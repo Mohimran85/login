@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Role</title>
+    <link
+      rel="icon"
+      type="icon/png"
+      sizes="32x32"
+      href="./asserts/images/Sona Logo.png"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="container">
+        <div class="icon">
+          <img src="./asserts/images/Sona Logo.png" alt="Sona Logo" />
+        </div>
+        <div class="title">
+          <h1>Event Management System</h1>
+        </div>
+      </div>
+    </header>
+
+    <main class="role-main">
+      <form action="" class="">
+        <div class="form-container">
+          <h2 class="form-title">Select Your Role</h2>
+          <div>
+            <label for="roleSelect"><h3>Role:</h3></label>
+            <select name="role" id="roleSelect" required>
+              <option value="" disabled selected>Select the Role</option>
+              <option value="Faculty">Faculty</option>
+              <option value="student">Student</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            class="role-button"
+            onclick="redirectToRolePage()"
+          >
+            Continue
+          </button>
+        </div>
+      </form>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Event Management System. All rights reserved.</p>
+    </footer>
+
+    <script>
+      function redirectToRolePage() {
+        const role = document.getElementById("roleSelect").value;
+        if (role === "student") {
+          window.location.href = "student.php";
+        } else if (role === "Faculty") {
+          window.location.href = "teacher.php";
+        } else {
+          alert("Please select a role before continuing.");
+        }
+      }
+    </script>
+  </body>
+</html>
