@@ -404,6 +404,12 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            .main {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding: 20px 15px;
+            }
+
             .filters-grid {
                 grid-template-columns: 1fr;
                 gap: 15px;
@@ -427,6 +433,27 @@
 
             .participation-item {
                 padding: 20px 15px;
+            }
+
+            .filters-section {
+                padding: 20px 15px;
+            }
+
+            .event-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .actions-section {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .action-btn {
+                text-align: center;
+                justify-content: center;
+                display: flex;
+                align-items: center;
             }
         }
     </style>
@@ -555,18 +582,18 @@
                             <label class="filter-label">Prize Filter</label>
                             <select name="prize" class="filter-select">
                                 <option value="">All Prizes</option>
-                                <option value="won"                                                                                                       <?php echo($prize_filter === 'won') ? 'selected' : ''; ?>>Events Won</option>
-                                <option value="participation"                                                                                                                           <?php echo($prize_filter === 'participation') ? 'selected' : ''; ?>>Participation Only</option>
+                                <option value="won"                                                                                                                                                          <?php echo($prize_filter === 'won') ? 'selected' : ''; ?>>Events Won</option>
+                                <option value="participation"                                                                                                                                                                                        <?php echo($prize_filter === 'participation') ? 'selected' : ''; ?>>Participation Only</option>
                             </select>
                         </div>
 
                         <div class="filter-group">
                             <label class="filter-label">Sort By</label>
                             <select name="sort" class="filter-select">
-                                <option value="attended_date"                                                                                                                           <?php echo($sort_by === 'attended_date') ? 'selected' : ''; ?>>Date</option>
-                                <option value="event_name"                                                                                                                     <?php echo($sort_by === 'event_name') ? 'selected' : ''; ?>>Event Name</option>
-                                <option value="event_type"                                                                                                                     <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
-                                <option value="prize"                                                                                                           <?php echo($sort_by === 'prize') ? 'selected' : ''; ?>>Prize</option>
+                                <option value="attended_date"                                                                                                                                                                                        <?php echo($sort_by === 'attended_date') ? 'selected' : ''; ?>>Date</option>
+                                <option value="event_name"                                                                                                                                                                               <?php echo($sort_by === 'event_name') ? 'selected' : ''; ?>>Event Name</option>
+                                <option value="event_type"                                                                                                                                                                               <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
+                                <option value="prize"                                                                                                                                                                <?php echo($sort_by === 'prize') ? 'selected' : ''; ?>>Prize</option>
                             </select>
                         </div>
 
@@ -606,7 +633,7 @@
         default  => 'prize-participation'
 };
 ?>">
-                                        🏆                                                                                         <?php echo htmlspecialchars($participation['prize']); ?>
+                                        🏆                                                                                                                                     <?php echo htmlspecialchars($participation['prize']); ?>
                                         <?php if (! empty($participation['prize_amount'])): ?>
                                             - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
                                         <?php endif; ?>

@@ -36,12 +36,11 @@ body.sidebar-open {
 /* Grid Layout System */
 .grid-container {
   display: grid;
-  grid-template-areas:
-    "header header"
-    "sidebar main";
+  grid-template-areas: "sidebar main";
   grid-template-columns: 280px 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: 1fr;
   min-height: 100vh;
+  padding-top: 80px; /* Account for fixed header */
   transition: all 0.3s ease;
 }
 
@@ -55,9 +54,12 @@ body.sidebar-open {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1002;
 }
 
 .header .menu-icon {
@@ -122,11 +124,14 @@ body.sidebar-open {
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   position: fixed;
   width: 280px;
-  margin-top: 0px;
+  top: 80px;
+  left: 0;
   height: calc(100vh - 80px);
   overflow-y: auto;
   transform: translateX(0);
   transition: transform 0.3s ease;
+  z-index: 1000;
+  margin-top: 48px;
 }
 
 /* Sidebar Header */
@@ -243,7 +248,7 @@ body.sidebar-open {
 /* Main Content */
 .main {
   grid-area: main;
-  margin-left: 30px;
+
   padding: 30px;
 }
 
@@ -780,10 +785,9 @@ body.sidebar-open {
 
 @media (max-width: 768px) {
   .grid-container {
-    grid-template-areas:
-      "header"
-      "main";
+    grid-template-areas: "main";
     grid-template-columns: 1fr;
+    padding-top: 80px; /* Account for fixed header */
   }
 
   .header .menu-icon {
@@ -800,10 +804,10 @@ body.sidebar-open {
 
   .sidebar {
     position: fixed;
-    top: 0;
+    top: 80px;
     left: 0;
     width: 280px;
-    height: 100vh;
+    height: calc(100vh - 80px);
     transform: translateX(-100%);
     z-index: 1000;
     background: #ffffff;
@@ -828,7 +832,7 @@ body.sidebar-open {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgb(255, 255, 255);
+    background: rgba(0, 0, 0, 0.3);
     z-index: -1;
     backdrop-filter: blur(2px);
   }
@@ -838,7 +842,7 @@ body.sidebar-open {
   }
 
   .sidebar.active {
-    z-index: 1001;
+    z-index: 1003;
   }
 
   .mobile-menu-btn {
@@ -846,9 +850,10 @@ body.sidebar-open {
   }
 
   .main {
-    margin-left: 0;
-    width: 100%;
+    margin-left: 0 !important;
+    width: 100% !important;
     padding: 20px 15px;
+    margin-top: 80px;
   }
 
   .main-card {
@@ -896,6 +901,24 @@ body.sidebar-open {
   .category-item {
     padding: 12px;
   }
+
+  /* Registration form mobile styles */
+  .registration-main {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 15px !important;
+  }
+
+  .registration-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+
+  .registration-form {
+    width: 100% !important;
+    margin: 0 !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -919,6 +942,9 @@ body.sidebar-open {
 
   .main {
     padding: 15px 10px;
+    margin-left: 0 !important;
+    width: 100% !important;
+    margin-top: 80px;
   }
 
   .card {
@@ -932,6 +958,7 @@ body.sidebar-open {
   .sidebar {
     width: 100vw;
     height: 100vh;
+    top: 0;
   }
 
   .card-header {
@@ -947,5 +974,23 @@ body.sidebar-open {
 
   .activity-icon {
     align-self: center;
+  }
+
+  /* Registration form mobile styles */
+  .registration-main {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10px !important;
+  }
+
+  .registration-container {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 15px !important;
+  }
+
+  .registration-form {
+    width: 100% !important;
+    margin: 0 !important;
   }
 }

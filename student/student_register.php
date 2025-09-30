@@ -165,7 +165,7 @@
   <title>Student Event Registration</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="student_dashboard.css"/>
-  
+
   <!-- google icons -->
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
@@ -209,7 +209,7 @@
       left: 0;
       height: 4px;
       background: linear-gradient(135deg, #1e4276 0%, #2d5aa0 100%);
-      z-index: 1000;
+      z-index: 1003;
       transition: width 0.3s ease;
       width: 0%;
     }
