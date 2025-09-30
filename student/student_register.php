@@ -359,11 +359,11 @@
     <div class="registration-container">
       <h2 class="form-title">Student Event Registration</h2>
       <div class="form-step-indicator">
-        Fill out all required fields marked with <span class="required-asterisk">*</span>
+      
       </div>
       <div class="parent">
         <div class="item div13">
-          <label for="regno">Registration Number:<span class="required-asterisk">*</span></label>
+          <label for="regno">Registration Number:<span class="required-asterisk"></span></label>
           <input type="text" id="regno" name="regno" value="<?php echo htmlspecialchars($logged_in_regno); ?>"
                  placeholder="Auto-filled from your profile"
                  pattern="[0-9]{2}[A-Z]{2,4}[0-9]{3}" title="Format: 23CS001"
@@ -436,7 +436,7 @@
           </select>
         </div>
         <div class="item div8">
-          <label for="eventname">Event Name:<span class="required-asterisk">*</span></label>
+          <label for="eventname">Event Name:<span class="required-asterisk">  </span></label>
           <input type="text" id="eventname" name="eventname" placeholder="Enter the Event Name"
                  maxlength="100" required />
           <div class="character-count"><span id="eventname-count">0</span>/100</div>
@@ -446,7 +446,7 @@
           <input type="date" id="attendedDate" name="attendedDate" required />
         </div>
         <div class="item div10">
-          <label for="organisation">Organisation By:<span class="required-asterisk">*</span></label>
+          <label for="organisation">Organisation By:<span class="required-asterisk">  </span></label>
           <input type="text" id="organisation" name="organisation" placeholder="Enter the Organisation Name"
                  maxlength="80" required />
           <div class="character-count"><span id="organisation-count">0</span>/80</div>
@@ -470,7 +470,7 @@
         </div>
         <div class="item div14">
           <label for="eventposter">Upload Event Poster:<span class="required-asterisk">*</span>
-            <span class="tooltip">ℹ️
+            <span class="tooltip">
               <span class="tooltiptext">Upload the official event poster/flyer in PDF format (Max: 5MB)</span>
             </span>
           </label>
@@ -483,7 +483,7 @@
         </div>
         <div class="item div15">
           <label for="certificates">Upload Certificates:<span class="required-asterisk">*</span>
-            <span class="tooltip">ℹ️
+            <span class="tooltip">
               <span class="tooltiptext">Upload your participation/achievement certificate in PDF format (Max: 5MB)</span>
             </span>
           </label>

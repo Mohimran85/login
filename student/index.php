@@ -39,7 +39,7 @@
     $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
 
     // Events won (with prizes)
-    $events_won_sql = "SELECT COUNT(*) as won FROM student_event_register WHERE regno=? AND prize IS NOT NULL AND prize != '' AND prize != 'No Prize'";
+    $events_won_sql = "SELECT COUNT(*) as won FROM student_event_register WHERE regno=? AND prize IN ('First', 'Second', 'Third')";
     $won_stmt       = $conn->prepare($events_won_sql);
     $won_stmt->bind_param("s", $regno);
     $won_stmt->execute();
@@ -254,7 +254,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($type['count'] / $total_events) * 100; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($type['count'] / $total_events) * 100; ?>%"></div>
                         </div>
                       </div>
                     </div>
