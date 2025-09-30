@@ -405,7 +405,6 @@
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .main {
-                margin-left: 0 !important;
                 width: 100% !important;
                 padding: 20px 15px;
             }

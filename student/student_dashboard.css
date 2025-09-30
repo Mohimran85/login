@@ -804,10 +804,10 @@ body.sidebar-open {
 
   .sidebar {
     position: fixed;
-    top: 80px;
+    top: 0;
     left: 0;
-    width: 280px;
-    height: calc(100vh - 80px);
+    width: 100vw;
+    height: 100vh;
     transform: translateX(-100%);
     z-index: 1000;
     background: #ffffff;
@@ -832,7 +832,7 @@ body.sidebar-open {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.3);
+
     z-index: -1;
     backdrop-filter: blur(2px);
   }
@@ -853,7 +853,6 @@ body.sidebar-open {
     margin-left: 0 !important;
     width: 100% !important;
     padding: 20px 15px;
-    margin-top: 80px;
   }
 
   .main-card {
@@ -941,10 +940,10 @@ body.sidebar-open {
   }
 
   .main {
-    padding: 15px 10px;
+    padding: 8px 4px;
     margin-left: 0 !important;
     width: 100% !important;
-    margin-top: 80px;
+    
   }
 
   .card {
@@ -980,17 +979,20 @@ body.sidebar-open {
   .registration-main {
     width: 100% !important;
     margin: 0 !important;
-    padding: 10px !important;
+    padding: 4px 2px !important;
+    min-height: auto;
   }
 
   .registration-container {
     width: 100% !important;
     margin: 0 !important;
-    padding: 15px !important;
+    padding: 8px 4px !important;
+    border-radius: 8px;
   }
 
   .registration-form {
     width: 100% !important;
     margin: 0 !important;
+    max-width: 100%;
   }
 }

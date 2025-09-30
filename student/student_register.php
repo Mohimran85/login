@@ -230,7 +230,7 @@
     .tooltip .tooltiptext {
       visibility: hidden;
       width: 200px;
-      background-color: #555;
+      background-color: #ffffffff;
       color: #fff;
       text-align: center;
       border-radius: 6px;

@@ -14,89 +14,89 @@
    <body>
       <header>
          <div class="container">
-            <div class="icon">
-               <img src="./asserts/images/Sona Logo.png" alt="Sona Logo" />
-            </div>
-            <div class="title">
-               <h1>Event Management System</h1>
-            </div>
-         </div>
+        <div class="icon">
+            <img src="./asserts/images/Sona Logo.png" alt="Sona Logo" />
+        </div>
+        <div class="title">
+            <h1>Event Management System</h1>
+        </div>
+    </div>
       </header>
       <main class="registration-main">
 <?php
-$servername = "localhost";
-$db_username = "root";
-$db_password = "";
-$dbname = "event_management_system";
+    $servername  = "localhost";
+    $db_username = "root";
+    $db_password = "";
+    $dbname      = "event_management_system";
 
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-$success_message = "";
-$error_messages = [];
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Sanitize inputs
-    $name = trim($_POST["name"]);
-    $dob = $_POST["dob"];
-    $username = trim($_POST["username"]);
-    $regno = trim($_POST["regno"]);
-    $year_of_join = $_POST["batch"];
-    $degree = $_POST["degree"];
-    $department = $_POST["department"];
-    $personal_email = trim($_POST["personal_email"]);
-    $password = $_POST["password"];
-    $re_password = $_POST["re-password"];
-
-    // Validation
-    if (empty($name) || empty($dob) || empty($username) || empty($regno) || empty($year_of_join) ||
-        empty($degree) || empty($department) || empty($personal_email) || empty($password) || empty($re_password)) {
-        $error_messages[] = "Please fill all required fields.";
-    }
-    if ($password !== $re_password) {
-        $error_messages[] = "Passwords do not match.";
-    }
-    if (!filter_var($personal_email, FILTER_VALIDATE_EMAIL)) {
-        $error_messages[] = "Invalid email format.";
-    }
-    if (strlen($password) < 6) {
-        $error_messages[] = "Password must be at least 6 characters long.";
-    }
-    // Stronger password policy
-    if (!preg_match("/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$/", $password)) {
-        $error_messages[] = "Password must include uppercase, lowercase, number, and special character.";
+    $conn = new mysqli($servername, $db_username, $db_password, $dbname);
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
     }
 
-    // Check username & email uniqueness
-    if (empty($error_messages)) {
-        $check_query = "SELECT id FROM student_register WHERE username=? OR personal_email=?";
-        $stmt = $conn->prepare($check_query);
-        $stmt->bind_param("ss", $username, $personal_email);
-        $stmt->execute();
-        $stmt->store_result();
-        if ($stmt->num_rows > 0) {
-            $error_messages[] = "Username or email already exists.";
+    $success_message = "";
+    $error_messages  = [];
+
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        // Sanitize inputs
+        $name           = trim($_POST["name"]);
+        $dob            = $_POST["dob"];
+        $username       = trim($_POST["username"]);
+        $regno          = trim($_POST["regno"]);
+        $year_of_join   = $_POST["batch"];
+        $degree         = $_POST["degree"];
+        $department     = $_POST["department"];
+        $personal_email = trim($_POST["personal_email"]);
+        $password       = $_POST["password"];
+        $re_password    = $_POST["re-password"];
+
+        // Validation
+        if (empty($name) || empty($dob) || empty($username) || empty($regno) || empty($year_of_join) ||
+            empty($degree) || empty($department) || empty($personal_email) || empty($password) || empty($re_password)) {
+            $error_messages[] = "Please fill all required fields.";
         }
-        $stmt->close();
-    }
+        if ($password !== $re_password) {
+            $error_messages[] = "Passwords do not match.";
+        }
+        if (! filter_var($personal_email, FILTER_VALIDATE_EMAIL)) {
+            $error_messages[] = "Invalid email format.";
+        }
+        if (strlen($password) < 6) {
+            $error_messages[] = "Password must be at least 6 characters long.";
+        }
+        // Stronger password policy
+        if (! preg_match("/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$/", $password)) {
+            $error_messages[] = "Password must include uppercase, lowercase, number, and special character.";
+        }
 
-    // Insert if no errors
-    if (empty($error_messages)) {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO student_register 
+        // Check username & email uniqueness
+        if (empty($error_messages)) {
+            $check_query = "SELECT id FROM student_register WHERE username=? OR personal_email=?";
+            $stmt        = $conn->prepare($check_query);
+            $stmt->bind_param("ss", $username, $personal_email);
+            $stmt->execute();
+            $stmt->store_result();
+            if ($stmt->num_rows > 0) {
+                $error_messages[] = "Username or email already exists.";
+            }
+            $stmt->close();
+        }
+
+        // Insert if no errors
+        if (empty($error_messages)) {
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $sql             = "INSERT INTO student_register
                 (name, dob, username, regno, year_of_join, degree, department, personal_email, password)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param(
-            "sssssssss",
-            $name, $dob, $username, $regno, $year_of_join, $degree, $department, $personal_email, $hashed_password
-        );
-        if ($stmt->execute()) {
-            // Set success message and redirect after showing it
-            $success_message = "Registration Successful! Redirecting to login page...";
-            echo "<script>
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param(
+                "sssssssss",
+                $name, $dob, $username, $regno, $year_of_join, $degree, $department, $personal_email, $hashed_password
+            );
+            if ($stmt->execute()) {
+                // Set success message and redirect after showing it
+                $success_message = "Registration Successful! Redirecting to login page...";
+                echo "<script>
                 // Show success popup
                 alert('Registration Successful!');
                 // Wait 2 seconds then redirect
@@ -104,27 +104,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     window.location.href = 'index.php';
                 }, 2000);
             </script>";
-        } else {
-            $error_messages[] = "Database error: Registration failed.";
+            } else {
+                $error_messages[] = "Database error: Registration failed.";
+            }
+            $stmt->close();
         }
-        $stmt->close();
     }
-}
-$conn->close();
+    $conn->close();
 ?>
          <form action="" method="POST" class="registration-form">
             <div class="registration-container">
                <h2 class="form-title">Student Registration</h2>
 
 <?php
-  if (!empty($success_message)) {
-    echo "<div class='success'>$success_message</div>";
-  }
-  if (!empty($error_messages)) {
-    foreach ($error_messages as $err) {
-      echo "<div class='error'>".htmlspecialchars($err)."</div>";
+    if (! empty($success_message)) {
+        echo "<div class='success'>$success_message</div>";
     }
-  }
+    if (! empty($error_messages)) {
+        foreach ($error_messages as $err) {
+            echo "<div class='error'>" . htmlspecialchars($err) . "</div>";
+        }
+    }
 ?>
 
                <div class="parent">
@@ -205,7 +205,7 @@ $conn->close();
             </div>
          </form>
       </main>
-      <footer> 
+      <footer>
          <p>&copy; 2025 Event Management System. All rights reserved.</p>
       </footer>
       <script src="scripts.js"></script>

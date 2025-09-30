@@ -67,9 +67,9 @@
 
                     // Redirect based on user role
                     if ($_SESSION['role'] === 'student') {
-                        header("Location: student/index.php"); // Redirect students to their dashboard
+                        header("Location: student/index.php");
                     } else {
-                        header("Location: admin/index.php"); // Redirect teachers/admin to admin panel
+                        header("Location: admin/index.php"); 
                     }
                     exit();
                 } else {
@@ -94,18 +94,14 @@
     <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<header>
-    <div class="container">
-        <div class="icon">
-            <img src="./asserts/images/Sona Logo.png" alt="Sona Logo" />
-        </div>
-        <div class="title">
-            <h1>Event Management System</h1>
-        </div>
-    </div>
-</header>
-
 <main>
+    <div class="login-header">
+        <!-- <div class="icon">
+            <img src="./asserts/images/Sona Logo.png" alt="Sona College Logo" />
+        </div> -->
+        <h1>Event Management System</h1>
+    </div>
+
     <form action="index.php" method="POST">
         <div class="form-container">
             <h2 class="form-title">Login</h2>
@@ -119,12 +115,12 @@
 
             <?php
                 if (! empty($error_message)) {
-                    echo "<div style='color:red; font-weight:bold; margin-top: 0.5rem; margin-bottom: 1rem; text-align: center;'>$error_message</div>";
+                    echo "<div class='message error-message'>$error_message</div>";
                 }
 
                 // Check for logout success message
                 if (isset($_GET['logout']) && $_GET['logout'] == 'success') {
-                    echo "<div style='color:green; font-weight:bold; margin-top: 0.5rem; margin-bottom: 1rem; text-align: center;'>You have been logged out successfully.</div>";
+                    echo "<div class='message success-message'>You have been logged out successfully.</div>";
                 }
             ?>
             <div class="form-group">
