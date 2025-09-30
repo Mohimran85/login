@@ -234,7 +234,7 @@ body, html {
         border-radius: 0;
     }
     .wrapper, .main, .registration-main {
-        margin-top: 20px;
+
         min-height: auto;
         padding: 0 6px;
     }

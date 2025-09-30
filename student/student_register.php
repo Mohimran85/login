@@ -165,7 +165,7 @@
   <title>Student Event Registration</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="student_dashboard.css"/>
-  <link rel="stylesheet" href="student_reg.css"/>
+  
   <!-- google icons -->
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"

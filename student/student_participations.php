@@ -447,7 +447,7 @@
         </div>
 
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar" id="sidebar" >
             <div class="sidebar-header">
                 <div class="sidebar-title">Student Portal</div>
                 <div class="close-sidebar">
@@ -462,7 +462,7 @@
 
             <nav>
                 <ul class="nav-menu">
-                    <li class="nav-item">
+                    <li class="nav-item" >
                         <a href="index.php" class="nav-link">
                             <span class="material-symbols-outlined">dashboard</span>
                             Dashboard
