@@ -253,7 +253,7 @@ $conn->close();
               </select>
             </div>
 
-            <?php if ($user_type === 'student'): ?>
+            <?php if ($user_type === 'student'): ?> 
             <div class="item div5" style="width: 95%">
               <label for="degree">Degree</label>
               <select name="degree" id="degree" disabled required>
