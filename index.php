@@ -99,7 +99,7 @@
         <!-- <div class="icon">
             <img src="./asserts/images/Sona Logo.png" alt="Sona College Logo" />
         </div> -->
-        <h1>Event Management System</h1>
+        <h1>Event Management system</h1>
     </div>
 
     <form action="index.php" method="POST">
@@ -132,9 +132,7 @@
     </form>
 </main>
 
-<footer>
-    <p>&copy; 2025 Event Management System. All rights reserved.</p>
-</footer>
+
 
 <script>
 // Prevent back button after logout
