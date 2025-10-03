@@ -150,7 +150,7 @@ body.sidebar-open {
   transform: translateX(0);
   transition: transform 0.3s ease;
   z-index: 1000;
-  margin-top: 48px;
+  margin-top: 30px;
 }
 
 /* Sidebar Header */

@@ -102,6 +102,36 @@
         $event_types = $types_stmt->get_result();
     }
 
+    // Get recently registered students (last 10)
+    $recent_students_sql = "SELECT sr.name, sr.regno, sr.department, sr.year_of_join,
+                                  ser.event_name, ser.event_type, ser.attended_date,
+                                  ser.prize, ser.organisation
+                           FROM student_register sr
+                           JOIN student_event_register ser ON sr.regno = ser.regno
+                           ORDER BY ser.attended_date DESC, ser.id DESC
+                           LIMIT 10";
+    $recent_students_result = $conn->query($recent_students_sql);
+
+    // Get student registration statistics by event type
+    $student_stats_sql = "SELECT ser.event_type, COUNT(DISTINCT ser.regno) as student_count,
+                                COUNT(ser.id) as total_registrations
+                         FROM student_event_register ser
+                         GROUP BY ser.event_type
+                         ORDER BY student_count DESC";
+    $student_stats_result = $conn->query($student_stats_sql);
+
+    // Get top performing students (students with prizes)
+    $top_students_sql = "SELECT sr.name, sr.regno, sr.department,
+                               COUNT(ser.id) as total_events,
+                               SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prizes_won
+                        FROM student_register sr
+                        JOIN student_event_register ser ON sr.regno = ser.regno
+                        GROUP BY sr.regno, sr.name, sr.department
+                        HAVING prizes_won > 0
+                        ORDER BY prizes_won DESC, total_events DESC
+                        LIMIT 5";
+    $top_students_result = $conn->query($top_students_sql);
+
     $stmt->close();
     if (isset($recent_stmt)) {
         $recent_stmt->close();
@@ -165,7 +195,7 @@
 
         <div class="student-info">
           <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-          <div class="student-regno">ID:                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
+          <div class="student-regno">ID:                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
         </div>
 
         <nav>
@@ -189,6 +219,12 @@
               </a>
             </li>
             <li class="nav-item">
+              <a href="registered_students.php" class="nav-link">
+                <span class="material-symbols-outlined">group</span>
+                Registered Students
+              </a>
+            </li>
+            <li class="nav-item">
               <a href="profile.php" class="nav-link">
                 <span class="material-symbols-outlined">person</span>
                 Profile
@@ -207,7 +243,7 @@
       <div class="main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back,                            <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
+          <h1>Welcome back,                                                                                  <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
           <p>Register for professional development events and track your participation</p>
         </div>
 
@@ -305,7 +341,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                         <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
@@ -339,32 +375,128 @@
             </div>
           </div>
 
-          <!-- Quick Stats -->
+          <!-- Recently Registered Students -->
           <div class="content-card">
             <div class="card-header">
-              <span class="material-symbols-outlined">insights</span>
-              <h3>My Statistics</h3>
+              <span class="material-symbols-outlined">group</span>
+              <h3>Recently Registered Students</h3>
+              <a href="registered_students.php" class="view-all-link">View All</a>
             </div>
-            <div class="categories-list">
-              <div class="category-item">
-                <div class="category-info">
-                  <span class="category-name">This Month's Events</span>
-                </div>
-                <span class="category-count">0</span>
+
+            <?php if ($recent_students_result && $recent_students_result->num_rows > 0): ?>
+              <div class="activities-list">
+                <?php while ($student = $recent_students_result->fetch_assoc()): ?>
+                  <div class="activity-item">
+                    <div class="activity-icon">
+                      <span class="material-symbols-outlined">person</span>
+                    </div>
+                    <div class="activity-details">
+                      <h4><?php echo htmlspecialchars($student['name']); ?></h4>
+                      <p class="activity-meta">
+                        <span class="event-type"><?php echo htmlspecialchars($student['regno']); ?></span>
+                        <span class="event-date"><?php echo htmlspecialchars($student['department']); ?></span>
+                        <span class="prize-badge">
+                          <?php echo htmlspecialchars($student['event_name']); ?>
+                        </span>
+                      </p>
+                      <p class="activity-meta">
+                        <small style="color: #666;">
+                          <?php echo date('M d, Y', strtotime($student['attended_date'])); ?>
+                          <?php if (! empty($student['prize']) && $student['prize'] !== 'None'): ?>
+                            | 🏆<?php echo htmlspecialchars($student['prize']); ?>
+                          <?php endif; ?>
+                        </small>
+                      </p>
+                    </div>
+                  </div>
+                <?php endwhile; ?>
               </div>
-              <div class="category-item">
-                <div class="category-info">
-                  <span class="category-name">Completed Events</span>
-                </div>
-                <span class="category-count">0</span>
+            <?php else: ?>
+              <div class="empty-state">
+                <span class="material-symbols-outlined">group_off</span>
+                <p>No student registrations yet</p>
+                <a href="registered_students.php" class="empty-action">View all registrations</a>
               </div>
-              <div class="category-item">
-                <div class="category-info">
-                  <span class="category-name">Total Registrations</span>
-                </div>
-                <span class="category-count"><?php echo $total_events; ?></span>
-              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <!-- Student Performance and Registration Statistics -->
+        <div class="content-grid" style="margin-top: 30px;">
+          <!-- Top Performing Students -->
+          <div class="content-card">
+            <div class="card-header">
+              <span class="material-symbols-outlined">star</span>
+              <h3>Top Performing Students</h3>
+              <a href="registered_students.php" class="view-all-link">View All</a>
             </div>
+
+            <?php if ($top_students_result && $top_students_result->num_rows > 0): ?>
+              <div class="categories-list">
+                <?php while ($student = $top_students_result->fetch_assoc()): ?>
+                  <div class="category-item">
+                    <div class="category-info">
+                      <span class="category-name">
+                        <?php echo htmlspecialchars($student['name']); ?>
+                        <small style="display: block; color: #666; font-size: 12px;">
+                          <?php echo htmlspecialchars($student['regno']); ?> |<?php echo htmlspecialchars($student['department']); ?>
+                        </small>
+                      </span>
+                      <div class="category-progress">
+                        <div class="progress-bar">
+                          <div class="progress-fill" style="width:                                                                                                                                     <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="text-align: center;">
+                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                     <?php echo $student['prizes_won']; ?></div>
+                      <small style="color: #666; font-size: 11px;"><?php echo $student['total_events']; ?> events</small>
+                    </div>
+                  </div>
+                <?php endwhile; ?>
+              </div>
+            <?php else: ?>
+              <div class="empty-state">
+                <span class="material-symbols-outlined">emoji_events</span>
+                <p>No prize winners yet</p>
+                <a href="registered_students.php" class="empty-action">View all students</a>
+              </div>
+            <?php endif; ?>
+          </div>
+
+          <!-- Event Type Registration Stats -->
+          <div class="content-card">
+            <div class="card-header">
+              <span class="material-symbols-outlined">analytics</span>
+              <h3>Student Registration by Event Type</h3>
+            </div>
+
+            <?php if ($student_stats_result && $student_stats_result->num_rows > 0): ?>
+              <div class="categories-list">
+                <?php while ($stat = $student_stats_result->fetch_assoc()): ?>
+                  <div class="category-item">
+                    <div class="category-info">
+                      <span class="category-name"><?php echo htmlspecialchars($stat['event_type']); ?></span>
+                      <div class="category-progress">
+                        <div class="progress-bar">
+                          <div class="progress-fill" style="width:                                                                                                                                     <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="text-align: center;">
+                      <div style="font-weight: bold; color: #3498db;"><?php echo $stat['student_count']; ?></div>
+                      <small style="color: #666; font-size: 11px;"><?php echo $stat['total_registrations']; ?> reg.</small>
+                    </div>
+                  </div>
+                <?php endwhile; ?>
+              </div>
+            <?php else: ?>
+              <div class="empty-state">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <p>No registration statistics available</p>
+                <a href="registered_students.php" class="empty-action">View registrations</a>
+              </div>
+            <?php endif; ?>
           </div>
         </div>
       </div>

@@ -133,63 +133,218 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Event Registration</title>
+    <title>Event Registration - Teacher Dashboard</title>
     <link
       rel="icon"
       type="icon/png"
       sizes="32x32"
-      href="./asserts/images/Sona Logo.png"
+      href="../asserts/images/Sona Logo.png"
     />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="stylesheet" href="../student/student_dashboard.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-input[type="file"]::file-selector-button {
-    background-color: #0c3878;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-}
+        .registration-form {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 900px;
+            margin: 0 auto;
+        }
 
+        .parent {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
 
-input[type="file"]::file-selector-button:hover {
-    background-color: #0c3878;
-}
-</style>
+        .item {
+            margin-bottom: 20px;
+        }
+
+        .item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .item input,
+        .item select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .item input:focus,
+        .item select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        #button {
+            background: #3498db;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        #button:hover {
+            background: #2980b9;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        input[type="file"]::file-selector-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background-color: #2980b9;
+        }
+
+        .form-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .div15 {
+            grid-column: 1 / -1;
+        }
+    </style>
   </head>
   <body>
-    <header>
-      <div class="container">
-        <div class="icon">
-          <img src="./asserts/images/Sona Logo.png" alt="Sona Logo" />
+    <div class="grid-container">
+      <!-- Header -->
+      <div class="header">
+        <div class="menu-icon">
+          <span class="material-symbols-outlined">menu</span>
         </div>
-        <div class="title">
-          <h1>Event Management System</h1>
+        <div class="icon">
+          <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
+        </div>
+        <div class="header-title">
+          <p>Event Management System</p>
         </div>
       </div>
-    </header>
-    <main class="registration-main">
-      <?php if (! empty($success_message)): ?>
-        <div class="alert alert-success" style="background-color: #d4edda; color: #155724; padding: 15px; margin: 20px auto; border-radius: 5px; max-width: 800px; text-align: center;">
-          <?php echo htmlspecialchars($success_message); ?>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">Teacher Portal</div>
+          <div class="close-sidebar">
+            <span class="material-symbols-outlined">close</span>
+          </div>
         </div>
-      <?php endif; ?>
 
-      <?php if (! empty($error_message)): ?>
-        <div class="alert alert-error" style="background-color: #f8d7da; color: #721c24; padding: 15px; margin: 20px auto; border-radius: 5px; max-width: 800px; text-align: center;">
-          <?php echo htmlspecialchars($error_message); ?>
+        <div class="student-info">
+          <div class="student-name"><?php echo htmlspecialchars($teacher_data['name'] ?? 'Guest'); ?></div>
+          <div class="student-regno">ID:                                         <?php echo htmlspecialchars($teacher_data['faculty_id'] ?? 'N/A'); ?></div>
         </div>
-      <?php endif; ?>
 
-      <form action="" method="POST" enctype="multipart/form-data" class="registration-form">
-        <div class="registration-container">
-          <h2 class="form-title">Staff Event Registration</h2>
+        <nav>
+          <ul class="nav-menu">
+            <li class="nav-item">
+              <a href="index.php" class="nav-link">
+                <span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="staff_event_reg.php" class="nav-link active">
+                <span class="material-symbols-outlined">event_note</span>
+                Event Registration
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="my_events.php" class="nav-link">
+                <span class="material-symbols-outlined">calendar_month</span>
+                My Events
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="registered_students.php" class="nav-link">
+                <span class="material-symbols-outlined">group</span>
+                Registered Students
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="profile.php" class="nav-link">
+                <span class="material-symbols-outlined">person</span>
+                Profile
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="../admin/logout.php" class="nav-link">
+                <span class="material-symbols-outlined">logout</span>
+                Logout
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
 
-          <div class="parent">
+      <!-- Main Content -->
+      <div class="main">
+        <div class="welcome-section">
+          <h1>📝 Staff Event Registration</h1>
+          <p>Register your participation in professional development events</p>
+        </div>
+
+        <?php if (! empty($success_message)): ?>
+          <div class="alert alert-success">
+            <?php echo htmlspecialchars($success_message); ?>
+          </div>
+        <?php endif; ?>
+
+        <?php if (! empty($error_message)): ?>
+          <div class="alert alert-error">
+            <?php echo htmlspecialchars($error_message); ?>
+          </div>
+        <?php endif; ?>
+
+        <form action="" method="POST" enctype="multipart/form-data" class="registration-form">
+          <div class="registration-container">
+            <h2 class="form-title">Staff Event Registration</h2>
+
+            <div class="parent">
 
             <div class="item div2">
-              <label for="staffid">Staff ID:</label>
+              <label for="staffid">Staff ID <span style="color: #e74c3c;">*</span>:</label>
               <input
                 type="text"
                 id="staffid"
@@ -201,7 +356,7 @@ input[type="file"]::file-selector-button:hover {
             </div>
 
             <div class="item div3">
-              <label for="name">Your Name:</label>
+              <label for="name">Your Name <span style="color: #e74c3c;">*</span>:</label>
               <input
                 type="text"
                 id="name"
@@ -215,14 +370,14 @@ input[type="file"]::file-selector-button:hover {
             <div class="item div4">
               <label for="department">Department:</label>
               <select id="department" name="department" required>
-                <option value="" disabled                                          <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select Your Department</option>
-                <option value="CSE"                                    <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
-                <option value="IT"                                   <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>Information Technology (IT)</option>
-                <option value="ECE"                                    <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
-                <option value="EEE"                                    <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
-                <option value="MECH"                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
-                <option value="CIVIL"                                      <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
-                <option value="BME"                                    <?php echo(isset($_POST['department']) && $_POST['department'] == 'BME') ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
+                <option value="" disabled                                                                                   <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select Your Department</option>
+                <option value="CSE"                                                                       <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
+                <option value="IT"                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>Information Technology (IT)</option>
+                <option value="ECE"                                                                       <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
+                <option value="EEE"                                                                       <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
+                <option value="MECH"                                                                         <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
+                <option value="CIVIL"                                                                           <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
+                <option value="BME"                                                                       <?php echo(isset($_POST['department']) && $_POST['department'] == 'BME') ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
               </select>
             </div>
 
@@ -236,24 +391,24 @@ input[type="file"]::file-selector-button:hover {
             <div class="item div6">
               <label for="academic">Academic Year:</label>
               <select id="academic" name="academic" required>
-                <option value="" disabled                                          <?php echo ! isset($_POST['academic']) ? 'selected' : ''; ?>>Select Academic Year</option>
-                <option value="2025-2026"                                          <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2025-2026') ? 'selected' : ''; ?>>(2025-2026)- ODD</option>
-                <option value="2026-2027"                                          <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2026-2027') ? 'selected' : ''; ?>>(2026-2027)-EVEN</option>
-                <option value="2027-2028"                                          <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2027-2028') ? 'selected' : ''; ?>>(2027-2028)-ODD</option>
-                <option value="2028-2029"                                          <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2028-2029') ? 'selected' : ''; ?>>(2028-2029)-EVEN</option>
+                <option value="" disabled                                                                                   <?php echo ! isset($_POST['academic']) ? 'selected' : ''; ?>>Select Academic Year</option>
+                <option value="2025-2026"                                                                                   <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2025-2026') ? 'selected' : ''; ?>>(2025-2026)- ODD</option>
+                <option value="2026-2027"                                                                                   <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2026-2027') ? 'selected' : ''; ?>>(2026-2027)-EVEN</option>
+                <option value="2027-2028"                                                                                   <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2027-2028') ? 'selected' : ''; ?>>(2027-2028)-ODD</option>
+                <option value="2028-2029"                                                                                   <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2028-2029') ? 'selected' : ''; ?>>(2028-2029)-EVEN</option>
               </select>
             </div>
 
             <div class="item div7">
               <label for="eventType">Event Type:</label>
               <select id="eventType" name="eventType" required>
-                <option value="" disabled                                          <?php echo ! isset($_POST['eventType']) ? 'selected' : ''; ?>>Select Event Type</option>
-                <option value="FDP"                                    <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'FDP') ? 'selected' : ''; ?>>FDP</option>
-                <option value="Workshop"                                         <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
-                <option value="CONFERENCE"                                           <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'CONFERENCE') ? 'selected' : ''; ?>>CONFERENCE</option>
-                <option value="INDUSTRIAL TRAINING"                                                    <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'INDUSTRIAL TRAINING') ? 'selected' : ''; ?>>INDUSTRIAL TRAINING</option>
-                <option value="STTP"                                     <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'STTP') ? 'selected' : ''; ?>>STTP</option>
-                <option value="REVIEWER"                                         <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'REVIEWER') ? 'selected' : ''; ?>>REVIEWER</option>
+                <option value="" disabled                                                                                   <?php echo ! isset($_POST['eventType']) ? 'selected' : ''; ?>>Select Event Type</option>
+                <option value="FDP"                                                                       <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'FDP') ? 'selected' : ''; ?>>FDP</option>
+                <option value="Workshop"                                                                                 <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
+                <option value="CONFERENCE"                                                                                     <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'CONFERENCE') ? 'selected' : ''; ?>>CONFERENCE</option>
+                <option value="INDUSTRIAL TRAINING"                                                                                                       <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'INDUSTRIAL TRAINING') ? 'selected' : ''; ?>>INDUSTRIAL TRAINING</option>
+                <option value="STTP"                                                                         <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'STTP') ? 'selected' : ''; ?>>STTP</option>
+                <option value="REVIEWER"                                                                                 <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'REVIEWER') ? 'selected' : ''; ?>>REVIEWER</option>
               </select>
             </div>
 
@@ -272,7 +427,7 @@ input[type="file"]::file-selector-button:hover {
             <div class="item div9">
               <label for="dates">No of Dates:</label>
               <select id="dates" name="dates" required>
-                <option value="" disabled                                          <?php echo ! isset($_POST['dates']) ? 'selected' : ''; ?>>Select No of Dates</option>
+                <option value="" disabled                                                                                   <?php echo ! isset($_POST['dates']) ? 'selected' : ''; ?>>Select No of Dates</option>
                 <?php for ($i = 1; $i <= 10; $i++): ?>
                   <option value="<?php echo $i; ?>"<?php echo(isset($_POST['dates']) && $_POST['dates'] == $i) ? 'selected' : ''; ?>><?php echo $i; ?></option>
                 <?php endfor; ?>
@@ -308,31 +463,72 @@ input[type="file"]::file-selector-button:hover {
             <div class="item div13">
               <label for="sponsors">Sponsors by:</label>
               <select id="sponsors" name="sponsors" required>
-                <option value="" disabled                                          <?php echo ! isset($_POST['sponsors']) ? 'selected' : ''; ?>>Select The Sponsors</option>
-                <option value="AICTE"                                      <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'AICTE') ? 'selected' : ''; ?>>AICTE</option>
-                <option value="IBM"                                    <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IBM') ? 'selected' : ''; ?>>IBM</option>
-                <option value="INFOSYS SPRINGBOARD"                                                    <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'INFOSYS SPRINGBOARD') ? 'selected' : ''; ?>>INFOSYS SPRINGBOARD</option>
-                <option value="IEI"                                    <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IEI') ? 'selected' : ''; ?>>IEI</option>
-                <option value="IEEE"                                     <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IEEE') ? 'selected' : ''; ?>>IEEE</option>
+                <option value="" disabled                                                                                   <?php echo ! isset($_POST['sponsors']) ? 'selected' : ''; ?>>Select The Sponsors</option>
+                <option value="AICTE"                                                                           <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'AICTE') ? 'selected' : ''; ?>>AICTE</option>
+                <option value="IBM"                                                                       <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IBM') ? 'selected' : ''; ?>>IBM</option>
+                <option value="INFOSYS SPRINGBOARD"                                                                                                       <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'INFOSYS SPRINGBOARD') ? 'selected' : ''; ?>>INFOSYS SPRINGBOARD</option>
+                <option value="IEI"                                                                       <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IEI') ? 'selected' : ''; ?>>IEI</option>
+                <option value="IEEE"                                                                         <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IEEE') ? 'selected' : ''; ?>>IEEE</option>
               </select>
             </div>
 
             <div class="item div14">
-              <label for="certificates">Upload Certificates:</label>
+              <label for="certificates">Upload Certificates <span style="color: #e74c3c;">*</span>:</label>
               <input type="file" id="certificates" name="certificates" accept=".pdf" required/>
-              <small>Allowed file types: PDF Only</small>
+              <small style="color: #666; font-size: 12px;">Allowed file types: PDF Only</small>
             </div>
 
             <div class="item div15">
-              <input type="submit" value="Register" id="button"/>
+              <button type="submit" id="button">
+                <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 5px;">save</span>
+                Register Event
+              </button>
+            </div>
             </div>
           </div>
-        </div>
-      </form>
-    </main>
-    <footer>
-      <p>&copy; 2025 Event Management System. All rights reserved.</p>
-    </footer>
-    <script src="scripts.js"></script>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      // Mobile menu functionality
+      function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const body = document.body;
+
+        if (sidebar.classList.contains('active')) {
+          sidebar.classList.remove('active');
+          body.classList.remove('sidebar-open');
+        } else {
+          sidebar.classList.add('active');
+          body.classList.add('sidebar-open');
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const headerMenuIcon = document.querySelector('.header .menu-icon');
+        if (headerMenuIcon) {
+          headerMenuIcon.addEventListener('click', toggleSidebar);
+        }
+
+        const closeSidebarBtn = document.querySelector('.close-sidebar');
+        if (closeSidebarBtn) {
+          closeSidebarBtn.addEventListener('click', toggleSidebar);
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+          const sidebar = document.getElementById('sidebar');
+          if (window.innerWidth <= 768 &&
+              sidebar &&
+              sidebar.classList.contains('active') &&
+              !sidebar.contains(event.target) &&
+              !headerMenuIcon.contains(event.target)) {
+            sidebar.classList.remove('active');
+            document.body.classList.remove('sidebar-open');
+          }
+        });
+      });
+    </script>
   </body>
 </html>
