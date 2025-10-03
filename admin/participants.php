@@ -156,7 +156,7 @@
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         margin-bottom: 20px;
       }
-      
+
       .filters-row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -480,10 +480,6 @@
               <span class="material-symbols-outlined">dashboard</span>
               <a href="index.php">Home</a>
             </li>
-            <li class="sidebar-list-item">
-              <span class="material-symbols-outlined">event</span>
-              <a href="add_event.php">Add Events</a>
-            </li>
             <li class="sidebar-list-item active">
               <span class="material-symbols-outlined">people</span>
               <a href="participants.php">Participants</a>
@@ -571,10 +567,10 @@
                   <label for="year">Year:</label>
                   <select name="year" id="year">
                     <option value="">All Years</option>
-                    <option value="I"                                                                                                                                                                                          <?php echo($filter_year === 'I') ? 'selected' : ''; ?>>I Year</option>
-                    <option value="II"                                                                                                                                                                                               <?php echo($filter_year === 'II') ? 'selected' : ''; ?>>II Year</option>
-                    <option value="III"                                                                                                                                                                                                    <?php echo($filter_year === 'III') ? 'selected' : ''; ?>>III Year</option>
-                    <option value="IV"                                                                                                                                                                                               <?php echo($filter_year === 'IV') ? 'selected' : ''; ?>>IV Year</option>
+                    <option value="I"                                                                                                                                                                                                                               <?php echo($filter_year === 'I') ? 'selected' : ''; ?>>I Year</option>
+                    <option value="II"                                                                                                                                                                                                                                     <?php echo($filter_year === 'II') ? 'selected' : ''; ?>>II Year</option>
+                    <option value="III"                                                                                                                                                                                                                                           <?php echo($filter_year === 'III') ? 'selected' : ''; ?>>III Year</option>
+                    <option value="IV"                                                                                                                                                                                                                                     <?php echo($filter_year === 'IV') ? 'selected' : ''; ?>>IV Year</option>
                   </select>
                 </div>
 
@@ -582,21 +578,21 @@
                   <label for="prize">Prize Status:</label>
                   <select name="prize" id="prize">
                     <option value="">All</option>
-                    <option value="First"                                                                                                                                                                                                              <?php echo($filter_prize === 'First') ? 'selected' : ''; ?>>First Prize</option>
-                    <option value="Second"                                                                                                                                                                                                                   <?php echo($filter_prize === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
-                    <option value="Third"                                                                                                                                                                                                              <?php echo($filter_prize === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
-                    <option value="no_prize"                                                                                                                                                                                                                             <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
+                    <option value="First"                                                                                                                                                                                                                                                       <?php echo($filter_prize === 'First') ? 'selected' : ''; ?>>First Prize</option>
+                    <option value="Second"                                                                                                                                                                                                                                                             <?php echo($filter_prize === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
+                    <option value="Third"                                                                                                                                                                                                                                                       <?php echo($filter_prize === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
+                    <option value="no_prize"                                                                                                                                                                                                                                                                         <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
                   </select>
                 </div>
 
                 <div class="filter-group">
                   <label for="entries">Show:</label>
                   <select name="entries" id="entries">
-                    <option value="10"                                       <?php echo($entries_param === '10') ? 'selected' : ''; ?>>10 entries</option>
-                    <option value="25"                                       <?php echo($entries_param === '25') ? 'selected' : ''; ?>>25 entries</option>
-                    <option value="50"                                       <?php echo($entries_param === '50') ? 'selected' : ''; ?>>50 entries</option>
-                    <option value="100"                                        <?php echo($entries_param === '100') ? 'selected' : ''; ?>>100 entries</option>
-                    <option value="all"                                        <?php echo($entries_param === 'all') ? 'selected' : ''; ?>>All entries</option>
+                    <option value="10"                                                                             <?php echo($entries_param === '10') ? 'selected' : ''; ?>>10 entries</option>
+                    <option value="25"                                                                             <?php echo($entries_param === '25') ? 'selected' : ''; ?>>25 entries</option>
+                    <option value="50"                                                                             <?php echo($entries_param === '50') ? 'selected' : ''; ?>>50 entries</option>
+                    <option value="100"                                                                               <?php echo($entries_param === '100') ? 'selected' : ''; ?>>100 entries</option>
+                    <option value="all"                                                                               <?php echo($entries_param === 'all') ? 'selected' : ''; ?>>All entries</option>
                   </select>
                 </div>
 

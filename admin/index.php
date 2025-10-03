@@ -230,10 +230,6 @@
               <a href="index.php">Home</a>
             </li>
             <li class="sidebar-list-item">
-              <span class="material-symbols-outlined">event</span>
-              <a href="add_event.php">Add Events</a>
-            </li>
-            <li class="sidebar-list-item">
               <span class="material-symbols-outlined">people</span>
               <a href="participants.php">Participants</a>
             </li>
@@ -308,10 +304,10 @@
 
       <script>
       // Get PHP data for charts and make them globally available
-      window.categoryData =                                                       <?php echo json_encode($category_data); ?>;
-      window.categoryCounts =                                                           <?php echo json_encode($category_counts); ?>;
-      window.monthlyEvents =                                                         <?php echo json_encode($monthly_events); ?>;
-      window.monthlyParticipations =                                                                         <?php echo json_encode($monthly_participations); ?>;
+      window.categoryData =                                                                                  <?php echo json_encode($category_data); ?>;
+      window.categoryCounts =                                                                                        <?php echo json_encode($category_counts); ?>;
+      window.monthlyEvents =                                                                                     <?php echo json_encode($monthly_events); ?>;
+      window.monthlyParticipations =                                                                                                             <?php echo json_encode($monthly_participations); ?>;
 
       // Debug: Show the data in console
       console.log('PHP Data Loaded:');

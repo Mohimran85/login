@@ -1,113 +1,113 @@
 <?php
-session_start();
+    session_start();
 
-// Check if user is logged in
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header("Location: ../index.php");
-    exit();
-}
+    // Check if user is logged in
+    if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+        header("Location: ../index.php");
+        exit();
+    }
 
-$conn = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+    $conn = new mysqli("localhost", "root", "", "event_management_system");
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
 
-$message = "";
-$username = $_SESSION['username'];
+    $message  = "";
+    $username = $_SESSION['username'];
 
-// Handle form submission for updates
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_profile'])) {
-    $name = trim($_POST["name"]);
-    $dob = $_POST["dob"];
-    $regno = trim($_POST["regno"]);
-    $year_of_join = $_POST["batch"];
-    $degree = $_POST["degree"];
-    $department = $_POST["department"];
-    $personal_email = trim($_POST["personal_email"]);
-    $password = $_POST["password"];
-    $re_password = $_POST["re-password"];
+    // Handle form submission for updates
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_profile'])) {
+        $name           = trim($_POST["name"]);
+        $dob            = $_POST["dob"];
+        $regno          = trim($_POST["regno"]);
+        $year_of_join   = $_POST["batch"];
+        $degree         = $_POST["degree"];
+        $department     = $_POST["department"];
+        $personal_email = trim($_POST["personal_email"]);
+        $password       = $_POST["password"];
+        $re_password    = $_POST["re-password"];
 
-    // Validation
-    if ($password !== $re_password) {
-        $message = "<div style='color:red;'>Passwords do not match.</div>";
-    } else {
-        // Update query - determine if it's student or teacher
-        $tables = ['student_register', 'teacher_register'];
-        
-        foreach ($tables as $table) {
-            $column_email = $table === 'student_register' ? 'personal_email' : 'email';
-            
-            // Check if user exists in this table
-            $check_sql = "SELECT id FROM $table WHERE username=?";
-            $check_stmt = $conn->prepare($check_sql);
-            $check_stmt->bind_param("s", $username);
-            $check_stmt->execute();
-            $check_result = $check_stmt->get_result();
-            
-            if ($check_result->num_rows > 0) {
-                // Update the record
-                if (!empty($password)) {
-                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                    if ($table === 'student_register') {
-                        $update_sql = "UPDATE $table SET name=?, dob=?, regno=?, year_of_join=?, degree=?, department=?, $column_email=?, password=? WHERE username=?";
-                        $update_stmt = $conn->prepare($update_sql);
-                        $update_stmt->bind_param("sssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $hashed_password, $username);
+        // Validation
+        if ($password !== $re_password) {
+            $message = "<div style='color:red;'>Passwords do not match.</div>";
+        } else {
+            // Update query - determine if it's student or teacher
+            $tables = ['student_register', 'teacher_register'];
+
+            foreach ($tables as $table) {
+                $column_email = $table === 'student_register' ? 'personal_email' : 'email';
+
+                // Check if user exists in this table
+                $check_sql  = "SELECT id FROM $table WHERE username=?";
+                $check_stmt = $conn->prepare($check_sql);
+                $check_stmt->bind_param("s", $username);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+
+                if ($check_result->num_rows > 0) {
+                    // Update the record
+                    if (! empty($password)) {
+                        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                        if ($table === 'student_register') {
+                            $update_sql  = "UPDATE $table SET name=?, dob=?, regno=?, year_of_join=?, degree=?, department=?, $column_email=?, password=? WHERE username=?";
+                            $update_stmt = $conn->prepare($update_sql);
+                            $update_stmt->bind_param("sssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $hashed_password, $username);
+                        } else {
+                            $update_sql  = "UPDATE $table SET name=?, year_of_join=?, department=?, $column_email=?, password=? WHERE username=?";
+                            $update_stmt = $conn->prepare($update_sql);
+                            $update_stmt->bind_param("ssssss", $name, $year_of_join, $department, $personal_email, $hashed_password, $username);
+                        }
                     } else {
-                        $update_sql = "UPDATE $table SET name=?, year_of_join=?, department=?, $column_email=?, password=? WHERE username=?";
-                        $update_stmt = $conn->prepare($update_sql);
-                        $update_stmt->bind_param("ssssss", $name, $year_of_join, $department, $personal_email, $hashed_password, $username);
+                        if ($table === 'student_register') {
+                            $update_sql  = "UPDATE $table SET name=?, dob=?, regno=?, year_of_join=?, degree=?, department=?, $column_email=? WHERE username=?";
+                            $update_stmt = $conn->prepare($update_sql);
+                            $update_stmt->bind_param("ssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $username);
+                        } else {
+                            $update_sql  = "UPDATE $table SET name=?, year_of_join=?, department=?, $column_email=? WHERE username=?";
+                            $update_stmt = $conn->prepare($update_sql);
+                            $update_stmt->bind_param("sssss", $name, $year_of_join, $department, $personal_email, $username);
+                        }
                     }
-                } else {
-                    if ($table === 'student_register') {
-                        $update_sql = "UPDATE $table SET name=?, dob=?, regno=?, year_of_join=?, degree=?, department=?, $column_email=? WHERE username=?";
-                        $update_stmt = $conn->prepare($update_sql);
-                        $update_stmt->bind_param("ssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $username);
+
+                    if ($update_stmt->execute()) {
+                        $message = "<div style='color:green;'>Profile updated successfully!</div>";
                     } else {
-                        $update_sql = "UPDATE $table SET name=?, year_of_join=?, department=?, $column_email=? WHERE username=?";
-                        $update_stmt = $conn->prepare($update_sql);
-                        $update_stmt->bind_param("sssss", $name, $year_of_join, $department, $personal_email, $username);
+                        $message = "<div style='color:red;'>Error updating profile: " . $update_stmt->error . "</div>";
                     }
+                    $update_stmt->close();
+                    break;
                 }
-                
-                if ($update_stmt->execute()) {
-                    $message = "<div style='color:green;'>Profile updated successfully!</div>";
-                } else {
-                    $message = "<div style='color:red;'>Error updating profile: " . $update_stmt->error . "</div>";
-                }
-                $update_stmt->close();
-                break;
+                $check_stmt->close();
             }
-            $check_stmt->close();
         }
     }
-}
 
-// Fetch user data
-$user_data = null;
-$user_type = "";
-$tables = ['student_register', 'teacher_register'];
+    // Fetch user data
+    $user_data = null;
+    $user_type = "";
+    $tables    = ['student_register', 'teacher_register'];
 
-foreach ($tables as $table) {
-    $column_email = $table === 'student_register' ? 'personal_email' : 'email';
-    $columns = $table === 'student_register' 
-        ? "name, dob, regno, year_of_join, degree, department, $column_email"
-        : "name, year_of_join, department, $column_email";
-    
-    $sql = "SELECT $columns FROM $table WHERE username=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows > 0) {
-        $user_data = $result->fetch_assoc();
-        $user_type = $table === 'student_register' ? 'student' : 'teacher';
-        break;
+    foreach ($tables as $table) {
+        $column_email = $table === 'student_register' ? 'personal_email' : 'email';
+        $columns      = $table === 'student_register'
+            ? "name, dob, regno, year_of_join, degree, department, $column_email"
+            : "name, year_of_join, department, $column_email";
+
+        $sql  = "SELECT $columns FROM $table WHERE username=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $user_data = $result->fetch_assoc();
+            $user_type = $table === 'student_register' ? 'student' : 'teacher';
+            break;
+        }
+        $stmt->close();
     }
-    $stmt->close();
-}
 
-$conn->close();
+    $conn->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -149,7 +149,7 @@ $conn->close();
           </div>
         </div>
       </div>
-      
+
       <aside id="sidebar">
         <div class="sidebar-title">
           <div class="sidebar-band">
@@ -160,10 +160,6 @@ $conn->close();
             <li class="sidebar-list-item">
               <span class="material-symbols-outlined">dashboard</span>
               <a href="index.php">Home</a>
-            </li>
-            <li class="sidebar-list-item">
-              <span class="material-symbols-outlined">event</span>
-              <a href="add_event.php">Add Events</a>
             </li>
             <li class="sidebar-list-item">
               <span class="material-symbols-outlined">people</span>
@@ -184,16 +180,16 @@ $conn->close();
           </ul>
         </div>
       </aside>
-      
+
       <div class="main">
         <div class="main-profile">
           <div class="profile-header">
             <h2>User Profile</h2>
             <button type="button" id="editBtn" onclick="toggleEdit()">Edit Profile</button>
           </div>
-          
+
           <?php echo $message; ?>
-          
+
           <form method="POST" action="" id="profileForm">
             <div class="item div2">
               <label for="name">Name:</label>
@@ -209,8 +205,8 @@ $conn->close();
             <?php if ($user_type === 'student'): ?>
             <div class="item div3">
               <label for="date">Date Of Birth:</label>
-              <input type="date" name="dob" id="dob" 
-                     value="<?php echo htmlspecialchars($user_data['dob'] ?? ''); ?>" 
+              <input type="date" name="dob" id="dob"
+                     value="<?php echo htmlspecialchars($user_data['dob'] ?? ''); ?>"
                      readonly required />
             </div>
 
@@ -244,26 +240,26 @@ $conn->close();
               <select name="batch" id="year_of_join" disabled required>
                 <option value="">Select The year</option>
                 <?php
-                $years = ['2020', '2021', '2022', '2023', '2024', '2025', '2026'];
-                foreach ($years as $year) {
-                    $selected = (isset($user_data['year_of_join']) && $user_data['year_of_join'] == $year) ? 'selected' : '';
-                    echo "<option value='$year' $selected>$year-" . ($year + 4) . "</option>";
-                }
+                    $years = ['2020', '2021', '2022', '2023', '2024', '2025', '2026'];
+                    foreach ($years as $year) {
+                        $selected = (isset($user_data['year_of_join']) && $user_data['year_of_join'] == $year) ? 'selected' : '';
+                        echo "<option value='$year' $selected>$year-" . ($year + 4) . "</option>";
+                    }
                 ?>
               </select>
             </div>
 
-            <?php if ($user_type === 'student'): ?> 
+            <?php if ($user_type === 'student'): ?>
             <div class="item div5" style="width: 95%">
               <label for="degree">Degree</label>
               <select name="degree" id="degree" disabled required>
                 <option value="">Select The Degree</option>
                 <?php
-                $degrees = ['b.tech' => 'B.Tech', 'm.tech' => 'M.Tech', 'B.E' => 'B.E', 'M.E' => 'M.E', 'bba' => 'BBA', 'mba' => 'MBA'];
-                foreach ($degrees as $value => $label) {
-                    $selected = (isset($user_data['degree']) && $user_data['degree'] == $value) ? 'selected' : '';
-                    echo "<option value='$value' $selected>$label</option>";
-                }
+                    $degrees = ['b.tech' => 'B.Tech', 'm.tech' => 'M.Tech', 'B.E' => 'B.E', 'M.E' => 'M.E', 'bba' => 'BBA', 'mba' => 'MBA'];
+                    foreach ($degrees as $value => $label) {
+                        $selected = (isset($user_data['degree']) && $user_data['degree'] == $value) ? 'selected' : '';
+                        echo "<option value='$value' $selected>$label</option>";
+                    }
                 ?>
               </select>
             </div>
@@ -274,11 +270,11 @@ $conn->close();
               <select name="department" id="department" disabled required>
                 <option value="">Select the Department</option>
                 <?php
-                $departments = ['IT', 'CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'AIML', 'ADS', 'FT', 'EXE', 'CSD'];
-                foreach ($departments as $dept) {
-                    $selected = (isset($user_data['department']) && $user_data['department'] == $dept) ? 'selected' : '';
-                    echo "<option value='$dept' $selected>$dept</option>";
-                }
+                    $departments = ['IT', 'CSE', 'ECE', 'EEE', 'MECH', 'CIVIL', 'AIML', 'ADS', 'FT', 'EXE', 'CSD'];
+                    foreach ($departments as $dept) {
+                        $selected = (isset($user_data['department']) && $user_data['department'] == $dept) ? 'selected' : '';
+                        echo "<option value='$dept' $selected>$dept</option>";
+                    }
                 ?>
               </select>
             </div>
@@ -316,7 +312,7 @@ $conn->close();
                 readonly
               />
             </div>
-            
+
             <div class="item div11">
               <input type="submit" name="update_profile" value="Update Profile" id="submitBtn" style="display:none;" />
               <button type="button" id="cancelBtn" onclick="cancelEdit()" style="display:none;">Cancel</button>
@@ -325,7 +321,7 @@ $conn->close();
         </div>
       </div>
     </div>
-    
+
     <script src="./JS/scripts.js"></script>
     <script>
       // Prevent back button to login page
@@ -342,45 +338,45 @@ $conn->close();
         const submitBtn = document.getElementById('submitBtn');
         const cancelBtn = document.getElementById('cancelBtn');
         const form = document.getElementById('profileForm');
-        
+
         // Get all form inputs
         const inputs = form.querySelectorAll('input[type="text"], input[type="email"], input[type="date"], input[type="tel"], input[type="password"]');
         const selects = form.querySelectorAll('select');
-        
+
         if (editBtn.textContent === 'Edit Profile') {
           // Enable edit mode
           editBtn.textContent = 'Cancel Edit';
           submitBtn.style.display = 'inline-block';
           cancelBtn.style.display = 'inline-block';
-          
+
           // Enable form fields (except username and regno which should stay disabled)
           inputs.forEach(input => {
             if (input.name !== 'username_display' && input.name !== 'regno') {
               input.removeAttribute('readonly');
             }
           });
-          
+
           selects.forEach(select => {
             select.removeAttribute('disabled');
           });
-          
+
         } else {
           // Disable edit mode
           editBtn.textContent = 'Edit Profile';
           submitBtn.style.display = 'none';
           cancelBtn.style.display = 'none';
-          
+
           // Disable form fields
           inputs.forEach(input => {
             input.setAttribute('readonly', true);
           });
-          
+
           selects.forEach(select => {
             select.setAttribute('disabled', true);
           });
         }
       }
-      
+
       function cancelEdit() {
         // Reload the page to reset all values
         window.location.reload();
@@ -390,7 +386,7 @@ $conn->close();
       document.getElementById('profileForm').addEventListener('submit', function(e) {
         const password = document.getElementById('password').value;
         const rePassword = document.getElementById('re-password').value;
-        
+
         if (password && password !== rePassword) {
           e.preventDefault();
           alert('Passwords do not match!');
