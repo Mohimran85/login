@@ -228,7 +228,7 @@ select {
   grid-area: main;
   margin-top: 40px;
   overflow-y: hidden;
-  padding: 20px;
+  padding: 20px;  
 }
 
 /* Remove conflicting styles from the .report class */

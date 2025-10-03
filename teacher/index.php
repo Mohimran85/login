@@ -1,7 +1,7 @@
 <?php
     session_start();
 
-    // Check if user is logged in as a student
+    // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         header("Location: ../index.php");
         exit();
@@ -12,67 +12,114 @@
         die("Connection failed: " . $conn->connect_error);
     }
 
-    // Get student data
+    // Get teacher data
     $username     = $_SESSION['username'];
-    $student_data = null;
+    $teacher_data = null;
 
-    $sql  = "SELECT name, regno FROM student_register WHERE username=?";
+    // Get teacher data from teacher_register table
+    $sql  = "SELECT name, faculty_id as employee_id FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $student_data = $result->fetch_assoc();
+        $teacher_data = $result->fetch_assoc();
     } else {
-        header("Location: ../index.php");
-        exit();
+        // Fallback: use student data structure for now
+        $sql  = "SELECT name, regno as employee_id FROM student_register WHERE username=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $teacher_data = $result->fetch_assoc();
+        } else {
+            header("Location: ../index.php");
+            exit();
+        }
     }
-    // Get comprehensive statistics
-    $regno = $student_data['regno'];
 
-    // Total events participated
-    $total_events_sql = "SELECT COUNT(*) as total FROM student_event_register WHERE regno=?";
+    // Get comprehensive statistics for teacher
+    $teacher_id = $teacher_data['employee_id'];
+
+    // Total events registered by this teacher in staff_event_reg
+    $total_events_sql = "SELECT COUNT(*) as total FROM staff_event_reg WHERE staff_id=?";
     $total_stmt       = $conn->prepare($total_events_sql);
-    $total_stmt->bind_param("s", $regno);
-    $total_stmt->execute();
-    $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
+    if ($total_stmt) {
+        $total_stmt->bind_param("s", $teacher_id);
+        $total_stmt->execute();
+        $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
+        $total_stmt->close();
+    } else {
+        $total_events = 0;
+    }
 
-    // Events won (with prizes)
-    $events_won_sql = "SELECT COUNT(*) as won FROM student_event_register WHERE regno=? AND prize IS NOT NULL AND prize != '' AND prize != 'No Prize'";
-    $won_stmt       = $conn->prepare($events_won_sql);
-    $won_stmt->bind_param("s", $regno);
-    $won_stmt->execute();
-    $events_won = $won_stmt->get_result()->fetch_assoc()['won'];
+    // Total students participated in events (from student_event_register)
+    $total_participants_sql = "SELECT COUNT(DISTINCT regno) as participants FROM student_event_register";
+    $participants_result    = $conn->query($total_participants_sql);
+    if ($participants_result) {
+        $total_participants = $participants_result->fetch_assoc()['participants'];
+    } else {
+        $total_participants = 0;
+    }
 
-    // Recent events (last 5)
-    $recent_events_sql = "SELECT event_name, event_type, attended_date, prize FROM student_event_register WHERE regno=? ORDER BY attended_date DESC, id DESC LIMIT 5";
-    $recent_stmt       = $conn->prepare($recent_events_sql);
-    $recent_stmt->bind_param("s", $regno);
-    $recent_stmt->execute();
-    $recent_events = $recent_stmt->get_result();
+    // Recent events registered by this teacher (last 5)
+    $recent_events_sql = "SELECT topic as event_name, event_type, event_date as start_date,
+                         CASE WHEN event_date < CURDATE() THEN 'completed'
+                              WHEN event_date = CURDATE() THEN 'ongoing'
+                              ELSE 'upcoming' END as status,
+                         organisation, sponsors
+                         FROM staff_event_reg
+                         WHERE staff_id=?
+                         ORDER BY event_date DESC, id DESC LIMIT 5";
+    $recent_stmt = $conn->prepare($recent_events_sql);
+    if ($recent_stmt) {
+        $recent_stmt->bind_param("s", $teacher_id);
+        $recent_stmt->execute();
+        $recent_events = $recent_stmt->get_result();
+    } else {
+        // Fallback: create empty result
+        $recent_events = null;
+    }
 
-    // Event type breakdown
-    $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register WHERE regno=? GROUP BY event_type ORDER BY count DESC LIMIT 8";
-    $types_stmt      = $conn->prepare($event_types_sql);
-    $types_stmt->bind_param("s", $regno);
-    $types_stmt->execute();
-    $event_types = $types_stmt->get_result();
+    // Event type breakdown for teacher's events
+    $event_types_sql = "SELECT event_type, COUNT(*) as count FROM staff_event_reg
+                       WHERE staff_id=?
+                       GROUP BY event_type ORDER BY count DESC LIMIT 8";
+    $types_stmt = $conn->prepare($event_types_sql);
+    if ($types_stmt) {
+        $types_stmt->bind_param("s", $teacher_id);
+        $types_stmt->execute();
+        $event_types = $types_stmt->get_result();
+    } else {
+        // Fallback: use student event data for chart
+        $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register
+                           GROUP BY event_type ORDER BY count DESC LIMIT 8";
+        $types_stmt = $conn->prepare($event_types_sql);
+        $types_stmt->execute();
+        $event_types = $types_stmt->get_result();
+    }
 
     $stmt->close();
-    $total_stmt->close();
-    $won_stmt->close();
-    $recent_stmt->close();
-    $types_stmt->close();
+    if (isset($recent_stmt)) {
+        $recent_stmt->close();
+    }
+
+    if (isset($types_stmt)) {
+        $types_stmt->close();
+    }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Dashboard - Event Management System</title>
+    <title>Teacher Dashboard - Event Management System</title>
     <!-- css link -->
-    <link rel="stylesheet" href="student_dashboard.css" />
+    <link rel="stylesheet" href="../student/student_dashboard.css" />
     <!-- google icons -->
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
@@ -110,15 +157,15 @@
       <!-- sidebar -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-          <div class="sidebar-title">Student Portal</div>
+          <div class="sidebar-title">Teacher Portal</div>
           <div class="close-sidebar">
             <span class="material-symbols-outlined">close</span>
           </div>
         </div>
 
         <div class="student-info">
-          <div class="student-name"><?php echo htmlspecialchars($student_data['name']); ?></div>
-          <div class="student-regno"><?php echo htmlspecialchars($student_data['regno']); ?></div>
+          <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
+          <div class="student-regno">ID:                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
         </div>
 
         <nav>
@@ -130,15 +177,15 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="student_register.php" class="nav-link">
-                <span class="material-symbols-outlined">add_circle</span>
-                Register Event
+              <a href="staff_event_reg.php" class="nav-link">
+                <span class="material-symbols-outlined">event_note</span>
+                Event Registration
               </a>
             </li>
             <li class="nav-item">
-              <a href="student_participations.php" class="nav-link">
-                <span class="material-symbols-outlined">event_note</span>
-                My Participations
+              <a href="my_events.php" class="nav-link">
+                <span class="material-symbols-outlined">calendar_month</span>
+                My Events
               </a>
             </li>
             <li class="nav-item">
@@ -160,26 +207,26 @@
       <div class="main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back,<?php echo explode(' ', $student_data['name'])[0]; ?>!</h1>
-          <p>Track your event participations and achievements</p>
+          <h1>Welcome back,                            <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
+          <p>Register for professional development events and track your participation</p>
         </div>
 
         <!-- cards  -->
         <div class="main-card">
           <div class="card">
             <div class="card-inner">
-              <h3>Total Events Participated</h3>
-              <span class="material-symbols-outlined">school</span>
+              <h3>Events Registered</h3>
+              <span class="material-symbols-outlined">event</span>
             </div>
             <h1><?php echo $total_events; ?></h1>
           </div>
 
           <div class="card">
             <div class="card-inner">
-              <h3>Total Events Won</h3>
-              <span class="material-symbols-outlined">emoji_events</span>
+              <h3>Total Students</h3>
+              <span class="material-symbols-outlined">group</span>
             </div>
-            <h1><?php echo $events_won; ?></h1>
+            <h1><?php echo $total_participants; ?></h1>
           </div>
 
           <div class="card">
@@ -188,13 +235,13 @@
               <span class="material-symbols-outlined">bolt</span>
             </div>
             <div class="quick-actions">
-              <a href="student_register.php" class="action-btn-card">
+              <a href="staff_event_reg.php" class="action-btn-card">
                 <span class="material-symbols-outlined">add</span>
                 Register Event
               </a>
-              <a href="student_participations.php" class="action-btn-card secondary">
+              <a href="my_events.php" class="action-btn-card secondary">
                 <span class="material-symbols-outlined">visibility</span>
-                View All Events
+                View My Events
               </a>
             </div>
           </div>
@@ -202,12 +249,12 @@
 
         <!-- Recent Activities and Event Categories Section -->
         <div class="content-grid">
-          <!-- Recent Activities -->
+          <!-- Recent Events -->
           <div class="content-card">
             <div class="card-header">
               <span class="material-symbols-outlined">schedule</span>
-              <h3>Recent Activities</h3>
-              <a href="student_participations.php" class="view-all-link">View All</a>
+              <h3>My Recent Events</h3>
+              <a href="my_events.php" class="view-all-link">View All</a>
             </div>
 
             <?php if ($recent_events->num_rows > 0): ?>
@@ -221,10 +268,14 @@
                       <h4><?php echo htmlspecialchars($event['event_name']); ?></h4>
                       <p class="activity-meta">
                         <span class="event-type"><?php echo htmlspecialchars($event['event_type']); ?></span>
-                        <span class="event-date"><?php echo date('M d, Y', strtotime($event['attended_date'])); ?></span>
-                        <?php if (! empty($event['prize']) && $event['prize'] !== 'No Prize'): ?>
-                          <span class="prize-badge">🏆<?php echo htmlspecialchars($event['prize']); ?></span>
-                        <?php endif; ?>
+                        <span class="event-date"><?php echo date('M d, Y', strtotime($event['start_date'])); ?></span>
+                        <span class="prize-badge">
+                          <?php
+                              $status     = $event['status'] ?? 'completed';
+                              $statusIcon = $status === 'active' ? '🟢' : ($status === 'upcoming' ? '🟡' : '✅');
+                              echo $statusIcon . ucfirst($status);
+                          ?>
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -233,8 +284,8 @@
             <?php else: ?>
               <div class="empty-state">
                 <span class="material-symbols-outlined">event_busy</span>
-                <p>No recent activities</p>
-                <a href="student_register.php" class="empty-action">Register your first event</a>
+                <p>No events registered yet</p>
+                <a href="staff_event_reg.php" class="empty-action">Register for your first event</a>
               </div>
             <?php endif; ?>
           </div>
@@ -254,7 +305,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($type['count'] / $total_events) * 100; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                         <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
@@ -266,13 +317,56 @@
               <div class="empty-state">
                 <span class="material-symbols-outlined">category</span>
                 <p>No event categories yet</p>
-                <a href="student_register.php" class="empty-action">Start participating</a>
+                <a href="staff_event_reg.php" class="empty-action">Start registering for events</a>
               </div>
             <?php endif; ?>
           </div>
         </div>
 
-        <!-- charts -->
+        <!-- Additional Teacher-specific sections -->
+        <div class="content-grid" style="margin-top: 30px;">
+          <!-- Upcoming Events -->
+          <div class="content-card">
+            <div class="card-header">
+              <span class="material-symbols-outlined">upcoming</span>
+              <h3>Upcoming Events</h3>
+              <a href="my_events.php" class="view-all-link">View All</a>
+            </div>
+            <div class="empty-state">
+              <span class="material-symbols-outlined">event_upcoming</span>
+              <p>No upcoming events</p>
+              <a href="staff_event_reg.php" class="empty-action">Register for events</a>
+            </div>
+          </div>
+
+          <!-- Quick Stats -->
+          <div class="content-card">
+            <div class="card-header">
+              <span class="material-symbols-outlined">insights</span>
+              <h3>My Statistics</h3>
+            </div>
+            <div class="categories-list">
+              <div class="category-item">
+                <div class="category-info">
+                  <span class="category-name">This Month's Events</span>
+                </div>
+                <span class="category-count">0</span>
+              </div>
+              <div class="category-item">
+                <div class="category-info">
+                  <span class="category-name">Completed Events</span>
+                </div>
+                <span class="category-count">0</span>
+              </div>
+              <div class="category-item">
+                <div class="category-info">
+                  <span class="category-name">Total Registrations</span>
+                </div>
+                <span class="category-count"><?php echo $total_events; ?></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

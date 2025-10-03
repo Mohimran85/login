@@ -382,11 +382,14 @@ html {
     flex-direction: column;
     height: auto;
   }
+  header{
+    display: block;
+  }
 }
 
 @media (max-width: 768px) {
   header {
-    display: none !important;
+    display:flex;
   }
   main {
     margin-top: 20px;
