@@ -227,6 +227,11 @@
             overflow: hidden;
         }
 
+        /* Hide mobile cards on desktop by default */
+        .mobile-card-table {
+            display: none;
+        }
+
         .participation-item {
             padding: 25px;
             border-bottom: 1px solid #f8f9fa;
@@ -404,9 +409,52 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .grid-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr;
+                grid-template-areas:
+                    "header"
+                    "main";
+                min-height: 100vh;
+                width: 100%;
+                max-width: 100vw;
+            }
+
+            .header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 999;
+                width: 100%;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
             .main {
                 width: 100% !important;
-                padding: 20px 15px;
+                max-width: 100vw;
+                padding: 80px 15px 20px 15px;
+                margin: 0 !important;
+                grid-area: main;
+                box-sizing: border-box;
+                overflow-x: hidden;
             }
 
             .filters-grid {
@@ -416,36 +464,96 @@
 
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
-            }
-
-            .event-details {
-                grid-template-columns: 1fr;
+                gap: 10px;
             }
 
             .participations-header {
-                padding: 20px;
+                padding: 20px 15px;
+                margin-bottom: 20px;
             }
 
             .participations-title {
                 font-size: 24px;
             }
 
-            .participation-item {
-                padding: 20px 15px;
-            }
-
             .filters-section {
                 padding: 20px 15px;
+                margin-bottom: 15px;
+            }
+
+            /* Mobile Table-like Card Design */
+            .participation-item {
+                background: white;
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                border-left: 4px solid var(--primary-color);
+                border: 1px solid #e9ecef;
+            }
+
+            .participation-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            }
+
+            .event-name {
+                font-size: 17px;
+                font-weight: 600;
+                color: #1e4276;
+                margin-bottom: 12px;
+                border-bottom: 1px solid #f0f0f0;
+                padding-bottom: 8px;
             }
 
             .event-meta {
-                flex-direction: column;
-                gap: 10px;
+                display: none; /* Hide meta section in mobile */
+            }
+
+            .event-details {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+
+            .detail-group {
+                background: transparent;
+                padding: 8px 0;
+                border-bottom: 1px solid #f8f9fa;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .detail-group:last-child {
+                border-bottom: none;
+            }
+
+            .detail-label {
+                font-size: 14px;
+                color: #1e4276;
+                font-weight: 600;
+                margin-bottom: 0;
+                text-transform: none;
+                min-width: 100px;
+                margin-right: 10px;
+            }
+
+            .detail-value {
+                font-size: 14px;
+                color: #666;
+                font-weight: 500;
+                text-align: right;
+                flex: 1;
             }
 
             .actions-section {
-                flex-direction: column;
-                gap: 10px;
+                flex-direction: row;
+                gap: 8px;
+                margin-top: 12px;
+                border-top: 1px solid #f0f0f0;
+                padding-top: 12px;
             }
 
             .action-btn {
@@ -453,7 +561,264 @@
                 justify-content: center;
                 display: flex;
                 align-items: center;
+                font-size: 12px;
+                padding: 8px 12px;
+                flex: 1;
             }
+
+            /* Prize badge positioning */
+            .prize-badge {
+                font-size: 11px;
+                padding: 4px 8px;
+                border-radius: 12px;
+                font-weight: 600;
+                margin-top: 8px;
+                display: inline-block;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 70px 10px 15px 10px;
+            }
+
+            .participations-header {
+                padding: 15px 10px;
+                border-radius: 12px;
+                margin-bottom: 20px;
+            }
+
+            .participations-title {
+                font-size: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+
+            .filters-section {
+                padding: 15px 10px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+            }
+
+            /* Modern Table Design for Mobile */
+            .mobile-card-table {
+                display: block;
+            }
+
+            .desktop-table {
+                display: none;
+            }
+
+            .participation-card {
+                background: #fff;
+                border-radius: 16px;
+                padding: 20px;
+                margin-bottom: 16px;
+                box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+                border: none;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .participation-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            }
+
+            .participation-card h4 {
+                margin: 0 0 16px 0;
+                color: #2d3748;
+                font-size: 18px;
+                font-weight: 700;
+                line-height: 1.2;
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+
+            /* Modern Table Layout */
+            .participation-info {
+                background: #f8fafc;
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            .info-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid #e2e8f0;
+                transition: background-color 0.2s ease;
+            }
+
+            .info-row:hover {
+                background-color: rgba(102, 126, 234, 0.05);
+                margin: 0 -8px;
+                padding: 12px 8px;
+                border-radius: 8px;
+            }
+
+            .info-row:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+
+            .info-label {
+                font-size: 14px;
+                font-weight: 600;
+                color: #4a5568;
+                min-width: 100px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .info-label::before {
+                content: '';
+                width: 6px;
+                height: 6px;
+                background: #667eea;
+                border-radius: 50%;
+            }
+
+            .info-value {
+                font-size: 14px;
+                color: #2d3748;
+                font-weight: 500;
+                text-align: right;
+                flex: 1;
+                margin-left: 12px;
+            }
+
+            /* Prize Badge Redesign */
+            .prize-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .prize-first {
+                background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                color: #b45309;
+                box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+            }
+
+            .prize-second {
+                background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+                color: #374151;
+                box-shadow: 0 2px 8px rgba(192, 192, 192, 0.3);
+            }
+
+            .prize-third {
+                background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
+                color: #fff;
+                box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
+            }
+
+            .prize-participation {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            }
+
+            /* Action Buttons Redesign */
+            .actions-section {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+                gap: 12px;
+                margin-top: 0;
+                border-top: none;
+                padding-top: 0;
+            }
+
+            .action-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                padding: 12px 16px;
+                border-radius: 12px;
+                text-decoration: none;
+                font-size: 13px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                text-align: center;
+            }
+
+            .btn-download {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            }
+
+            .btn-download:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+            }
+
+            .btn-view {
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                color: white;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            }
+
+            .btn-view:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            }
+
+            /* Empty State */
+            .empty-state {
+                text-align: center;
+                padding: 60px 20px;
+                background: #f8fafc;
+                border-radius: 16px;
+                margin: 20px 0;
+            }
+
+            .empty-state .material-symbols-outlined {
+                font-size: 64px;
+                color: #cbd5e1;
+                margin-bottom: 16px;
+            }
+
+            .empty-state h3 {
+                color: #4a5568;
+                font-size: 18px;
+                margin-bottom: 8px;
+            }
+
+            .empty-state p {
+                color: #718096;
+                margin-bottom: 20px;
+            }
+
+            /* Hide the original participation items on mobile */
+            .participations-list .participation-item {
+                display: none;
+            }
+        }
+
+        /* Ensure no horizontal overflow */
+        * {
+            max-width: 100%;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -581,18 +946,18 @@
                             <label class="filter-label">Prize Filter</label>
                             <select name="prize" class="filter-select">
                                 <option value="">All Prizes</option>
-                                <option value="won"                                                                                                                                                          <?php echo($prize_filter === 'won') ? 'selected' : ''; ?>>Events Won</option>
-                                <option value="participation"                                                                                                                                                                                        <?php echo($prize_filter === 'participation') ? 'selected' : ''; ?>>Participation Only</option>
+                                <option value="won"                                                                                                                                                                                                                                                                                                                   <?php echo($prize_filter === 'won') ? 'selected' : ''; ?>>Events Won</option>
+                                <option value="participation"                                                                                                                                                                                                                                                                                                                                                                               <?php echo($prize_filter === 'participation') ? 'selected' : ''; ?>>Participation Only</option>
                             </select>
                         </div>
 
                         <div class="filter-group">
                             <label class="filter-label">Sort By</label>
                             <select name="sort" class="filter-select">
-                                <option value="attended_date"                                                                                                                                                                                        <?php echo($sort_by === 'attended_date') ? 'selected' : ''; ?>>Date</option>
-                                <option value="event_name"                                                                                                                                                                               <?php echo($sort_by === 'event_name') ? 'selected' : ''; ?>>Event Name</option>
-                                <option value="event_type"                                                                                                                                                                               <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
-                                <option value="prize"                                                                                                                                                                <?php echo($sort_by === 'prize') ? 'selected' : ''; ?>>Prize</option>
+                                <option value="attended_date"                                                                                                                                                                                                                                                                                                                                                                               <?php echo($sort_by === 'attended_date') ? 'selected' : ''; ?>>Date</option>
+                                <option value="event_name"                                                                                                                                                                                                                                                                                                                                                             <?php echo($sort_by === 'event_name') ? 'selected' : ''; ?>>Event Name</option>
+                                <option value="event_type"                                                                                                                                                                                                                                                                                                                                                             <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
+                                <option value="prize"                                                                                                                                                                                                                                                                                                                               <?php echo($sort_by === 'prize') ? 'selected' : ''; ?>>Prize</option>
                             </select>
                         </div>
 
@@ -605,26 +970,28 @@
 
             <!-- Participations List -->
             <div class="participations-list">
-                <?php if ($participations->num_rows > 0): ?>
-                    <?php while ($participation = $participations->fetch_assoc()): ?>
-                        <div class="participation-item">
-                            <div class="event-name"><?php echo htmlspecialchars($participation['event_name']); ?></div>
+                <!-- Desktop View -->
+                <div class="desktop-table">
+                    <?php if ($participations->num_rows > 0): ?>
+                        <?php while ($participation = $participations->fetch_assoc()): ?>
+                            <div class="participation-item">
+                                <div class="event-name"><?php echo htmlspecialchars($participation['event_name']); ?></div>
 
-                            <div class="event-meta">
-                                <div class="meta-item">
-                                    <span class="material-symbols-outlined">category</span>
-                                    <?php echo htmlspecialchars($participation['event_type']); ?>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="material-symbols-outlined">schedule</span>
-                                    <?php echo date('M d, Y', strtotime($participation['attended_date'])); ?>
-                                </div>
-                                <div class="meta-item">
-                                    <span class="material-symbols-outlined">business</span>
-                                    <?php echo htmlspecialchars($participation['organisation']); ?>
-                                </div>
-                                <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
-                                    <div class="prize-badge<?php
+                                <div class="event-meta">
+                                    <div class="meta-item">
+                                        <span class="material-symbols-outlined">category</span>
+                                        <?php echo htmlspecialchars($participation['event_type']); ?>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="material-symbols-outlined">schedule</span>
+                                        <?php echo date('M d, Y', strtotime($participation['attended_date'])); ?>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="material-symbols-outlined">business</span>
+                                        <?php echo htmlspecialchars($participation['organisation']); ?>
+                                    </div>
+                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
+                                        <div class="prize-badge<?php
     echo match ($participation['prize']) {
         'First'  => 'prize-first',
         'Second' => 'prize-second',
@@ -632,55 +999,180 @@
         default  => 'prize-participation'
 };
 ?>">
-                                        🏆                                                                                                                                     <?php echo htmlspecialchars($participation['prize']); ?>
-                                        <?php if (! empty($participation['prize_amount'])): ?>
-                                            - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
-                                        <?php endif; ?>
+                                            🏆                                                                                                 <?php echo htmlspecialchars($participation['prize']); ?>
+                                            <?php if (! empty($participation['prize_amount'])): ?>
+                                                - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="event-details">
+                                    <div class="detail-group">
+                                        <div class="detail-label">Event Type:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['event_type']); ?></div>
                                     </div>
-                                <?php endif; ?>
-                            </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Date:</div>
+                                        <div class="detail-value"><?php echo date('M d, Y', strtotime($participation['attended_date'])); ?></div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Organization:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['organisation']); ?></div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Department:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['department']); ?></div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Year & Semester:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['current_year'] . ' - ' . $participation['semester']); ?></div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Location:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['district'] . ', ' . $participation['state']); ?></div>
+                                    </div>
+                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Prize:</div>
+                                        <div class="detail-value">
+                                            <span class="prize-badge                                                                                                                                         <?php
+                                                                                                                                             echo match ($participation['prize']) {
+                                                                                                                                                 'First'  => 'prize-first',
+                                                                                                                                                 'Second' => 'prize-second',
+                                                                                                                                                 'Third'  => 'prize-third',
+                                                                                                                                                 default  => 'prize-participation'
+                                                                                                                                         };
+                                                                                                                                         ?>">
+                                                🏆                                                                                                         <?php echo htmlspecialchars($participation['prize']); ?>
+                                                <?php if (! empty($participation['prize_amount'])): ?>
+                                                    - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
+                                                <?php endif; ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
 
-                            <div class="event-details">
-                                <div class="detail-group">
-                                    <div class="detail-label">Department</div>
-                                    <div class="detail-value"><?php echo htmlspecialchars($participation['department']); ?></div>
-                                </div>
-                                <div class="detail-group">
-                                    <div class="detail-label">Year & Semester</div>
-                                    <div class="detail-value"><?php echo htmlspecialchars($participation['current_year'] . ' - ' . $participation['semester']); ?></div>
-                                </div>
-                                <div class="detail-group">
-                                    <div class="detail-label">Location</div>
-                                    <div class="detail-value"><?php echo htmlspecialchars($participation['district'] . ', ' . $participation['state']); ?></div>
+                                <div class="actions-section">
+                                    <?php if (! empty($participation['certificates'])): ?>
+                                        <a href="<?php echo htmlspecialchars($participation['certificates']); ?>"
+                                           class="action-btn btn-download" target="_blank">
+                                            <span class="material-symbols-outlined">download</span>
+                                            Certificate
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if (! empty($participation['event_poster'])): ?>
+                                        <a href="<?php echo htmlspecialchars($participation['event_poster']); ?>"
+                                           class="action-btn btn-view" target="_blank">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                            Event Poster
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-
-                            <div class="actions-section">
-                                <?php if (! empty($participation['certificates'])): ?>
-                                    <a href="<?php echo htmlspecialchars($participation['certificates']); ?>"
-                                       class="action-btn btn-download" target="_blank">
-                                        <span class="material-symbols-outlined">download</span>
-                                        Certificate
-                                    </a>
-                                <?php endif; ?>
-                                <?php if (! empty($participation['event_poster'])): ?>
-                                    <a href="<?php echo htmlspecialchars($participation['event_poster']); ?>"
-                                       class="action-btn btn-view" target="_blank">
-                                        <span class="material-symbols-outlined">visibility</span>
-                                        Event Poster
-                                    </a>
-                                <?php endif; ?>
-                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <span class="material-symbols-outlined">event_busy</span>
+                            <h3>No Event Participations Found</h3>
+                            <p>You haven't participated in any events yet or no events match your search criteria.</p>
+                            <a href="student_register.php" class="empty-action">Register Your First Event</a>
                         </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <div class="empty-state">
-                        <span class="material-symbols-outlined">event_busy</span>
-                        <h3>No Event Participations Found</h3>
-                        <p>You haven't participated in any events yet or no events match your search criteria.</p>
-                        <a href="student_register.php" class="empty-action">Register Your First Event</a>
-                    </div>
-                <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Mobile Card Layout -->
+                <div class="mobile-card-table">
+                    <?php
+                        // Re-execute query for mobile view
+                        $mobile_stmt = $conn->prepare($sql);
+                        $mobile_stmt->bind_param($param_types, ...$params);
+                        $mobile_stmt->execute();
+                        $mobile_participations = $mobile_stmt->get_result();
+                    ?>
+                    <?php if ($mobile_participations->num_rows > 0): ?>
+                        <?php while ($participation = $mobile_participations->fetch_assoc()): ?>
+                            <div class="participation-card">
+                                <h4><?php echo htmlspecialchars($participation['event_name']); ?></h4>
+
+                                <div class="participation-info">
+                                    <div class="info-row">
+                                        <div class="info-label">Event Type</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['event_type']); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Date</div>
+                                        <div class="info-value"><?php echo date('M d, Y', strtotime($participation['attended_date'])); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Organization</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['organisation']); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Department</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['department']); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Year & Semester</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['current_year'] . ' - ' . $participation['semester']); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Location</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['district'] . ', ' . $participation['state']); ?></div>
+                                    </div>
+                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
+                                    <div class="info-row">
+                                        <div class="info-label">Prize</div>
+                                        <div class="info-value">
+                                            <span class="prize-badge                                                                     <?php
+                                                                         echo match ($participation['prize']) {
+                                                                             'First'  => 'prize-first',
+                                                                             'Second' => 'prize-second',
+                                                                             'Third'  => 'prize-third',
+                                                                             default  => 'prize-participation'
+                                                                     };
+                                                                     ?>">
+                                                🏆                                                     <?php echo htmlspecialchars($participation['prize']); ?>
+                                                <?php if (! empty($participation['prize_amount'])): ?>
+                                                    - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
+                                                <?php endif; ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if (! empty($participation['certificates']) || ! empty($participation['event_poster'])): ?>
+                                <div class="actions-section">
+                                    <?php if (! empty($participation['certificates'])): ?>
+                                        <a href="<?php echo htmlspecialchars($participation['certificates']); ?>"
+                                           class="action-btn btn-download" target="_blank">
+                                            <span class="material-symbols-outlined">download</span>
+                                            Certificate
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if (! empty($participation['event_poster'])): ?>
+                                        <a href="<?php echo htmlspecialchars($participation['event_poster']); ?>"
+                                           class="action-btn btn-view" target="_blank">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                            Event Poster
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endwhile; ?>
+                        <?php $mobile_stmt->close(); ?>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <span class="material-symbols-outlined">event_busy</span>
+                            <h3>No Event Participations Found</h3>
+                            <p>You haven't participated in any events yet or no events match your search criteria.</p>
+                            <a href="student_register.php" class="empty-action">Register Your First Event</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>

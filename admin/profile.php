@@ -53,9 +53,9 @@
                             $update_stmt = $conn->prepare($update_sql);
                             $update_stmt->bind_param("sssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $hashed_password, $username);
                         } else {
-                            $update_sql  = "UPDATE $table SET name=?, year_of_join=?, department=?, $column_email=?, password=? WHERE username=?";
+                            $update_sql  = "UPDATE $table SET name=?, department=?, $column_email=?, password=? WHERE username=?";
                             $update_stmt = $conn->prepare($update_sql);
-                            $update_stmt->bind_param("ssssss", $name, $year_of_join, $department, $personal_email, $hashed_password, $username);
+                            $update_stmt->bind_param("sssss", $name, $department, $personal_email, $hashed_password, $username);
                         }
                     } else {
                         if ($table === 'student_register') {
@@ -63,9 +63,9 @@
                             $update_stmt = $conn->prepare($update_sql);
                             $update_stmt->bind_param("ssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $username);
                         } else {
-                            $update_sql  = "UPDATE $table SET name=?, year_of_join=?, department=?, $column_email=? WHERE username=?";
+                            $update_sql  = "UPDATE $table SET name=?, department=?, $column_email=? WHERE username=?";
                             $update_stmt = $conn->prepare($update_sql);
-                            $update_stmt->bind_param("sssss", $name, $year_of_join, $department, $personal_email, $username);
+                            $update_stmt->bind_param("ssss", $name, $department, $personal_email, $username);
                         }
                     }
 
@@ -91,7 +91,7 @@
         $column_email = $table === 'student_register' ? 'personal_email' : 'email';
         $columns      = $table === 'student_register'
             ? "name, dob, regno, year_of_join, degree, department, $column_email"
-            : "name, year_of_join, department, $column_email";
+            : "name, faculty_id, department, $column_email";
 
         $sql  = "SELECT $columns FROM $table WHERE username=?";
         $stmt = $conn->prepare($sql);
@@ -223,6 +223,20 @@
             </div>
             <?php endif; ?>
 
+            <?php if ($user_type === 'teacher'): ?>
+            <div class="item div4">
+              <label for="faculty_id">Faculty ID: <small style="color: #6c757d; font-weight: normal;">(Cannot be changed)</small></label>
+              <input
+                type="text"
+                id="faculty-id"
+                name="faculty_id"
+                value="<?php echo htmlspecialchars($user_data['faculty_id'] ?? ''); ?>"
+                readonly
+                required
+              />
+            </div>
+            <?php endif; ?>
+
             <div class="item div3">
               <label for="Username">Username: <small style="color: #6c757d; font-weight: normal;">(Cannot be changed)</small></label>
               <input
@@ -235,6 +249,7 @@
               />
             </div>
 
+            <?php if ($user_type === 'student'): ?>
             <div class="item div5" style="width: 95%">
               <label for="batch">Year of Join:</label>
               <select name="batch" id="year_of_join" disabled required>
@@ -248,6 +263,7 @@
                 ?>
               </select>
             </div>
+            <?php endif; ?>
 
             <?php if ($user_type === 'student'): ?>
             <div class="item div5" style="width: 95%">

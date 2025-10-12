@@ -127,6 +127,12 @@
     $students_stmt->execute();
     $students_result = $students_stmt->get_result();
 
+    // Store all results in an array to avoid duplicate data
+    $students_data = [];
+    while ($row = $students_result->fetch_assoc()) {
+        $students_data[] = $row;
+    }
+
     // Get filter options
     $event_types_result = $conn->query("SELECT DISTINCT event_type FROM student_event_register ORDER BY event_type");
     $departments_result = $conn->query("SELECT DISTINCT department FROM student_register ORDER BY department");
@@ -150,7 +156,7 @@
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e1e5e9;
         }
 
         .filters-grid {
@@ -210,7 +216,7 @@
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e1e5e9;
         }
 
         .table-header {
@@ -293,7 +299,7 @@
             background: white;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e1e5e9;
             text-align: center;
         }
 
@@ -306,6 +312,358 @@
         .stat-label {
             color: #666;
             margin-top: 5px;
+        }
+
+        /* Hide mobile cards on desktop by default */
+        .mobile-card-table {
+            display: none;
+        }
+
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .grid-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr;
+                grid-template-areas:
+                    "header"
+                    "main";
+                min-height: 100vh;
+                width: 100%;
+                max-width: 100vw;
+            }
+
+            .header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 999;
+                width: 100%;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main {
+                width: 100% !important;
+                max-width: 100vw;
+                padding: 80px 10px 20px 10px;
+                margin: 0 !important;
+                grid-area: main;
+                box-sizing: border-box;
+                overflow-x: hidden;
+            }
+
+            .page-title {
+                font-size: 24px;
+                margin-bottom: 15px;
+                text-align: center;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .stat-card {
+                padding: 15px 10px;
+            }
+
+            .stat-number {
+                font-size: 1.5em;
+            }
+
+            .stat-label {
+                font-size: 12px;
+            }
+
+            .filters {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .filter-actions {
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 10px;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .students-table {
+                margin: 0;
+                border-radius: 8px;
+            }
+
+            .table-header {
+                padding: 15px;
+            }
+
+            .table-header h3 {
+                font-size: 18px;
+                margin-bottom: 5px;
+            }
+
+            /* Mobile table styling */
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            table {
+                min-width: 600px; /* Minimum width to maintain readability */
+                font-size: 14px;
+            }
+
+            th, td {
+                padding: 8px 6px;
+                white-space: nowrap;
+            }
+
+            th {
+                font-size: 12px;
+                position: sticky;
+                top: 0;
+                background: #f8f9fa;
+                z-index: 10;
+            }
+
+            /* Hide less important columns on very small screens */
+            .mobile-hide {
+                display: none;
+            }
+
+            .prize-badge {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+
+            .pagination {
+                flex-wrap: wrap;
+                gap: 5px;
+                margin: 15px 0;
+            }
+
+            .pagination a,
+            .pagination span {
+                padding: 6px 10px;
+                font-size: 14px;
+                min-width: 35px;
+                text-align: center;
+            }
+
+            /* Card-style table for better mobile experience - controlled in smaller media query */
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 70px 5px 15px 5px;
+            }
+
+            .page-title {
+                font-size: 20px;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+
+            .stat-card {
+                padding: 12px 8px;
+                border-radius: 12px;
+            }
+
+            .filters-section {
+                padding: 15px 10px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+            }
+
+            .filter-group input,
+            .filter-group select {
+                padding: 8px;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            /* Modern Mobile Card Design */
+            .mobile-card-table {
+                display: block;
+            }
+
+            .desktop-table {
+                display: none;
+            }
+
+            .student-card {
+                background: #fff;
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 12px;
+                border: 1px solid #e1e5e9;
+            }
+
+            .student-card h4 {
+                margin: 0 0 12px 0;
+                color: #2d3748;
+                font-size: 16px;
+                font-weight: 600;
+                border-bottom: 1px solid #e1e5e9;
+                padding-bottom: 8px;
+            }
+
+            /* Simple Table Layout */
+            .student-card p {
+                margin: 8px 0;
+                padding: 8px 0;
+                border-bottom: 1px solid #f5f5f5;
+                font-size: 14px;
+                color: #2d3748;
+            }
+
+            .student-card p:last-of-type {
+                border-bottom: none;
+                margin-bottom: 12px;
+            }
+
+            .student-card p strong {
+                color: #4a5568;
+                font-weight: 500;
+            }
+
+            /* Simple Prize Badge */
+            .student-card .prize-badge {
+                display: inline-block;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: 500;
+            }
+
+            /* Action Buttons */
+            .action-btn {
+                display: inline-block;
+                margin: 4px 8px 4px 0;
+                padding: 8px 12px;
+                border-radius: 6px;
+                text-decoration: none;
+                font-size: 12px;
+                font-weight: 500;
+                text-align: center;
+            }
+
+            .btn-certificate {
+                background: #10b981;
+                color: white;
+            }
+
+            .btn-poster {
+                background: #3b82f6;
+                color: white;
+            }
+
+            .prize-first {
+                background: #ffd700 !important;
+                color: #b8860b !important;
+            }
+
+            .prize-second {
+                background: #c0c0c0 !important;
+                color: #666 !important;
+            }
+
+            .prize-third {
+                background: #cd7f32 !important;
+                color: #fff !important;
+            }
+
+            .prize-participation {
+                background: #e8f4fd !important;
+                color: #3498db !important;
+            }
+
+            /* Simple Table Header */
+            .students-table {
+                margin: 0;
+                border-radius: 8px;
+                overflow: hidden;
+                background: transparent;
+            }
+
+            .table-header {
+                padding: 16px 15px;
+                background: #f8f9fa;
+                border-bottom: 1px solid #e1e5e9;
+            }
+
+            .table-header h3 {
+                font-size: 16px;
+                margin: 0;
+                color: #2d3748;
+                font-weight: 600;
+            }
+
+            /* Simple Empty State */
+            .empty-state {
+                text-align: center;
+                padding: 40px 20px;
+                background: #fff;
+                border-radius: 8px;
+                border: 1px solid #e1e5e9;
+                margin: 12px 0;
+            }
+
+            .empty-state .material-symbols-outlined {
+                font-size: 48px;
+                color: #cbd5e1;
+                margin-bottom: 12px;
+            }
+
+            .empty-state h3 {
+                color: #4a5568;
+                font-size: 16px;
+                margin-bottom: 6px;
+                font-weight: 600;
+            }
+
+            .empty-state p {
+                color: #718096;
+                margin: 0;
+                font-size: 14px;
+            }
+        }
+
+        /* Ensure no horizontal overflow */
+        * {
+            max-width: 100%;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -335,7 +693,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
+                <div class="student-regno">ID:                                               <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
             </div>
 
             <nav>
@@ -442,11 +800,11 @@
                             <label for="prize">Prize Filter</label>
                             <select id="prize" name="prize">
                                 <option value="">All</option>
-                                <option value="winner"                                                                                                             <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
-                                <option value="First"                                                                                                           <?php echo $prize_filter === 'First' ? 'selected' : ''; ?>>First Prize</option>
-                                <option value="Second"                                                                                                             <?php echo $prize_filter === 'Second' ? 'selected' : ''; ?>>Second Prize</option>
-                                <option value="Third"                                                                                                           <?php echo $prize_filter === 'Third' ? 'selected' : ''; ?>>Third Prize</option>
-                                <option value="Participation"                                                                                                                           <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
+                                <option value="winner"                                                                                                                                                                                                                                                                                                                                     <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
+                                <option value="First"                                                                                                                                                                                                                                                                                                                               <?php echo $prize_filter === 'First' ? 'selected' : ''; ?>>First Prize</option>
+                                <option value="Second"                                                                                                                                                                                                                                                                                                                                     <?php echo $prize_filter === 'Second' ? 'selected' : ''; ?>>Second Prize</option>
+                                <option value="Third"                                                                                                                                                                                                                                                                                                                               <?php echo $prize_filter === 'Third' ? 'selected' : ''; ?>>Third Prize</option>
+                                <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                               <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
                             </select>
                         </div>
 
@@ -470,7 +828,7 @@
                     <h3>📋 Student Registrations (<?php echo $total_records; ?> total)</h3>
                 </div>
 
-                <div class="table-responsive">
+                <div class="table-responsive desktop-table">
                     <table>
                         <thead>
                             <tr>
@@ -478,13 +836,11 @@
                                 <th>Event Details</th>
                                 <th>Date</th>
                                 <th>Prize</th>
-                                <th>Mode</th>
-                                <th>College</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if ($students_result->num_rows > 0): ?>
-                                <?php while ($student = $students_result->fetch_assoc()): ?>
+                            <?php if (! empty($students_data)): ?>
+                                <?php foreach ($students_data as $student): ?>
                                     <tr>
                                         <td>
                                             <strong><?php echo htmlspecialchars($student['name']); ?></strong><br>
@@ -516,13 +872,11 @@
                                                 <?php echo htmlspecialchars($prize); ?>
                                             </span>
                                         </td>
-                                        <td>Online/Offline</td>
-                                        <td><?php echo htmlspecialchars($student['college']); ?></td>
                                     </tr>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <td colspan="4" style="text-align: center; padding: 40px;">
                                         <span class="material-symbols-outlined" style="font-size: 48px; color: #ccc;">group_off</span>
                                         <p style="color: #666; margin: 10px 0;">No students found matching your criteria</p>
                                     </td>
@@ -530,6 +884,51 @@
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Mobile Card Layout -->
+                <div class="mobile-card-table">
+                    <?php if (! empty($students_data)): ?>
+                        <?php foreach ($students_data as $student): ?>
+                            <div class="student-card">
+                                <h4><?php echo htmlspecialchars($student['event_name']); ?></h4>
+                                <p><strong>• Event Type:</strong>                                                                                                                                       <?php echo htmlspecialchars($student['event_type']); ?></p>
+                                <p><strong>• Date:</strong>                                                                                                                           <?php echo date('M d, Y', strtotime($student['attended_date'])); ?></p>
+                                <p><strong>• Organization:</strong>                                                                                                                                           <?php echo htmlspecialchars($student['college']); ?></p>
+                                <p><strong>• Department:</strong>                                                                                                                                       <?php echo htmlspecialchars($student['department']); ?></p>
+                                <p><strong>• Year & Semester:</strong>                                                                                                                                                 <?php echo htmlspecialchars($student['year_of_join']); ?> -<?php echo htmlspecialchars($student['position']); ?></p>
+                                <p><strong>• Location:</strong>                                                                                                                                   <?php echo htmlspecialchars($student['position']); ?></p>
+                                <p><strong>• Prize:</strong>
+                                    <?php
+                                        $prize       = $student['prize'];
+                                        $badge_class = '';
+                                        $prize_text  = strtoupper(htmlspecialchars($prize));
+                                        if (strtolower($prize) == 'third') {
+                                            $prize_text .= ' - ₹1000';
+                                        }
+                                        switch (strtolower($prize)) {
+                                            case 'first':$badge_class = ' prize-first';
+                                                break;
+                                            case 'second':$badge_class = ' prize-second';
+                                                break;
+                                            case 'third':$badge_class = ' prize-third';
+                                                break;
+                                            default: $badge_class = ' prize-participation';
+                                        }
+                                    ?>
+                                    <span class="prize-badge<?php echo $badge_class; ?>">🏆<?php echo $prize_text; ?></span>
+                                </p>
+                                <a href="#" class="action-btn btn-certificate">📥 Certificate</a>
+                                <a href="#" class="action-btn btn-poster">👁 Event Poster</a>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <span class="material-symbols-outlined">group_off</span>
+                            <h3>No Students Found</h3>
+                            <p>No students found matching your search criteria</p>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Pagination -->

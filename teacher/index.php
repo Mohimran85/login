@@ -16,7 +16,7 @@
     $username     = $_SESSION['username'];
     $teacher_data = null;
 
-    // Get teacher data from teacher_register table
+    // Try to get teacher data from teacher_register table first
     $sql  = "SELECT name, faculty_id as employee_id FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
@@ -26,29 +26,36 @@
     if ($result->num_rows > 0) {
         $teacher_data = $result->fetch_assoc();
     } else {
-        // Fallback: use student data structure for now
-        $sql  = "SELECT name, regno as employee_id FROM student_register WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        // Fallback: Check if username exists in student_register table
+        $sql2  = "SELECT name, regno as employee_id FROM student_register WHERE username=?";
+        $stmt2 = $conn->prepare($sql2);
+        $stmt2->bind_param("s", $username);
+        $stmt2->execute();
+        $result2 = $stmt2->get_result();
 
-        if ($result->num_rows > 0) {
-            $teacher_data = $result->fetch_assoc();
+        if ($result2->num_rows > 0) {
+            $teacher_data = $result2->fetch_assoc();
         } else {
-            header("Location: ../index.php");
-            exit();
+            // If no data found anywhere, create a default entry
+            $teacher_data = [
+                'name'        => ucfirst($username),                            // Use username as name
+                'employee_id' => 'TEMP-' . strtoupper(substr($username, 0, 4)), // Generate temp ID
+            ];
         }
+        if (isset($stmt2)) {
+            $stmt2->close();
+        }
+
     }
 
     // Get comprehensive statistics for teacher
     $teacher_id = $teacher_data['employee_id'];
 
     // Total events registered by this teacher in staff_event_reg
-    $total_events_sql = "SELECT COUNT(*) as total FROM staff_event_reg WHERE staff_id=?";
+    $total_events_sql = "SELECT COUNT(*) as total FROM staff_event_reg WHERE staff_id=? OR name=?";
     $total_stmt       = $conn->prepare($total_events_sql);
     if ($total_stmt) {
-        $total_stmt->bind_param("s", $teacher_id);
+        $total_stmt->bind_param("ss", $teacher_id, $teacher_data['name']);
         $total_stmt->execute();
         $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
         $total_stmt->close();
@@ -67,16 +74,14 @@
 
     // Recent events registered by this teacher (last 5)
     $recent_events_sql = "SELECT topic as event_name, event_type, event_date as start_date,
-                         CASE WHEN event_date < CURDATE() THEN 'completed'
-                              WHEN event_date = CURDATE() THEN 'ongoing'
-                              ELSE 'upcoming' END as status,
+                         'completed' as status,
                          organisation, sponsors
                          FROM staff_event_reg
-                         WHERE staff_id=?
+                         WHERE staff_id=? OR name=?
                          ORDER BY event_date DESC, id DESC LIMIT 5";
     $recent_stmt = $conn->prepare($recent_events_sql);
     if ($recent_stmt) {
-        $recent_stmt->bind_param("s", $teacher_id);
+        $recent_stmt->bind_param("ss", $teacher_id, $teacher_data['name']);
         $recent_stmt->execute();
         $recent_events = $recent_stmt->get_result();
     } else {
@@ -86,11 +91,11 @@
 
     // Event type breakdown for teacher's events
     $event_types_sql = "SELECT event_type, COUNT(*) as count FROM staff_event_reg
-                       WHERE staff_id=?
+                       WHERE staff_id=? OR name=?
                        GROUP BY event_type ORDER BY count DESC LIMIT 8";
     $types_stmt = $conn->prepare($event_types_sql);
     if ($types_stmt) {
-        $types_stmt->bind_param("s", $teacher_id);
+        $types_stmt->bind_param("ss", $teacher_id, $teacher_data['name']);
         $types_stmt->execute();
         $event_types = $types_stmt->get_result();
     } else {
@@ -162,12 +167,414 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
       rel="stylesheet"
     />
+
+    <style>
+        /* Teacher Dashboard Specific Styles */
+        .main {
+            padding: 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, #2d5aa0 0%, #1e3a6f 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(45, 90, 160, 0.3);
+        }
+
+        .welcome-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .welcome-section p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .card-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-inner h3 {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .card-inner .material-symbols-outlined {
+            font-size: 2.5rem;
+            color: #2d5aa0;
+            opacity: 0.8;
+        }
+
+        .card h1 {
+            font-size: 2.5rem;
+            color: #2d5aa0;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-btn-card {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: #2d5aa0;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .action-btn-card:hover {
+            background: #1e3a6f;
+            transform: translateX(5px);
+        }
+
+        .action-btn-card.secondary {
+            background: #6c757d;
+        }
+
+        .action-btn-card.secondary:hover {
+            background: #5a6268;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: 1px solid #e9ecef;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 25px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .card-header .material-symbols-outlined {
+            color: #2d5aa0;
+            font-size: 1.5rem;
+        }
+
+        .card-header h3 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0;
+            flex: 1;
+        }
+
+        .view-all-link {
+            color: #2d5aa0;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .view-all-link:hover {
+            color: #1e3a6f;
+        }
+
+        .activities-list {
+            padding: 0;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            padding: 20px 25px;
+            border-bottom: 1px solid #f1f3f4;
+            transition: background 0.3s ease;
+        }
+
+        .activity-item:hover {
+            background: #f8f9fa;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            background: #e3f2fd;
+            color: #2d5aa0;
+            padding: 10px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+        }
+
+        .activity-details {
+            flex: 1;
+        }
+
+        .activity-details h4 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+            font-size: 1rem;
+        }
+
+        .activity-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 5px 0;
+            font-size: 0.85rem;
+        }
+
+        .event-type {
+            /* background: #e9ecef; */
+            color: #ffffffff;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .event-date {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .prize-badge {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 25px;
+        }
+
+        .empty-state .material-symbols-outlined {
+            font-size: 3rem;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+        }
+
+        .empty-state p {
+            color: #6c757d;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .empty-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #2d5aa0;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .empty-action:hover {
+            background: #1e3a6f;
+            transform: translateY(-2px);
+        }
+
+        .categories-list {
+            padding: 20px 25px;
+        }
+
+        .category-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .category-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .category-info {
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .category-progress {
+            width: 100%;
+        }
+
+        .progress-bar {
+            background: #e9ecef;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #2d5aa0, #1e3a6f);
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .category-count {
+            background: #2d5aa0;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-areas: "main";
+                grid-template-columns: 1fr;
+                padding-top: 80px;
+            }
+
+            .header .menu-icon {
+                display: block;
+            }
+
+            .header .icon {
+                display: none;
+            }
+
+            .sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                transform: translateX(-100%) !important;
+                z-index: 1004 !important;
+                background: #ffffff !important;
+                box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15) !important;
+                transition: transform 0.3s ease !important;
+                padding: 20px 0 !important;
+                overflow-y: auto !important;
+            }
+
+            .close-sidebar {
+                display: flex !important;
+            }
+
+            .sidebar.active {
+                transform: translateX(0) !important;
+                z-index: 1005 !important;
+            }
+
+            .sidebar.active::before {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: -1;
+                backdrop-filter: blur(2px);
+                background: rgba(0, 0, 0, 0.3);
+            }
+
+            .main {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding: 15px;
+            }
+
+            .welcome-section {
+                padding: 20px;
+            }
+
+            .welcome-section h1 {
+                font-size: 2rem;
+            }
+
+            .main-card {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .activity-item {
+                padding: 15px 20px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
   </head>
   <body>
-    <!-- <button class="mobile-menu-btn" onclick="toggleSidebar()">
-      <span class="material-symbols-outlined">menu</span>
-    </button> -->
-
     <div class="grid-container">
       <!-- header -->
       <div class="header">
@@ -195,7 +602,7 @@
 
         <div class="student-info">
           <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-          <div class="student-regno">ID:                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
+          <div class="student-regno">ID:                                         <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
         </div>
 
         <nav>
@@ -209,7 +616,7 @@
             <li class="nav-item">
               <a href="staff_event_reg.php" class="nav-link">
                 <span class="material-symbols-outlined">event_note</span>
-                Event Registration
+                Add Event Record
               </a>
             </li>
             <li class="nav-item">
@@ -243,8 +650,8 @@
       <div class="main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back,                                                                                  <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
-          <p>Register for professional development events and track your participation</p>
+          <h1>Welcome back,                                                                                                                                        <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
+          <p>Add your completed professional development events and track your achievements</p>
         </div>
 
         <!-- cards  -->
@@ -273,7 +680,7 @@
             <div class="quick-actions">
               <a href="staff_event_reg.php" class="action-btn-card">
                 <span class="material-symbols-outlined">add</span>
-                Register Event
+                Add Event Record
               </a>
               <a href="my_events.php" class="action-btn-card secondary">
                 <span class="material-symbols-outlined">visibility</span>
@@ -306,11 +713,7 @@
                         <span class="event-type"><?php echo htmlspecialchars($event['event_type']); ?></span>
                         <span class="event-date"><?php echo date('M d, Y', strtotime($event['start_date'])); ?></span>
                         <span class="prize-badge">
-                          <?php
-                              $status     = $event['status'] ?? 'completed';
-                              $statusIcon = $status === 'active' ? '🟢' : ($status === 'upcoming' ? '🟡' : '✅');
-                              echo $statusIcon . ucfirst($status);
-                          ?>
+                          ✅ Completed
                         </span>
                       </p>
                     </div>
@@ -320,8 +723,8 @@
             <?php else: ?>
               <div class="empty-state">
                 <span class="material-symbols-outlined">event_busy</span>
-                <p>No events registered yet</p>
-                <a href="staff_event_reg.php" class="empty-action">Register for your first event</a>
+                <p>No events recorded yet</p>
+                <a href="staff_event_reg.php" class="empty-action">Add your first completed event</a>
               </div>
             <?php endif; ?>
           </div>
@@ -341,7 +744,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                           <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
@@ -353,7 +756,7 @@
               <div class="empty-state">
                 <span class="material-symbols-outlined">category</span>
                 <p>No event categories yet</p>
-                <a href="staff_event_reg.php" class="empty-action">Start registering for events</a>
+                <a href="staff_event_reg.php" class="empty-action">Start adding completed events</a>
               </div>
             <?php endif; ?>
           </div>
@@ -361,20 +764,6 @@
 
         <!-- Additional Teacher-specific sections -->
         <div class="content-grid" style="margin-top: 30px;">
-          <!-- Upcoming Events -->
-          <div class="content-card">
-            <div class="card-header">
-              <span class="material-symbols-outlined">upcoming</span>
-              <h3>Upcoming Events</h3>
-              <a href="my_events.php" class="view-all-link">View All</a>
-            </div>
-            <div class="empty-state">
-              <span class="material-symbols-outlined">event_upcoming</span>
-              <p>No upcoming events</p>
-              <a href="staff_event_reg.php" class="empty-action">Register for events</a>
-            </div>
-          </div>
-
           <!-- Recently Registered Students -->
           <div class="content-card">
             <div class="card-header">
@@ -444,12 +833,12 @@
                       </span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                     <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                           <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
                         </div>
                       </div>
                     </div>
                     <div style="text-align: center;">
-                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                     <?php echo $student['prizes_won']; ?></div>
+                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $student['prizes_won']; ?></div>
                       <small style="color: #666; font-size: 11px;"><?php echo $student['total_events']; ?> events</small>
                     </div>
                   </div>
@@ -479,7 +868,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($stat['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                     <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                           <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>

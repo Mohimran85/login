@@ -36,7 +36,14 @@
     // Handle delete operation
     if (isset($_POST['delete_id'])) {
         $delete_id   = $_POST['delete_id'];
-        $delete_sql  = "DELETE FROM student_event_register WHERE id = ?";
+        $delete_type = $_POST['delete_type'] ?? 'student'; // Default to student for backward compatibility
+
+        if ($delete_type === 'teacher') {
+            $delete_sql = "DELETE FROM staff_event_reg WHERE id = ?";
+        } else {
+            $delete_sql = "DELETE FROM student_event_register WHERE id = ?";
+        }
+
         $delete_stmt = $conn->prepare($delete_sql);
         $delete_stmt->bind_param("i", $delete_id);
         if ($delete_stmt->execute()) {
@@ -48,62 +55,93 @@
     }
 
     // Get filter parameters
-    $filter_event_type = isset($_GET['event_type']) ? $_GET['event_type'] : '';
-    $filter_department = isset($_GET['department']) ? $_GET['department'] : '';
-    $filter_year       = isset($_GET['year']) ? $_GET['year'] : '';
-    $filter_prize      = isset($_GET['prize']) ? $_GET['prize'] : '';
-    $search_query      = isset($_GET['search']) ? $_GET['search'] : '';
-    $entries_param     = isset($_GET['entries']) ? $_GET['entries'] : '10';
-    $entries_per_page  = ($entries_param === 'all') ? PHP_INT_MAX : (int) $entries_param;
-    $current_page      = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+    $filter_event_type       = isset($_GET['event_type']) ? $_GET['event_type'] : '';
+    $filter_department       = isset($_GET['department']) ? $_GET['department'] : '';
+    $filter_year             = isset($_GET['year']) ? $_GET['year'] : '';
+    $filter_prize            = isset($_GET['prize']) ? $_GET['prize'] : '';
+    $filter_participant_type = isset($_GET['participant_type']) ? $_GET['participant_type'] : 'all'; // New filter
+    $search_query            = isset($_GET['search']) ? $_GET['search'] : '';
+    $entries_param           = isset($_GET['entries']) ? $_GET['entries'] : '10';
+    $entries_per_page        = ($entries_param === 'all') ? PHP_INT_MAX : (int) $entries_param;
+    $current_page            = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 
-    // Build WHERE clause based on filters
-    $where_conditions = [];
-    $params           = [];
-    $param_types      = "";
+    // Build WHERE clause based on filters - for both student and teacher queries
+    $student_where_conditions = [];
+    $teacher_where_conditions = [];
+    $params                   = [];
+    $param_types              = "";
 
+    // Build conditions for students
     if (! empty($filter_event_type)) {
-        $where_conditions[] = "e.event_type = ?";
-        $params[]           = $filter_event_type;
-        $param_types .= "s";
+        $student_where_conditions[] = "se.event_type = ?";
+        $teacher_where_conditions[] = "te.event_type = ?";
+        $params[]                   = $filter_event_type;
+        $params[]                   = $filter_event_type; // For teacher query
+        $param_types .= "ss";
     }
 
     if (! empty($filter_department)) {
-        $where_conditions[] = "e.department = ?";
-        $params[]           = $filter_department;
-        $param_types .= "s";
+        $student_where_conditions[] = "se.department = ?";
+        $teacher_where_conditions[] = "te.department = ?";
+        $params[]                   = $filter_department;
+        $params[]                   = $filter_department; // For teacher query
+        $param_types .= "ss";
     }
 
     if (! empty($filter_year)) {
-        $where_conditions[] = "e.current_year = ?";
-        $params[]           = $filter_year;
+        $student_where_conditions[] = "se.current_year = ?";
+        // For teachers, we'll skip year filter as they don't have current_year
+        $params[] = $filter_year;
         $param_types .= "s";
     }
 
     if (! empty($filter_prize) && $filter_prize !== 'all') {
         if ($filter_prize === 'no_prize') {
-            $where_conditions[] = "(e.prize IS NULL OR e.prize = '' OR e.prize = 'No Prize')";
+            $student_where_conditions[] = "(se.prize IS NULL OR se.prize = '' OR se.prize = 'No Prize')";
+            // Teachers don't have prize field in staff_event_reg, so we'll skip this filter for them
         } else {
-            $where_conditions[] = "e.prize = ?";
-            $params[]           = $filter_prize;
+            $student_where_conditions[] = "se.prize = ?";
+            // Skip prize filter for teachers as they don't have this field
+            $params[] = $filter_prize;
             $param_types .= "s";
         }
     }
 
     if (! empty($search_query)) {
-        $where_conditions[] = "(s.name LIKE ? OR e.regno LIKE ? OR e.event_name LIKE ?)";
-        $search_param       = "%$search_query%";
-        $params[]           = $search_param;
-        $params[]           = $search_param;
-        $params[]           = $search_param;
-        $param_types .= "sss";
+        $student_where_conditions[] = "(sr.name LIKE ? OR se.regno LIKE ? OR se.event_name LIKE ?)";
+        $teacher_where_conditions[] = "(tr.name LIKE ? OR te.staff_id LIKE ? OR te.topic LIKE ?)";
+        $search_param               = "%$search_query%";
+        $params[]                   = $search_param;
+        $params[]                   = $search_param;
+        $params[]                   = $search_param;
+        $params[]                   = $search_param; // For teacher query
+        $params[]                   = $search_param; // For teacher query
+        $params[]                   = $search_param; // For teacher query
+        $param_types .= "ssssss";
     }
 
-    $where_clause = ! empty($where_conditions) ? "WHERE " . implode(" AND ", $where_conditions) : "";
+    $student_where_clause = ! empty($student_where_conditions) ? "WHERE " . implode(" AND ", $student_where_conditions) : "";
+    $teacher_where_clause = ! empty($teacher_where_conditions) ? "WHERE " . implode(" AND ", $teacher_where_conditions) : "";
 
-    // Get total count for pagination
-    $count_sql = "SELECT COUNT(*) as total FROM student_event_register e
-              LEFT JOIN student_register s ON e.regno = s.regno $where_clause";
+    // Build the UNION query based on participant type filter
+    if ($filter_participant_type === 'student') {
+        // Only students
+        $count_sql = "SELECT COUNT(*) as total FROM student_event_register se
+                      LEFT JOIN student_register sr ON se.regno = sr.regno $student_where_clause";
+    } elseif ($filter_participant_type === 'teacher') {
+        // Only teachers
+        $count_sql = "SELECT COUNT(*) as total FROM staff_event_reg te
+                      LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id $teacher_where_clause";
+    } else {
+        // Both students and teachers (UNION)
+        $count_sql = "SELECT COUNT(*) as total FROM (
+            SELECT se.id FROM student_event_register se
+            LEFT JOIN student_register sr ON se.regno = sr.regno $student_where_clause
+            UNION ALL
+            SELECT te.id FROM staff_event_reg te
+            LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id $teacher_where_clause
+        ) as combined";
+    }
     $count_stmt = $conn->prepare($count_sql);
     if (! empty($params)) {
         $count_stmt->bind_param($param_types, ...$params);
@@ -526,12 +564,24 @@
                 </div>
 
                 <div class="filter-group">
+                  <label for="participant_type">Participant Type:</label>
+                  <select name="participant_type" id="participant_type">
+                    <option value="all"                                                                               <?php echo($filter_participant_type === 'all') ? 'selected' : ''; ?>>All Participants</option>
+                    <option value="student"                                                                                       <?php echo($filter_participant_type === 'student') ? 'selected' : ''; ?>>Students Only</option>
+                    <option value="teacher"                                                                                       <?php echo($filter_participant_type === 'teacher') ? 'selected' : ''; ?>>Teachers Only</option>
+                  </select>
+                </div>
+
+                <div class="filter-group">
                   <label for="event_type">Event Type:</label>
                   <select name="event_type" id="event_type">
                     <option value="">All Event Types</option>
                     <?php
-                        // Get distinct event types
-                        $types_sql    = "SELECT DISTINCT event_type FROM student_event_register WHERE event_type IS NOT NULL ORDER BY event_type";
+                        // Get distinct event types from both tables
+                        $types_sql = "SELECT DISTINCT event_type FROM student_event_register WHERE event_type IS NOT NULL
+                                     UNION
+                                     SELECT DISTINCT event_type FROM staff_event_reg WHERE event_type IS NOT NULL
+                                     ORDER BY event_type";
                         $types_result = $conn->query($types_sql);
                         if ($types_result) {
                             while ($type_row = $types_result->fetch_assoc()) {
@@ -549,8 +599,11 @@
                   <select name="department" id="department">
                     <option value="">All Departments</option>
                     <?php
-                        // Get distinct departments
-                        $dept_sql    = "SELECT DISTINCT department FROM student_event_register WHERE department IS NOT NULL ORDER BY department";
+                        // Get distinct departments from both tables
+                        $dept_sql = "SELECT DISTINCT department FROM student_event_register WHERE department IS NOT NULL
+                                    UNION
+                                    SELECT DISTINCT department FROM staff_event_reg WHERE department IS NOT NULL
+                                    ORDER BY department";
                         $dept_result = $conn->query($dept_sql);
                         if ($dept_result) {
                             while ($dept_row = $dept_result->fetch_assoc()) {
@@ -567,10 +620,10 @@
                   <label for="year">Year:</label>
                   <select name="year" id="year">
                     <option value="">All Years</option>
-                    <option value="I"                                                                                                                                                                                                                               <?php echo($filter_year === 'I') ? 'selected' : ''; ?>>I Year</option>
-                    <option value="II"                                                                                                                                                                                                                                     <?php echo($filter_year === 'II') ? 'selected' : ''; ?>>II Year</option>
-                    <option value="III"                                                                                                                                                                                                                                           <?php echo($filter_year === 'III') ? 'selected' : ''; ?>>III Year</option>
-                    <option value="IV"                                                                                                                                                                                                                                     <?php echo($filter_year === 'IV') ? 'selected' : ''; ?>>IV Year</option>
+                    <option value="I"                                                                                                                                                                                                                                                                                                         <?php echo($filter_year === 'I') ? 'selected' : ''; ?>>I Year</option>
+                    <option value="II"                                                                                                                                                                                                                                                                                                                 <?php echo($filter_year === 'II') ? 'selected' : ''; ?>>II Year</option>
+                    <option value="III"                                                                                                                                                                                                                                                                                                                         <?php echo($filter_year === 'III') ? 'selected' : ''; ?>>III Year</option>
+                    <option value="IV"                                                                                                                                                                                                                                                                                                                 <?php echo($filter_year === 'IV') ? 'selected' : ''; ?>>IV Year</option>
                   </select>
                 </div>
 
@@ -578,21 +631,21 @@
                   <label for="prize">Prize Status:</label>
                   <select name="prize" id="prize">
                     <option value="">All</option>
-                    <option value="First"                                                                                                                                                                                                                                                       <?php echo($filter_prize === 'First') ? 'selected' : ''; ?>>First Prize</option>
-                    <option value="Second"                                                                                                                                                                                                                                                             <?php echo($filter_prize === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
-                    <option value="Third"                                                                                                                                                                                                                                                       <?php echo($filter_prize === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
-                    <option value="no_prize"                                                                                                                                                                                                                                                                         <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
+                    <option value="First"                                                                                                                                                                                                                                                                                                                                         <?php echo($filter_prize === 'First') ? 'selected' : ''; ?>>First Prize</option>
+                    <option value="Second"                                                                                                                                                                                                                                                                                                                                                 <?php echo($filter_prize === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
+                    <option value="Third"                                                                                                                                                                                                                                                                                                                                         <?php echo($filter_prize === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
+                    <option value="no_prize"                                                                                                                                                                                                                                                                                                                                                                 <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
                   </select>
                 </div>
 
                 <div class="filter-group">
                   <label for="entries">Show:</label>
                   <select name="entries" id="entries">
-                    <option value="10"                                                                             <?php echo($entries_param === '10') ? 'selected' : ''; ?>>10 entries</option>
-                    <option value="25"                                                                             <?php echo($entries_param === '25') ? 'selected' : ''; ?>>25 entries</option>
-                    <option value="50"                                                                             <?php echo($entries_param === '50') ? 'selected' : ''; ?>>50 entries</option>
-                    <option value="100"                                                                               <?php echo($entries_param === '100') ? 'selected' : ''; ?>>100 entries</option>
-                    <option value="all"                                                                               <?php echo($entries_param === 'all') ? 'selected' : ''; ?>>All entries</option>
+                    <option value="10"                                                                                                                                                         <?php echo($entries_param === '10') ? 'selected' : ''; ?>>10 entries</option>
+                    <option value="25"                                                                                                                                                         <?php echo($entries_param === '25') ? 'selected' : ''; ?>>25 entries</option>
+                    <option value="50"                                                                                                                                                         <?php echo($entries_param === '50') ? 'selected' : ''; ?>>50 entries</option>
+                    <option value="100"                                                                                                                                                             <?php echo($entries_param === '100') ? 'selected' : ''; ?>>100 entries</option>
+                    <option value="all"                                                                                                                                                             <?php echo($entries_param === 'all') ? 'selected' : ''; ?>>All entries</option>
                   </select>
                 </div>
 
@@ -613,26 +666,100 @@
           </div>
 
           <?php
-              // Get participants data with filters and pagination
-              $sql = "SELECT
-                      e.id,
-                      e.regno,
-                      s.name,
-                      e.current_year,
-                      e.semester,
-                      e.department,
-                      e.event_type,
-                      e.event_name,
-                      e.attended_date,
-                      e.organisation,
-                      e.prize,
-                      e.prize_amount,
-                      e.event_poster,
-                      e.certificates
-                  FROM student_event_register e
-                  LEFT JOIN student_register s ON e.regno = s.regno
-                  $where_clause
-                  ORDER BY e.attended_date DESC, e.id DESC";
+              // Get participants data with filters and pagination - Combined Students and Teachers
+
+              // Build the main query based on participant type filter
+              if ($filter_participant_type === 'student') {
+                  // Only students
+                  $sql = "SELECT
+                          se.id,
+                          se.regno as reg_id,
+                          sr.name,
+                          se.current_year as year_info,
+                          se.semester,
+                          se.department,
+                          se.event_type,
+                          se.event_name as event_title,
+                          se.attended_date as event_date,
+                          se.organisation,
+                          se.prize,
+                          se.prize_amount,
+                          se.event_poster,
+                          se.certificates,
+                          'student' as participant_type
+                      FROM student_event_register se
+                      LEFT JOIN student_register sr ON se.regno = sr.regno
+                      $student_where_clause
+                      ORDER BY se.attended_date DESC, se.id DESC";
+              } elseif ($filter_participant_type === 'teacher') {
+                  // Only teachers
+                  $sql = "SELECT
+                          te.id,
+                          te.staff_id as reg_id,
+                          tr.name,
+                          '' as year_info,
+                          '' as semester,
+                          te.department,
+                          te.event_type,
+                          te.topic as event_title,
+                          te.event_date,
+                          te.organisation,
+                          '' as prize,
+                          '' as prize_amount,
+                          '' as event_poster,
+                          te.certificate_path as certificates,
+                          'teacher' as participant_type
+                      FROM staff_event_reg te
+                      LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id
+                      $teacher_where_clause
+                      ORDER BY te.event_date DESC, te.id DESC";
+              } else {
+                  // Both students and teachers (UNION)
+                  $sql = "SELECT * FROM (
+                      SELECT
+                          se.id,
+                          se.regno as reg_id,
+                          sr.name,
+                          se.current_year as year_info,
+                          se.semester,
+                          se.department,
+                          se.event_type,
+                          se.event_name as event_title,
+                          se.attended_date as event_date,
+                          se.organisation,
+                          se.prize,
+                          se.prize_amount,
+                          se.event_poster,
+                          se.certificates,
+                          'student' as participant_type
+                      FROM student_event_register se
+                      LEFT JOIN student_register sr ON se.regno = sr.regno
+                      $student_where_clause
+
+                      UNION ALL
+
+                      SELECT
+                          te.id,
+                          te.staff_id as reg_id,
+                          tr.name,
+                          '' as year_info,
+                          '' as semester,
+                          te.department,
+                          te.event_type,
+                          te.topic as event_title,
+                          te.event_date,
+                          te.organisation,
+                          '' as prize,
+                          '' as prize_amount,
+                          '' as event_poster,
+                          te.certificate_path as certificates,
+                          'teacher' as participant_type
+                      FROM staff_event_reg te
+                      LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id
+                      $teacher_where_clause
+                  ) as combined_results
+                  ORDER BY event_date DESC, id DESC";
+              }
 
               // Add LIMIT clause only if not showing all entries
               if ($entries_param !== 'all') {
@@ -641,15 +768,41 @@
 
               $stmt = $conn->prepare($sql);
 
-              // Add pagination parameters only if not showing all entries
-              if ($entries_param !== 'all') {
-                  $params[] = $entries_per_page;
-                  $params[] = $offset;
-                  $param_types .= "ii";
+              // Rebuild parameters for the main query
+              $main_params      = [];
+              $main_param_types = "";
+
+              if ($filter_participant_type === 'student') {
+                  // Use only student parameters
+                  foreach ($params as $param) {
+                      if (strpos($param_types, 's') !== false || is_string($param)) {
+                          $main_params[] = $param;
+                          $main_param_types .= "s";
+                      }
+                  }
+              } elseif ($filter_participant_type === 'teacher') {
+                  // Use only teacher parameters
+                  foreach ($params as $param) {
+                      if (strpos($param_types, 's') !== false || is_string($param)) {
+                          $main_params[] = $param;
+                          $main_param_types .= "s";
+                      }
+                  }
+              } else {
+                  // Use parameters for both student and teacher queries
+                  $main_params      = $params;
+                  $main_param_types = $param_types;
               }
 
-              if (! empty($params)) {
-                  $stmt->bind_param($param_types, ...$params);
+              // Add pagination parameters only if not showing all entries
+              if ($entries_param !== 'all') {
+                  $main_params[] = $entries_per_page;
+                  $main_params[] = $offset;
+                  $main_param_types .= "ii";
+              }
+
+              if (! empty($main_params)) {
+                  $stmt->bind_param($main_param_types, ...$main_params);
               }
               $stmt->execute();
               $result = $stmt->get_result();
@@ -677,8 +830,9 @@
                   echo "<thead>";
                   echo "<tr>";
                   echo "<th>S.No</th>";
-                  echo "<th>Reg No</th>";
-                  echo "<th>Student Name</th>";
+                  echo "<th>Type</th>";
+                  echo "<th>ID</th>";
+                  echo "<th>Name</th>";
                   echo "<th>Year</th>";
                   echo "<th>Dept</th>";
                   echo "<th>Event Type</th>";
@@ -695,22 +849,31 @@
                   while ($row = $result->fetch_assoc()) {
                       echo "<tr>";
                       echo "<td>" . $sno++ . "</td>";
-                      echo "<td>" . htmlspecialchars($row['regno']) . "</td>";
+
+                      // Participant type badge
+                      $type_badge = ($row['participant_type'] === 'teacher') ?
+                      "<span style='background: #28a745; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px;'>👨‍🏫 Teacher</span>" :
+                      "<span style='background: #007bff; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px;'>👨‍🎓 Student</span>";
+                      echo "<td>" . $type_badge . "</td>";
+
+                      echo "<td>" . htmlspecialchars($row['reg_id']) . "</td>";
                       echo "<td>" . htmlspecialchars($row['name'] ?? 'N/A') . "</td>";
-                      echo "<td>" . htmlspecialchars($row['current_year']) . "</td>";
+                      echo "<td>" . htmlspecialchars($row['year_info'] ?: 'N/A') . "</td>";
                       echo "<td>" . htmlspecialchars($row['department']) . "</td>";
                       echo "<td>" . htmlspecialchars($row['event_type']) . "</td>";
-                      echo "<td>" . htmlspecialchars($row['event_name']) . "</td>";
-                      echo "<td>" . date('d-M-Y', strtotime($row['attended_date'])) . "</td>";
+                      echo "<td>" . htmlspecialchars($row['event_title']) . "</td>";
+                      echo "<td>" . date('d-M-Y', strtotime($row['event_date'])) . "</td>";
                       echo "<td>" . htmlspecialchars($row['prize'] ?: 'No Prize') . "</td>";
 
                       // Files column with download links
                       echo "<td class='files-cell'>";
                       if (! empty($row['event_poster'])) {
-                          echo "<a href='download.php?id=" . $row['id'] . "&type=poster' class='download-btn' target='_blank'>📄 Poster</a>";
+                          $download_type = ($row['participant_type'] === 'teacher') ? 'teacher_poster' : 'poster';
+                          echo "<a href='download.php?id=" . $row['id'] . "&type=$download_type&participant_type=" . $row['participant_type'] . "' class='download-btn' target='_blank'>📄 Poster</a>";
                       }
                       if (! empty($row['certificates'])) {
-                          echo "<a href='download.php?id=" . $row['id'] . "&type=certificate' class='download-btn' target='_blank'>🏆 Certificate</a>";
+                          $download_type = ($row['participant_type'] === 'teacher') ? 'teacher_certificate' : 'certificate';
+                          echo "<a href='download.php?id=" . $row['id'] . "&type=$download_type&participant_type=" . $row['participant_type'] . "' class='download-btn' target='_blank'>🏆 Certificate</a>";
                       }
                       if (empty($row['event_poster']) && empty($row['certificates'])) {
                           echo "<span class='no-files'>No files</span>";
@@ -720,10 +883,11 @@
                       // Actions column
                       echo "<td>";
                       echo "<div class='action-buttons'>";
-                      echo "<a href='edit_participant.php?id=" . $row['id'] . "' class='btn btn-warning' title='Edit'>
+                      $edit_page = ($row['participant_type'] === 'teacher') ? 'edit_teacher_participant.php' : 'edit_participant.php';
+                      echo "<a href='$edit_page?id=" . $row['id'] . "' class='btn btn-warning' title='Edit'>
                           <span class='material-symbols-outlined'>edit</span>
                         </a>";
-                      echo "<button onclick='confirmDelete(" . $row['id'] . ")' class='btn btn-danger' title='Delete'>
+                      echo "<button onclick='confirmDelete(" . $row['id'] . ", \"" . $row['participant_type'] . "\")' class='btn btn-danger' title='Delete'>
                           <span class='material-symbols-outlined'>delete</span>
                         </button>";
                       echo "</div>";
@@ -773,31 +937,72 @@
                   echo "<h3>Summary</h3>";
                   echo "<p><strong>Filtered Results:</strong> " . $total_records . " participants</p>";
 
-                  // Get additional stats with same filters
-                  $stats_sql = "SELECT
-                  COUNT(DISTINCT e.event_name) as total_events,
-                  COUNT(DISTINCT e.regno) as unique_students,
-                  COUNT(*) as total_registrations,
-                  SUM(CASE WHEN e.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prize_winners
-              FROM student_event_register e
-              LEFT JOIN student_register s ON e.regno = s.regno
-              $where_clause";
+                  // Get additional stats based on participant type filter
+                  if ($filter_participant_type === 'student') {
+                      $stats_sql = "SELECT
+                          COUNT(DISTINCT se.event_name) as total_events,
+                          COUNT(DISTINCT se.regno) as unique_participants,
+                          COUNT(*) as total_registrations,
+                          SUM(CASE WHEN se.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prize_winners,
+                          'Students' as participant_label
+                      FROM student_event_register se
+                      LEFT JOIN student_register sr ON se.regno = sr.regno
+                      $student_where_clause";
+                  } elseif ($filter_participant_type === 'teacher') {
+                      $stats_sql = "SELECT
+                          COUNT(DISTINCT te.topic) as total_events,
+                          COUNT(DISTINCT te.staff_id) as unique_participants,
+                          COUNT(*) as total_registrations,
+                          0 as prize_winners,
+                          'Teachers' as participant_label
+                      FROM staff_event_reg te
+                      LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id
+                      $teacher_where_clause";
+                  } else {
+                      // Combined stats for both students and teachers
+                      $stats_sql = "SELECT
+                          (student_stats.total_events + teacher_stats.total_events) as total_events,
+                          (student_stats.unique_participants + teacher_stats.unique_participants) as unique_participants,
+                          (student_stats.total_registrations + teacher_stats.total_registrations) as total_registrations,
+                          student_stats.prize_winners,
+                          'All Participants' as participant_label
+                      FROM
+                      (SELECT
+                          COUNT(DISTINCT se.event_name) as total_events,
+                          COUNT(DISTINCT se.regno) as unique_participants,
+                          COUNT(*) as total_registrations,
+                          SUM(CASE WHEN se.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prize_winners
+                      FROM student_event_register se
+                      LEFT JOIN student_register sr ON se.regno = sr.regno
+                      $student_where_clause) as student_stats,
+                      (SELECT
+                          COUNT(DISTINCT te.topic) as total_events,
+                          COUNT(DISTINCT te.staff_id) as unique_participants,
+                          COUNT(*) as total_registrations
+                      FROM staff_event_reg te
+                      LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id
+                      $teacher_where_clause) as teacher_stats";
+                  }
 
                   $stats_stmt = $conn->prepare($stats_sql);
-                  if (! empty($where_conditions)) {
+                  if (! empty($main_params) && $entries_param !== 'all') {
                       // Remove pagination params for stats
-                      $stats_params      = array_slice($params, 0, -2);
-                      $stats_param_types = substr($param_types, 0, -2);
-                      $stats_stmt->bind_param($stats_param_types, ...$stats_params);
+                      $stats_params      = array_slice($main_params, 0, -2);
+                      $stats_param_types = substr($main_param_types, 0, -2);
+                      if (! empty($stats_params)) {
+                          $stats_stmt->bind_param($stats_param_types, ...$stats_params);
+                      }
+                  } elseif (! empty($main_params)) {
+                      $stats_stmt->bind_param($main_param_types, ...$main_params);
                   }
                   $stats_stmt->execute();
                   $stats_result = $stats_stmt->get_result();
 
                   if ($stats_result && $stats_row = $stats_result->fetch_assoc()) {
                       echo "<p><strong>Total Events:</strong> " . $stats_row['total_events'] . "</p>";
-                      echo "<p><strong>Unique Students:</strong> " . $stats_row['unique_students'] . "</p>";
+                      echo "<p><strong>Unique " . $stats_row['participant_label'] . ":</strong> " . $stats_row['unique_participants'] . "</p>";
                       echo "<p><strong>Total Registrations:</strong> " . $stats_row['total_registrations'] . "</p>";
-                      echo "<p><strong>Prize Winners:</strong> " . $stats_row['prize_winners'] . "</p>";
+                      echo "<p><strong>Prize Winners:</strong> " . $stats_row['prize_winners'] . " (Students only)</p>";
                   }
                   echo "</div>";
 
@@ -825,6 +1030,7 @@
           <button onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
           <form method="POST" style="display: inline;">
             <input type="hidden" name="delete_id" id="deleteId">
+            <input type="hidden" name="delete_type" id="deleteType">
             <button type="submit" class="btn btn-danger">Delete</button>
           </form>
         </div>
@@ -847,8 +1053,9 @@
       }
 
       // Delete confirmation functions
-      function confirmDelete(id) {
+      function confirmDelete(id, participantType) {
         document.getElementById('deleteId').value = id;
+        document.getElementById('deleteType').value = participantType || 'student';
         document.getElementById('deleteModal').style.display = 'block';
       }
 

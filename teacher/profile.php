@@ -191,7 +191,7 @@
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            background:linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -205,7 +205,7 @@
         .profile-name {
             font-size: 24px;
             font-weight: 600;
-            color: #3498db;
+            color:linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             margin-bottom: 8px;
         }
 
@@ -324,12 +324,12 @@
         }
 
         .btn-primary {
-            background: #3498db;
+            background:linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
         }
 
         .btn-primary:hover {
-            background: #2980b9;
+            background:linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             transform: translateY(-2px);
         }
 
