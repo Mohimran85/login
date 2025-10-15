@@ -65,6 +65,13 @@
     $entries_per_page        = ($entries_param === 'all') ? PHP_INT_MAX : (int) $entries_param;
     $current_page            = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 
+    // Validate search query
+    $search_error = '';
+    if (! empty($search_query) && strlen(trim($search_query)) < 2) {
+        $search_error = 'Search query must be at least 2 characters long.';
+        $search_query = ''; // Reset search query to prevent database errors
+    }
+
     // Build WHERE clause based on filters - for both student and teacher queries
     $student_where_conditions = [];
     $teacher_where_conditions = [];
@@ -474,6 +481,39 @@
           font-size: 16px; /* Prevents zoom on iOS */
         }
       }
+
+      /* Alert Messages - matching login page style */
+      .alert {
+        padding: 12px 15px;
+        margin: 15px 0;
+        border-radius: 8px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .alert-success {
+        background-color: #d1e7dd;
+        border: 1px solid #a3cfbb;
+        color: #0a3622;
+      }
+
+      .alert-error {
+        background-color: #f8d7da;
+        border: 1px solid #f1aeb5;
+        color: #721c24;
+      }
+
+      .alert-success::before {
+        content: "✓";
+        font-weight: bold;
+      }
+
+      .alert-error::before {
+        content: "⚠";
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
@@ -523,6 +563,10 @@
               <a href="participants.php">Participants</a>
             </li>
             <li class="sidebar-list-item">
+              <span class="material-symbols-outlined">manage_accounts</span>
+              <a href="user_management.php">User Management</a>
+            </li>
+            <li class="sidebar-list-item">
               <span class="material-symbols-outlined">bar_chart</span>
               <a href="reports.php">Reports</a>
             </li>
@@ -551,6 +595,10 @@
             <div class="alert alert-error"><?php echo $error_message; ?></div>
           <?php endif; ?>
 
+          <?php if (! empty($search_error)): ?>
+            <div class="alert alert-error"><?php echo $search_error; ?></div>
+          <?php endif; ?>
+
           <!-- Filters Section -->
           <div class="filters-container">
             <h3>Filter Participants</h3>
@@ -560,15 +608,16 @@
                   <label for="search">Search:</label>
                   <input type="text" id="search" name="search"
                          placeholder="Name, Reg No, Event..."
-                         value="<?php echo htmlspecialchars($search_query); ?>" style="margin-bottom:20px;">
+                         value="<?php echo htmlspecialchars($search_query); ?>" style="margin-bottom: 5px;">
+                  <small style="color: #666; font-size: 12px;">Minimum 2 characters required</small>
                 </div>
 
                 <div class="filter-group">
                   <label for="participant_type">Participant Type:</label>
                   <select name="participant_type" id="participant_type">
-                    <option value="all"                                                                               <?php echo($filter_participant_type === 'all') ? 'selected' : ''; ?>>All Participants</option>
-                    <option value="student"                                                                                       <?php echo($filter_participant_type === 'student') ? 'selected' : ''; ?>>Students Only</option>
-                    <option value="teacher"                                                                                       <?php echo($filter_participant_type === 'teacher') ? 'selected' : ''; ?>>Teachers Only</option>
+                    <option value="all"                                                                                                                                                             <?php echo($filter_participant_type === 'all') ? 'selected' : ''; ?>>All Participants</option>
+                    <option value="student"                                                                                                                                                                             <?php echo($filter_participant_type === 'student') ? 'selected' : ''; ?>>Students Only</option>
+                    <option value="teacher"                                                                                                                                                                             <?php echo($filter_participant_type === 'teacher') ? 'selected' : ''; ?>>Teachers Only</option>
                   </select>
                 </div>
 
@@ -620,10 +669,10 @@
                   <label for="year">Year:</label>
                   <select name="year" id="year">
                     <option value="">All Years</option>
-                    <option value="I"                                                                                                                                                                                                                                                                                                         <?php echo($filter_year === 'I') ? 'selected' : ''; ?>>I Year</option>
-                    <option value="II"                                                                                                                                                                                                                                                                                                                 <?php echo($filter_year === 'II') ? 'selected' : ''; ?>>II Year</option>
-                    <option value="III"                                                                                                                                                                                                                                                                                                                         <?php echo($filter_year === 'III') ? 'selected' : ''; ?>>III Year</option>
-                    <option value="IV"                                                                                                                                                                                                                                                                                                                 <?php echo($filter_year === 'IV') ? 'selected' : ''; ?>>IV Year</option>
+                    <option value="I"                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($filter_year === 'I') ? 'selected' : ''; ?>>I Year</option>
+                    <option value="II"                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($filter_year === 'II') ? 'selected' : ''; ?>>II Year</option>
+                    <option value="III"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($filter_year === 'III') ? 'selected' : ''; ?>>III Year</option>
+                    <option value="IV"                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($filter_year === 'IV') ? 'selected' : ''; ?>>IV Year</option>
                   </select>
                 </div>
 
@@ -631,21 +680,21 @@
                   <label for="prize">Prize Status:</label>
                   <select name="prize" id="prize">
                     <option value="">All</option>
-                    <option value="First"                                                                                                                                                                                                                                                                                                                                         <?php echo($filter_prize === 'First') ? 'selected' : ''; ?>>First Prize</option>
-                    <option value="Second"                                                                                                                                                                                                                                                                                                                                                 <?php echo($filter_prize === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
-                    <option value="Third"                                                                                                                                                                                                                                                                                                                                         <?php echo($filter_prize === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
-                    <option value="no_prize"                                                                                                                                                                                                                                                                                                                                                                 <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
+                    <option value="First"                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($filter_prize === 'First') ? 'selected' : ''; ?>>First Prize</option>
+                    <option value="Second"                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($filter_prize === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
+                    <option value="Third"                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($filter_prize === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
+                    <option value="no_prize"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
                   </select>
                 </div>
 
                 <div class="filter-group">
                   <label for="entries">Show:</label>
                   <select name="entries" id="entries">
-                    <option value="10"                                                                                                                                                         <?php echo($entries_param === '10') ? 'selected' : ''; ?>>10 entries</option>
-                    <option value="25"                                                                                                                                                         <?php echo($entries_param === '25') ? 'selected' : ''; ?>>25 entries</option>
-                    <option value="50"                                                                                                                                                         <?php echo($entries_param === '50') ? 'selected' : ''; ?>>50 entries</option>
-                    <option value="100"                                                                                                                                                             <?php echo($entries_param === '100') ? 'selected' : ''; ?>>100 entries</option>
-                    <option value="all"                                                                                                                                                             <?php echo($entries_param === 'all') ? 'selected' : ''; ?>>All entries</option>
+                    <option value="10"                                                                                                                                                                                                                                     <?php echo($entries_param === '10') ? 'selected' : ''; ?>>10 entries</option>
+                    <option value="25"                                                                                                                                                                                                                                     <?php echo($entries_param === '25') ? 'selected' : ''; ?>>25 entries</option>
+                    <option value="50"                                                                                                                                                                                                                                     <?php echo($entries_param === '50') ? 'selected' : ''; ?>>50 entries</option>
+                    <option value="100"                                                                                                                                                                                                                                           <?php echo($entries_param === '100') ? 'selected' : ''; ?>>100 entries</option>
+                    <option value="all"                                                                                                                                                                                                                                           <?php echo($entries_param === 'all') ? 'selected' : ''; ?>>All entries</option>
                   </select>
                 </div>
 
@@ -1074,6 +1123,34 @@
       // Auto-submit form when changing entries per page
       document.getElementById('entries').addEventListener('change', function() {
         this.form.submit();
+      });
+
+      // Search validation
+      document.querySelector('form').addEventListener('submit', function(e) {
+        const searchInput = document.getElementById('search');
+        const searchValue = searchInput.value.trim();
+
+        if (searchValue.length > 0 && searchValue.length < 2) {
+          e.preventDefault();
+          alert('Search query must be at least 2 characters long.');
+          searchInput.focus();
+          return false;
+        }
+      });
+
+      // Real-time search validation feedback
+      document.getElementById('search').addEventListener('input', function() {
+        const searchValue = this.value.trim();
+
+        if (searchValue.length === 1) {
+          this.style.borderColor = '#dc3545';
+          this.style.backgroundColor = '#fff5f5';
+          this.title = 'Search query must be at least 2 characters long';
+        } else {
+          this.style.borderColor = '';
+          this.style.backgroundColor = '';
+          this.title = '';
+        }
       });
     </script>
   </body>

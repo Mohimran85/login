@@ -57,17 +57,42 @@
                 }
             } else {
                 // Check if username exists in teacher_register
-                $teacher_sql  = "SELECT username, name FROM teacher_register WHERE username=?";
+                $teacher_sql  = "SELECT username, name, faculty_id FROM teacher_register WHERE username=?";
                 $teacher_stmt = $conn->prepare($teacher_sql);
                 $teacher_stmt->bind_param("s", $username);
                 $teacher_stmt->execute();
                 $teacher_result = $teacher_stmt->get_result();
 
                 if ($teacher_result->num_rows > 0) {
-                    $message = "<div class='error'>
-                    Password reset by DOB is only available for <strong>Students</strong>.<br>
-                    Teachers, please contact the administrator for password reset.
-                </div>";
+                    $teacher_data = $teacher_result->fetch_assoc();
+                    $faculty_id   = $teacher_data['faculty_id'];
+                    $name         = $teacher_data['name'];
+
+                    if (! empty($faculty_id)) {
+                        // Set password to faculty_id
+                        $new_password    = $faculty_id;
+                        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+
+                        // Update password
+                        $update_sql  = "UPDATE teacher_register SET password=? WHERE username=?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("ss", $hashed_password, $username);
+
+                        if ($update_stmt->execute()) {
+                            $message = "<div class='success'>   
+                            <h3>✅ Password Reset Successful!</h3>
+                            <p><strong>Hello $name,</strong></p>
+                            <p>Your password has been reset to your <strong>Faculty ID</strong>.</p>
+            
+                            <p>Please login with your new password and consider changing it in your profile for security.</p>
+                        </div>";
+                        } else {
+                            $message = "<div class='error'>Error updating password. Please try again.</div>";
+                        }
+                        $update_stmt->close();
+                    } else {
+                        $message = "<div class='error'>Faculty ID not found in your profile. Please contact admin.</div>";
+                    }
                 } else {
                     $message = "<div class='error'>Username not found. Please check your username and try again.</div>";
                 }
@@ -202,13 +227,19 @@
                     </div>
                 <?php endif; ?>
             <?php else: ?>
+                <div class="info-box">
+                    <h4>📋 Password Reset Information</h4>
+                    <p><strong>For Students:</strong> Password will be reset to your Date of Birth (YYYYMMDD format)</p>
+                    <p><strong>For Teachers:</strong> Password will be reset to your Faculty ID</p>
+                </div>
+
                 <form method="POST">
                     <div class="item">
                         <label for="username">Enter Your Username:</label>
                         <input
                             type="text"
                             name="username"
-                            placeholder="Enter your student username"
+                            placeholder="Enter your username (student or teacher)"
                             required
                             autocomplete="username"
                         />

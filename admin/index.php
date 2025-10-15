@@ -39,6 +39,38 @@
         $stmt->close();
     }
 
+    // Check teacher role/status if user is a teacher
+    if ($user_type === 'teacher') {
+        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+        $teacher_status_stmt->bind_param("s", $username);
+        $teacher_status_stmt->execute();
+        $teacher_status_result = $teacher_status_stmt->get_result();
+
+        $teacher_status = 'teacher'; // Default status
+        if ($teacher_status_result->num_rows > 0) {
+            $status_data    = $teacher_status_result->fetch_assoc();
+            $teacher_status = $status_data['status'];
+        }
+        $teacher_status_stmt->close();
+
+        // Only allow admin role to access admin dashboard
+        if ($teacher_status !== 'admin') {
+            $message = ($teacher_status === 'inactive')
+                ? 'Your account is inactive. Please contact an administrator to restore access.'
+                : 'Admin dashboard access requires administrator role. Your current role is: ' . ucfirst($teacher_status);
+            $_SESSION['access_denied'] = $message;
+            header("Location: ../teacher/index.php");
+            exit();
+        }
+    }
+
+    // Redirect students who shouldn't have access to admin dashboard
+    if ($user_type === 'student') {
+        header("Location: ../student.php");
+        exit();
+    }
+
     // Get dashboard statistics
     $total_students       = 0;
     $total_teachers       = 0;
@@ -234,6 +266,10 @@
               <a href="participants.php">Participants</a>
             </li>
             <li class="sidebar-list-item">
+              <span class="material-symbols-outlined">manage_accounts</span>
+              <a href="user_management.php">User Management</a>
+            </li>
+            <li class="sidebar-list-item">
               <span class="material-symbols-outlined">bar_chart</span>
               <a href="reports.php">Reports</a>
             </li>
@@ -304,10 +340,10 @@
 
       <script>
       // Get PHP data for charts and make them globally available
-      window.categoryData =                                                                                  <?php echo json_encode($category_data); ?>;
-      window.categoryCounts =                                                                                        <?php echo json_encode($category_counts); ?>;
-      window.monthlyEvents =                                                                                     <?php echo json_encode($monthly_events); ?>;
-      window.monthlyParticipations =                                                                                                             <?php echo json_encode($monthly_participations); ?>;
+      window.categoryData =                                                                                                                                                                   <?php echo json_encode($category_data); ?>;
+      window.categoryCounts =                                                                                                                                                                               <?php echo json_encode($category_counts); ?>;
+      window.monthlyEvents =                                                                                                                                                                         <?php echo json_encode($monthly_events); ?>;
+      window.monthlyParticipations =                                                                                                                                                                                                                         <?php echo json_encode($monthly_participations); ?>;
 
       // Debug: Show the data in console
       console.log('PHP Data Loaded:');

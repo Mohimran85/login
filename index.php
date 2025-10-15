@@ -21,6 +21,21 @@
         die("Connection failed: " . $conn->connect_error);
     }
 
+    // Function to safely check and add status column
+    function ensureStatusColumn($conn, $table_name)
+    {
+        $check_column  = "SHOW COLUMNS FROM $table_name LIKE 'status'";
+        $column_result = $conn->query($check_column);
+
+        if ($column_result->num_rows == 0) {
+            $add_column = "ALTER TABLE $table_name ADD COLUMN status VARCHAR(20) DEFAULT 'active'";
+            $conn->query($add_column);
+        }
+    }
+
+    // Ensure status column exists in teacher table
+    ensureStatusColumn($conn, 'teacher_register');
+
     $error_message = "";
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -65,11 +80,34 @@
                     $_SESSION['role']      = ($table === 'student_register') ? 'student' : 'teacher';
                     $_SESSION['logged_in'] = true;
 
-                    // Redirect based on user role
+                    // Redirect based on user role and status
                     if ($_SESSION['role'] === 'student') {
                         header("Location: student/index.php");
                     } else {
-                        header("Location: admin/index.php"); 
+                        // For teachers, check their role/status before allowing admin access
+                        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+                        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+                        $teacher_status_stmt->bind_param("s", $username);
+                        $teacher_status_stmt->execute();
+                        $teacher_status_result = $teacher_status_stmt->get_result();
+
+                        $teacher_status = 'teacher'; // Default status
+                        if ($teacher_status_result->num_rows > 0) {
+                            $status_data    = $teacher_status_result->fetch_assoc();
+                            $teacher_status = $status_data['status'];
+                        }
+                        $teacher_status_stmt->close();
+
+                        // Redirect based on teacher role/status
+                        if ($teacher_status === 'inactive') {
+                            $_SESSION['access_denied'] = 'Your account is inactive. Please contact an administrator to restore access.';
+                            header("Location: teacher/index.php");
+                        } elseif ($teacher_status === 'admin') {
+                            header("Location: admin/index.php");
+                        } else {
+                            // Regular teachers go to teacher dashboard
+                            header("Location: teacher/index.php");
+                        }
                     }
                     exit();
                 } else {
