@@ -151,6 +151,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+    .header {
+  grid-area: header;
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  font-size: 15px;
+  font-weight: 100;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  color: #1e4276;
+  position: fixed;
+  width: 100%;
+  z-index: 1001;
+  top: 0;
+  left: 0;
+}
+
+
+
         .filters-section {
             background: white;
             padding: 20px;
@@ -323,6 +344,10 @@
         @media (max-width: 768px) {
             body {
                 overflow-x: hidden;
+            }
+
+            .header .header-logo {
+                display: none;
             }
 
             .grid-container {
@@ -670,17 +695,26 @@
 <body>
     <div class="grid-container">
         <!-- Header -->
-        <div class="header">
-            <div class="menu-icon">
-                <span class="material-symbols-outlined">menu</span>
-            </div>
-            <div class="icon">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
-            </div>
-            <div class="header-title">
-                <p>Event Management System</p>
-            </div>
+       <div class="header">
+         <div class="menu-icon" onclick="openSidebar()">
+          <span class="material-symbols-outlined">menu</span>
         </div>
+        <div class="header-logo">
+          <img
+            class="logo"
+            src="sona_logo.jpg"
+            alt="Sona College Logo"
+            height="60px"
+            width="200"
+          />
+        </div>
+        <div class="header-title">
+          <p>Event Management Dashboard</p>
+        </div>
+        <div >
+          <!-- empty -->
+        </div>
+      </div>
 
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
@@ -693,7 +727,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                               <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
+                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
             </div>
 
             <nav>
@@ -800,11 +834,11 @@
                             <label for="prize">Prize Filter</label>
                             <select id="prize" name="prize">
                                 <option value="">All</option>
-                                <option value="winner"                                                                                                                                                                                                                                                                                                                                     <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
-                                <option value="First"                                                                                                                                                                                                                                                                                                                               <?php echo $prize_filter === 'First' ? 'selected' : ''; ?>>First Prize</option>
-                                <option value="Second"                                                                                                                                                                                                                                                                                                                                     <?php echo $prize_filter === 'Second' ? 'selected' : ''; ?>>Second Prize</option>
-                                <option value="Third"                                                                                                                                                                                                                                                                                                                               <?php echo $prize_filter === 'Third' ? 'selected' : ''; ?>>Third Prize</option>
-                                <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                               <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
+                                <option value="winner"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
+                                <option value="First"                                                                                                                                                                                                                                                                                                                                                                                    <?php echo $prize_filter === 'First' ? 'selected' : ''; ?>>First Prize</option>
+                                <option value="Second"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $prize_filter === 'Second' ? 'selected' : ''; ?>>Second Prize</option>
+                                <option value="Third"                                                                                                                                                                                                                                                                                                                                                                                    <?php echo $prize_filter === 'Third' ? 'selected' : ''; ?>>Third Prize</option>
+                                <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
                             </select>
                         </div>
 
@@ -892,12 +926,12 @@
                         <?php foreach ($students_data as $student): ?>
                             <div class="student-card">
                                 <h4><?php echo htmlspecialchars($student['event_name']); ?></h4>
-                                <p><strong>• Event Type:</strong>                                                                                                                                       <?php echo htmlspecialchars($student['event_type']); ?></p>
-                                <p><strong>• Date:</strong>                                                                                                                           <?php echo date('M d, Y', strtotime($student['attended_date'])); ?></p>
-                                <p><strong>• Organization:</strong>                                                                                                                                           <?php echo htmlspecialchars($student['college']); ?></p>
-                                <p><strong>• Department:</strong>                                                                                                                                       <?php echo htmlspecialchars($student['department']); ?></p>
-                                <p><strong>• Year & Semester:</strong>                                                                                                                                                 <?php echo htmlspecialchars($student['year_of_join']); ?> -<?php echo htmlspecialchars($student['position']); ?></p>
-                                <p><strong>• Location:</strong>                                                                                                                                   <?php echo htmlspecialchars($student['position']); ?></p>
+                                <p><strong>• Event Type:</strong>                                                                                                                                                                                                          <?php echo htmlspecialchars($student['event_type']); ?></p>
+                                <p><strong>• Date:</strong>                                                                                                                                                                                        <?php echo date('M d, Y', strtotime($student['attended_date'])); ?></p>
+                                <p><strong>• Organization:</strong>                                                                                                                                                                                                                <?php echo htmlspecialchars($student['college']); ?></p>
+                                <p><strong>• Department:</strong>                                                                                                                                                                                                          <?php echo htmlspecialchars($student['department']); ?></p>
+                                <p><strong>• Year & Semester:</strong>                                                                                                                                                                                                                         <?php echo htmlspecialchars($student['year_of_join']); ?> -<?php echo htmlspecialchars($student['position']); ?></p>
+                                <p><strong>• Location:</strong>                                                                                                                                                                                                    <?php echo htmlspecialchars($student['position']); ?></p>
                                 <p><strong>• Prize:</strong>
                                     <?php
                                         $prize       = $student['prize'];

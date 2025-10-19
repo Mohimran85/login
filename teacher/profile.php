@@ -173,6 +173,24 @@
             gap: 30px;
             margin-bottom: 30px;
         }
+        .header {
+  grid-area: header;
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  font-size: 15px;
+  font-weight: 100;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  color: #1e4276;
+  position: fixed;
+  width: 100%;
+  z-index: 1001;
+  top: 0;
+  left: 0;
+}
 
         .profile-card {
             background: white;
@@ -412,6 +430,10 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            .header .header-logo {
+                display: none;
+            }
+
             .profile-container {
                 grid-template-columns: 1fr;
                 gap: 20px;
@@ -445,16 +467,25 @@
     <div class="grid-container">
         <!-- Header -->
         <div class="header">
-            <div class="menu-icon">
-                <span class="material-symbols-outlined">menu</span>
-            </div>
-            <div class="icon">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
-            </div>
-            <div class="header-title">
-                <p>Event Management System</p>
-            </div>
+         <div class="menu-icon" onclick="openSidebar()">
+          <span class="material-symbols-outlined">menu</span>
         </div>
+        <div class="header-logo">
+          <img
+            class="logo"
+            src="sona_logo.jpg"
+            alt="Sona College Logo"
+            height="60px"
+            width="200"
+          />
+        </div>
+        <div class="header-title">
+          <p>Event Management Dashboard</p>
+        </div>
+        <div >
+          <!-- empty -->
+        </div>
+      </div>
 
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
@@ -467,7 +498,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['faculty_id'] ?? $teacher_data['regno'] ?? 'N/A'); ?></div>
+                <div class="student-regno">ID:                                                                                                                                           <?php echo htmlspecialchars($teacher_data['faculty_id'] ?? $teacher_data['regno'] ?? 'N/A'); ?></div>
             </div>
 
             <nav>
@@ -531,7 +562,7 @@
                             <?php echo strtoupper(substr($teacher_data['name'], 0, 1)); ?>
                         </div>
                         <div class="profile-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                        <div class="profile-regno">Faculty ID:                                                               <?php echo htmlspecialchars($teacher_data['faculty_id'] ?? $teacher_data['regno'] ?? 'N/A'); ?></div>
+                        <div class="profile-regno">Faculty ID:                                                                                                                             <?php echo htmlspecialchars($teacher_data['faculty_id'] ?? $teacher_data['regno'] ?? 'N/A'); ?></div>
 
                         <div class="profile-stats">
                             <div class="stat-item">
@@ -548,7 +579,7 @@
                     <div class="info-section">
                         <div class="info-title">Account Information</div>
                         <div class="info-text">
-                            <strong>Username:</strong>                                                       <?php echo htmlspecialchars($teacher_data['username']); ?><br>
+                            <strong>Username:</strong>                                                                                                             <?php echo htmlspecialchars($teacher_data['username']); ?><br>
                             <strong>Role:</strong> <span style="color: #3498db;">Faculty Member</span><br>
                             <strong>Status:</strong> <span style="color: #28a745;">Active</span>
                         </div>
@@ -630,13 +661,13 @@
                                 </div>
                                 <select name="department" class="form-select profile-edit" style="display: none;">
                                     <option value="">Select Department</option>
-                                    <option value="CSE"                                                        <?php echo($teacher_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
-                                    <option value="IT"                                                       <?php echo($teacher_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
-                                    <option value="ECE"                                                        <?php echo($teacher_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
-                                    <option value="EEE"                                                        <?php echo($teacher_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
-                                    <option value="MECH"                                                         <?php echo($teacher_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
-                                    <option value="CIVIL"                                                          <?php echo($teacher_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
-                                    <option value="BME"                                                        <?php echo($teacher_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
+                                    <option value="CSE"                                                                                                               <?php echo($teacher_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
+                                    <option value="IT"                                                                                                             <?php echo($teacher_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
+                                    <option value="ECE"                                                                                                               <?php echo($teacher_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
+                                    <option value="EEE"                                                                                                               <?php echo($teacher_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
+                                    <option value="MECH"                                                                                                                 <?php echo($teacher_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
+                                    <option value="CIVIL"                                                                                                                   <?php echo($teacher_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
+                                    <option value="BME"                                                                                                               <?php echo($teacher_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
                                 </select>
                             </div>
                         </div>

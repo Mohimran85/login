@@ -173,325 +173,295 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Student Form Styling */
-        .parent {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(7, 1fr);
-            grid-column-gap: 20px;
-            grid-row-gap: 20px;
-            padding: 30px;
-            background: white;
+        /* Modern Registration Form Design */
+        .registration-container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        .header {
+  grid-area: header;
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  font-size: 15px;
+  font-weight: 100;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  color: #1e4276;
+  position: fixed;
+  width: 100%;
+  z-index: 1001;
+  top: 0;
+  left: 0;
+}
+
+        .registration-form {
+            background: #ffffff;
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
         }
 
-        .item {
+        .form-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .form-title {
+            color: #2c5aa0;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .form-subtitle {
+            color: #6c757d;
+            font-size: 16px;
+            font-weight: 400;
+            margin: 0;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
             display: flex;
             flex-direction: column;
         }
 
-        .div1 { grid-area: 1 / 1 / 2 / 2; }
-        .div2 { grid-area: 1 / 2 / 2 / 3; }
-        .div3 { grid-area: 2 / 1 / 3 / 2; }
-        .div4 { grid-area: 2 / 2 / 3 / 3; }
-        .div5 { grid-area: 3 / 1 / 4 / 2; }
-        .div6 { grid-area: 3 / 2 / 4 / 3; }
-        .div7 { grid-area: 4 / 1 / 5 / 3; }
-        .div8 { grid-area: 5 / 1 / 6 / 2; }
-        .div9 { grid-area: 5 / 2 / 6 / 3; }
-        .div10 { grid-area: 6 / 1 / 7 / 2; }
-        .div11 { grid-area: 6 / 2 / 7 / 3; }
-        .div12 { grid-area: 7 / 1 / 8 / 2; }
-        .div13 { grid-area: 7 / 2 / 8 / 3; }
-        .div14 { grid-area: 8 / 1 / 9 / 3; }
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
 
-        .item label {
+        .form-label {
             font-weight: 600;
-            margin-bottom: 8px;
             color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .required-asterisk {
-            color: #e74c3c;
-            margin-left: 3px;
-        }
-
-        .item input,
-        .item select {
-            padding: 12px 15px;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
+        .form-input,
+        .form-select {
+            padding: 15px 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
             font-size: 16px;
             font-family: 'Poppins', sans-serif;
             transition: all 0.3s ease;
-            background: white;
+            background: #ffffff;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .item input:focus,
-        .item select:focus {
+        .form-input:focus,
+        .form-select:focus {
             outline: none;
-            border-color: #2d5aa0;
-            box-shadow: 0 0 0 3px rgba(45, 90, 160, 0.1);
+            border-color: #2c5aa0;
+            box-shadow: 0 0 0 4px rgba(44, 90, 160, 0.1);
+            transform: translateY(-2px);
         }
 
-        .character-count {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-            text-align: right;
+        .form-input:hover,
+        .form-select:hover {
+            border-color: #2c5aa0;
         }
 
-        .tooltip {
-            position: relative;
-            display: inline-block;
-            margin-left: 5px;
-            cursor: help;
-        }
-
-        .tooltiptext {
-            visibility: hidden;
-            width: 220px;
-            background-color: #555;
-            color: white;
+        .file-upload-area {
+            border: 2px dashed #e9ecef;
+            border-radius: 10px;
+            padding: 30px;
             text-align: center;
-            border-radius: 6px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -110px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 12px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #f8f9fa;
         }
 
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
+        .file-upload-area:hover {
+            border-color: #2c5aa0;
+            background: #f0f4ff;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #2c5aa0;
+            background: #e3f2fd;
+        }
+
+        .file-upload-icon {
+            font-size: 48px;
+            color: #6c757d;
+            margin-bottom: 15px;
+        }
+
+        .file-upload-text {
+            color: #495057;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .file-upload-hint {
+            color: #6c757d;
+            font-size: 14px;
         }
 
         .file-preview {
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 8px;
             display: none;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-preview.show {
+            display: flex;
+        }
+
+        .file-info {
+            flex: 1;
         }
 
         .file-name {
             font-weight: 600;
-            color: #2d5aa0;
+            color: #28a745;
+            margin-bottom: 2px;
         }
 
         .file-size {
             font-size: 12px;
-            color: #666;
+            color: #6c757d;
         }
 
-        #button {
-            background: linear-gradient(135deg, #2d5aa0 0%, #1e3a6f 100%);
+        .submit-button {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e3f72 100%);
             color: white;
-            padding: 15px 30px;
+            padding: 18px 40px;
             border: none;
-            border-radius: 25px;
+            border-radius: 50px;
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             width: 100%;
-            margin-top: 20px;
+            margin-top: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        #button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(45, 90, 160, 0.3);
+        .submit-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(44, 90, 160, 0.4);
         }
 
-        small {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+        .submit-button:active {
+            transform: translateY(-1px);
         }
 
-        .registration-form {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-            margin: 20px auto;
-            max-width: 1000px;
-        }
-
-        .registration-form::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(10px);
-            z-index: 1;
-        }
-
-        .form-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .form-title {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            font-size: 28px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .form-title .material-symbols-outlined {
-            font-size: 32px;
-            color: #2d5aa0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #ecf0f1;
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 20px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #2d5aa0, #1e3a6f);
-            border-radius: 3px;
-            transition: width 0.3s ease;
-            width: 0%;
+        .form-note {
+            font-size: 13px;
+            color: #6c757d;
+            margin-top: 8px;
+            font-style: italic;
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            body {
-                overflow-x: hidden;
-                margin: 0;
-                padding: 0;
+            .header .header-logo {
+                display: none;
             }
 
-            .main {
-                width: 100% !important;
-                max-width: 100vw !important;
-                padding: 20px 10px !important;
-                margin: 0 !important;
-                overflow-x: hidden;
-                box-sizing: border-box;
+            .registration-container {
+                padding: 0 10px;
+                margin: 10px auto;
             }
 
             .registration-form {
-                padding: 20px 15px;
-                margin: 10px 5px;
-                width: calc(100% - 10px);
-                max-width: calc(100vw - 20px);
-                box-sizing: border-box;
-            }
-
-            .parent {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto;
-                padding: 20px 15px;
-                gap: 15px;
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            .div1 { grid-area: 1 / 1 / 2 / 2; }
-            .div2 { grid-area: 2 / 1 / 3 / 2; }
-            .div3 { grid-area: 3 / 1 / 4 / 2; }
-            .div4 { grid-area: 4 / 1 / 5 / 2; }
-            .div5 { grid-area: 5 / 1 / 6 / 2; }
-            .div6 { grid-area: 6 / 1 / 7 / 2; }
-            .div7 { grid-area: 7 / 1 / 8 / 2; }
-            .div8 { grid-area: 8 / 1 / 9 / 2; }
-            .div9 { grid-area: 9 / 1 / 10 / 2; }
-            .div10 { grid-area: 10 / 1 / 11 / 2; }
-            .div11 { grid-area: 11 / 1 / 12 / 2; }
-            .div12 { grid-area: 12 / 1 / 13 / 2; }
-            .div13 { grid-area: 13 / 1 / 14 / 2; }
-            .div14 { grid-area: 14 / 1 / 15 / 2; }
-
-            .item {
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            .item input,
-            .item select {
-                padding: 12px 15px;
-                font-size: 16px;
-                width: 100%;
-                box-sizing: border-box;
+                padding: 30px 20px;
+                margin: 0;
             }
 
             .form-title {
-                font-size: 24px;
-                margin-bottom: 20px;
+                font-size: 28px;
+                flex-direction: column;
+                gap: 10px;
             }
 
-            #button {
-                padding: 14px 24px;
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .form-group.full-width {
+                grid-column: 1;
+            }
+
+            .submit-button {
+                padding: 16px 30px;
                 font-size: 16px;
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            /* Ensure no horizontal overflow */
-            * {
-                max-width: 100%;
-                box-sizing: border-box;
             }
         }
 
         @media (max-width: 480px) {
-            .main {
-                padding: 15px 5px !important;
+            .registration-container {
+                padding: 0 5px;
             }
 
             .registration-form {
-                padding: 15px 10px;
-                margin: 5px 2px;
-                width: calc(100% - 4px);
-                max-width: calc(100vw - 10px);
-            }
-
-            .parent {
-                padding: 15px 10px;
-                gap: 12px;
+                padding: 25px 15px;
+                border-radius: 15px;
             }
 
             .form-title {
-                font-size: 20px;
-                margin-bottom: 15px;
+                font-size: 24px;
             }
 
-            .item input,
-            .item select {
-                padding: 10px 12px;
+            .form-subtitle {
+                font-size: 14px;
+            }
+
+            .form-grid {
+                gap: 18px;
+            }
+
+            .form-input,
+            .form-select {
+                padding: 12px 15px;
                 font-size: 16px;
             }
 
-            .item label {
-                font-size: 14px;
-                margin-bottom: 6px;
+            .form-label {
+                font-size: 13px;
+            }
+
+            .submit-button {
+                padding: 15px 25px;
+                font-size: 16px;
+                border-radius: 30px;
+            }
+
+            .file-upload-area {
+                padding: 25px 15px;
+            }
+
+            .file-upload-icon {
+                font-size: 36px;
             }
         }
 
@@ -526,16 +496,26 @@
     <div class="grid-container">
       <!-- Header -->
       <div class="header">
-        <div class="menu-icon">
+         <div class="menu-icon" onclick="openSidebar()">
           <span class="material-symbols-outlined">menu</span>
         </div>
-        <div class="icon">
-          <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
+        <div class="header-logo">
+          <img
+            class="logo"
+            src="sona_logo.jpg"
+            alt="Sona College Logo"
+            height="60px"
+            width="200"
+          />
         </div>
         <div class="header-title">
-          <p>Event Management System</p>
+          <p>Event Management Dashboard</p>
+        </div>
+        <div >
+          <!-- empty -->
         </div>
       </div>
+
 
       <!-- Sidebar -->
       <aside class="sidebar" id="sidebar">
@@ -548,7 +528,7 @@
 
         <div class="student-info">
           <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-          <div class="student-regno">ID:                                                                                                                         <?php echo htmlspecialchars($teacher_data['faculty_id']); ?></div>
+          <div class="student-regno">ID:                                                                                                                                                                                                         <?php echo htmlspecialchars($teacher_data['faculty_id']); ?></div>
         </div>
 
         <nav>
@@ -613,261 +593,205 @@
 
         <div class="registration-container">
           <form action="" method="POST" enctype="multipart/form-data" class="registration-form" id="staffEventForm">
-            <div class="form-content">
-              <h2 class="form-title">
+            <div class="form-header">
+              <h1 class="form-title">
                 <span class="material-symbols-outlined">event_note</span>
-                Add Completed Event Record
-              </h2>
+                Staff Event Registration
+              </h1>
+              <p class="form-subtitle">Register your completed professional development events</p>
+            </div>
 
-              <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label" for="staffid">Staff ID</label>
+                <input
+                  type="text"
+                  id="staffid"
+                  name="staffid"
+                  class="form-input"
+                  value="<?php echo isset($_POST['staffid']) ? htmlspecialchars($_POST['staffid']) : htmlspecialchars($teacher_data['faculty_id']); ?>"
+                  required
+                  readonly
+                  style="background-color: #f8f9fa; cursor: not-allowed;"
+                >
+                <div class="form-note">Auto-filled from your profile</div>
               </div>
 
-              <div class="parent">
-                <div class="item div1">
-                  <label>
-                    Staff ID <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Your unique staff identification</span>
-                    </div>
-                  </label>
-                  <input
-                    type="text"
-                    name="staffid"
-                    placeholder="Enter Your Staff ID"
-                    value="<?php echo isset($_POST['staffid']) ? htmlspecialchars($_POST['staffid']) : htmlspecialchars($teacher_data['faculty_id']); ?>"
-                    required
-                  />
-                </div>
+              <div class="form-group">
+                <label class="form-label" for="name">Full Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  class="form-input"
+                  value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : htmlspecialchars($teacher_data['name']); ?>"
+                  required
+                  readonly
+                  style="background-color: #f8f9fa; cursor: not-allowed;"
+                >
+                <div class="form-note">Auto-filled from your profile</div>
+              </div>
 
-                <div class="item div2">
-                  <label>
-                    Full Name <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Your full name as registered</span>
-                    </div>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Enter Your Full Name"
-                    value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : htmlspecialchars($teacher_data['name']); ?>"
-                    required
-                  />
-                </div>
+              <div class="form-group">
+                <label class="form-label" for="department">Department</label>
+                <select id="department" name="department" class="form-select" required>
+                  <option value="">Select Your Department</option>
+                  <option value="Computer Science"                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'Computer Science') ? 'selected' : ''; ?>>Computer Science</option>
+                  <option value="Information Technology"                                                                                                                 <?php echo(isset($_POST['department']) && $_POST['department'] == 'Information Technology') ? 'selected' : ''; ?>>Information Technology</option>
+                  <option value="Electronics"                                                                                           <?php echo(isset($_POST['department']) && $_POST['department'] == 'Electronics') ? 'selected' : ''; ?>>Electronics</option>
+                  <option value="Mechanical"                                                                                         <?php echo(isset($_POST['department']) && $_POST['department'] == 'Mechanical') ? 'selected' : ''; ?>>Mechanical</option>
+                  <option value="Civil"                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'Civil') ? 'selected' : ''; ?>>Civil</option>
+                  <option value="Electrical"                                                                                         <?php echo(isset($_POST['department']) && $_POST['department'] == 'Electrical') ? 'selected' : ''; ?>>Electrical</option>
+                  <option value="MBA"                                                                           <?php echo(isset($_POST['department']) && $_POST['department'] == 'MBA') ? 'selected' : ''; ?>>MBA</option>
+                  <option value="Other"                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'Other') ? 'selected' : ''; ?>>Other</option>
+                </select>
+              </div>
 
-                <div class="item div3">
-                  <label>
-                    Department <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Your department affiliation</span>
-                    </div>
-                  </label>
-                  <select name="department" required>
-                    <option value="" disabled                                                                                           <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select Your Department</option>
-                    <option value="CSE"                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
-                    <option value="IT"                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>Information Technology (IT)</option>
-                    <option value="ECE"                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
-                    <option value="EEE"                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
-                    <option value="MECH"                                                                                 <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
-                    <option value="CIVIL"                                                                                   <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
-                    <option value="BME"                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'BME') ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
-                  </select>
-                </div>
+              <div class="form-group">
+                <label class="form-label" for="academic">Academic Year</label>
+                <select id="academic" name="academic" class="form-select" required>
+                  <option value="">Select Academic Year</option>
+                  <option value="2024-25"                                                                                   <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2024-25') ? 'selected' : ''; ?>>2024-25</option>
+                  <option value="2023-24"                                                                                   <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2023-24') ? 'selected' : ''; ?>>2023-24</option>
+                  <option value="2022-23"                                                                                   <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2022-23') ? 'selected' : ''; ?>>2022-23</option>
+                  <option value="2021-22"                                                                                   <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2021-22') ? 'selected' : ''; ?>>2021-22</option>
+                </select>
+              </div>
 
-                <div class="item div4">
-                  <label>
-                    Event Date <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Date when the event took place (past date only)</span>
-                    </div>
-                  </label>
-                  <input
-                    type="date"
-                    name="event-of-date"
-                    max="<?php echo date('Y-m-d'); ?>"
-                    value="<?php echo isset($_POST['event-of-date']) ? htmlspecialchars($_POST['event-of-date']) : ''; ?>"
-                    required
-                  />
-                  <small>Select past date only</small>
-                </div>                <div class="item div5">
-                  <label>
-                    Academic Year <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Academic year when event occurred</span>
-                    </div>
-                  </label>
-                  <select name="academic" required>
-                    <option value="" disabled                                                                                           <?php echo ! isset($_POST['academic']) ? 'selected' : ''; ?>>Select Academic Year</option>
-                    <option value="2024-2025"                                                                                           <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2024-2025') ? 'selected' : ''; ?>>(2024-2025) - Current</option>
-                    <option value="2025-2026"                                                                                           <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2025-2026') ? 'selected' : ''; ?>>(2025-2026) - ODD</option>
-                    <option value="2026-2027"                                                                                           <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2026-2027') ? 'selected' : ''; ?>>(2026-2027) - EVEN</option>
-                    <option value="2027-2028"                                                                                           <?php echo(isset($_POST['academic']) && $_POST['academic'] == '2027-2028') ? 'selected' : ''; ?>>(2027-2028) - ODD</option>
-                  </select>
-                </div>
+              <div class="form-group">
+                <label class="form-label" for="eventType">Event Type</label>
+                <select id="eventType" name="eventType" class="form-select" required>
+                  <option value="">Select Event Type</option>
+                  <option value="Workshop"                                                                                     <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
+                  <option value="Seminar"                                                                                   <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
+                  <option value="Conference"                                                                                         <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Conference') ? 'selected' : ''; ?>>Conference</option>
+                  <option value="Training"                                                                                     <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Training') ? 'selected' : ''; ?>>Training</option>
+                  <option value="FDP"                                                                           <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'FDP') ? 'selected' : ''; ?>>Faculty Development Program</option>
+                  <option value="Webinar"                                                                                   <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
+                  <option value="Other"                                                                               <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Other') ? 'selected' : ''; ?>>Other</option>
+                </select>
+              </div>
 
-                <div class="item div6">
-                  <label>
-                    Event Type <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Type of professional development activity</span>
-                    </div>
-                  </label>
-                  <select name="eventType" required>
-                    <option value="" disabled                                                                                           <?php echo ! isset($_POST['eventType']) ? 'selected' : ''; ?>>Select Event Type</option>
-                    <option value="FDP"                                                                               <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'FDP') ? 'selected' : ''; ?>>Faculty Development Program (FDP)</option>
-                    <option value="Workshop"                                                                                         <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
-                    <option value="CONFERENCE"                                                                                             <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'CONFERENCE') ? 'selected' : ''; ?>>Conference</option>
-                    <option value="INDUSTRIAL TRAINING"                                                                                                               <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'INDUSTRIAL TRAINING') ? 'selected' : ''; ?>>Industrial Training</option>
-                    <option value="STTP"                                                                                 <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'STTP') ? 'selected' : ''; ?>>Short Term Training Program (STTP)</option>
-                    <option value="REVIEWER"                                                                                         <?php echo(isset($_POST['eventType']) && $_POST['eventType'] == 'REVIEWER') ? 'selected' : ''; ?>>Reviewer</option>
-                  </select>
-                </div>
+              <div class="form-group">
+                <label class="form-label" for="event-of-date">Event Date</label>
+                <input
+                  type="date"
+                  id="event-of-date"
+                  name="event-of-date"
+                  class="form-input"
+                  value="<?php echo isset($_POST['event-of-date']) ? htmlspecialchars($_POST['event-of-date']) : ''; ?>"
+                  required
+                  max="<?php echo date('Y-m-d'); ?>"
+                >
+                <div class="form-note">Select past date only (completed events)</div>
+              </div>
 
-                <div class="item div7">
-                  <label>
-                    Event Topic <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Professional development topic</span>
-                    </div>
-                  </label>
-                  <input
-                    type="text"
-                    name="topic"
-                    placeholder="Enter the Event Topic or Subject"
-                    value="<?php echo isset($_POST['topic']) ? htmlspecialchars($_POST['topic']) : ''; ?>"
-                    maxlength="100"
-                    required
-                  />
-                  <div class="character-count">
-                    <span id="topicCount">0</span>/100 characters
+              <div class="form-group full-width">
+                <label class="form-label" for="topic">Event Topic/Subject</label>
+                <input
+                  type="text"
+                  id="topic"
+                  name="topic"
+                  class="form-input"
+                  value="<?php echo isset($_POST['topic']) ? htmlspecialchars($_POST['topic']) : ''; ?>"
+                  required
+                  maxlength="100"
+                  placeholder="Enter the main topic or subject of the event"
+                >
+                <div class="form-note">Brief description of the event topic (max 100 characters)</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="dates">Duration (Days)</label>
+                <select id="dates" name="dates" class="form-select" required>
+                  <option value="">Select Duration</option>
+                  <option value="1"                                                                       <?php echo(isset($_POST['dates']) && $_POST['dates'] == '1') ? 'selected' : ''; ?>>1 Day</option>
+                  <option value="2"                                                                       <?php echo(isset($_POST['dates']) && $_POST['dates'] == '2') ? 'selected' : ''; ?>>2 Days</option>
+                  <option value="3"                                                                       <?php echo(isset($_POST['dates']) && $_POST['dates'] == '3') ? 'selected' : ''; ?>>3 Days</option>
+                  <option value="5"                                                                       <?php echo(isset($_POST['dates']) && $_POST['dates'] == '5') ? 'selected' : ''; ?>>5 Days</option>
+                  <option value="7"                                                                       <?php echo(isset($_POST['dates']) && $_POST['dates'] == '7') ? 'selected' : ''; ?>>1 Week</option>
+                  <option value="14"                                                                         <?php echo(isset($_POST['dates']) && $_POST['dates'] == '14') ? 'selected' : ''; ?>>2 Weeks</option>
+                  <option value="30"                                                                         <?php echo(isset($_POST['dates']) && $_POST['dates'] == '30') ? 'selected' : ''; ?>>1 Month</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="from">From Date</label>
+                <input
+                  type="date"
+                  id="from"
+                  name="from"
+                  class="form-input"
+                  value="<?php echo isset($_POST['from']) ? htmlspecialchars($_POST['from']) : ''; ?>"
+                  required
+                  max="<?php echo date('Y-m-d'); ?>"
+                >
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="to">To Date</label>
+                <input
+                  type="date"
+                  id="to"
+                  name="to"
+                  class="form-input"
+                  value="<?php echo isset($_POST['to']) ? htmlspecialchars($_POST['to']) : ''; ?>"
+                  required
+                  max="<?php echo date('Y-m-d'); ?>"
+                >
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="organisation">Organizing Institution</label>
+                <input
+                  type="text"
+                  id="organisation"
+                  name="organisation"
+                  class="form-input"
+                  value="<?php echo isset($_POST['organisation']) ? htmlspecialchars($_POST['organisation']) : ''; ?>"
+                  required
+                  maxlength="80"
+                  placeholder="Name of the organizing institution"
+                >
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="sponsors">Event Sponsors</label>
+                <input
+                  type="text"
+                  id="sponsors"
+                  name="sponsors"
+                  class="form-input"
+                  value="<?php echo isset($_POST['sponsors']) ? htmlspecialchars($_POST['sponsors']) : ''; ?>"
+                  required
+                  placeholder="Enter sponsors or 'Self-funded' if none"
+                >
+              </div>
+
+              <div class="form-group full-width">
+                <label class="form-label" for="certificates">Event Certificate</label>
+                <input type="file" id="certificates" name="certificates" accept=".pdf" required style="display: none;">
+                <div class="file-upload-area" onclick="document.getElementById('certificates').click();" id="fileUploadArea">
+                  <div class="file-upload-icon">
+                    <span class="material-symbols-outlined">cloud_upload</span>
                   </div>
-                  <small>Professional development event topic</small>
+                  <div class="file-upload-text">Click to upload certificate</div>
+                  <div class="file-upload-hint">PDF files only (Max: 5MB)</div>
                 </div>
-
-
-
-                <div class="item div8">
-                  <label>
-                    Number of Days <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Duration of the event</span>
-                    </div>
-                  </label>
-                  <select name="dates" required>
-                    <option value="" disabled                                                                                           <?php echo ! isset($_POST['dates']) ? 'selected' : ''; ?>>Select Duration</option>
-                    <?php for ($i = 1; $i <= 10; $i++): ?>
-                      <option value="<?php echo $i; ?>"<?php echo(isset($_POST['dates']) && $_POST['dates'] == $i) ? 'selected' : ''; ?>>
-                        <?php echo $i; ?> Day<?php echo $i > 1 ? 's' : ''; ?>
-                      </option>
-                    <?php endfor; ?>
-                  </select>
-                </div>
-
-                <div class="item div9">
-                  <label>
-                    Start Date <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Event start date (past date only)</span>
-                    </div>
-                  </label>
-                  <input
-                    type="date"
-                    name="from"
-                    max="<?php echo date('Y-m-d'); ?>"
-                    value="<?php echo isset($_POST['from']) ? htmlspecialchars($_POST['from']) : ''; ?>"
-                    required
-                  />
-                  <small>Select past date only</small>
-                </div>
-
-                <div class="item div10">
-                  <label>
-                    End Date <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Event end date (past date only)</span>
-                    </div>
-                  </label>
-                  <input
-                    type="date"
-                    name="to"
-                    max="<?php echo date('Y-m-d'); ?>"
-                    value="<?php echo isset($_POST['to']) ? htmlspecialchars($_POST['to']) : ''; ?>"
-                    required
-                  />
-                  <small>Select past date only</small>
-                </div>                <div class="item div11">
-                  <label>
-                    Organized By <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Institution/Company organizing the event</span>
-                    </div>
-                  </label>
-                  <input
-                    type="text"
-                    name="organisation"
-                    placeholder="Enter the Organizing Institution/Company"
-                    value="<?php echo isset($_POST['organisation']) ? htmlspecialchars($_POST['organisation']) : ''; ?>"
-                    maxlength="80"
-                    required
-                  />
-                  <div class="character-count">
-                    <span id="organizationCount">0</span>/80 characters
-                  </div>
-                </div>
-
-                <div class="item div12">
-                  <label>
-                    Sponsored By <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Event sponsor organization</span>
-                    </div>
-                  </label>
-                  <select name="sponsors" required>
-                    <option value="" disabled                                                                                           <?php echo ! isset($_POST['sponsors']) ? 'selected' : ''; ?>>Select Sponsor</option>
-                    <option value="AICTE"                                                                                   <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'AICTE') ? 'selected' : ''; ?>>AICTE</option>
-                    <option value="IBM"                                                                               <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IBM') ? 'selected' : ''; ?>>IBM</option>
-                    <option value="INFOSYS SPRINGBOARD"                                                                                                               <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'INFOSYS SPRINGBOARD') ? 'selected' : ''; ?>>Infosys Springboard</option>
-                    <option value="IEI"                                                                               <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IEI') ? 'selected' : ''; ?>>Institution of Engineers India (IEI)</option>
-                    <option value="IEEE"                                                                                 <?php echo(isset($_POST['sponsors']) && $_POST['sponsors'] == 'IEEE') ? 'selected' : ''; ?>>Institute of Electrical and Electronics Engineers (IEEE)</option>
-                  </select>
-                </div>
-
-                <div class="item div13">
-                  <label>
-                    Certificate <span class="required-asterisk">*</span>
-                    <div class="tooltip">
-                      <span class="material-symbols-outlined" style="font-size: 14px;">info</span>
-                      <span class="tooltiptext">Upload your completion certificate</span>
-                    </div>
-                  </label>
-                  <input type="file" name="certificates" accept=".pdf" required id="certificateFile"/>
-                  <div class="file-preview" id="certificatePreview">
+                <div class="file-preview" id="certificatePreview">
+                  <span class="material-symbols-outlined" style="color: #28a745;">check_circle</span>
+                  <div class="file-info">
                     <div class="file-name" id="certificateName"></div>
                     <div class="file-size" id="certificateSize"></div>
                   </div>
-                  <small>Only PDF files accepted (Max: 5MB)</small>
-                </div>
-
-                <div class="item div14">
-                  <button type="submit" id="button">
-                    Add Event Record
-                  </button>
                 </div>
               </div>
             </div>
+
+            <button type="submit" class="submit-button" id="submitBtn">
+              <span class="material-symbols-outlined" style="margin-right: 10px;">event_available</span>
+              Register Event
+            </button>
           </form>
         </div>
       </div>
@@ -914,65 +838,70 @@
 
         // Modern form functionality
         const form = document.getElementById('staffEventForm');
-        const fileInput = document.getElementById('certificateFile');
-        const fileUploadButton = document.getElementById('fileUploadButton');
-        const fileUploadText = document.getElementById('fileUploadText');
-        const progressFill = document.getElementById('progressFill');
+        const fileInput = document.getElementById('certificates');
+        const fileUploadArea = document.getElementById('fileUploadArea');
         const submitBtn = document.getElementById('submitBtn');
 
-        // Form progress tracking
-        function updateProgress() {
-          const inputs = form.querySelectorAll('input[required], select[required]');
-          let filledInputs = 0;
+        // File upload enhancement
+        if (fileInput) {
+          fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const preview = document.getElementById('certificatePreview');
+            const fileName = document.getElementById('certificateName');
+            const fileSize = document.getElementById('certificateSize');
 
-          inputs.forEach(input => {
-            if (input.type === 'file') {
-              if (input.files.length > 0) filledInputs++;
-            } else if (input.value.trim() !== '') {
-              filledInputs++;
+            if (file) {
+              if (file.type !== 'application/pdf') {
+                alert('Please select a PDF file only.');
+                this.value = '';
+                preview.classList.remove('show');
+                return;
+              }
+
+              if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                alert('File size must be less than 5MB.');
+                this.value = '';
+                preview.classList.remove('show');
+                return;
+              }
+
+              // Show file preview
+              fileName.textContent = file.name;
+              fileSize.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+              preview.classList.add('show');
+
+              // Update upload area
+              fileUploadArea.style.borderColor = '#28a745';
+              fileUploadArea.style.backgroundColor = '#f8f9fa';
+            } else {
+              preview.classList.remove('show');
+              fileUploadArea.style.borderColor = '#e9ecef';
+              fileUploadArea.style.backgroundColor = '#f8f9fa';
             }
           });
 
-          const progress = (filledInputs / inputs.length) * 100;
-          progressFill.style.width = progress + '%';
+          // Drag and drop functionality
+          fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+          });
 
-          if (progress === 100) {
-            progressFill.style.background = 'linear-gradient(90deg, #27ae60, #2ecc71)';
-          } else {
-            progressFill.style.background = 'linear-gradient(90deg, #3498db, #2ecc71)';
-          }
+          fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+          });
+
+          fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+              fileInput.files = files;
+              fileInput.dispatchEvent(new Event('change'));
+            }
+          });
         }
-
-        // File upload enhancement
-        fileInput.addEventListener('change', function(e) {
-          const file = e.target.files[0];
-          if (file) {
-            if (file.type !== 'application/pdf') {
-              alert('Please select a PDF file only.');
-              this.value = '';
-              return;
-            }
-
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-              alert('File size must be less than 5MB.');
-              this.value = '';
-              return;
-            }
-
-            fileUploadButton.classList.add('has-file');
-            fileUploadText.textContent = file.name;
-            fileUploadButton.querySelector('.material-symbols-outlined').textContent = 'check_circle';
-          } else {
-            fileUploadButton.classList.remove('has-file');
-            fileUploadText.textContent = 'Choose Certificate File';
-            fileUploadButton.querySelector('.material-symbols-outlined').textContent = 'cloud_upload';
-          }
-          updateProgress();
-        });
-
-        // Real-time validation and progress
-        form.addEventListener('input', updateProgress);
-        form.addEventListener('change', updateProgress);
 
         // Date validation
         const eventDate = form.querySelector('input[name="event-of-date"]');
@@ -997,27 +926,30 @@
         toDate.addEventListener('change', validateDates);
 
         // Enhanced form submission
-        form.addEventListener('submit', function(e) {
-          const originalText = submitBtn.innerHTML;
-          submitBtn.innerHTML = '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span> Registering...';
-          submitBtn.disabled = true;
+        if (form && submitBtn) {
+          form.addEventListener('submit', function(e) {
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="material-symbols-outlined" style="animation: spin 1s linear infinite;">sync</span> Submitting...';
+            submitBtn.disabled = true;
 
-          // Re-enable button after 3 seconds in case of errors
-          setTimeout(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-          }, 3000);
-        });
+            // Re-enable button after 5 seconds in case of errors
+            setTimeout(() => {
+              submitBtn.innerHTML = originalText;
+              submitBtn.disabled = false;
+            }, 5000);
+          });
+        }
 
-        // Input animations
+        // Input animations and focus effects
         const inputs = form.querySelectorAll('.form-input, .form-select');
         inputs.forEach(input => {
           input.addEventListener('focus', function() {
-            this.parentElement.style.transform = 'scale(1.02)';
+            this.parentElement.style.transform = 'translateY(-2px)';
+            this.parentElement.style.transition = 'transform 0.2s ease';
           });
 
           input.addEventListener('blur', function() {
-            this.parentElement.style.transform = 'scale(1)';
+            this.parentElement.style.transform = 'translateY(0)';
           });
         });
 

@@ -169,11 +169,23 @@
         }
 
         .header {
-            grid-area: header;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-        }
+  grid-area: header;
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  font-size: 15px;
+  font-weight: 100;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  color: #1e4276;
+  position: fixed;
+  width: 100%;
+  z-index: 1001;
+  top: 0;
+  left: 0;
+}
 
         .sidebar {
             grid-area: sidebar;
@@ -520,6 +532,10 @@
                 overflow-x: hidden;
             }
 
+            .header .header-logo {
+                display: none;
+            }
+
             .grid-container {
                 grid-template-columns: 1fr;
                 grid-template-rows: 60px 1fr;
@@ -805,17 +821,26 @@
 <body>
     <div class="grid-container">
         <!-- Header -->
-        <div class="header">
-            <div class="menu-icon">
-                <span class="material-symbols-outlined">menu</span>
-            </div>
-            <div class="icon">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
-            </div>
-            <div class="header-title">
-                <p>Event Management System</p>
-            </div>
+         <div class="header">
+         <div class="menu-icon" onclick="openSidebar()">
+          <span class="material-symbols-outlined">menu</span>
         </div>
+        <div class="header-logo">
+          <img
+            class="logo"
+            src="sona_logo.jpg"
+            alt="Sona College Logo"
+            height="60px"
+            width="200"
+          />
+        </div>
+        <div class="header-title">
+          <p>Event Management Dashboard</p>
+        </div>
+        <div >
+          <!-- empty -->
+        </div>
+      </div>
 
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
@@ -828,7 +853,7 @@
 
         <div class="student-info">
             <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-            <div class="student-regno">ID:                                           <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
+            <div class="student-regno">ID:                                                                                     <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
         </div>            <nav>
                 <ul class="nav-menu">
                     <li class="nav-item">
@@ -938,10 +963,10 @@
                         <div class="filter-group">
                             <label class="filter-label">Sort By</label>
                             <select name="sort" class="filter-select">
-                                <option value="event_date"                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($sort_by === 'event_date') ? 'selected' : ''; ?>>Date</option>
-                                <option value="topic"                                                                                                                                                                                                                                                                                                                                                                                    <?php echo($sort_by === 'topic') ? 'selected' : ''; ?>>Event Name</option>
-                                <option value="event_type"                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
-                                <option value="organisation"                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($sort_by === 'organisation') ? 'selected' : ''; ?>>Organization</option>
+                                <option value="event_date"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($sort_by === 'event_date') ? 'selected' : ''; ?>>Date</option>
+                                <option value="topic"                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($sort_by === 'topic') ? 'selected' : ''; ?>>Event Name</option>
+                                <option value="event_type"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
+                                <option value="organisation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($sort_by === 'organisation') ? 'selected' : ''; ?>>Organization</option>
                             </select>
                         </div>
 

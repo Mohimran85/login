@@ -12,7 +12,11 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Get filter parameters from GET (same as participants.php)
+// Get export format
+$format      = isset($_GET['format']) ? $_GET['format'] : 'csv';
+$export_type = isset($_GET['export_type']) ? $_GET['export_type'] : 'detailed';
+
+// Get filter parameters (same as participants.php)
 $filter_event_type       = isset($_GET['event_type']) ? $_GET['event_type'] : '';
 $filter_department       = isset($_GET['department']) ? $_GET['department'] : '';
 $filter_year             = isset($_GET['year']) ? $_GET['year'] : '';
@@ -20,12 +24,7 @@ $filter_prize            = isset($_GET['prize']) ? $_GET['prize'] : '';
 $filter_participant_type = isset($_GET['participant_type']) ? $_GET['participant_type'] : 'all';
 $search_query            = isset($_GET['search']) ? $_GET['search'] : '';
 
-header("Content-Type: application/vnd.ms-excel");
-header("Content-Disposition: attachment; filename=participants_report_" . date('Y-m-d') . ".xls");
-header("Pragma: no-cache");
-header("Expires: 0");
-
-// Build WHERE clause based on filters - same logic as participants.php
+// Build WHERE clause based on filters
 $student_where_conditions = [];
 $teacher_where_conditions = [];
 $params                   = [];
@@ -50,8 +49,7 @@ if (! empty($filter_department)) {
 
 if (! empty($filter_year)) {
     $student_where_conditions[] = "se.current_year = ?";
-    // Skip year filter for teachers as they don't have current_year
-    $params[] = $filter_year;
+    $params[]                   = $filter_year;
     $param_types .= "s";
 }
 
@@ -83,7 +81,6 @@ $teacher_where_clause = ! empty($teacher_where_conditions) ? "WHERE " . implode(
 
 // Build the UNION query based on participant type filter
 if ($filter_participant_type === 'student') {
-    // Only students
     $sql = "SELECT
             se.id,
             se.regno as reg_id,
@@ -99,13 +96,14 @@ if ($filter_participant_type === 'student') {
             se.prize_amount,
             se.event_poster,
             se.certificates,
+            sr.personal_email,
+            sr.degree,
             'student' as participant_type
         FROM student_event_register se
         LEFT JOIN student_register sr ON se.regno = sr.regno
         $student_where_clause
         ORDER BY se.attended_date DESC, se.id DESC";
 } elseif ($filter_participant_type === 'teacher') {
-    // Only teachers
     $sql = "SELECT
             te.id,
             te.staff_id as reg_id,
@@ -121,13 +119,14 @@ if ($filter_participant_type === 'student') {
             '' as prize_amount,
             '' as event_poster,
             te.certificate_path as certificates,
+            tr.email as personal_email,
+            '' as degree,
             'teacher' as participant_type
         FROM staff_event_reg te
         LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id
         $teacher_where_clause
         ORDER BY te.event_date DESC, te.id DESC";
 } else {
-    // Both students and teachers (UNION)
     $sql = "SELECT * FROM (
         SELECT
             se.id,
@@ -144,6 +143,8 @@ if ($filter_participant_type === 'student') {
             se.prize_amount,
             se.event_poster,
             se.certificates,
+            sr.personal_email,
+            sr.degree,
             'student' as participant_type
         FROM student_event_register se
         LEFT JOIN student_register sr ON se.regno = sr.regno
@@ -166,6 +167,8 @@ if ($filter_participant_type === 'student') {
             '' as prize_amount,
             '' as event_poster,
             te.certificate_path as certificates,
+            tr.email as personal_email,
+            '' as degree,
             'teacher' as participant_type
         FROM staff_event_reg te
         LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id
@@ -181,55 +184,118 @@ if (! empty($params)) {
 $stmt->execute();
 $result = $stmt->get_result();
 
-echo "<table border='1'>";
-echo "<tr>
-        <th>S.No</th>
-        <th>Participant Type</th>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Year</th>
-        <th>Department</th>
-        <th>Event Type</th>
-        <th>Event Name</th>
-        <th>Event Date</th>
-        <th>Organisation</th>
-        <th>Prize</th>
-        <th>Has Poster</th>
-        <th>Has Certificate</th>
-      </tr>";
+// Set appropriate headers based on format
+if ($format === 'excel') {
+    header("Content-Type: application/vnd.ms-excel");
+    header("Content-Disposition: attachment; filename=participants_export_" . date('Y-m-d_H-i-s') . ".xls");
+    header("Pragma: no-cache");
+    header("Expires: 0");
 
+    // Start HTML table for Excel
+    echo "<table border='1'>";
+} else {
+    // CSV format
+    header('Content-Type: text/csv');
+    header('Content-Disposition: attachment; filename="participants_export_' . date('Y-m-d_H-i-s') . '.csv"');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Pragma: public');
+
+    $output = fopen('php://output', 'w');
+}
+
+// Prepare headers based on export type
+if ($export_type === 'summary') {
+    $headers = ['S.No', 'Participant Type', 'ID', 'Name', 'Department', 'Event Type', 'Event Name', 'Event Date', 'Prize'];
+} else {
+    // Detailed export
+    $headers = ['S.No', 'Participant Type', 'ID', 'Name', 'Email', 'Year/Role', 'Department', 'Event Type', 'Event Name', 'Event Date', 'Organisation', 'Prize', 'Prize Amount', 'Has Poster', 'Has Certificate'];
+}
+
+// Output headers
+if ($format === 'excel') {
+    echo "<tr>";
+    foreach ($headers as $header) {
+        echo "<th>" . htmlspecialchars($header) . "</th>";
+    }
+    echo "</tr>";
+} else {
+    fputcsv($output, $headers);
+}
+
+// Output data
 $sno = 1;
 if ($result->num_rows > 0) {
     while ($row = $result->fetch_assoc()) {
-        echo "<tr>";
-        echo "<td>" . $sno++ . "</td>";
+        if ($export_type === 'summary') {
+            $data = [
+                $sno++,
+                ($row['participant_type'] === 'teacher') ? 'Teacher' : 'Student',
+                $row['reg_id'],
+                $row['name'] ?? 'N/A',
+                $row['department'],
+                $row['event_type'],
+                $row['event_title'],
+                date('d-M-Y', strtotime($row['event_date'])),
+                $row['prize'] ?: 'No Prize',
+            ];
+        } else {
+            // Detailed export
+            $data = [
+                $sno++,
+                ($row['participant_type'] === 'teacher') ? 'Teacher' : 'Student',
+                $row['reg_id'],
+                $row['name'] ?? 'N/A',
+                $row['personal_email'] ?? 'N/A',
+                $row['year_info'] ?: ($row['participant_type'] === 'teacher' ? 'Faculty' : 'N/A'),
+                $row['department'],
+                $row['event_type'],
+                $row['event_title'],
+                date('d-M-Y', strtotime($row['event_date'])),
+                $row['organisation'],
+                $row['prize'] ?: 'No Prize',
+                $row['prize_amount'] ?: '',
+                ! empty($row['event_poster']) ? 'Yes' : 'No',
+                ! empty($row['certificates']) ? 'Yes' : 'No',
+            ];
+        }
 
-        // Participant type
-        $participant_type = ($row['participant_type'] === 'teacher') ? 'Teacher' : 'Student';
-        echo "<td>" . htmlspecialchars($participant_type) . "</td>";
-
-        echo "<td>" . htmlspecialchars($row['reg_id']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['name'] ?? 'N/A') . "</td>";
-        echo "<td>" . htmlspecialchars($row['year_info'] ?: 'N/A') . "</td>";
-        echo "<td>" . htmlspecialchars($row['department']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['event_type']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['event_title']) . "</td>";
-        echo "<td>" . htmlspecialchars(date('d-M-Y', strtotime($row['event_date']))) . "</td>";
-        echo "<td>" . htmlspecialchars($row['organisation']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['prize'] ?: 'No Prize') . "</td>";
-
-        // File availability
-        $has_poster      = ! empty($row['event_poster']) ? 'Yes' : 'No';
-        $has_certificate = ! empty($row['certificates']) ? 'Yes' : 'No';
-        echo "<td>" . $has_poster . "</td>";
-        echo "<td>" . $has_certificate . "</td>";
-
-        echo "</tr>";
+        if ($format === 'excel') {
+            echo "<tr>";
+            foreach ($data as $cell) {
+                echo "<td>" . htmlspecialchars($cell) . "</td>";
+            }
+            echo "</tr>";
+        } else {
+            fputcsv($output, $data);
+        }
     }
 } else {
-    echo "<tr><td colspan='13'>No records found</td></tr>";
+    if ($format === 'excel') {
+        echo "<tr><td colspan='" . count($headers) . "'>No records found</td></tr>";
+    } else {
+        fputcsv($output, array_fill(0, count($headers), 'No records found'));
+    }
 }
 
-echo "</table>";
+// Add export metadata
+if ($format === 'csv') {
+    fputcsv($output, []);
+    fputcsv($output, ['=== EXPORT METADATA ===']);
+    fputcsv($output, ['Export Date', date('Y-m-d H:i:s')]);
+    fputcsv($output, ['Export Type', $export_type]);
+    fputcsv($output, ['Format', $format]);
+    fputcsv($output, ['Filters Applied', ! empty(array_filter([$filter_event_type, $filter_department, $filter_year, $filter_prize, $search_query])) ? 'Yes' : 'No']);
+    if (! empty($search_query)) {
+        fputcsv($output, ['Search Query', $search_query]);
+    }
+}
+
+// Close output
+if ($format === 'excel') {
+    echo "</table>";
+} else {
+    fclose($output);
+}
 
 $conn->close();
+exit();

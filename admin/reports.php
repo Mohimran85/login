@@ -84,6 +84,10 @@
                   <span class="material-symbols-outlined">people</span>
                   <a href="participants.php">Participants</a>
                 </li>
+                <li class="sidebar-list-item">
+                  <span class="material-symbols-outlined">manage_accounts</span>
+                  <a href="user_management.php">User Management</a>
+                </li>
                 <li class="sidebar-list-item active">
                   <span class="material-symbols-outlined">bar_chart</span>
                   <a href="reports.php">Reports</a>
@@ -102,13 +106,19 @@
             <form class="form" action="" method="POST">
                 <div class="card">
                     <div class="inner-card">
-                        <label for="year">Year:</label>
+                        <label for="year">Academic Year:</label>
                         <select name="year" id="year" required>
-                            <option value="">Select Year</option>
-                            <option value="1st Year">1st Year</option>
-                            <option value="2nd Year">2nd Year</option>
-                            <option value="3rd Year">3rd Year</option>
-                            <option value="4th Year">4th Year</option>
+                            <option value="">Select Academic Year</option>
+                            <?php
+                                // Generate last 10 academic years starting from current year
+                                $current_year = date('Y');
+                                for ($i = 0; $i < 10; $i++) {
+                                    $start_year    = $current_year - $i;
+                                    $end_year      = $start_year + 1;
+                                    $academic_year = $start_year . '-' . $end_year;
+                                    echo "<option value='$academic_year'>$academic_year</option>";
+                                }
+                            ?>
                         </select>
                     </div>
                 </div>
@@ -131,14 +141,8 @@
                         <label for="semester">Semester:</label>
                         <select name="semester" id="semester" required>
                             <option value="">Select Semester</option>
-                            <option value="first semester">First semester</option>
-                            <option value="second semester">Second semester</option>
-                            <option value="third semester">Third semester</option>
-                            <option value="fourth semester">Fourth semester</option>
-                            <option value="fifth semester">Fifth semester</option>
-                            <option value="sixth semester">Sixth semester</option>
-                            <option value="seventh semester">Seventh semester</option>
-                            <option value="eighth semester">Eighth semester</option>
+                            <option value="Odd">Odd Semester</option>
+                            <option value="Even">Even Semester</option>
                         </select>
                     </div>
                 </div>
@@ -178,13 +182,32 @@
                     $semester   = $_POST['semester'];
                     $event_type = $_POST['event_type'];
 
+                    // For academic year format like "2024-2025", we need to map it back to database values
+                    // The database might store it as "2024-25" or the full year, so we'll search for both patterns
+                    $year_patterns = [$year];
+                    if (strpos($year, '-') !== false) {
+                        $year_parts = explode('-', $year);
+                        if (count($year_parts) == 2) {
+                            // Add short format like "2024-25"
+                            $short_year      = $year_parts[0] . '-' . substr($year_parts[1], -2);
+                            $year_patterns[] = $short_year;
+                        }
+                    }
+
+                    // Build the query with OR conditions for year patterns
+                    $year_conditions = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
+
                     $stmt = $conn->prepare("SELECT e.id, e.regno, s.name, e.current_year, e.semester, e.department,
                                          e.state, e.district, e.event_type, e.event_name, e.attended_date,
                                          e.organisation, e.prize, e.prize_amount, e.event_poster, e.certificates
                                    FROM student_event_register e
                                    JOIN student_register s ON e.regno = s.regno
-                                   WHERE e.current_year=? AND e.department=? AND e.semester=? AND e.event_type=?");
-                    $stmt->bind_param("ssss", $year, $department, $semester, $event_type);
+                                   WHERE ($year_conditions) AND e.department=? AND e.semester=? AND e.event_type=?");
+
+                    // Bind parameters: all year patterns + department + semester + event_type
+                    $bind_types  = str_repeat('s', count($year_patterns)) . 'sss';
+                    $bind_values = array_merge($year_patterns, [$department, $semester, $event_type]);
+                    $stmt->bind_param($bind_types, ...$bind_values);
                     $stmt->execute();
                     $result = $stmt->get_result();
 
@@ -195,7 +218,7 @@
                         echo "<th>S.No</th>";
                         echo "<th>Reg No</th>";
                         echo "<th>Name</th>";
-                        echo "<th>Current Year</th>";
+                        echo "<th>Academic Year</th>";
                         echo "<th>Semester</th>";
                         echo "<th>Department</th>";
                         echo "<th>State</th>";

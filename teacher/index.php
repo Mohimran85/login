@@ -178,7 +178,24 @@
             padding: 20px;
             min-height: calc(100vh - 80px);
         }
-
+        .header {
+  grid-area: header;
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  font-size: 15px;
+  font-weight: 100;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  color: #1e4276;
+  position: fixed;
+  width: 100%;
+  z-index: 1001;
+  top: 0;
+  left: 0;
+}
         .welcome-section {
             background: linear-gradient(135deg, #2d5aa0 0%, #1e3a6f 100%);
             color: white;
@@ -502,7 +519,7 @@
                 display: block;
             }
 
-            .header .icon {
+            .header .header-logo {
                 display: none;
             }
 
@@ -603,7 +620,7 @@
   <body>
     <div class="grid-container">
       <!-- header -->
-      <div class="header">
+      <!-- <div class="header">
         <div class="menu-icon">
           <span class="material-symbols-outlined">menu</span>
         </div>
@@ -615,6 +632,26 @@
         </div>
         <div class="header-title">
           <p>Event Management System</p>
+        </div>
+      </div> -->
+      <div class="header">
+         <div class="menu-icon" onclick="openSidebar()">
+          <span class="material-symbols-outlined">menu</span>
+        </div>
+        <div class="header-logo">
+          <img
+            class="logo"
+            src="sona_logo.jpg"
+            alt="Sona College Logo"
+            height="60px"
+            width="200"
+          />
+        </div>
+        <div class="header-title">
+          <p>Event Management Dashboard</p>
+        </div>
+        <div >
+          <!-- empty -->
         </div>
       </div>
       <!-- sidebar -->
@@ -628,7 +665,7 @@
 
         <div class="student-info">
           <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-          <div class="student-regno">ID:                                         <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php echo $is_admin ? '(Admin)' : ''; ?></div>
+          <div class="student-regno">ID:                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php echo $is_admin ? '(Admin)' : ''; ?></div>
         </div>
 
         <nav>
@@ -709,14 +746,14 @@
       <div class="main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back,                                                                                                                                                                                                                         <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
+          <h1>Welcome back,                                                                                                                                                                                                                                                    <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
           <p>Add your completed professional development events and track your achievements</p>
         </div>
 
         <!-- Access Denied Alert -->
         <?php if (isset($_SESSION['access_denied'])): ?>
         <div class="alert alert-warning" style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; color: #856404;">
-          <strong>⚠️ Access Restricted:</strong>                                                                                                         <?php echo $_SESSION['access_denied']; ?>
+          <strong>⚠️ Access Restricted:</strong>                                                                                                                                                             <?php echo $_SESSION['access_denied']; ?>
           <?php unset($_SESSION['access_denied']); // Clear the message after displaying ?>
         </div>
         <?php endif; ?>
@@ -811,7 +848,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
@@ -900,12 +937,12 @@
                       </span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
                         </div>
                       </div>
                     </div>
                     <div style="text-align: center;">
-                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $student['prizes_won']; ?></div>
+                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $student['prizes_won']; ?></div>
                       <small style="color: #666; font-size: 11px;"><?php echo $student['total_events']; ?> events</small>
                     </div>
                   </div>
@@ -935,7 +972,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($stat['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>

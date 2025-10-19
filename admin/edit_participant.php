@@ -414,6 +414,10 @@
                         <a href="participants.php">Participants</a>
                     </li>
                     <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <a href="user_management.php">User Management</a>
+                    </li>
+                    <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">bar_chart</span>
                         <a href="reports.php">Reports</a>
                     </li>
@@ -462,24 +466,24 @@
                                     <label for="current_year">Current Year *</label>
                                     <select id="current_year" name="current_year" required>
                                         <option value="">Select Year</option>
-                                        <option value="I"                                                                                                                                                                                                                                                                                              <?php echo($participant['current_year'] === 'I') ? 'selected' : ''; ?>>I Year</option>
-                                        <option value="II"                                                                                                                                                                                                                                                                                                   <?php echo($participant['current_year'] === 'II') ? 'selected' : ''; ?>>II Year</option>
-                                        <option value="III"                                                                                                                                                                                                                                                                                                        <?php echo($participant['current_year'] === 'III') ? 'selected' : ''; ?>>III Year</option>
-                                        <option value="IV"                                                                                                                                                                                                                                                                                                   <?php echo($participant['current_year'] === 'IV') ? 'selected' : ''; ?>>IV Year</option>
+                                        <option value="I"                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['current_year'] === 'I') ? 'selected' : ''; ?>>I Year</option>
+                                        <option value="II"                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['current_year'] === 'II') ? 'selected' : ''; ?>>II Year</option>
+                                        <option value="III"                                                                                                                                                                                                                                                                                                                                                                   <?php echo($participant['current_year'] === 'III') ? 'selected' : ''; ?>>III Year</option>
+                                        <option value="IV"                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['current_year'] === 'IV') ? 'selected' : ''; ?>>IV Year</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="semester">Semester</label>
                                     <select id="semester" name="semester">
                                         <option value="">Select Semester</option>
-                                        <option value="I"                                                                                                                                                                                                                                                                                              <?php echo($participant['semester'] === 'I') ? 'selected' : ''; ?>>I Semester</option>
-                                        <option value="II"                                                                                                                                                                                                                                                                                                   <?php echo($participant['semester'] === 'II') ? 'selected' : ''; ?>>II Semester</option>
-                                        <option value="III"                                                                                                                                                                                                                                                                                                        <?php echo($participant['semester'] === 'III') ? 'selected' : ''; ?>>III Semester</option>
-                                        <option value="IV"                                                                                                                                                                                                                                                                                                   <?php echo($participant['semester'] === 'IV') ? 'selected' : ''; ?>>IV Semester</option>
-                                        <option value="V"                                                                                                                                                                                                                                                                                              <?php echo($participant['semester'] === 'V') ? 'selected' : ''; ?>>V Semester</option>
-                                        <option value="VI"                                                                                                                                                                                                                                                                                                   <?php echo($participant['semester'] === 'VI') ? 'selected' : ''; ?>>VI Semester</option>
-                                        <option value="VII"                                                                                                                                                                                                                                                                                                        <?php echo($participant['semester'] === 'VII') ? 'selected' : ''; ?>>VII Semester</option>
-                                        <option value="VIII"                                                                                                                                                                                                                                                                                                             <?php echo($participant['semester'] === 'VIII') ? 'selected' : ''; ?>>VIII Semester</option>
+                                        <option value="I"                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['semester'] === 'I') ? 'selected' : ''; ?>>I Semester</option>
+                                        <option value="II"                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['semester'] === 'II') ? 'selected' : ''; ?>>II Semester</option>
+                                        <option value="III"                                                                                                                                                                                                                                                                                                                                                                   <?php echo($participant['semester'] === 'III') ? 'selected' : ''; ?>>III Semester</option>
+                                        <option value="IV"                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['semester'] === 'IV') ? 'selected' : ''; ?>>IV Semester</option>
+                                        <option value="V"                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['semester'] === 'V') ? 'selected' : ''; ?>>V Semester</option>
+                                        <option value="VI"                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['semester'] === 'VI') ? 'selected' : ''; ?>>VI Semester</option>
+                                        <option value="VII"                                                                                                                                                                                                                                                                                                                                                                   <?php echo($participant['semester'] === 'VII') ? 'selected' : ''; ?>>VII Semester</option>
+                                        <option value="VIII"                                                                                                                                                                                                                                                                                                                                                                         <?php echo($participant['semester'] === 'VIII') ? 'selected' : ''; ?>>VIII Semester</option>
                                     </select>
                                 </div>
                             </div>
@@ -487,18 +491,18 @@
                                 <label for="department">Department *</label>
                                 <select id="department" name="department" required>
                                     <option value="">Select Department</option>
-                                    <option value="Computer Science"                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['department'] === 'Computer Science') ? 'selected' : ''; ?>>Computer Science</option>
-                                    <option value="Information Technology"                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($participant['department'] === 'Information Technology') ? 'selected' : ''; ?>>Information Technology</option>
-                                    <option value="Electronics and Communication"                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo($participant['department'] === 'Electronics and Communication') ? 'selected' : ''; ?>>Electronics and Communication</option>
-                                    <option value="Electrical and Electronics"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['department'] === 'Electrical and Electronics') ? 'selected' : ''; ?>>Electrical and Electronics</option>
-                                    <option value="Electronics"                                                                                                                                                                                                                                                                                                                            <?php echo($participant['department'] === 'Electronics') ? 'selected' : ''; ?>>Electronics</option>
-                                    <option value="Electrical"                                                                                                                                                                                                                                                                                                                       <?php echo($participant['department'] === 'Electrical') ? 'selected' : ''; ?>>Electrical</option>
-                                    <option value="Mechanical"                                                                                                                                                                                                                                                                                                                       <?php echo($participant['department'] === 'Mechanical') ? 'selected' : ''; ?>>Mechanical</option>
-                                    <option value="Civil"                                                                                                                                                                                                                                                                                              <?php echo($participant['department'] === 'Civil') ? 'selected' : ''; ?>>Civil</option>
-                                    <option value="Automobile"                                                                                                                                                                                                                                                                                                                       <?php echo($participant['department'] === 'Automobile') ? 'selected' : ''; ?>>Automobile</option>
-                                    <option value="Biomedical"                                                                                                                                                                                                                                                                                                                       <?php echo($participant['department'] === 'Biomedical') ? 'selected' : ''; ?>>Biomedical</option>
-                                    <option value="Chemical"                                                                                                                                                                                                                                                                                                             <?php echo($participant['department'] === 'Chemical') ? 'selected' : ''; ?>>Chemical</option>
-                                    <option value="Aeronautical"                                                                                                                                                                                                                                                                                                                                 <?php echo($participant['department'] === 'Aeronautical') ? 'selected' : ''; ?>>Aeronautical</option>
+                                    <option value="Computer Science"                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($participant['department'] === 'Computer Science') ? 'selected' : ''; ?>>Computer Science</option>
+                                    <option value="Information Technology"                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['department'] === 'Information Technology') ? 'selected' : ''; ?>>Information Technology</option>
+                                    <option value="Electronics and Communication"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['department'] === 'Electronics and Communication') ? 'selected' : ''; ?>>Electronics and Communication</option>
+                                    <option value="Electrical and Electronics"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['department'] === 'Electrical and Electronics') ? 'selected' : ''; ?>>Electrical and Electronics</option>
+                                    <option value="Electronics"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['department'] === 'Electronics') ? 'selected' : ''; ?>>Electronics</option>
+                                    <option value="Electrical"                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['department'] === 'Electrical') ? 'selected' : ''; ?>>Electrical</option>
+                                    <option value="Mechanical"                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['department'] === 'Mechanical') ? 'selected' : ''; ?>>Mechanical</option>
+                                    <option value="Civil"                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['department'] === 'Civil') ? 'selected' : ''; ?>>Civil</option>
+                                    <option value="Automobile"                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['department'] === 'Automobile') ? 'selected' : ''; ?>>Automobile</option>
+                                    <option value="Biomedical"                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['department'] === 'Biomedical') ? 'selected' : ''; ?>>Biomedical</option>
+                                    <option value="Chemical"                                                                                                                                                                                                                                                                                                                                                                         <?php echo($participant['department'] === 'Chemical') ? 'selected' : ''; ?>>Chemical</option>
+                                    <option value="Aeronautical"                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($participant['department'] === 'Aeronautical') ? 'selected' : ''; ?>>Aeronautical</option>
                                 </select>
                             </div>
                         </div>
@@ -511,16 +515,16 @@
                                     <label for="event_type">Event Type *</label>
                                     <select id="event_type" name="event_type" required>
                                         <option value="">Select Event Type</option>
-                                        <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                      <?php echo($participant['event_type'] === 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
-                                        <option value="Workshop"                                                                                                                                                                                                                                                                                                                                 <?php echo($participant['event_type'] === 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
-                                        <option value="Seminar"                                                                                                                                                                                                                                                                                                                            <?php echo($participant['event_type'] === 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
-                                        <option value="Conference"                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['event_type'] === 'Conference') ? 'selected' : ''; ?>>Conference</option>
-                                        <option value="Competition"                                                                                                                                                                                                                                                                                                                                                <?php echo($participant['event_type'] === 'Competition') ? 'selected' : ''; ?>>Competition</option>
-                                        <option value="Training"                                                                                                                                                                                                                                                                                                                                 <?php echo($participant['event_type'] === 'Training') ? 'selected' : ''; ?>>Training</option>
-                                        <option value="Webinar"                                                                                                                                                                                                                                                                                                                            <?php echo($participant['event_type'] === 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
-                                        <option value="Internship"                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['event_type'] === 'Internship') ? 'selected' : ''; ?>>Internship</option>
-                                        <option value="Project"                                                                                                                                                                                                                                                                                                                            <?php echo($participant['event_type'] === 'Project') ? 'selected' : ''; ?>>Project</option>
-                                        <option value="Placement"                                                                                                                                                                                                                                                                                                                                      <?php echo($participant['event_type'] === 'Placement') ? 'selected' : ''; ?>>Placement</option>
+                                        <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['event_type'] === 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
+                                        <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($participant['event_type'] === 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
+                                        <option value="Seminar"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['event_type'] === 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
+                                        <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['event_type'] === 'Conference') ? 'selected' : ''; ?>>Conference</option>
+                                        <option value="Competition"                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($participant['event_type'] === 'Competition') ? 'selected' : ''; ?>>Competition</option>
+                                        <option value="Training"                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($participant['event_type'] === 'Training') ? 'selected' : ''; ?>>Training</option>
+                                        <option value="Webinar"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['event_type'] === 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
+                                        <option value="Internship"                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['event_type'] === 'Internship') ? 'selected' : ''; ?>>Internship</option>
+                                        <option value="Project"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['event_type'] === 'Project') ? 'selected' : ''; ?>>Project</option>
+                                        <option value="Placement"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['event_type'] === 'Placement') ? 'selected' : ''; ?>>Placement</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -546,11 +550,11 @@
                                     <label for="prize">Prize/Achievement</label>
                                     <select id="prize" name="prize">
                                         <option value="">No Prize</option>
-                                        <option value="First"                                                                                                                                                                                                                                                                                                                  <?php echo($participant['prize'] === 'First') ? 'selected' : ''; ?>>First Prize</option>
-                                        <option value="Second"                                                                                                                                                                                                                                                                                                                       <?php echo($participant['prize'] === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
-                                        <option value="Third"                                                                                                                                                                                                                                                                                                                  <?php echo($participant['prize'] === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
-                                        <option value="Participation"                                                                                                                                                                                                                                                                                                                                                          <?php echo($participant['prize'] === 'Participation') ? 'selected' : ''; ?>>Participation Certificate</option>
-                                                                                                        <?php echo($participant['prize'] === 'Excellence') ? 'selected' : ''; ?>>Excellence Award</option>
+                                        <option value="First"                                                                                                                                                                                                                                                                                                                                                                               <?php echo($participant['prize'] === 'First') ? 'selected' : ''; ?>>First Prize</option>
+                                        <option value="Second"                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['prize'] === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
+                                        <option value="Third"                                                                                                                                                                                                                                                                                                                                                                               <?php echo($participant['prize'] === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
+                                        <option value="Participation"                                                                      <?php echo($participant['prize'] === 'Participation') ? 'selected' : ''; ?>>Participation Certificate</option>
+                                        <option value="Excellence"                                                                   <?php echo($participant['prize'] === 'Excellence') ? 'selected' : ''; ?>>Excellence Award</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -621,183 +625,97 @@
         // Show/hide prize amount based on prize selection
         document.getElementById('prize').addEventListener('change', function() {
             const prizeAmount = document.getElementById('prize_amount');
+            const prizeAmountLabel = prizeAmount.previousElementSibling;
             if (this.value === 'First' || this.value === 'Second' || this.value === 'Third') {
                 prizeAmount.style.display = 'block';
-                prizeAmount.previousElementSibling.style.display = 'block';
+                prizeAmountLabel.style.display = 'block';
             } else {
                 prizeAmount.style.display = 'none';
-                prizeAmount.previousElementSibling.style.display = 'none';
+                prizeAmountLabel.style.display = 'none';
                 prizeAmount.value = '';
             }
         });
 
         // Trigger the prize change event on page load
         document.getElementById('prize').dispatchEvent(new Event('change'));
-    </script>
-</body>
-</html>
 
-<?php
-    $conn->close();
-?>
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const regno = document.getElementById('regno').value.trim();
+            const eventName = document.getElementById('event_name').value.trim();
+            const eventDate = document.getElementById('attended_date').value;
+            const currentYear = document.getElementById('current_year').value;
+            const department = document.getElementById('department').value;
+            const eventType = document.getElementById('event_type').value;
 
-                            <div class="form-group">
-                                <label for="student_name">Student Name</label>
-                                <input type="text" id="student_name" value="<?php echo htmlspecialchars($participant['student_name'] ?? 'N/A'); ?>" readonly style="background-color: #f8f9fa;">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="current_year">Current Year</label>
-                                <select id="current_year" name="current_year" required>
-                                    <option value="I"                                                                                                                                                                                                                                                                                                                               <?php echo($participant['current_year'] === 'I') ? 'selected' : ''; ?>>I Year</option>
-                                    <option value="II"                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['current_year'] === 'II') ? 'selected' : ''; ?>>II Year</option>
-                                    <option value="III"                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['current_year'] === 'III') ? 'selected' : ''; ?>>III Year</option>
-                                    <option value="IV"                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['current_year'] === 'IV') ? 'selected' : ''; ?>>IV Year</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="semester">Semester</label>
-                                <select id="semester" name="semester">
-                                    <option value="">Select Semester</option>
-                                    <option value="I"                                                                                                                                                                                                                                                                                                                               <?php echo($participant['semester'] === 'I') ? 'selected' : ''; ?>>I Semester</option>
-                                    <option value="II"                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['semester'] === 'II') ? 'selected' : ''; ?>>II Semester</option>
-                                    <option value="III"                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['semester'] === 'III') ? 'selected' : ''; ?>>III Semester</option>
-                                    <option value="IV"                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['semester'] === 'IV') ? 'selected' : ''; ?>>IV Semester</option>
-                                    <option value="V"                                                                                                                                                                                                                                                                                                                               <?php echo($participant['semester'] === 'V') ? 'selected' : ''; ?>>V Semester</option>
-                                    <option value="VI"                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['semester'] === 'VI') ? 'selected' : ''; ?>>VI Semester</option>
-                                    <option value="VII"                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['semester'] === 'VII') ? 'selected' : ''; ?>>VII Semester</option>
-                                    <option value="VIII"                                                                                                                                                                                                                                                                                                                                                 <?php echo($participant['semester'] === 'VIII') ? 'selected' : ''; ?>>VIII Semester</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="department">Department</label>
-                                <select id="department" name="department" required>
-                                    <option value="">Select Department</option>
-                                    <option value="Computer Science"                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($participant['department'] === 'Computer Science') ? 'selected' : ''; ?>>Computer Science</option>
-                                    <option value="Information Technology"                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['department'] === 'Information Technology') ? 'selected' : ''; ?>>Information Technology</option>
-                                    <option value="Electronics"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['department'] === 'Electronics') ? 'selected' : ''; ?>>Electronics</option>
-                                    <option value="Mechanical"                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['department'] === 'Mechanical') ? 'selected' : ''; ?>>Mechanical</option>
-                                    <option value="Civil"                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['department'] === 'Civil') ? 'selected' : ''; ?>>Civil</option>
-                                    <option value="Electrical"                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['department'] === 'Electrical') ? 'selected' : ''; ?>>Electrical</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="event_type">Event Type</label>
-                                <select id="event_type" name="event_type" required>
-                                    <option value="">Select Event Type</option>
-                                    <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                               <?php echo($participant['event_type'] === 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
-                                    <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                                         <?php echo($participant['event_type'] === 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
-                                    <option value="Seminar"                                                                                                                                                                                                                                                                                                                                                                   <?php echo($participant['event_type'] === 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
-                                    <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($participant['event_type'] === 'Conference') ? 'selected' : ''; ?>>Conference</option>
-                                    <option value="Competition"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($participant['event_type'] === 'Competition') ? 'selected' : ''; ?>>Competition</option>
-                                    <option value="Training"                                                                                                                                                                                                                                                                                                                                                                         <?php echo($participant['event_type'] === 'Training') ? 'selected' : ''; ?>>Training</option>
-                                    <option value="Webinar"                                                                                                                                                                                                                                                                                                                                                                   <?php echo($participant['event_type'] === 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="event_name">Event Name *</label>
-                                <input type="text" id="event_name" name="event_name" value="<?php echo htmlspecialchars($participant['event_name']); ?>" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="attended_date">Event Date *</label>
-                                <input type="date" id="attended_date" name="attended_date" value="<?php echo $participant['attended_date']; ?>" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="organisation">Organisation</label>
-                                <input type="text" id="organisation" name="organisation" value="<?php echo htmlspecialchars($participant['organisation']); ?>">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="prize">Prize</label>
-                                <select id="prize" name="prize">
-                                    <option value="">No Prize</option>
-                                    <option value="First"                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['prize'] === 'First') ? 'selected' : ''; ?>>First Prize</option>
-                                    <option value="Second"                                                                                                                                                                                                                                                                                                                                                             <?php echo($participant['prize'] === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
-                                    <option value="Third"                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['prize'] === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
-                                    <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($participant['prize'] === 'Participation') ? 'selected' : ''; ?>>Participation Certificate</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="prize_amount">Prize Amount</label>
-                                <input type="text" id="prize_amount" name="prize_amount" value="<?php echo htmlspecialchars($participant['prize_amount']); ?>" placeholder="e.g., Rs. 5000">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="event_poster">Event Poster</label>
-                                <input type="file" id="event_poster" name="event_poster" accept=".pdf,.jpg,.jpeg,.png">
-                                <?php if (! empty($participant['event_poster'])): ?>
-                                    <div class="current-files">
-                                        <strong>Current:</strong>
-                                        <a href="download.php?id=<?php echo $participant['id']; ?>&type=poster" class="file-link" target="_blank">📄 View Current Poster</a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="certificates">Certificate</label>
-                                <input type="file" id="certificates" name="certificates" accept=".pdf,.jpg,.jpeg,.png">
-                                <?php if (! empty($participant['certificates'])): ?>
-                                    <div class="current-files">
-                                        <strong>Current:</strong>
-                                        <a href="download.php?id=<?php echo $participant['id']; ?>&type=certificate" class="file-link" target="_blank">🏆 View Current Certificate</a>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <div class="form-actions">
-                            <a href="participants.php" class="btn btn-secondary">
-                                <span class="material-symbols-outlined">arrow_back</span>
-                                Back to Participants
-                            </a>
-                            <button type="submit" name="update_participant" class="btn btn-primary">
-                                <span class="material-symbols-outlined">save</span>
-                                Update Participant
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="./JS/scripts.js"></script>
-    <script>
-        // Prevent back button to login page
-        if (window.history && window.history.pushState) {
-            window.history.pushState(null, null, window.location.href);
-            window.addEventListener('popstate', function () {
-                window.history.pushState(null, null, window.location.href);
-            });
-        }
-
-        // Navigation function for header profile
-        function navigateToProfile() {
-            window.location.href = 'profile.php';
-        }
-
-        // Show/hide prize amount based on prize selection
-        document.getElementById('prize').addEventListener('change', function() {
-            const prizeAmount = document.getElementById('prize_amount');
-            if (this.value === 'First' || this.value === 'Second' || this.value === 'Third') {
-                prizeAmount.style.display = 'block';
-                prizeAmount.previousElementSibling.style.display = 'block';
-            } else {
-                prizeAmount.style.display = 'none';
-                prizeAmount.previousElementSibling.style.display = 'none';
-                prizeAmount.value = '';
+            if (!regno) {
+                alert('Registration number is required!');
+                e.preventDefault();
+                document.getElementById('regno').focus();
+                return false;
             }
+
+            if (!eventName) {
+                alert('Event name is required!');
+                e.preventDefault();
+                document.getElementById('event_name').focus();
+                return false;
+            }
+
+            if (!eventDate) {
+                alert('Event date is required!');
+                e.preventDefault();
+                document.getElementById('attended_date').focus();
+                return false;
+            }
+
+            if (!currentYear) {
+                alert('Current year is required!');
+                e.preventDefault();
+                document.getElementById('current_year').focus();
+                return false;
+            }
+
+            if (!department) {
+                alert('Department is required!');
+                e.preventDefault();
+                document.getElementById('department').focus();
+                return false;
+            }
+
+            if (!eventType) {
+                alert('Event type is required!');
+                e.preventDefault();
+                document.getElementById('event_type').focus();
+                return false;
+            }
+
+            return true;
         });
 
-        // Trigger the prize change event on page load
-        document.getElementById('prize').dispatchEvent(new Event('change'));
+        // File upload validation
+        const posterInput = document.getElementById('event_poster');
+        const certInput = document.getElementById('certificates');
+
+        function validateFileSize(input, maxSizeMB = 5) {
+            if (input.files && input.files[0]) {
+                const fileSize = input.files[0].size / 1024 / 1024; // Convert to MB
+                if (fileSize > maxSizeMB) {
+                    alert(`File size must be less than ${maxSizeMB}MB`);
+                    input.value = '';
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        posterInput.addEventListener('change', function() {
+            validateFileSize(this);
+        });
+
+        certInput.addEventListener('change', function() {
+            validateFileSize(this);
+        });
     </script>
 </body>
 </html>

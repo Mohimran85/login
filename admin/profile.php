@@ -107,6 +107,34 @@
         $stmt->close();
     }
 
+    // Check teacher status and redirect appropriately
+    if ($user_type === 'teacher') {
+        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+        $teacher_status_stmt->bind_param("s", $username);
+        $teacher_status_stmt->execute();
+        $teacher_status_result = $teacher_status_stmt->get_result();
+
+        $teacher_status = 'teacher';
+        if ($teacher_status_result->num_rows > 0) {
+            $status_data    = $teacher_status_result->fetch_assoc();
+            $teacher_status = $status_data['status'];
+        }
+        $teacher_status_stmt->close();
+
+        // Only allow admin teachers to access admin profile
+        if ($teacher_status !== 'admin') {
+            header("Location: ../teacher/profile.php");
+            exit();
+        }
+    }
+
+    // Redirect students to their profile
+    if ($user_type === 'student') {
+        header("Location: ../student/profile.php");
+        exit();
+    }
+
     $conn->close();
 ?>
 <!DOCTYPE html>
@@ -164,6 +192,14 @@
             <li class="sidebar-list-item">
               <span class="material-symbols-outlined">people</span>
               <a href="participants.php">Participants</a>
+            </li>
+            <li class="sidebar-list-item">
+              <span class="material-symbols-outlined">manage_accounts</span>
+              <a href="user_management.php">User Management</a>
+            </li>
+            <li class="sidebar-list-item">
+              <span class="material-symbols-outlined">upload</span>
+              <a href="bulk_import.php">Bulk Import</a>
             </li>
             <li class="sidebar-list-item">
               <span class="material-symbols-outlined">bar_chart</span>

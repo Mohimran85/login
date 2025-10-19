@@ -73,7 +73,7 @@
 
     // Redirect students who shouldn't have access to user management
     if ($user_type === 'student') {
-        header("Location: ../student.php");
+        header("Location: ../student/index.php");
         exit();
     }
 
@@ -135,7 +135,7 @@
                     $new_role   = $_POST['new_role'];
 
                     $allowed_tables = ['student_register', 'teacher_register'];
-                    $allowed_roles  = ['admin', 'teacher', 'student', 'inactive'];
+                    $allowed_roles  = ['admin', 'teacher', 'student'];
 
                     if (in_array($table_name, $allowed_tables) && in_array($new_role, $allowed_roles)) {
                         // Ensure status column exists
@@ -143,13 +143,13 @@
 
                         // Validate role assignment based on table
                         $valid_assignment = true;
-                        if ($table_name === 'student_register' && ! in_array($new_role, ['student', 'inactive'])) {
+                        if ($table_name === 'student_register' && ! in_array($new_role, ['student'])) {
                             $valid_assignment = false;
-                            $error_message    = "Students can only have 'student' or 'inactive' roles.";
+                            $error_message    = "Students can only have 'student' role.";
                         }
-                        if ($table_name === 'teacher_register' && ! in_array($new_role, ['admin', 'teacher', 'inactive'])) {
+                        if ($table_name === 'teacher_register' && ! in_array($new_role, ['admin', 'teacher'])) {
                             $valid_assignment = false;
-                            $error_message    = "Teachers can only have 'admin', 'teacher', or 'inactive' roles.";
+                            $error_message    = "Teachers can only have 'admin' or 'teacher' roles.";
                         }
 
                         if ($valid_assignment) {
@@ -170,16 +170,16 @@
         }
     }
 
-                                                                                    // Get filter parameters
-    $filter_user_type = isset($_GET['user_type']) ? $_GET['user_type'] : 'teacher'; // Default to teacher for teacher users
+                                                                                // Get filter parameters
+    $filter_user_type = isset($_GET['user_type']) ? $_GET['user_type'] : 'all'; // Default to 'all' for admin users
     $filter_status    = isset($_GET['status']) ? $_GET['status'] : 'all';
     $search_query     = isset($_GET['search']) ? $_GET['search'] : '';
     $entries_param    = isset($_GET['entries']) ? $_GET['entries'] : '10';
     $entries_per_page = ($entries_param === 'all') ? PHP_INT_MAX : (int) $entries_param;
     $current_page     = isset($_GET['page']) ? (int) $_GET['page'] : 1;
 
-    // Restrict teachers to only manage teachers
-    if ($user_type === 'teacher' && $filter_user_type !== 'teacher') {
+    // Restrict teachers to only manage teachers (except admin-level teachers)
+    if ($user_type === 'teacher' && $teacher_status !== 'admin') {
         $filter_user_type = 'teacher';
     }
 
@@ -190,63 +190,122 @@
         $search_query = '';
     }
 
-    // Build queries for both students and teachers
-    $student_query = "SELECT id, name, username, personal_email as email, regno as identifier, department, year_of_join,
-                             COALESCE(status, 'student') as status, 'student' as user_type, created_at
+    $student_query = "SELECT id, name, username, personal_email as email, regno as identifier, department,
+                             COALESCE(year_of_join, DATE(NOW())) as year_of_join,
+                             COALESCE(status, 'student') as status, 'student' as user_type,
+                             id as sort_order
                       FROM student_register WHERE 1=1";
 
-    $teacher_query = "SELECT id, name, username, email, faculty_id as identifier, department, year_of_join,
-                             COALESCE(status, 'teacher') as status, 'teacher' as user_type, created_at
+    $teacher_query = "SELECT id, name, username, email, faculty_id as identifier, department,
+                             COALESCE(year_of_join, DATE(NOW())) as year_of_join,
+                             COALESCE(status, 'teacher') as status, 'teacher' as user_type,
+                             id as sort_order
                       FROM teacher_register WHERE 1=1";
 
-    $params      = [];
-    $param_types = "";
-
-    // Add search conditions
+    // Add search conditions to queries
     if (! empty($search_query)) {
-        $search_param = "%$search_query%";
         $student_query .= " AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
         $teacher_query .= " AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
-
-        // Add parameters for both queries
-        for ($i = 0; $i < 8; $i++) {
-            $params[] = $search_param;
-            $param_types .= "s";
-        }
     }
 
-    // Add status filter
+    // Add status filter to queries
     if ($filter_status !== 'all') {
         $student_query .= " AND COALESCE(status, 'student') = ?";
         $teacher_query .= " AND COALESCE(status, 'teacher') = ?";
-        $params[] = $filter_status;
-        $params[] = $filter_status;
-        $param_types .= "ss";
     }
 
     // Combine queries based on user type filter and user permissions
-    if ($user_type === 'teacher') {
-        // Teachers can only see teacher records
-        $final_query = $teacher_query . " ORDER BY created_at DESC";
+    $params      = [];
+    $param_types = "";
+
+    if ($user_type === 'teacher' && $teacher_status !== 'admin') {
+        // Non-admin teachers can only see teacher records
+        $final_query      = $teacher_query . " ORDER BY id DESC";
+        $count_base_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1";
     } elseif ($filter_user_type === 'student') {
-        $final_query = $student_query . " ORDER BY created_at DESC";
+        $final_query      = $student_query . " ORDER BY id DESC";
+        $count_base_query = "SELECT COUNT(*) as total FROM student_register WHERE 1=1";
     } elseif ($filter_user_type === 'teacher') {
-        $final_query = $teacher_query . " ORDER BY created_at DESC";
+        $final_query      = $teacher_query . " ORDER BY id DESC";
+        $count_base_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1";
     } else {
-        $final_query = "($student_query) UNION ($teacher_query) ORDER BY created_at DESC";
+        $final_query      = "($student_query) UNION ($teacher_query) ORDER BY sort_order DESC";
+        $count_base_query = "SELECT COUNT(*) as total FROM (($student_query) UNION ($teacher_query)) as combined_users";
     }
 
-    // Get total count for pagination
-    $count_query = "SELECT COUNT(*) as total FROM ($final_query) as combined_users";
+    // Add search conditions to parameters
+    if (! empty($search_query)) {
+        $search_param = "%$search_query%";
+        if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
+            // Only teacher search parameters
+            for ($i = 0; $i < 4; $i++) {
+                $params[] = $search_param;
+                $param_types .= "s";
+            }
+        } elseif ($filter_user_type === 'student') {
+            // Only student search parameters
+            for ($i = 0; $i < 4; $i++) {
+                $params[] = $search_param;
+                $param_types .= "s";
+            }
+        } else {
+            // Both student and teacher search parameters
+            for ($i = 0; $i < 8; $i++) {
+                $params[] = $search_param;
+                $param_types .= "s";
+            }
+        }
+    }
 
+    // Add status filter to parameters
+    if ($filter_status !== 'all') {
+        if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
+            // Only teacher status parameter
+            $params[] = $filter_status;
+            $param_types .= "s";
+        } elseif ($filter_user_type === 'student') {
+            // Only student status parameter
+            $params[] = $filter_status;
+            $param_types .= "s";
+        } else {
+            // Both student and teacher status parameters
+            $params[] = $filter_status;
+            $params[] = $filter_status;
+            $param_types .= "ss";
+        }
+    }
+
+    // Build count query with same conditions
+    if (! empty($search_query)) {
+        if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
+            $count_base_query .= " AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
+        } elseif ($filter_user_type === 'student') {
+            $count_base_query .= " AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
+        } else {
+            // For 'all' users, we need to handle UNION differently
+            $student_count_query = "SELECT COUNT(*) as total FROM student_register WHERE 1=1 AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
+            $teacher_count_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1 AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
+
+            if ($filter_status !== 'all') {
+                $student_count_query .= " AND COALESCE(status, 'student') = ?";
+                $teacher_count_query .= " AND COALESCE(status, 'teacher') = ?";
+            }
+
+            $count_base_query = "SELECT (($student_count_query) + ($teacher_count_query)) as total";
+        }
+    }
+
+    if ($filter_status !== 'all' && $filter_user_type !== 'all') {
+        $count_base_query .= " AND COALESCE(status, '" . (($filter_user_type === 'student') ? 'student' : 'teacher') . "') = ?";
+    } // Get total count for pagination
     if (! empty($params)) {
-        $count_stmt = $conn->prepare($count_query);
+        $count_stmt = $conn->prepare($count_base_query);
         $count_stmt->bind_param($param_types, ...$params);
         $count_stmt->execute();
         $total_users = $count_stmt->get_result()->fetch_assoc()['total'];
         $count_stmt->close();
     } else {
-        $total_users = $conn->query($count_query)->fetch_assoc()['total'];
+        $total_users = $conn->query($count_base_query)->fetch_assoc()['total'];
     }
 
     // Calculate pagination
@@ -261,18 +320,26 @@
     // Execute final query
     if (! empty($params)) {
         $users_stmt = $conn->prepare($final_query);
-        $users_stmt->bind_param($param_types, ...$params);
-        $users_stmt->execute();
-        $users_result = $users_stmt->get_result();
+        if ($users_stmt) {
+            $users_stmt->bind_param($param_types, ...$params);
+            $users_stmt->execute();
+            $users_result = $users_stmt->get_result();
+        } else {
+            $error_message = "Query preparation failed: " . $conn->error;
+            $users_result  = false;
+        }
     } else {
         $users_result = $conn->query($final_query);
+        if (! $users_result) {
+            $error_message = "Query execution failed: " . $conn->error;
+        }
     }
 
-    // Get statistics (only for teachers if user is teacher)
-    if ($user_type === 'teacher') {
-        $total_students  = 0; // Teachers can't see student count
+    // Get statistics (only for teachers if user is non-admin teacher)
+    if ($user_type === 'teacher' && $teacher_status !== 'admin') {
+        $total_students  = 0; // Non-admin teachers can't see student count
         $total_teachers  = $conn->query("SELECT COUNT(*) as count FROM teacher_register")->fetch_assoc()['count'];
-        $active_students = 0; // Teachers can't see student count
+        $active_students = 0; // Non-admin teachers can't see student count
 
         // Safe query for active/admin teachers
         $active_teachers_result = $conn->query("SELECT COUNT(*) as count FROM teacher_register WHERE COALESCE(status, 'teacher') IN ('teacher', 'admin')");
@@ -494,11 +561,6 @@
         .status-student {
             background: #cfe2ff;
             color: #084298;
-        }
-
-        .status-inactive {
-            background: #f8d7da;
-            color: #721c24;
         }
 
         .user-type-badge {
@@ -726,6 +788,52 @@
                 padding: 20px;
             }
         }
+
+        /* Export dropdown styles */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            background-color: #f9f9f9;
+            min-width: 220px;
+            width: max-content;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            right: 0;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            white-space: nowrap;
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content a:hover {
+            background-color: #f1f1f1;
+            border-radius: 6px;
+        }
     </style>
 </head>
 <body>
@@ -739,7 +847,7 @@
                 <img class="logo" src="./asserts/sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
             </div>
             <div class="header-title">
-                <p>User Management System</p>
+                <p>Event Management Dashboard</p>
             </div>
             <div class="header-profile">
                 <div class="profile-info" onclick="navigateToProfile()">
@@ -812,7 +920,7 @@
 
                 <!-- Statistics -->
                 <div class="stats-grid">
-                    <?php if ($user_type !== 'teacher'): ?>
+                    <?php if ($user_type !== 'teacher' || $teacher_status === 'admin'): ?>
                     <div class="stat-card">
                         <h3>Total Students</h3>
                         <div class="number"><?php echo $total_students; ?></div>
@@ -824,7 +932,7 @@
                         <div class="number"><?php echo $total_teachers; ?></div>
                         <div class="label">Registered Teachers</div>
                     </div>
-                    <?php if ($user_type !== 'teacher'): ?>
+                    <?php if ($user_type !== 'teacher' || $teacher_status === 'admin'): ?>
                     <div class="stat-card">
                         <h3>Active Students</h3>
                         <div class="number"><?php echo $active_students; ?></div>
@@ -841,30 +949,30 @@
                 <!-- Filters -->
                 <div class="filters-container">
                     <div class="filters-header">
-                        <h3>🔍 Filter                                                                                                                                                                                                                                                                                  <?php echo $user_type === 'teacher' ? 'Teachers' : 'Users'; ?></h3>
+                        <h3>🔍 Filter                                                                                                                                                             <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?></h3>
                         <a href="add_user.php" class="add-user-btn">
                             <span class="material-symbols-outlined">person_add</span>
-                            Add New                                                                                                                                                                                                                                                      <?php echo $user_type === 'teacher' ? 'Teacher' : 'User'; ?>
+                            Add New                                                                                                                                             <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teacher' : 'User'; ?>
                         </a>
                     </div>
 
                     <form method="GET" action="">
                         <div class="filters-row">
                             <div class="filter-group">
-                                <label for="search">Search                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $user_type === 'teacher' ? 'Teachers' : 'Users'; ?></label>
+                                <label for="search">Search                                                                                                                                                                                                                                         <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?></label>
                                 <input type="text" id="search" name="search"
                                        placeholder="Name, Username, Email, ID..."
                                        value="<?php echo htmlspecialchars($search_query); ?>">
                                 <small style="color: #666; font-size: 12px;">Minimum 2 characters required</small>
                             </div>
 
-                            <?php if ($user_type !== 'teacher'): ?>
+                            <?php if ($user_type !== 'teacher' || $teacher_status === 'admin'): ?>
                             <div class="filter-group">
                                 <label for="user_type">User Type</label>
                                 <select id="user_type" name="user_type">
-                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $filter_user_type === 'all' ? 'selected' : ''; ?>>All Users</option>
-                                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $filter_user_type === 'student' ? 'selected' : ''; ?>>Students</option>
-                                    <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $filter_user_type === 'teacher' ? 'selected' : ''; ?>>Teachers</option>
+                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $filter_user_type === 'all' ? 'selected' : ''; ?>>All Users</option>
+                                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo $filter_user_type === 'student' ? 'selected' : ''; ?>>Students</option>
+                                    <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo $filter_user_type === 'teacher' ? 'selected' : ''; ?>>Teachers</option>
                                 </select>
                             </div>
                             <?php else: ?>
@@ -874,21 +982,20 @@
                             <div class="filter-group">
                                 <label for="status">Role/Status</label>
                                 <select id="status" name="status">
-                                    <option value="all"                                                                                                                                                                                                                             <?php echo $filter_status === 'all' ? 'selected' : ''; ?>>All Roles</option>
-                                    <option value="admin"                                                                                                                                                                                                                                     <?php echo $filter_status === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                                    <option value="teacher"                                                                                                                                                                                                                                             <?php echo $filter_status === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
-                                    <option value="student"                                                                                                                                                                                                                                             <?php echo $filter_status === 'student' ? 'selected' : ''; ?>>Student</option>
-                                    <option value="inactive"                                                                                                                                                                                                                                                 <?php echo $filter_status === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo $filter_status === 'all' ? 'selected' : ''; ?>>All Roles</option>
+                                    <option value="admin"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo $filter_status === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                                    <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $filter_status === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
+                                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $filter_status === 'student' ? 'selected' : ''; ?>>Student</option>
                                 </select>
                             </div>
 
                             <div class="filter-group">
                                 <label for="entries">Show Entries</label>
                                 <select id="entries" name="entries">
-                                    <option value="10"                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $entries_param === '10' ? 'selected' : ''; ?>>10</option>
-                                    <option value="25"                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $entries_param === '25' ? 'selected' : ''; ?>>25</option>
-                                    <option value="50"                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $entries_param === '50' ? 'selected' : ''; ?>>50</option>
-                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $entries_param === 'all' ? 'selected' : ''; ?>>All</option>
+                                    <option value="10"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $entries_param === '10' ? 'selected' : ''; ?>>10</option>
+                                    <option value="25"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $entries_param === '25' ? 'selected' : ''; ?>>25</option>
+                                    <option value="50"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $entries_param === '50' ? 'selected' : ''; ?>>50</option>
+                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $entries_param === 'all' ? 'selected' : ''; ?>>All</option>
                                 </select>
                             </div>
 
@@ -905,16 +1012,30 @@
                 <!-- Users Table -->
                 <div class="users-table-container">
                     <div class="table-header">
-                        <h3>📋                                                                                                                                                                                                                                 <?php echo $user_type === 'teacher' ? 'Teachers' : 'Users'; ?> List (<?php echo $total_users; ?> total)</h3>
-                        <div style="display: flex; gap: 10px;">
+                        <h3>📋                                                                                                                                 <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?> List (<?php echo $total_users; ?> total)</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <a href="bulk_import.php" class="btn btn-secondary">
                                 <span class="material-symbols-outlined">upload</span>
                                 Bulk Import
                             </a>
-                            <a href="export_users.php" class="btn btn-success">
-                                <span class="material-symbols-outlined">download</span>
-                                Export
-                            </a>
+                            <div class="dropdown" style="position: relative; display: inline-block;">
+                                <button class="btn btn-success dropdown-toggle" onclick="toggleExportDropdown()" id="exportDropdown">
+                                    <span class="material-symbols-outlined">download</span>
+                                    Export Users
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">arrow_drop_down</span>
+                                </button>
+                                <div id="exportDropdownContent" class="dropdown-content" style="display: none; position: absolute; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1000; right: 0; border-radius: 6px;">
+                                    <a href="export_users.php?type=students" style="color: black; padding: 12px 16px; text-decoration: none; display: block;">
+                                        <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">school</span> Export Students
+                                    </a>
+                                    <a href="export_users.php?type=teachers" style="color: black; padding: 12px 16px; text-decoration: none; display: block;">
+                                        <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">person</span> Export Teachers
+                                    </a>
+                                    <a href="export_users.php?type=all" style="color: black; padding: 12px 16px; text-decoration: none; display: block;">
+                                        <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">groups</span> Export All Users
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -972,11 +1093,9 @@
                                                             title="Change User Role">
                                                         <?php if ($user['user_type'] === 'teacher'): ?>
                                                             <option value="admin"<?php echo $user['status'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                                                            <option value="teacher"                                                                                                                                                                                                                                                          <?php echo $user['status'] === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
-                                                            <option value="inactive"                                                                                                                                                                                                                                                             <?php echo $user['status'] === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                                                            <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $user['status'] === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
                                                         <?php else: ?>
                                                             <option value="student"<?php echo $user['status'] === 'student' ? 'selected' : ''; ?>>Student</option>
-                                                            <option value="inactive"                                                                                                                                                                                                                                                             <?php echo $user['status'] === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
                                                         <?php endif; ?>
                                                     </select>
 
@@ -992,8 +1111,8 @@
                                     <tr>
                                         <td colspan="7" style="text-align: center; padding: 40px;">
                                             <span class="material-symbols-outlined" style="font-size: 48px; color: #ccc;">person_off</span>
-                                            <p style="color: #666; margin: 10px 0;">No                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $user_type === 'teacher' ? 'teachers' : 'users'; ?> found matching your criteria</p>
-                                            <a href="add_user.php" class="btn btn-primary">Add First                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $user_type === 'teacher' ? 'Teacher' : 'User'; ?></a>
+                                            <p style="color: #666; margin: 10px 0;">No                                                                                                                                                                                                                                                                                                                                                         <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'teachers' : 'users'; ?> found matching your criteria</p>
+                                            <a href="add_user.php" class="btn btn-primary">Add First                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $user_type === 'teacher' ? 'Teacher' : 'User'; ?></a>
                                         </td>
                                     </tr>
                                 <?php endif; ?>
@@ -1177,6 +1296,22 @@
 
         function closeSidebar() {
             // Add your sidebar close functionality here
+        }
+
+        // Export dropdown functionality
+        function toggleExportDropdown() {
+            const dropdown = document.getElementById("exportDropdownContent");
+            dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+        }
+
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdown-toggle') && !event.target.closest('.dropdown-toggle')) {
+                const dropdowns = document.getElementsByClassName("dropdown-content");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    dropdowns[i].style.display = "none";
+                }
+            }
         }
     </script>
 </body>

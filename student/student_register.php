@@ -279,6 +279,21 @@
       font-size: 11px;
       color: #6c757d;
     }
+
+    /* State-District dropdown styling */
+    select:disabled {
+      background-color: #f8f9fa;
+      color: #6c757d;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .form-field-helper {
+      font-size: 11px;
+      color: #6c757d;
+      margin-top: 2px;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -359,7 +374,7 @@
     <div class="registration-container">
       <h2 class="form-title">Student Event Registration</h2>
       <div class="form-step-indicator">
-      
+
       </div>
       <div class="parent">
         <div class="item div13">
@@ -370,13 +385,19 @@
                  maxlength="10" readonly style="background-color: #f8f9fa; cursor: not-allowed;" required />
         </div>
         <div class="item div5">
-          <label for="year">Current Year:</label>
+          <label for="year">Academic Year:</label>
           <select id="year" name="year" required>
-            <option value="" disabled selected>Select Your Year</option>
-            <option value="1st Year">1st Year</option>
-            <option value="2nd Year">2nd Year</option>
-            <option value="3rd Year">3rd Year</option>
-            <option value="4th Year">4th Year</option>
+            <option value="" disabled selected>Select Academic Year</option>
+            <?php
+                // Generate last 10 academic years starting from current year
+                $current_year = date('Y');
+                for ($i = 0; $i < 10; $i++) {
+                    $start_year    = $current_year - $i;
+                    $end_year      = $start_year + 1;
+                    $academic_year = $start_year . '-' . $end_year;
+                    echo "<option value='$academic_year'>$academic_year</option>";
+                }
+            ?>
           </select>
         </div>
         <div class="item div6">
@@ -395,34 +416,31 @@
         <div class="item div22">
           <label for="semester">Semester:</label>
           <select id="semester" name="semester" required>
-            <option value="" disabled selected>Select Your Semester</option>
-            <option value="first semester">First Semester</option>
-            <option value="second semester">Second Semester</option>
-            <option value="third semester">Third Semester</option>
-            <option value="fourth semester">Fourth Semester</option>
-            <option value="fifth semester">Fifth Semester</option>
-            <option value="sixth semester">Sixth Semester</option>
-            <option value="seventh semester">Seventh Semester</option>
-            <option value="eighth semester">Eighth Semester</option>
+            <option value="" disabled selected>Select Semester</option>
+            <option value="Odd">Odd Semester</option>
+            <option value="Even">Even Semester</option>
           </select>
         </div>
         <div class="item div17">
           <label for="state">State:</label>
           <select id="state" name="state" required>
             <option value="" disabled selected>Select State</option>
-            <option value="tamilnadu">Tamil Nadu</option>
-            <option value="kerala">Kerala</option>
-            <option value="karnataka">Karnataka</option>
+            <option value="Tamil Nadu">Tamil Nadu</option>
+            <option value="Kerala">Kerala</option>
+            <option value="Karnataka">Karnataka</option>
+            <option value="Andhra Pradesh">Andhra Pradesh</option>
+            <option value="Telangana">Telangana</option>
+            <option value="Maharashtra">Maharashtra</option>
+            <option value="Goa">Goa</option>
           </select>
         </div>
         <div class="item div18">
           <label for="district">District:</label>
-          <select id="district" name="district" required>
+          <select id="district" name="district" required disabled>
             <option value="" disabled selected>Select District</option>
-            <option value="salem">Salem</option>
-            <option value="chennai">Chennai</option>
-            <option value="coimbatore">Coimbatore</option>
+            <!-- Districts will be populated dynamically based on state selection -->
           </select>
+          <div class="form-field-helper">Please select a state first</div>
         </div>
         <div class="item div7">
           <label for="eventType">Event Type:</label>
@@ -721,6 +739,85 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.remove('sidebar-open');
         }
     });
+
+    // State-District functionality
+    const stateDistricts = {
+        'Tamil Nadu': [
+            'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli',
+            'Tiruppur', 'Vellore', 'Erode', 'Thoothukkudi', 'Dindigul', 'Thanjavur',
+            'Ranipet', 'Sivaganga', 'Karur', 'Namakkal', 'Cuddalore', 'Nagapattinam',
+            'Villupuram', 'Ramanathapuram', 'Kanchipuram', 'Krishnagiri', 'Ariyalur',
+            'Perambalur', 'Pudukkottai', 'Dharmapuri', 'Virudhunagar', 'Kanyakumari',
+            'Tiruvarur', 'Nilgiris', 'Chengalpattu', 'Tirupathur', 'Tenkasi',
+            'Mayiladuthurai', 'Kallakurichi'
+        ],
+        'Kerala': [
+            'Thiruvananthapuram', 'Kollam', 'Pathanamthitta', 'Alappuzha', 'Kottayam',
+            'Idukki', 'Ernakulam', 'Thrissur', 'Palakkad', 'Malappuram', 'Kozhikode',
+            'Wayanad', 'Kannur', 'Kasaragod'
+        ],
+        'Karnataka': [
+            'Bengaluru Urban', 'Bengaluru Rural', 'Mysuru', 'Tumakuru', 'Kolar',
+            'Chikkaballapura', 'Chitradurga', 'Davanagere', 'Shivamogga', 'Belagavi',
+            'Bagalkot', 'Vijayapura', 'Uttara Kannada', 'Haveri', 'Dharwad', 'Gadag',
+            'Koppal', 'Ballari', 'Raichur', 'Kalaburagi', 'Bidar', 'Yadgir',
+            'Chamarajanagar', 'Mandya', 'Hassan', 'Dakshina Kannada', 'Udupi', 'Kodagu',
+            'Chikkamagaluru'
+        ],
+        'Andhra Pradesh': [
+            'Anantapur', 'Chittoor', 'East Godavari', 'Guntur', 'Krishna', 'Kurnool',
+            'Nellore', 'Prakasam', 'Srikakulam', 'Visakhapatnam', 'Vizianagaram',
+            'West Godavari', 'YSR Kadapa'
+        ],
+        'Telangana': [
+            'Hyderabad', 'Secunderabad', 'Adilabad', 'Bhadradri Kothagudem', 'Jagitial',
+            'Jangaon', 'Jayashankar Bhupalpally', 'Jogulamba Gadwal', 'Kamareddy',
+            'Karimnagar', 'Khammam', 'Kumuram Bheem', 'Mahabubabad', 'Mahabubnagar',
+            'Mancherial', 'Medak', 'Medchal–Malkajgiri', 'Mulugu', 'Nagarkurnool',
+            'Nalgonda', 'Narayanpet', 'Nirmal', 'Nizamabad', 'Peddapalli',
+            'Rajanna Sircilla', 'Ranga Reddy', 'Sangareddy', 'Siddipet', 'Suryapet',
+            'Vikarabad', 'Wanaparthy', 'Warangal Rural', 'Warangal Urban', 'Yadadri Bhuvanagiri'
+        ],
+        'Maharashtra': [
+            'Mumbai City', 'Mumbai Suburban', 'Thane', 'Pune', 'Nashik', 'Nagpur',
+            'Aurangabad', 'Solapur', 'Amravati', 'Nanded', 'Kolhapur', 'Akola',
+            'Latur', 'Ahmednagar', 'Chandrapur', 'Parbhani', 'Jalgaon', 'Buldhana',
+            'Ratnagiri', 'Gondia', 'Yavatmal', 'Nandurbar', 'Wardha', 'Beed',
+            'Washim', 'Gadchiroli', 'Hingoli', 'Osmanabad', 'Raigad', 'Sangli',
+            'Sindhudurg', 'Satara', 'Jalna', 'Dhule', 'Bhandara'
+        ],
+        'Goa': [
+            'North Goa', 'South Goa'
+        ]
+    };
+
+    const stateSelect = document.getElementById('state');
+    const districtSelect = document.getElementById('district');
+
+    if (stateSelect && districtSelect) {
+        stateSelect.addEventListener('change', function() {
+            const selectedState = this.value;
+
+            // Clear existing district options
+            districtSelect.innerHTML = '<option value="" disabled selected>Select District</option>';
+
+            if (selectedState && stateDistricts[selectedState]) {
+                // Populate districts for selected state
+                stateDistricts[selectedState].forEach(function(district) {
+                    const option = document.createElement('option');
+                    option.value = district;
+                    option.textContent = district;
+                    districtSelect.appendChild(option);
+                });
+
+                // Enable district dropdown
+                districtSelect.disabled = false;
+            } else {
+                // Disable district dropdown if no state selected
+                districtSelect.disabled = true;
+            }
+        });
+    }
 });
 </script>
 </body>
