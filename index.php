@@ -128,16 +128,184 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Event Management - Login</title>
-    <link rel="icon" type="icon/png" sizes="32x32" href="./asserts/images/Sona Logo.png" />
+    <link rel="icon" type="icon/png" sizes="32x32" href="./asserts/sona_logo.jpg" />
     <link rel="stylesheet" href="styles.css" />
+    <style>
+        .header {
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  font-size: 15px;
+  font-weight: 100;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  color: #1e4276;
+  position: fixed;
+  width: 100%;
+  z-index: 1001;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+}
+.header-logo {
+   flex-shrink: 0;
+   margin-left: 10px;
+}
+img{
+   width: 200px;
+   height: 60px;
+   border-radius: 5px;
+}
+.header-title {
+   font-size: 24px;
+   font-weight: 400;
+   flex: 1;
+   text-align: center;
+}
+.empty {
+   flex-shrink: 0;
+   width: 200px;
+}
+/* Mobile and Tablet Styles with Background Image */
+@media (max-width: 1023px) {
+   body {
+      background: linear-gradient(135deg,
+         rgba(30, 66, 118, 0.8) 0%,
+         rgba(45, 90, 160, 0.6) 25%,
+         rgba(30, 66, 118, 0.5) 50%,
+         rgba(45, 90, 160, 0.6) 75%,
+         rgba(30, 66, 118, 0.8) 100%),
+         url("sona_login_img.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: scroll;
+      min-height: 100vh;
+      position: relative;
+   }
+
+   .header{
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+   }
+
+   .header-logo {
+      display: none;
+   }
+
+   .empty{
+      display: none;
+   }
+
+   .registration-main{
+      margin-top: 100px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      padding: 30px 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+   }
+
+   /* Enhanced input styling for mobile transparency */
+   .registration-main input[type="text"],
+   .registration-main input[type="password"] {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(5px);
+   }
+
+   .registration-main input[type="text"]:focus,
+   .registration-main input[type="password"]:focus {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(30, 66, 118, 0.5);
+      box-shadow: 0 0 10px rgba(30, 66, 118, 0.2);
+   }
+
+   /* Submit button transparency */
+   .registration-main input[type="submit"] {
+      background: rgba(30, 66, 118, 0.9);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+   }
+
+   .registration-main input[type="submit"]:hover {
+      background: rgba(30, 66, 118, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(30, 66, 118, 0.3);
+   }
+ }
+
+/* Background image for laptop/desktop screens only */
+@media (min-width: 1024px) {
+   body {
+      background-image:linear-gradient(135deg,
+             rgba(30, 66, 118, 0.8) 0%,
+             rgba(45, 90, 160, 0.6) 25%,
+             rgba(30, 66, 118, 0.5) 50%,
+             rgba(45, 90, 160, 0.6) 75%,
+             rgba(30, 66, 118, 0.8) 100%), url('./sona_login_img.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      position: relative;
+   }
+
+   body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg,
+         rgba(30, 66, 118, 0.1) 0%,
+         transparent 25%,
+         transparent 75%,
+         rgba(30, 66, 118, 0.1) 100%);
+      z-index: -1;
+      pointer-events: none;
+   }
+
+   main {
+      position: relative;
+      z-index: 1;
+   }
+
+   /* Enhanced glass effect for login form on desktop */
+   .registration-main {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.0);
+      border-radius: 20px;
+      padding: 40px;
+   }
+}
+    </style>
 </head>
 <body>
 <main>
-    <div class="login-header">
-        <!-- <div class="icon">
-            <img src="./asserts/images/Sona Logo.png" alt="Sona College Logo" />
-        </div> -->
-        <h1>Event Management system</h1>
+    <div class="header">
+        <div class="header-logo">
+          <img
+            class="logo"
+            src="sona_logo.jpg"
+            alt="Sona College Logo"
+            height="60px"
+            width="200px"
+          />
+        </div>
+        <div class="header-title">
+          <p>Event Management System</p>
+        </div>
+        <div class="empty">
+          <!-- empty -->
+        </div>
     </div>
 
     <form action="index.php" method="POST">
@@ -147,8 +315,31 @@
             <div class="form-group">
                 <input type="text" name="name" placeholder="Username or Email" required />
             </div>
-            <div class="form-group">
-                <input type="password" name="password" placeholder="Password" required />
+            <div class="form-group" style="position: relative;">
+                <input type="password" name="password" id="password" placeholder="Password" required />
+                <button type="button" id="togglePassword" style="
+                    position: absolute;
+                    right: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: none;
+                    border: none;
+                    cursor: pointer;
+                    color: #666;
+                    font-size: 18px;
+                    padding: 0;
+                    width: 24px;
+                    height: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    transition: color 0.3s ease;
+                " title="Show/Hide Password">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
             </div>
 
             <?php
@@ -180,6 +371,60 @@ if (window.history.replaceState) {
 
 window.addEventListener('popstate', function(event) {
     window.history.replaceState(null, null, window.location.href);
+});
+
+// Password visibility toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordField = document.getElementById('password');
+    const toggleButton = document.getElementById('togglePassword');
+
+    // Define SVG icons
+    const eyeOpenIcon = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+    `;
+
+    const eyeClosedIcon = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+        </svg>
+    `;
+
+    if (passwordField && toggleButton) {
+        toggleButton.addEventListener('click', function() {
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleButton.innerHTML = eyeClosedIcon;
+                toggleButton.title = 'Hide Password';
+                toggleButton.style.color = '#0c3878';
+            } else {
+                passwordField.type = 'password';
+                toggleButton.innerHTML = eyeOpenIcon;
+                toggleButton.title = 'Show Password';
+                toggleButton.style.color = '#666';
+            }
+        });
+
+        // Add hover effect
+        toggleButton.addEventListener('mouseenter', function() {
+            if (passwordField.type === 'password') {
+                this.style.color = '#0c3878';
+            } else {
+                this.style.color = '#333';
+            }
+        });
+
+        toggleButton.addEventListener('mouseleave', function() {
+            if (passwordField.type === 'password') {
+                this.style.color = '#666';
+            } else {
+                this.style.color = '#0c3878';
+            }
+        });
+    }
 });
 </script>
 </body>

@@ -184,6 +184,14 @@
 
           <div class="card">
             <div class="card-inner">
+              <h3>Success Rate</h3>
+              <span class="material-symbols-outlined">trending_up</span>
+            </div>
+            <h1><?php echo $total_events > 0 ? round(($events_won / $total_events) * 100, 1) : 0; ?>%</h1>
+          </div>
+
+          <div class="card">
+            <div class="card-inner">
               <h3>Quick Actions</h3>
               <span class="material-symbols-outlined">bolt</span>
             </div>
@@ -254,7 +262,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($type['count'] / $total_events) * 100; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($type['count'] / $total_events) * 100; ?>%"></div>
                         </div>
                       </div>
                     </div>

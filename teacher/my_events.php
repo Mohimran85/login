@@ -220,7 +220,7 @@
         }
 
         .participations-header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: linear-gradient(135deg, #103164 0%, var(--secondary-color) 100%);
             color: white;
             padding: 40px;
             margin-bottom: 30px;
@@ -449,9 +449,9 @@
             font-size: 14px;
             font-weight: 600;
             text-transform: uppercase;
-            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             color: white;
-            box-shadow: 0 8px 25px rgba(23, 162, 184, 0.3);
+           
         }
 
         .actions-section {
@@ -475,12 +475,12 @@
         .btn-download {
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
-            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+             
         }
 
         .btn-download:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 40px rgba(40, 167, 69, 0.4);
+            
         }
 
         .empty-state {
@@ -753,7 +753,7 @@
 
         @media (max-width: 480px) {
             .main {
-                padding: 70px 5px 15px 5px; /* Reduced padding for very small screens */
+                padding: 0px 5px 15px 5px; /* Reduced padding for very small screens */
             }
 
             .participations-header {
@@ -1002,7 +1002,7 @@
                                     <?php echo htmlspecialchars($event['sponsors']); ?>
                                 </div>
                                 <div class="status-badge">
-                                    ✅ Completed
+                                     Completed
                                 </div>
                             </div>
 

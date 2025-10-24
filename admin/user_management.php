@@ -166,6 +166,54 @@
                         }
                     }
                     break;
+
+                case 'edit_user':
+                    $user_id    = (int) $_POST['user_id'];
+                    $table_name = $_POST['table_name'];
+                    $name       = trim($_POST['name']);
+                    $username   = trim($_POST['username']);
+                    $email      = trim($_POST['email']);
+                    $department = $_POST['department'];
+                    $identifier = trim($_POST['identifier']);
+
+                    $allowed_tables = ['student_register', 'teacher_register'];
+
+                    if (in_array($table_name, $allowed_tables)) {
+                        // Validation
+                        if (empty($name) || empty($username) || empty($email) || empty($department) || empty($identifier)) {
+                            $error_message = "All fields are required!";
+                        } elseif (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                            $error_message = "Invalid email format!";
+                        } else {
+                            // Check for username/email uniqueness (excluding current user)
+                            $email_column      = ($table_name === 'student_register') ? 'personal_email' : 'email';
+                            $identifier_column = ($table_name === 'student_register') ? 'regno' : 'faculty_id';
+
+                            $check_unique_sql = "SELECT id FROM $table_name WHERE (username = ? OR $email_column = ? OR $identifier_column = ?) AND id != ?";
+                            $check_stmt       = $conn->prepare($check_unique_sql);
+                            $check_stmt->bind_param("sssi", $username, $email, $identifier, $user_id);
+                            $check_stmt->execute();
+                            $check_result = $check_stmt->get_result();
+
+                            if ($check_result->num_rows > 0) {
+                                $error_message = "Username, email, or identifier already exists for another user!";
+                            } else {
+                                // Update user information
+                                $update_sql  = "UPDATE $table_name SET name = ?, username = ?, $email_column = ?, department = ?, $identifier_column = ? WHERE id = ?";
+                                $update_stmt = $conn->prepare($update_sql);
+                                $update_stmt->bind_param("sssssi", $name, $username, $email, $department, $identifier, $user_id);
+
+                                if ($update_stmt->execute()) {
+                                    $success_message = "User information updated successfully!";
+                                } else {
+                                    $error_message = "Error updating user information: " . $conn->error;
+                                }
+                                $update_stmt->close();
+                            }
+                            $check_stmt->close();
+                        }
+                    }
+                    break;
             }
         }
     }
@@ -834,6 +882,44 @@
             background-color: #f1f1f1;
             border-radius: 6px;
         }
+
+        /* Edit Modal Form Styles */
+        .modal-content .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-content .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-content .filter-group input:focus,
+        .modal-content .filter-group select:focus {
+            outline: none;
+            border-color: #0c3878 !important;
+            box-shadow: 0 0 0 2px rgba(12, 56, 120, 0.1);
+        }
+
+        .modal-content .filter-group input.error,
+        .modal-content .filter-group select.error {
+            border-color: #dc3545 !important;
+            background-color: #fff5f5;
+        }
+
+        .modal-content .filter-group small {
+            display: block;
+            margin-top: 5px;
+        }
+
+        /* Form validation styles */
+        .form-error {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 5px;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -949,17 +1035,14 @@
                 <!-- Filters -->
                 <div class="filters-container">
                     <div class="filters-header">
-                        <h3>🔍 Filter                                                                                                                                                             <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?></h3>
-                        <a href="add_user.php" class="add-user-btn">
-                            <span class="material-symbols-outlined">person_add</span>
-                            Add New                                                                                                                                             <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teacher' : 'User'; ?>
-                        </a>
+                        <h3>🔍 Filter                                                                                                                                                                                                    <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?></h3>
+                        
                     </div>
 
                     <form method="GET" action="">
                         <div class="filters-row">
                             <div class="filter-group">
-                                <label for="search">Search                                                                                                                                                                                                                                         <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?></label>
+                                <label for="search">Search                                                                                                                                                                                                                                                                                                   <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?></label>
                                 <input type="text" id="search" name="search"
                                        placeholder="Name, Username, Email, ID..."
                                        value="<?php echo htmlspecialchars($search_query); ?>">
@@ -970,9 +1053,9 @@
                             <div class="filter-group">
                                 <label for="user_type">User Type</label>
                                 <select id="user_type" name="user_type">
-                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $filter_user_type === 'all' ? 'selected' : ''; ?>>All Users</option>
-                                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo $filter_user_type === 'student' ? 'selected' : ''; ?>>Students</option>
-                                    <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo $filter_user_type === 'teacher' ? 'selected' : ''; ?>>Teachers</option>
+                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $filter_user_type === 'all' ? 'selected' : ''; ?>>All Users</option>
+                                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $filter_user_type === 'student' ? 'selected' : ''; ?>>Students</option>
+                                    <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $filter_user_type === 'teacher' ? 'selected' : ''; ?>>Teachers</option>
                                 </select>
                             </div>
                             <?php else: ?>
@@ -982,20 +1065,20 @@
                             <div class="filter-group">
                                 <label for="status">Role/Status</label>
                                 <select id="status" name="status">
-                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo $filter_status === 'all' ? 'selected' : ''; ?>>All Roles</option>
-                                    <option value="admin"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo $filter_status === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                                    <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $filter_status === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
-                                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $filter_status === 'student' ? 'selected' : ''; ?>>Student</option>
+                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $filter_status === 'all' ? 'selected' : ''; ?>>All Roles</option>
+                                    <option value="admin"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $filter_status === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                                    <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $filter_status === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
+                                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $filter_status === 'student' ? 'selected' : ''; ?>>Student</option>
                                 </select>
                             </div>
 
                             <div class="filter-group">
                                 <label for="entries">Show Entries</label>
                                 <select id="entries" name="entries">
-                                    <option value="10"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $entries_param === '10' ? 'selected' : ''; ?>>10</option>
-                                    <option value="25"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $entries_param === '25' ? 'selected' : ''; ?>>25</option>
-                                    <option value="50"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $entries_param === '50' ? 'selected' : ''; ?>>50</option>
-                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $entries_param === 'all' ? 'selected' : ''; ?>>All</option>
+                                    <option value="10"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $entries_param === '10' ? 'selected' : ''; ?>>10</option>
+                                    <option value="25"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $entries_param === '25' ? 'selected' : ''; ?>>25</option>
+                                    <option value="50"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $entries_param === '50' ? 'selected' : ''; ?>>50</option>
+                                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $entries_param === 'all' ? 'selected' : ''; ?>>All</option>
                                 </select>
                             </div>
 
@@ -1012,7 +1095,7 @@
                 <!-- Users Table -->
                 <div class="users-table-container">
                     <div class="table-header">
-                        <h3>📋                                                                                                                                 <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?> List (<?php echo $total_users; ?> total)</h3>
+                        <h3>📋                                                                                                                                                                 <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?> List (<?php echo $total_users; ?> total)</h3>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <a href="bulk_import.php" class="btn btn-secondary">
                                 <span class="material-symbols-outlined">upload</span>
@@ -1083,17 +1166,17 @@
                                             <td><?php echo date('M d, Y', strtotime($user['year_of_join'])); ?></td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    <a href="edit_user.php?id=<?php echo $user['id']; ?>&type=<?php echo $user['user_type']; ?>"
-                                                       class="btn btn-warning" title="Edit User">
+                                                    <button onclick="openEditModal(<?php echo $user['id']; ?>, '<?php echo $user['user_type']; ?>', '<?php echo htmlspecialchars($user['name']); ?>', '<?php echo htmlspecialchars($user['username']); ?>', '<?php echo htmlspecialchars($user['email']); ?>', '<?php echo htmlspecialchars($user['department']); ?>', '<?php echo htmlspecialchars($user['identifier']); ?>')"
+                                                            class="btn btn-warning" title="Edit User">
                                                         <span class="material-symbols-outlined">edit</span>
-                                                    </a>
+                                                    </button>
 
                                                     <select onchange="changeUserRole(<?php echo $user['id']; ?>, '<?php echo $user['user_type']; ?>', this.value, '<?php echo $user['status']; ?>')"
                                                             class="btn btn-primary" style="padding: 8px 6px; font-size: 11px; border: none; border-radius: 6px; cursor: pointer;"
                                                             title="Change User Role">
                                                         <?php if ($user['user_type'] === 'teacher'): ?>
                                                             <option value="admin"<?php echo $user['status'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                                                            <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $user['status'] === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
+                                                            <option value="teacher"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo $user['status'] === 'teacher' ? 'selected' : ''; ?>>Teacher</option>
                                                         <?php else: ?>
                                                             <option value="student"<?php echo $user['status'] === 'student' ? 'selected' : ''; ?>>Student</option>
                                                         <?php endif; ?>
@@ -1111,8 +1194,8 @@
                                     <tr>
                                         <td colspan="7" style="text-align: center; padding: 40px;">
                                             <span class="material-symbols-outlined" style="font-size: 48px; color: #ccc;">person_off</span>
-                                            <p style="color: #666; margin: 10px 0;">No                                                                                                                                                                                                                                                                                                                                                         <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'teachers' : 'users'; ?> found matching your criteria</p>
-                                            <a href="add_user.php" class="btn btn-primary">Add First                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $user_type === 'teacher' ? 'Teacher' : 'User'; ?></a>
+                                            <p style="color: #666; margin: 10px 0;">No                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'teachers' : 'users'; ?> found matching your criteria</p>
+                                            <a href="add_user.php" class="btn btn-primary">Add First                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $user_type === 'teacher' ? 'Teacher' : 'User'; ?></a>
                                         </td>
                                     </tr>
                                 <?php endif; ?>
@@ -1175,6 +1258,73 @@
         </div>
     </div>
 
+    <!-- Edit User Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content" style="max-width: 600px; text-align: left;">
+            <h3>✏️ Edit User Profile</h3>
+            <form id="editForm" method="POST">
+                <input type="hidden" name="action" value="edit_user">
+                <input type="hidden" name="user_id" id="editUserId">
+                <input type="hidden" name="table_name" id="editTableName">
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                    <div class="filter-group">
+                        <label for="editName">Full Name *</label>
+                        <input type="text" id="editName" name="name" required
+                               style="padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="editUsername">Username *</label>
+                        <input type="text" id="editUsername" name="username" required
+                               style="padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="editEmail">Email *</label>
+                        <input type="email" id="editEmail" name="email" required
+                               style="padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="editDepartment">Department *</label>
+                        <select id="editDepartment" name="department" required
+                                style="padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px;">
+                            <option value="">Select Department</option>
+                            <option value="IT">IT</option>
+                            <option value="CSE">CSE</option>
+                            <option value="ECE">ECE</option>
+                            <option value="EEE">EEE</option>
+                            <option value="MECH">MECH</option>
+                            <option value="CIVIL">CIVIL</option>
+                            <option value="AIML">AIML</option>
+                            <option value="ADS">ADS</option>
+                            <option value="FT">FT</option>
+                            <option value="EXE">EXE</option>
+                            <option value="CSD">CSD</option>
+                            <option value="MBA">MBA</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group" style="grid-column: 1 / -1;">
+                        <label for="editIdentifier" id="editIdentifierLabel">ID *</label>
+                        <input type="text" id="editIdentifier" name="identifier" required
+                               style="padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 14px; width: 100%;">
+                        <small style="color: #666; font-size: 12px;" id="editIdentifierHelp">Registration number for students, Faculty ID for teachers</small>
+                    </div>
+                </div>
+
+                <div class="modal-buttons" style="text-align: center; margin-top: 30px;">
+                    <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">save</span>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Hidden forms for actions -->
     <form id="deleteForm" method="POST" style="display: none;">
         <input type="hidden" name="action" value="delete_user">
@@ -1201,6 +1351,111 @@
                 `Are you sure you want to delete ${userName}? This action cannot be undone and will remove all their data from the system.`;
             document.getElementById('deleteModal').style.display = 'block';
         }
+
+        // Edit Modal Functions
+        function openEditModal(userId, userType, name, username, email, department, identifier) {
+            // Set form values
+            document.getElementById('editUserId').value = userId;
+            document.getElementById('editTableName').value = userType + '_register';
+            document.getElementById('editName').value = name;
+            document.getElementById('editUsername').value = username;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editDepartment').value = department;
+            document.getElementById('editIdentifier').value = identifier;
+
+            // Update labels based on user type
+            const identifierLabel = document.getElementById('editIdentifierLabel');
+            const identifierHelp = document.getElementById('editIdentifierHelp');
+
+            if (userType === 'student') {
+                identifierLabel.textContent = 'Registration Number *';
+                identifierHelp.textContent = 'Student registration number (e.g., 12345678901234)';
+            } else {
+                identifierLabel.textContent = 'Faculty ID *';
+                identifierHelp.textContent = 'Faculty identification number';
+            }
+
+            // Show modal
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            // Reset form
+            document.getElementById('editForm').reset();
+            // Remove any error styling
+            const inputs = document.querySelectorAll('#editModal input, #editModal select');
+            inputs.forEach(input => {
+                input.classList.remove('error');
+                const errorMsg = input.parentNode.querySelector('.form-error');
+                if (errorMsg) errorMsg.remove();
+            });
+        }
+
+        // Form validation for edit modal
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            let isValid = true;
+
+            // Remove previous error messages
+            const errorMessages = document.querySelectorAll('#editModal .form-error');
+            errorMessages.forEach(msg => msg.remove());
+
+            // Validate required fields
+            const requiredFields = ['editName', 'editUsername', 'editEmail', 'editDepartment', 'editIdentifier'];
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    field.classList.add('error');
+                    const errorMsg = document.createElement('span');
+                    errorMsg.className = 'form-error';
+                    errorMsg.textContent = 'This field is required';
+                    field.parentNode.appendChild(errorMsg);
+                    isValid = false;
+                } else {
+                    field.classList.remove('error');
+                }
+            });
+
+            // Validate email format
+            const emailField = document.getElementById('editEmail');
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailField.value && !emailPattern.test(emailField.value)) {
+                emailField.classList.add('error');
+                let errorMsg = emailField.parentNode.querySelector('.form-error');
+                if (errorMsg) {
+                    errorMsg.textContent = 'Please enter a valid email address';
+                } else {
+                    errorMsg = document.createElement('span');
+                    errorMsg.className = 'form-error';
+                    errorMsg.textContent = 'Please enter a valid email address';
+                    emailField.parentNode.appendChild(errorMsg);
+                }
+                isValid = false;
+            }
+
+            // Validate identifier format (basic check)
+            const identifierField = document.getElementById('editIdentifier');
+            if (identifierField.value && identifierField.value.length < 3) {
+                identifierField.classList.add('error');
+                let errorMsg = identifierField.parentNode.querySelector('.form-error');
+                if (errorMsg) {
+                    errorMsg.textContent = 'ID must be at least 3 characters long';
+                } else {
+                    errorMsg = document.createElement('span');
+                    errorMsg.className = 'form-error';
+                    errorMsg.textContent = 'ID must be at least 3 characters long';
+                    identifierField.parentNode.appendChild(errorMsg);
+                }
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                // Focus on first error field
+                const firstError = document.querySelector('#editModal .error');
+                if (firstError) firstError.focus();
+            }
+        });
 
         function closeDeleteModal() {
             document.getElementById('deleteModal').style.display = 'none';
@@ -1246,6 +1501,7 @@
         window.onclick = function(event) {
             const deleteModal = document.getElementById('deleteModal');
             const roleModal = document.getElementById('roleModal');
+            const editModal = document.getElementById('editModal');
 
             if (event.target == deleteModal) {
                 deleteModal.style.display = 'none';
@@ -1253,6 +1509,9 @@
             if (event.target == roleModal) {
                 roleModal.style.display = 'none';
                 location.reload(); // Reset dropdowns
+            }
+            if (event.target == editModal) {
+                closeEditModal();
             }
         }
 

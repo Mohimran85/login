@@ -9,19 +9,328 @@
       <style>
          .error { color: red; margin: 5px 0; }
          .success { color: green; font-weight: bold; margin: 5px 0; }
+         .header {
+  background-color: #fff;
+  height: 80px;
+  display: flex;
+  font-size: 15px;
+  font-weight: 100;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  color: #1e4276;
+  position: fixed;
+  width: 100%;
+  z-index: 1001;
+  top: 0;
+  left: 0;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+.header-logo {
+   flex-shrink: 0;
+}
+.header-logo img{
+   width: 200px;
+   height: 60px;
+   object-fit: contain;
+   display: block;
+}
+.header-title {
+   font-size: 24px;
+   font-weight: 400;
+   flex: 1;
+   text-align: center;
+}
+.header-title p {
+   margin: 0;
+}
+.empty {
+   flex-shrink: 0;
+   width: 200px;
+}
+/* Mobile Responsive Improvements */
+.registration-main {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(100vh - 80px);
+  padding: 20px 10px;
+  margin-top: 100px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.registration-form {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.registration-container {
+  background: #fff;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  padding: 30px 25px;
+  border-radius: 15px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.parent {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 15px;
+  width: 100%;
+}
+
+.item {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.item input, .item select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .header {
+    justify-content: center;
+    padding: 0 15px;
+  }
+
+  .header-logo {
+    display: none;
+  }
+
+  .empty {
+    display: none;
+  }
+
+  .registration-main {
+    margin-top: 90px;
+    padding: 15px 10px;
+    min-height: calc(100vh - 90px);
+  }
+
+  .registration-container {
+    padding: 25px 20px;
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .parent {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .form-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    justify-content: center;
+    padding: 0 10px;
+    height: 70px;
+  }
+
+  .header-logo {
+    display: none;
+  }
+
+  .empty {
+    display: none;
+  }
+
+  .registration-main {
+    margin-top: 80px;
+    padding: 10px 5px;
+    min-height: calc(100vh - 80px);
+  }
+
+  .registration-container {
+    padding: 20px 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .parent {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .form-title {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+
+  .item input, .item select {
+    padding: 12px 15px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+
+  .item label {
+    font-size: 14px;
+    margin-bottom: 5px;
+  }
+
+  #button {
+    padding: 15px;
+    font-size: 16px;
+    border-radius: 8px;
+  }
+}
+
+/* Global body styling with fallback */
+body {
+  background-color: #f0f4f8 !important;
+  background-image: url("sona_login_img.jpg") !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: scroll !important;
+  min-height: 100vh;
+}
+
+/* Mobile and Tablet Styles with Background Image */
+@media (max-width: 1023px) {
+  body {
+    background: linear-gradient(135deg,
+       rgba(30, 66, 118, 0.8) 0%,
+       rgba(45, 90, 160, 0.6) 25%,
+       rgba(30, 66, 118, 0.5) 50%,
+       rgba(45, 90, 160, 0.6) 75%,
+       rgba(30, 66, 118, 0.8) 100%),
+       url("sona_login_img.jpg") !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: scroll !important;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  .header {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+  }
+
+  .registration-container {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Enhanced input styling for mobile */
+  .registration-container input[type="text"],
+  .registration-container input[type="email"],
+  .registration-container input[type="password"],
+  .registration-container input[type="date"],
+  .registration-container select {
+    background: #ffffff !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .registration-container input:focus,
+  .registration-container select:focus {
+    background: #ffffff !important;
+    border: 1px solid rgba(30, 66, 118, 0.5) !important;
+    box-shadow: 0 0 10px rgba(30, 66, 118, 0.2);
+  }
+
+  /* Submit button transparency */
+  .registration-container #button {
+    background: rgba(30, 66, 118, 0.9) !important;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+  }
+
+  .registration-container #button:hover {
+    background: rgba(30, 66, 118, 1) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(30, 66, 118, 0.3);
+  }
+}
+
+/* Background image for laptop/desktop screens only */
+@media (min-width: 1024px) {
+  body {
+    background: linear-gradient(
+        135deg,
+        rgba(30, 66, 118, 0.7) 0%,
+        rgba(45, 90, 160, 0.5) 25%,
+        rgba(30, 66, 118, 0.4) 50%,
+        rgba(45, 90, 160, 0.5) 75%,
+        rgba(30, 66, 118, 0.7) 100%
+      ),
+      url("sona_login_img.jpg") !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    position: relative;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      45deg,
+      rgba(30, 66, 118, 0.1) 0%,
+      transparent 25%,
+      transparent 75%,
+      rgba(30, 66, 118, 0.1) 100%
+    );
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  main {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Enhanced form styling for desktop */
+  .registration-container {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.15);
+  }
+}
       </style>
    </head>
    <body>
-      <header>
-         <div class="container">
-        <div class="icon">
-            <img src="./asserts/images/Sona Logo.png" alt="Sona Logo" />
+      <div class="header">
+        <div class="header-logo">
+          <img
+            class="logo"
+            src="./asserts/images/Sona Logo.png"
+            alt="Sona College Logo"
+            height="60px"
+            width="200px"
+          />
         </div>
-        <div class="title">
-            <h1>Event Management System</h1>
+        <div class="header-title">
+          <p>Event Management System</p>
         </div>
-    </div>
-      </header>
+        <div class="empty">
+          <!-- empty -->
+        </div>
+      </div>
       <main class="registration-main">
 <?php
     $servername  = "localhost";
@@ -130,65 +439,65 @@
                <div class="parent">
                   <div class="item div2">
                      <label for="student-name">Name:</label>
-                     <input type="text" id="student-name" name="name" placeholder="Name" required />
+                     <input type="text" id="student-name" name="name" placeholder="Name" value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>" required />
                   </div>
                   <div class="item div3">
                      <label for="dob">Date Of Birth:</label>
-                     <input type="date" name="dob" id="dob" required />
+                     <input type="date" name="dob" id="dob" value="<?php echo isset($_POST['dob']) ? htmlspecialchars($_POST['dob']) : ''; ?>" required />
                   </div>
                   <div class="item div3">
                      <label for="username">Username:</label>
-                     <input type="text" id="username" name="username" placeholder="Username" required />
+                     <input type="text" id="username" name="username" placeholder="Username" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" required />
                   </div>
                   <div class="item div4">
                      <label for="registration-number">Registration Number:</label>
-                     <input type="text" id="registration-number" inputmode="numeric" pattern="\d{14}" title="Enter 12-digit reg no" name="regno" placeholder="Registration No" required />
+                     <input type="text" id="registration-number" inputmode="numeric" pattern="\d{14}" title="Enter 12-digit reg no" name="regno" placeholder="Registration No" value="<?php echo isset($_POST['regno']) ? htmlspecialchars($_POST['regno']) : ''; ?>" required />
                   </div>
                   <div class="item div5">
                      <label for="year_of_join">Year of Join:</label>
                      <select name="batch" id="year_of_join" required>
-                        <option value="" disabled selected>Select The year</option>
-                        <option value="2020">2020-24</option>
-                        <option value="2021">2021-25</option>
-                        <option value="2022">2022-26</option>
-                        <option value="2023">2023-27</option>
-                        <option value="2024">2024-28</option>
-                        <option value="2025">2025-29</option>
-                        <option value="2026">2026-30</option>
+                        <option value="" disabled                                                                                                                                                    <?php echo ! isset($_POST['batch']) ? 'selected' : ''; ?>>Select The year</option>
+                        <option value="2020"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2020') ? 'selected' : ''; ?>>2020-24</option>
+                        <option value="2021"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2021') ? 'selected' : ''; ?>>2021-25</option>
+                        <option value="2022"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2022') ? 'selected' : ''; ?>>2022-26</option>
+                        <option value="2023"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2023') ? 'selected' : ''; ?>>2023-27</option>
+                        <option value="2024"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2024') ? 'selected' : ''; ?>>2024-28</option>
+                        <option value="2025"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2025') ? 'selected' : ''; ?>>2025-29</option>
+                        <option value="2026"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2026') ? 'selected' : ''; ?>>2026-30</option>
                      </select>
                   </div>
                   <div class="item div5">
                      <label for="degree">Degree</label>
                      <select name="degree" id="degree" required>
-                        <option value="" disabled selected>Select The Degree</option>
-                        <option value="b.tech">B.Tech</option>
-                        <option value="m.tech">M.Tech</option>
-                        <option value="B.E">B.E</option>
-                        <option value="M.E">M.E</option>
-                        <option value="bba">BBA</option>
-                        <option value="mba">MBA</option>
+                        <option value="" disabled                                                                                                                                                    <?php echo ! isset($_POST['degree']) ? 'selected' : ''; ?>>Select The Degree</option>
+                        <option value="b.tech"                                                                                                                                           <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'b.tech') ? 'selected' : ''; ?>>B.Tech</option>
+                        <option value="m.tech"                                                                                                                                           <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'm.tech') ? 'selected' : ''; ?>>M.Tech</option>
+                        <option value="B.E"                                                                                                                                  <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'B.E') ? 'selected' : ''; ?>>B.E</option>
+                        <option value="M.E"                                                                                                                                  <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'M.E') ? 'selected' : ''; ?>>M.E</option>
+                        <option value="bba"                                                                                                                                  <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'bba') ? 'selected' : ''; ?>>BBA</option>
+                        <option value="mba"                                                                                                                                  <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'mba') ? 'selected' : ''; ?>>MBA</option>
                      </select>
                   </div>
                   <div class="item div5">
                      <label for="department">Department</label>
                      <select name="department" id="department" required>
-                        <option value="" disabled selected>Select the Department</option>
-                        <option value="IT">IT</option>
-                        <option value="CSE">CSE</option>
-                        <option value="ECE">ECE</option>
-                        <option value="EEE">EEE</option>
-                        <option value="MECH">MECH</option>
-                        <option value="CIVIL">CIVIL</option>
-                        <option value="AIML">AIML</option>
-                        <option value="ADS">ADS</option>
-                        <option value="FT">FT</option>
-                        <option value="EXE">EXE</option>
-                        <option value="CSD">CSD</option>
+                        <option value="" disabled                                                                                                                                                    <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select the Department</option>
+                        <option value="IT"                                                                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>IT</option>
+                        <option value="CSE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>CSE</option>
+                        <option value="ECE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>ECE</option>
+                        <option value="EEE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>EEE</option>
+                        <option value="MECH"                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>MECH</option>
+                        <option value="CIVIL"                                                                                                                                        <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>CIVIL</option>
+                        <option value="AIML"                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'AIML') ? 'selected' : ''; ?>>AIML</option>
+                        <option value="ADS"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'ADS') ? 'selected' : ''; ?>>ADS</option>
+                        <option value="FT"                                                                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'FT') ? 'selected' : ''; ?>>FT</option>
+                        <option value="EXE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'EXE') ? 'selected' : ''; ?>>EXE</option>
+                        <option value="CSD"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSD') ? 'selected' : ''; ?>>CSD</option>
                      </select>
                   </div>
                   <div class="item div7">
                      <label for="email">Personal Email:</label>
-                     <input type="email" inputmode="email" id="email" name="personal_email" placeholder="Personal Email" required />
+                     <input type="email" inputmode="email" id="email" name="personal_email" placeholder="Personal Email" value="<?php echo isset($_POST['personal_email']) ? htmlspecialchars($_POST['personal_email']) : ''; ?>" required />
                   </div>
                   <div class="item div8">
                      <label for="password">Password:</label>

@@ -113,6 +113,27 @@
     <link rel="icon" type="image/png" sizes="32x32" href="./asserts/images/Sona Logo.png" />
     <link rel="stylesheet" href="styles.css" />
     <style>
+        /* Background image styling */
+        body {
+            background-image: url("sona_login_img.jpg");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(30, 66, 118, 0.5), rgba(255, 255, 255, 0.3));
+            z-index: -1;
+        }
+
         .password-info {
             background: #e7f3ff;
             border: 2px solid #1e4276;
@@ -193,26 +214,127 @@
             align-items: center;
             flex-direction: column;
             width: auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 500px;
+            margin: 20px auto;
         }
         form {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
 
     </style>
+    <style>
+      .header {
+        background-color: #fff;
+        height: 80px;
+        display: flex;
+        font-size: 15px;
+        font-weight: 100;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+          rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+        color: #1e4276;
+        position: fixed;
+        width: 100%;
+        z-index: 1001;
+        top: 0;
+        left: 0;
+        padding: 0 20px;
+        box-sizing: border-box;
+      }
+
+      .header-logo {
+        flex-shrink: 0;
+      }
+
+      .header-logo img {
+        width: 200px;
+        height: 60px;
+        object-fit: contain;
+        display: block;
+      }
+
+      .header-title {
+        font-size: 24px;
+        font-weight: 400;
+        flex: 1;
+        text-align: center;
+      }
+
+      .header-title p {
+        margin: 0;
+      }
+
+      .empty {
+        flex-shrink: 0;
+        width: 200px;
+      }
+
+      .role-main {
+        margin-top: 10px;
+        padding-top: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          justify-content: center;
+          padding: 0 10px;
+        }
+        .header-logo {
+          display: none;
+        }
+        .empty {
+          display: none;
+        }
+        .role-main {
+          margin-top: 100px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .header {
+          justify-content: center;
+          padding: 0 10px;
+        }
+        .header-logo {
+          display: none;
+        }
+        .empty {
+          display: none;
+        }
+        .role-main {
+          margin-top: 100px;
+        }
+      }
+    </style>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <div class="icon">
-                <img src="./asserts/images/Sona Logo.png" alt="Sona Logo" />
-            </div>
-            <div class="title">
-                <h1>Event Management System</h1>
-            </div>
+    <div class="header">
+        <div class="header-logo">
+          <img
+            class="logo"
+            src="sona_logo.jpg"
+            alt="Sona College Logo"
+            height="60px"
+            width="200px"
+          />
         </div>
-    </header>
+        <div class="header-title">
+          <p>Event Management Dashboard</p>
+        </div>
+        <div class="empty">
+          <!-- empty -->
+        </div>
+    </div>
 
     <main class="forget-main">
         <div class="form-container">

@@ -558,7 +558,7 @@
                 height: 100vh;
                 z-index: -1;
                 backdrop-filter: blur(2px);
-                background: rgba(0, 0, 0, 0.3);
+               
             }
 
             .main {

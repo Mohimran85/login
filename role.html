@@ -10,26 +10,239 @@
       sizes="32x32"
       href="./asserts/images/Sona Logo.png"
     />
+    <style>
+      /* Global body styling with fallback */
+      body {
+        background-color: #f0f4f8 !important;
+        background-image: url("sona_login_img.jpg") !important;
+        background-size: cover !important;
+        background-position: center !important;
+        background-repeat: no-repeat !important;
+        background-attachment: scroll !important;
+        min-height: 100vh;
+      }
+
+      .header {
+        background-color: #fff;
+        height: 80px;
+        display: flex;
+        font-size: 15px;
+        font-weight: 100;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+          rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+        color: #1e4276;
+        position: fixed;
+        width: 100%;
+        z-index: 1001;
+        top: 0;
+        left: 0;
+        padding: 0 20px;
+        box-sizing: border-box;
+      }
+
+      .header-logo {
+        flex-shrink: 0;
+      }
+
+      .header-logo img {
+        width: 200px;
+        height: 60px;
+        object-fit: contain;
+        display: block;
+      }
+
+      .header-title {
+        font-size: 24px;
+        font-weight: 400;
+        flex: 1;
+        text-align: center;
+      }
+
+      .header-title p {
+        margin: 0;
+      }
+
+      .empty {
+        flex-shrink: 0;
+        width: 200px;
+      }
+
+      .role-main {
+        margin-top: 10px;
+        padding-top: 20px;
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          justify-content: center;
+          padding: 0 10px;
+        }
+        .header-logo {
+          display: none;
+        }
+        .empty {
+          display: none;
+        }
+        .role-main {
+          margin-top: 100px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .header {
+          justify-content: center;
+          padding: 0 10px;
+        }
+        .header-logo {
+          display: none;
+        }
+        .empty {
+          display: none;
+        }
+        .role-main {
+          margin-top: 100px;
+        }
+      }
+
+      /* Mobile and Tablet Styles with Background Image */
+      @media (max-width: 1023px) {
+        body {
+          background: linear-gradient(
+              135deg,
+              rgba(30, 66, 118, 0.8) 0%,
+              rgba(45, 90, 160, 0.6) 25%,
+              rgba(30, 66, 118, 0.5) 50%,
+              rgba(45, 90, 160, 0.6) 75%,
+              rgba(30, 66, 118, 0.8) 100%
+            ),
+            url("sona_login_img.jpg") !important;
+          background-size: cover !important;
+          background-position: center !important;
+          background-repeat: no-repeat !important;
+          background-attachment: scroll !important;
+          min-height: 100vh;
+          position: relative;
+        }
+
+        .header {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+        }
+
+        .form-container {
+          background: rgba(255, 255, 255, 0.1);
+          backdrop-filter: blur(15px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 15px;
+          padding: 30px 20px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Enhanced input styling for mobile transparency */
+        .form-container select {
+          background: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          backdrop-filter: blur(5px);
+        }
+
+        .form-container select:focus {
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(30, 66, 118, 0.5);
+          box-shadow: 0 0 10px rgba(30, 66, 118, 0.2);
+        }
+
+        /* Button transparency */
+        .role-button {
+          background: rgba(30, 66, 118, 0.9) !important;
+          backdrop-filter: blur(5px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .role-button:hover {
+          background: rgba(30, 66, 118, 1) !important;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 15px rgba(30, 66, 118, 0.3);
+        }
+      }
+
+      /* Background image for laptop/desktop screens only */
+      @media (min-width: 1024px) {
+        body {
+          background: linear-gradient(
+              135deg,
+              rgba(30, 66, 118, 0.7) 0%,
+              rgba(45, 90, 160, 0.5) 25%,
+              rgba(30, 66, 118, 0.4) 50%,
+              rgba(45, 90, 160, 0.5) 75%,
+              rgba(30, 66, 118, 0.7) 100%
+            ),
+            url("sona_login_img.jpg") !important;
+          background-size: cover !important;
+          background-position: center !important;
+          background-repeat: no-repeat !important;
+          background-attachment: fixed !important;
+          position: relative;
+          min-height: 100vh;
+        }
+
+        body::before {
+          content: "";
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(
+            45deg,
+            rgba(30, 66, 118, 0.1) 0%,
+            transparent 25%,
+            transparent 75%,
+            rgba(30, 66, 118, 0.1) 100%
+          );
+          z-index: -1;
+          pointer-events: none;
+        }
+
+        main {
+          position: relative;
+          z-index: 1;
+        }
+
+        /* Enhanced glass effect for role form on desktop */
+        .form-container {
+          background: rgba(255, 255, 255, 0.15);
+          backdrop-filter: blur(25px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+          border-radius: 20px;
+          padding: 40px;
+        }
+      }
+    </style>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header>
-      <div class="container">
-        <div class="icon">
-          <img src="./asserts/images/Sona Logo.png" alt="Sona Logo" />
-        </div>
-        <div class="title">
-          <h1>Event Management System</h1>
-        </div>
+    <div class="header">
+      <div class="header-logo">
+        <img
+          class="logo"
+          src="sona_logo.jpg"
+          alt="Sona College Logo"
+          height="60px"
+          width="200"
+        />
       </div>
-    </header>
+      <div class="header-title">
+        <p>Event Management System</p>
+      </div>
+      <div class="empty">
+        <!-- empty -->
+      </div>
+    </div>
 
     <main class="role-main">
-      <div class="login-header">
-        
-        <h1>Event Management System</h1>
-      </div>
-
       <form action="" class="">
         <div class="form-container">
           <h2 class="form-title">Select Your Role</h2>
