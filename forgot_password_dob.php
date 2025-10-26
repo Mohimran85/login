@@ -79,11 +79,11 @@
                         $update_stmt->bind_param("ss", $hashed_password, $username);
 
                         if ($update_stmt->execute()) {
-                            $message = "<div class='success'>   
+                            $message = "<div class='success'>
                             <h3>✅ Password Reset Successful!</h3>
                             <p><strong>Hello $name,</strong></p>
                             <p>Your password has been reset to your <strong>Faculty ID</strong>.</p>
-            
+
                             <p>Please login with your new password and consider changing it in your profile for security.</p>
                         </div>";
                         } else {
@@ -285,6 +285,18 @@
       }
 
       @media (max-width: 768px) {
+        body {
+            background-image: url("sona_login_img.jpg");
+            background-size: cover;
+            background-position: center;
+            background-attachment: scroll;
+            background-repeat: no-repeat;
+        }
+
+        body::before {
+            background: linear-gradient(135deg, rgba(30, 66, 118, 0.6), rgba(255, 255, 255, 0.4));
+        }
+
         .header {
           justify-content: center;
           padding: 0 10px;
@@ -297,10 +309,27 @@
         }
         .role-main {
           margin-top: 100px;
+        }
+
+        .form-container {
+          margin: 20px 10px;
+          padding: 30px 20px;
         }
       }
 
       @media (max-width: 480px) {
+        body {
+            background-image: url("sona_login_img.jpg");
+            background-size: cover;
+            background-position: center;
+            background-attachment: scroll;
+            background-repeat: no-repeat;
+        }
+
+        body::before {
+            background: linear-gradient(135deg, rgba(30, 66, 118, 0.7), rgba(255, 255, 255, 0.5));
+        }
+
         .header {
           justify-content: center;
           padding: 0 10px;
@@ -313,6 +342,11 @@
         }
         .role-main {
           margin-top: 100px;
+        }
+
+        .form-container {
+          margin: 15px 10px;
+          padding: 25px 15px;
         }
       }
     </style>
