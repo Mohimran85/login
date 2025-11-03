@@ -71,13 +71,21 @@
         exit();
     }
 
-    // Get dashboard statistics
+    // Get selected year from URL parameter or default to current year
+    $current_year  = isset($_GET['year']) && is_numeric($_GET['year']) ? (int) $_GET['year'] : date('Y');
+    $previous_year = $current_year - 1;
+
+    // Get comparison year if provided
+    $compare_year       = isset($_GET['compare_year']) && is_numeric($_GET['compare_year']) ? (int) $_GET['compare_year'] : null;
+    $is_comparison_mode = $compare_year !== null;
+
+    // Get dashboard statistics for selected year
     $total_students       = 0;
     $total_teachers       = 0;
     $total_events         = 0;
     $total_participations = 0;
 
-    // Count total students
+    // Count total students (not year-specific)
     $student_sql    = "SELECT COUNT(*) as count FROM student_register";
     $student_result = $conn->query($student_sql);
     if ($student_result) {
@@ -87,7 +95,7 @@
         $total_students = 0;
     }
 
-    // Count total teachers
+    // Count total teachers (not year-specific)
     $teacher_sql    = "SELECT COUNT(*) as count FROM teacher_register";
     $teacher_result = $conn->query($teacher_sql);
     if ($teacher_result) {
@@ -97,27 +105,72 @@
         $total_teachers = 0;
     }
 
-    // Count total unique event types from student registrations only
-    // One event type = one unique category (Workshop, Hackathon, etc.)
-    $student_events_sql    = "SELECT COUNT(DISTINCT event_type) as count FROM student_event_register WHERE event_type IS NOT NULL AND event_type != ''";
+    // Count total unique event types from student registrations for selected year
+    $student_events_sql    = "SELECT COUNT(DISTINCT event_type) as count FROM student_event_register WHERE event_type IS NOT NULL AND event_type != '' AND YEAR(attended_date) = $current_year";
     $student_events_result = $conn->query($student_events_sql);
     $student_events_count  = $student_events_result ? $student_events_result->fetch_assoc()['count'] : 0;
 
     $total_events = $student_events_count;
 
-    // Count total participations (students only)
-    $student_participation_sql    = "SELECT COUNT(*) as count FROM student_event_register";
+    // Count total participations for selected year (students only)
+    $student_participation_sql    = "SELECT COUNT(*) as count FROM student_event_register WHERE YEAR(attended_date) = $current_year";
     $student_participation_result = $conn->query($student_participation_sql);
     $student_participations       = $student_participation_result ? $student_participation_result->fetch_assoc()['count'] : 0;
 
     $total_participations = $student_participations;
 
-    // Enhanced Events by Category Analytics System (Students Only)
+    // Get comparison year data if in comparison mode
+    $compare_total_events         = 0;
+    $compare_total_participations = 0;
+    $compare_category_analytics   = [];
+
+    if ($is_comparison_mode) {
+        // Count events for comparison year
+        $compare_events_sql    = "SELECT COUNT(DISTINCT event_type) as count FROM student_event_register WHERE event_type IS NOT NULL AND event_type != '' AND YEAR(attended_date) = $compare_year";
+        $compare_events_result = $conn->query($compare_events_sql);
+        $compare_total_events  = $compare_events_result ? $compare_events_result->fetch_assoc()['count'] : 0;
+
+        // Count participations for comparison year
+        $compare_parts_sql            = "SELECT COUNT(*) as count FROM student_event_register WHERE YEAR(attended_date) = $compare_year";
+        $compare_parts_result         = $conn->query($compare_parts_sql);
+        $compare_total_participations = $compare_parts_result ? $compare_parts_result->fetch_assoc()['count'] : 0;
+
+        // Get category analytics for comparison year
+        $compare_category_sql = "SELECT
+            event_type,
+            COUNT(*) as participations,
+            COUNT(DISTINCT event_type) as unique_events,
+            COUNT(DISTINCT regno) as unique_participants,
+            SUM(CASE WHEN prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prize_winners
+            FROM student_event_register
+            WHERE event_type IS NOT NULL AND event_type != ''
+            AND YEAR(attended_date) = $compare_year
+            GROUP BY event_type
+            ORDER BY participations DESC";
+
+        $compare_category_result = $conn->query($compare_category_sql);
+
+        if ($compare_category_result) {
+            while ($row = $compare_category_result->fetch_assoc()) {
+                $category                              = $row['event_type'];
+                $compare_category_analytics[$category] = [
+                    'name'                 => $category,
+                    'total_participations' => (int) $row['participations'],
+                    'total_events'         => (int) $row['unique_events'],
+                    'total_participants'   => (int) $row['unique_participants'],
+                    'prize_winners'        => (int) $row['prize_winners'],
+                    'success_rate'         => $row['participations'] > 0 ? round(($row['prize_winners'] / $row['participations']) * 100, 1) : 0,
+                ];
+            }
+        }
+    }
+
+    // Enhanced Events by Category Analytics System (Students Only) - Year Specific
     $category_analytics            = [];
     $total_category_events         = 0;
     $total_category_participations = 0;
 
-    // Get comprehensive student event data with detailed analytics
+    // Get comprehensive student event data with detailed analytics for selected year
     $student_category_sql = "SELECT
         event_type,
         COUNT(*) as participations,
@@ -129,6 +182,7 @@
         MAX(attended_date) as latest_event_date
         FROM student_event_register
         WHERE event_type IS NOT NULL AND event_type != ''
+        AND YEAR(attended_date) = $current_year
         GROUP BY event_type
         ORDER BY participations DESC";
 
@@ -201,11 +255,9 @@
     }
 
     // Enhanced Monthly Event Trends Data Collection (Students Only)
-    $current_year  = date('Y');
-    $previous_year = $current_year - 1;
-    $monthly_data  = [];
-    $months        = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    $month_names   = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    $monthly_data = [];
+    $months       = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    $month_names  = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
     // Initialize arrays for chart data
     $monthly_events         = [];
@@ -463,7 +515,189 @@
       </aside>
       <!-- main container -->
       <div class="main">
+        <!-- Quick Navigation Menu -->
+        <div class="quick-nav-menu">
+          <div class="nav-container">
+            <span class="nav-title">Quick Analytics Navigation:</span>
+            <div class="nav-controls">
+              <div class="year-selector-container">
+                <span class="year-label">Analysis Year:</span>
+                <select id="yearSelector" class="year-dropdown" onchange="changeAnalysisYear()">
+                  <?php
+                      // Get available years from database
+                      $conn        = new mysqli("localhost", "root", "", "event_management_system");
+                      $year_sql    = "SELECT DISTINCT YEAR(attended_date) as year FROM student_event_register WHERE attended_date IS NOT NULL ORDER BY year DESC";
+                      $year_result = $conn->query($year_sql);
+
+                      $available_years = [];
+                      if ($year_result && $year_result->num_rows > 0) {
+                          while ($year_row = $year_result->fetch_assoc()) {
+                              $available_years[] = $year_row['year'];
+                          }
+                      }
+
+                      // Generate years from current year to 10 years back
+                      $current_system_year = date('Y');
+                      $all_years           = [];
+                      for ($i = 0; $i <= 10; $i++) {
+                          $year        = $current_system_year - $i;
+                          $all_years[] = $year;
+                      }
+
+                      // Merge available years with system years and remove duplicates
+                      $all_years = array_unique(array_merge($available_years, $all_years));
+                      rsort($all_years); // Sort descending
+
+                      foreach ($all_years as $year) {
+                          $selected = ($year == $current_year) ? 'selected' : '';
+                          $has_data = in_array($year, $available_years) ? ' ✓' : ' ○';
+                          echo "<option value=\"$year\" $selected>$year$has_data</option>";
+                      }
+
+                      $conn->close();
+                  ?>
+                </select>
+                <span class="year-info">
+                  <?php echo count($available_years); ?> years with data
+                </span>
+              </div>
+              <div class="nav-buttons">
+                <button class="nav-btn" onclick="scrollToSection('dashboard-cards')">
+                  <span class="material-symbols-outlined">dashboard</span>
+                  Dashboard
+                </button>
+                <button class="nav-btn" onclick="scrollToSection('category-analytics')">
+                  <span class="material-symbols-outlined">analytics</span>
+                  Category Analytics
+                </button>
+                <button class="nav-btn" onclick="scrollToSection('monthly-trends')">
+                  <span class="material-symbols-outlined">trending_up</span>
+                  Monthly Trends
+                </button>
+                <button class="nav-btn" onclick="scrollToSection('detailed-insights')">
+                  <span class="material-symbols-outlined">insights</span>
+                  Detailed Insights
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- cards  -->
+        <div class="main-card" id="dashboard-cards">
+          <div class="year-indicator">
+            <?php if ($is_comparison_mode): ?>
+              <h3>📊 Year-over-Year Comparison:<?php echo $current_year; ?> vs<?php echo $compare_year; ?></h3>
+              <p>Comparing analytics between                                             <?php echo $current_year; ?> and<?php echo $compare_year; ?>
+                <span class="custom-year-note">(Comparison Mode)</span>
+              </p>
+            <?php else: ?>
+              <h3>📊 Dashboard Analytics for<?php echo $current_year; ?></h3>
+              <p>Showing data for academic year                                                                                             <?php echo $current_year; ?>
+                <?php if (isset($_GET['year'])): ?>
+                  <span class="custom-year-note">(Custom Year Selected)</span>
+                <?php endif; ?>
+              </p>
+            <?php endif; ?>
+          </div>
+        </div>
+
+        <?php if ($is_comparison_mode): ?>
+        <!-- Comparison Cards -->
+        <div class="comparison-cards">
+          <h3 class="comparison-title">📈 Year-over-Year Comparison Results</h3>
+          <div class="comparison-grid">
+            <div class="comparison-card">
+              <div class="comparison-header">
+                <h4>Student Events</h4>
+                <span class="comparison-icon">📅</span>
+              </div>
+              <div class="comparison-data">
+                <div class="year-data current-year">
+                  <span class="year-label"><?php echo $current_year; ?></span>
+                  <span class="year-value"><?php echo number_format($total_events); ?></span>
+                </div>
+                <div class="comparison-arrow">
+                  <?php
+                      $events_change     = $total_events - $compare_total_events;
+                      $events_change_pct = $compare_total_events > 0 ? round(($events_change / $compare_total_events) * 100, 1) : 0;
+                  ?>
+                  <span class="change-indicator<?php echo $events_change >= 0 ? 'positive' : 'negative'; ?>">
+                    <?php echo $events_change >= 0 ? '▲' : '▼'; ?>
+                    <?php echo abs($events_change_pct); ?>%
+                  </span>
+                </div>
+                <div class="year-data compare-year">
+                  <span class="year-label"><?php echo $compare_year; ?></span>
+                  <span class="year-value"><?php echo number_format($compare_total_events); ?></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-card">
+              <div class="comparison-header">
+                <h4>Participations</h4>
+                <span class="comparison-icon">👥</span>
+              </div>
+              <div class="comparison-data">
+                <div class="year-data current-year">
+                  <span class="year-label"><?php echo $current_year; ?></span>
+                  <span class="year-value"><?php echo number_format($total_participations); ?></span>
+                </div>
+                <div class="comparison-arrow">
+                  <?php
+                      $parts_change     = $total_participations - $compare_total_participations;
+                      $parts_change_pct = $compare_total_participations > 0 ? round(($parts_change / $compare_total_participations) * 100, 1) : 0;
+                  ?>
+                  <span class="change-indicator<?php echo $parts_change >= 0 ? 'positive' : 'negative'; ?>">
+                    <?php echo $parts_change >= 0 ? '▲' : '▼'; ?>
+                    <?php echo abs($parts_change_pct); ?>%
+                  </span>
+                </div>
+                <div class="year-data compare-year">
+                  <span class="year-label"><?php echo $compare_year; ?></span>
+                  <span class="year-value"><?php echo number_format($compare_total_participations); ?></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-card">
+              <div class="comparison-header">
+                <h4>Categories</h4>
+                <span class="comparison-icon">📊</span>
+              </div>
+              <div class="comparison-data">
+                <div class="year-data current-year">
+                  <span class="year-label"><?php echo $current_year; ?></span>
+                  <span class="year-value"><?php echo count($category_analytics); ?></span>
+                </div>
+                <div class="comparison-arrow">
+                  <?php
+                      $categories_change     = count($category_analytics) - count($compare_category_analytics);
+                      $categories_change_pct = count($compare_category_analytics) > 0 ? round(($categories_change / count($compare_category_analytics)) * 100, 1) : 0;
+                  ?>
+                  <span class="change-indicator<?php echo $categories_change >= 0 ? 'positive' : 'negative'; ?>">
+                    <?php echo $categories_change >= 0 ? '▲' : '▼'; ?>
+                    <?php echo abs($categories_change_pct); ?>%
+                  </span>
+                </div>
+                <div class="year-data compare-year">
+                  <span class="year-label"><?php echo $compare_year; ?></span>
+                  <span class="year-value"><?php echo count($compare_category_analytics); ?></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="comparison-action">
+              <button class="exit-comparison-btn" onclick="exitComparisonMode()">
+                <span class="material-symbols-outlined">close</span>
+                Exit Comparison
+              </button>
+            </div>
+          </div>
+        </div>
+        <?php endif; ?>
+
         <div class="main-card">
           <div class="card">
             <div class="card-inner">
@@ -471,6 +705,7 @@
               <span class="material-symbols-outlined">school</span>
             </div>
             <h1><?php echo number_format($total_students); ?></h1>
+            <small>All time registrations</small>
           </div>
 
            <div class="card">
@@ -479,30 +714,33 @@
               <span class="material-symbols-outlined">person_book</span>
             </div>
             <h1><?php echo number_format($total_teachers); ?></h1>
+            <small>All time registrations</small>
           </div>
 
            <div class="card">
             <div class="card-inner">
-              <h3>Total Student Events:</h3>
+              <h3>Student Events (<?php echo $current_year; ?>):</h3>
               <span class="material-symbols-outlined">event</span>
             </div>
             <h1><?php echo number_format($total_events); ?></h1>
+            <small>Event types in                                                                   <?php echo $current_year; ?></small>
           </div>
 
            <div class="card">
             <div class="card-inner">
-              <h3>Total Student Participations:</h3>
+              <h3>Participations (<?php echo $current_year; ?>):</h3>
               <span class="material-symbols-outlined">groups</span>
             </div>
             <h1><?php echo number_format($total_participations); ?></h1>
+            <small>Total in                                                       <?php echo $current_year; ?></small>
           </div>
         </div>
         <!-- Enhanced Charts Section -->
-        <div class="charts">
+        <div class="charts" id="category-analytics">
           <!-- Enhanced Category Analytics Card -->
           <div class="charts-card enhanced-category-card">
             <div class="chart-header">
-              <h2 class="chart-title"> Student Events Analysis</h2>
+              <h2 class="chart-title">Student Events Analysis -                                                                                                                               <?php echo $current_year; ?></h2>
               <div class="chart-controls">
                 <select id="categoryView" onchange="updateCategoryChart()">
                   <option value="participations">Total Participations</option>
@@ -586,7 +824,7 @@
 
             <!-- Detailed Category Breakdown Table -->
             <div class="category-details">
-              <h3> Detailed Student Category Analytics</h3>
+              <h3>Detailed Student Category Analytics -                                                                                                               <?php echo $current_year; ?></h3>
               <div class="category-table-container">
                 <table class="category-table">
                   <thead>
@@ -604,10 +842,14 @@
                       <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
                           <span style="font-size: 48px;">📊</span>
-                          <strong>No Event Data Available</strong>
-                          <p>No student event categories found in the database.</p>
+                          <strong>No Event Data Available for                                                                                                                           <?php echo $current_year; ?></strong>
+                          <p>No student event categories found for the year                                                                                                                                                       <?php echo $current_year; ?>.</p>
+                          <div style="font-size: 12px; color: #aaa; margin-top: 8px;">
+                            Try selecting a different year from the dropdown above, or add events for                                                                                                                                                                                                           <?php echo $current_year; ?>.
+                          </div>
                         </div>
                       </td>
+                    </tr>
                     </tr>
                     <?php else: ?>
                     <?php foreach ($category_analytics as $category): ?>
@@ -647,14 +889,14 @@
                       <td class="participations-cell">
                         <span class="participation-count"><?php echo number_format($category['total_participations']); ?></span>
                         <div class="participation-bar">
-                          <div class="participation-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($total_category_participations > 0) ? ($category['total_participations'] / $total_category_participations) * 100 : 0; ?>%"></div>
+                          <div class="participation-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($total_category_participations > 0) ? ($category['total_participations'] / $total_category_participations) * 100 : 0; ?>%"></div>
                         </div>
                       </td>
                       <td class="participants-cell">
                         <span class="participants-count"><?php echo $category['total_participants']; ?></span>
                       </td>
                       <td class="success-cell">
-                        <span class="success-rate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $category['success_rate'] > 30 ? 'high' : ($category['success_rate'] > 20 ? 'medium' : 'low'); ?>">
+                        <span class="success-rate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $category['success_rate'] > 30 ? 'high' : ($category['success_rate'] > 20 ? 'medium' : 'low'); ?>">
                           <?php echo $category['success_rate']; ?>%
                         </span>
                       </td>
@@ -675,15 +917,21 @@
           </div>
 
           <!-- Monthly Student Event Trends Chart (Enhanced) -->
-          <div class="charts-card">
+          <div class="charts-card" id="monthly-trends">
             <div class="trend-header">
-              <h2 class="chart-title">Monthly Student Event Analysis  -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $current_year; ?></h2>
+              <h2 class="chart-title">Monthly Student Event Analysis -                                                                                                                                             <?php echo $current_year; ?>
+                <span class="year-badge"><?php echo $current_year; ?></span>
+              </h2>
               <div class="trend-controls">
                 <select id="trendView" onchange="updateTrendChart()">
                   <option value="overview">Overview</option>
                   <option value="detailed">Detailed Analysis</option>
                   <option value="comparison">YoY Comparison</option>
                 </select>
+                <button class="trend-comparison" onclick="showYearComparison()" title="Compare Years">
+                  <span class="material-symbols-outlined">compare_arrows</span>
+                  Compare
+                </button>
                 <button class="trend-refresh" onclick="refreshTrendData()" title="Refresh Data">
                   <span class="material-symbols-outlined">refresh</span>
                 </button>
@@ -857,7 +1105,7 @@
         </div>
 
         <!-- Additional Analytics Section -->
-        <div class="analytics-section">
+        <div class="analytics-section" id="detailed-insights">
           <div class="analytics-card">
             <h3> Student Event Distribution Overview</h3>
             <div class="distribution-chart-container">
@@ -998,37 +1246,42 @@
         </div>
       </div>
 
+      <!-- Scroll to Top Button -->
+      <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
+        <span class="material-symbols-outlined">keyboard_arrow_up</span>
+      </button>
+
       <!-- Scripts -->
       <!-- js scripts-  -->
       <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/5.3.4/apexcharts.min.js"></script>
 
       <script>
       // Get PHP data for charts and make them globally available (Students Only)
-      window.categoryData =                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($category_data); ?>;
-      window.categoryCounts =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($category_counts); ?>;
-      window.monthlyEvents =                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($monthly_events); ?>;
-      window.monthlyParticipations =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($monthly_participations); ?>;
-      window.monthlyWins =                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($monthly_wins); ?>;
-      window.months =                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($months); ?>;
-      window.currentYear =                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($current_year); ?>;
-      window.previousYear =                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo json_encode($previous_year); ?>;
+      window.categoryData =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo json_encode($category_data); ?>;
+      window.categoryCounts =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo json_encode($category_counts); ?>;
+      window.monthlyEvents =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo json_encode($monthly_events); ?>;
+      window.monthlyParticipations =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo json_encode($monthly_participations); ?>;
+      window.monthlyWins =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo json_encode($monthly_wins); ?>;
+      window.months =                                                                                                                                                                                                                                                                                                                                                                                           <?php echo json_encode($months); ?>;
+      window.currentYear =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo json_encode($current_year); ?>;
+      window.previousYear =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($previous_year); ?>;
 
       // Previous year data for YoY comparison (Students Only)
-      window.previousYearEvents =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo json_encode($previous_year_events); ?>;
-      window.previousYearParticipations =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo json_encode($previous_year_participations); ?>;
-      window.previousYearWins =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo json_encode($previous_year_wins); ?>;
+      window.previousYearEvents =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($previous_year_events); ?>;
+      window.previousYearParticipations =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo json_encode($previous_year_participations); ?>;
+      window.previousYearWins =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo json_encode($previous_year_wins); ?>;
 
       // Enhanced Category Analytics Data (Students Only)
-      window.categoryAnalytics =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode(array_values($category_analytics)); ?>;
-      window.totalCategoryParticipations =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($total_category_participations); ?>;
-      window.totalCategoryEvents =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode($total_category_events); ?>;
+      window.categoryAnalytics =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo json_encode(array_values($category_analytics)); ?>;
+      window.totalCategoryParticipations =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo json_encode($total_category_participations); ?>;
+      window.totalCategoryEvents =                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo json_encode($total_category_events); ?>;
 
       // Distribution Chart Data (Students Only)
       window.distributionData = {
-        totalWins:                                                                                                                                                                                                                                                                                                 <?php echo $total_year_wins; ?>,
-        totalEvents:                                                                                                                                                                                                                                                                                                                                 <?php echo $total_year_events; ?>,
-        totalParticipations:                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $total_year_participations; ?>,
-        studentParticipations:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $student_participations; ?>,
+        totalWins:                                                                                                                                                                                                                                                                                                                                     <?php echo $total_year_wins; ?>,
+        totalEvents:                                                                                                                                                                                                                                                                                                                                                                         <?php echo $total_year_events; ?>,
+        totalParticipations:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $total_year_participations; ?>,
+        studentParticipations:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $student_participations; ?>,
         colors: ['#008FFB', '#00E396', '#FEB019', '#FF4560']
       };
 
@@ -1163,6 +1416,236 @@
     function navigateToProfile() {
       window.location.href = 'profile.php';
     }
+
+    // Scroll to Top Functionality
+    function scrollToTop() {
+      const main = document.querySelector('.main');
+      if (main) {
+        main.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      } else {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
+    }
+
+    // Scroll to Section Functionality
+    function scrollToSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      const main = document.querySelector('.main');
+
+      if (section && main) {
+        const sectionTop = section.offsetTop - 100; // Account for navigation menu
+        main.scrollTo({
+          top: sectionTop,
+          behavior: 'smooth'
+        });
+      } else if (section) {
+        section.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }
+
+    // Year Change Functionality
+    function changeAnalysisYear() {
+      const yearSelector = document.getElementById('yearSelector');
+      const selectedYear = yearSelector.value;
+
+      // Show loading state
+      showLoadingState();
+
+      // Reload page with selected year
+      const currentUrl = new URL(window.location);
+      currentUrl.searchParams.set('year', selectedYear);
+      window.location.href = currentUrl.toString();
+    }
+
+    // Loading State Function
+    function showLoadingState() {
+      // Add loading overlay
+      const loadingOverlay = document.createElement('div');
+      loadingOverlay.id = 'loadingOverlay';
+      loadingOverlay.innerHTML = `
+        <div class="loading-container">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading Analytics for ${document.getElementById('yearSelector').value}...</div>
+          <div class="loading-subtext">Updating category analytics and trend data</div>
+        </div>
+      `;
+      loadingOverlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(30, 66, 118, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        backdrop-filter: blur(5px);
+      `;
+      document.body.appendChild(loadingOverlay);
+    }
+
+    // Year Comparison Function
+    function showYearComparison() {
+      const currentYear = document.getElementById('yearSelector').value;
+      const previousYear = parseInt(currentYear) - 1;
+
+      // Create comparison popup
+      const comparisonPopup = document.createElement('div');
+      comparisonPopup.id = 'yearComparisonPopup';
+      comparisonPopup.innerHTML = `
+        <div class="comparison-content">
+          <h3>Year-over-Year Comparison</h3>
+          <div class="comparison-selector">
+            <label>Compare ${currentYear} with:</label>
+            <select id="compareYear">
+              <option value="${previousYear}">${previousYear}</option>
+              <option value="${previousYear - 1}">${previousYear - 1}</option>
+              <option value="${previousYear - 2}">${previousYear - 2}</option>
+            </select>
+            <button onclick="generateComparison()">Generate Comparison</button>
+            <button onclick="closeComparison()">Close</button>
+          </div>
+        </div>
+      `;
+
+      // Add styling
+      comparisonPopup.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+      `;
+
+      document.body.appendChild(comparisonPopup);
+    }
+
+    function closeComparison() {
+      const popup = document.getElementById('yearComparisonPopup');
+      if (popup) {
+        popup.remove();
+      }
+    }
+
+    // Generate Comparison Function
+    function generateComparison() {
+      const currentYear = document.getElementById('yearSelector').value;
+      const compareYear = document.getElementById('compareYear').value;
+
+      // Close the popup
+      closeComparison();
+
+      // Show loading state
+      showLoadingState();
+
+      // Create comparison URL with both years
+      const currentUrl = new URL(window.location);
+      currentUrl.searchParams.set('year', currentYear);
+      currentUrl.searchParams.set('compare_year', compareYear);
+
+      // Redirect to show comparison
+      window.location.href = currentUrl.toString();
+    }
+
+    // Exit Comparison Mode Function
+    function exitComparisonMode() {
+      const currentUrl = new URL(window.location);
+      currentUrl.searchParams.delete('compare_year');
+      window.location.href = currentUrl.toString();
+    }
+
+    // Refresh trend data function
+    function refreshTrendData() {
+      // Show loading state
+      showLoadingState();
+
+      // Reload current page to refresh data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+
+    // Update URL with current year parameter on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const yearSelector = document.getElementById('yearSelector');
+      const currentYear = yearSelector.value;
+
+      // Update URL if year is different from current year
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlYear = urlParams.get('year');
+
+      if (urlYear && urlYear !== currentYear) {
+        yearSelector.value = urlYear;
+      } else if (!urlYear && currentYear !== new Date().getFullYear().toString()) {
+        // Add year parameter to URL if custom year is selected
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('year', currentYear);
+        window.history.replaceState({}, '', newUrl);
+      }
+    });
+
+    // Show/Hide Scroll to Top Button
+    window.addEventListener('scroll', function() {
+      const scrollToTopBtn = document.getElementById('scrollToTop');
+      const main = document.querySelector('.main');
+
+      if (main && main.scrollTop > 300) {
+        scrollToTopBtn.classList.add('visible');
+      } else {
+        scrollToTopBtn.classList.remove('visible');
+      }
+    });
+
+    // Add scroll listener to main content area
+    document.addEventListener('DOMContentLoaded', function() {
+      const main = document.querySelector('.main');
+      const scrollToTopBtn = document.getElementById('scrollToTop');
+
+      if (main) {
+        main.addEventListener('scroll', function() {
+          if (main.scrollTop > 300) {
+            scrollToTopBtn.classList.add('visible');
+          } else {
+            scrollToTopBtn.classList.remove('visible');
+          }
+        });
+      }
+
+      // Smooth scroll for internal links
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        });
+      });
+
+      // Add smooth scroll navigation to analytics cards
+      const analyticsCards = document.querySelectorAll('.analytics-card');
+      analyticsCards.forEach((card, index) => {
+        card.style.scrollMarginTop = '100px'; // Account for fixed header
+      });
+    });
     </script>
 
   </body>
