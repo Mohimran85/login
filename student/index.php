@@ -59,11 +59,32 @@
     $types_stmt->execute();
     $event_types = $types_stmt->get_result();
 
+    // OD Request statistics
+    $od_stats_sql = "SELECT
+                        COUNT(*) as total_od_requests,
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_od,
+                        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_od,
+                        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_od
+                     FROM od_requests WHERE student_regno=?";
+    $od_stats_stmt = $conn->prepare($od_stats_sql);
+    $od_stats_stmt->bind_param("s", $regno);
+    $od_stats_stmt->execute();
+    $od_stats = $od_stats_stmt->get_result()->fetch_assoc();
+
+    // Recent OD requests (last 3)
+    $recent_od_sql  = "SELECT event_name, status, request_date, event_date FROM od_requests WHERE student_regno=? ORDER BY request_date DESC LIMIT 3";
+    $recent_od_stmt = $conn->prepare($recent_od_sql);
+    $recent_od_stmt->bind_param("s", $regno);
+    $recent_od_stmt->execute();
+    $recent_od_requests = $recent_od_stmt->get_result();
+
     $stmt->close();
     $total_stmt->close();
     $won_stmt->close();
     $recent_stmt->close();
     $types_stmt->close();
+    $od_stats_stmt->close();
+    $recent_od_stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -142,6 +163,12 @@
               </a>
             </li>
             <li class="nav-item">
+              <a href="od_request.php" class="nav-link">
+                <span class="material-symbols-outlined">description</span>
+                OD Request
+              </a>
+            </li>
+            <li class="nav-item">
               <a href="profile.php" class="nav-link">
                 <span class="material-symbols-outlined">person</span>
                 Profile
@@ -192,6 +219,27 @@
 
           <div class="card">
             <div class="card-inner">
+              <h3>OD Requests</h3>
+              <span class="material-symbols-outlined">request_page</span>
+            </div>
+            <div class="od-stats">
+              <div class="od-stat-item">
+                <span class="od-count"><?php echo $od_stats['total_od_requests'] ?? 0; ?></span>
+                <span class="od-label">Total</span>
+              </div>
+              <div class="od-stat-item pending">
+                <span class="od-count"><?php echo $od_stats['pending_od'] ?? 0; ?></span>
+                <span class="od-label">Pending</span>
+              </div>
+              <div class="od-stat-item approved">
+                <span class="od-count"><?php echo $od_stats['approved_od'] ?? 0; ?></span>
+                <span class="od-label">Approved</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-inner">
               <h3>Quick Actions</h3>
               <span class="material-symbols-outlined">bolt</span>
             </div>
@@ -199,6 +247,10 @@
               <a href="student_register.php" class="action-btn-card">
                 <span class="material-symbols-outlined">add</span>
                 Register Event
+              </a>
+              <a href="od_request.php" class="action-btn-card">
+                <span class="material-symbols-outlined">request_page</span>
+                OD Request
               </a>
               <a href="student_participations.php" class="action-btn-card secondary">
                 <span class="material-symbols-outlined">visibility</span>
@@ -247,6 +299,42 @@
             <?php endif; ?>
           </div>
 
+          <!-- Recent OD Requests -->
+          <div class="content-card">
+            <div class="card-header">
+              <span class="material-symbols-outlined">request_page</span>
+              <h3>Recent OD Requests</h3>
+              <a href="od_request.php" class="view-all-link">View All</a>
+            </div>
+
+            <?php if ($recent_od_requests->num_rows > 0): ?>
+              <div class="od-requests-list">
+                <?php while ($od_request = $recent_od_requests->fetch_assoc()): ?>
+                  <div class="od-request-item">
+                    <div class="od-request-icon">
+                      <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <div class="od-request-details">
+                      <h4><?php echo htmlspecialchars($od_request['event_name']); ?></h4>
+                      <p class="od-request-meta">
+                        <span class="od-status                                               <?php echo $od_request['status']; ?>">
+                          <?php echo ucfirst($od_request['status']); ?>
+                        </span>
+                        <span class="od-date"><?php echo date('M d, Y', strtotime($od_request['event_date'])); ?></span>
+                      </p>
+                    </div>
+                  </div>
+                <?php endwhile; ?>
+              </div>
+            <?php else: ?>
+              <div class="empty-state">
+                <span class="material-symbols-outlined">description</span>
+                <p>No OD requests yet</p>
+                <a href="od_request.php" class="empty-action">Submit your first OD request</a>
+              </div>
+            <?php endif; ?>
+          </div>
+
           <!-- Event Categories -->
           <div class="content-card">
             <div class="card-header">
@@ -262,7 +350,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($type['count'] / $total_events) * 100; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                   <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>

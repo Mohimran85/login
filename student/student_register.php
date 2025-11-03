@@ -57,6 +57,25 @@
         $prize         = isset($_POST['prize']) ? trim($_POST['prize']) : '';
         $prize_amount  = isset($_POST['prizeamount']) ? trim($_POST['prizeamount']) : '';
 
+        // Check for approved OD request
+        $od_check_sql = "SELECT status FROM od_requests WHERE student_regno = ? AND event_name = ? AND status = 'approved'";
+        $od_check_stmt = $conn->prepare($od_check_sql);
+        $od_check_stmt->bind_param("ss", $regno, $event_name);
+        $od_check_stmt->execute();
+        $od_check_stmt->store_result();
+
+        if ($od_check_stmt->num_rows == 0) {
+            echo "<div style='background: #fff3cd; border: 1px solid #ffecb5; color: #856404; padding: 15px; border-radius: 5px; margin: 20px; text-align: center;'>";
+            echo "<h3>🔒 OD Approval Required</h3>";
+            echo "<p>You need to submit an OD (On Duty) request and get approval from your class counselor before registering for this event.</p>";
+            echo "<p><a href='od_request.php' style='color: #0056b3; text-decoration: none; font-weight: bold;'>➤ Submit OD Request</a></p>";
+            echo "</div>";
+            $od_check_stmt->close();
+            $conn->close();
+            exit;
+        }
+        $od_check_stmt->close();
+
         $target_dir = "uploads/";
         if (! is_dir($target_dir)) {
             mkdir($target_dir, 0777, true);
@@ -393,7 +412,7 @@
                 $current_year = date('Y');
                 for ($i = 0; $i < 10; $i++) {
                     $start_year    = $current_year - $i;
-                    $end_year      = $start_year + 1;
+                    $end_year      = substr($start_year + 1, -2); // Get last 2 digits
                     $academic_year = $start_year . '-' . $end_year;
                     echo "<option value='$academic_year'>$academic_year</option>";
                 }

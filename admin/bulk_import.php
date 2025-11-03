@@ -662,15 +662,15 @@
 
                 <!-- Import Steps -->
                 <div class="import-steps">
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo ! $show_preview && empty($import_results) ? 'active' : ''; ?>">
+                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo ! $show_preview && empty($import_results) ? 'active' : ''; ?>">
                         <div class="step-number">1</div>
                         <span>Upload File</span>
                     </div>
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $show_preview ? 'active' : ''; ?>">
+                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $show_preview ? 'active' : ''; ?>">
                         <div class="step-number">2</div>
                         <span>Preview & Confirm</span>
                     </div>
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo ! empty($import_results) ? 'active' : ''; ?>">
+                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo ! empty($import_results) ? 'active' : ''; ?>">
                         <div class="step-number">3</div>
                         <span>Import Results</span>
                     </div>
@@ -692,24 +692,6 @@
                         <a href="download_template.php?type=teachers" class="btn btn-success">
                             <span class="material-symbols-outlined">download</span>
                             Teacher Template
-                        </a>
-                    </div>
-
-                    <!-- Export Existing Users -->
-                    <div class="template-download" style="background: #fff3cd; border-left: 4px solid #ffc107;">
-                        <h4>📤 Export Existing Users</h4>
-                        <p>Export current user data from the database to CSV format:</p>
-                        <a href="export_users.php?type=students" class="btn btn-warning">
-                            <span class="material-symbols-outlined">file_download</span>
-                            Export Students
-                        </a>
-                        <a href="export_users.php?type=teachers" class="btn btn-warning">
-                            <span class="material-symbols-outlined">file_download</span>
-                            Export Teachers
-                        </a>
-                        <a href="export_users.php?type=all" class="btn btn-warning">
-                            <span class="material-symbols-outlined">file_download</span>
-                            Export All Users
                         </a>
                     </div>
 
@@ -789,7 +771,7 @@
                             </table>
                         </div>
 
-                        <p><strong>Total rows to import:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo count($preview_data); ?></p>
+                        <p><strong>Total rows to import:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo count($preview_data); ?></p>
 
                         <div style="text-align: center; margin-top: 30px;">
                             <a href="bulk_import.php" class="btn btn-secondary">

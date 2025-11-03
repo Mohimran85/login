@@ -9,6 +9,37 @@
       <style>
          .error { color: red; margin: 5px 0; }
          .success { color: green; font-weight: bold; margin: 5px 0; }
+
+         /* Password toggle styles */
+         .password-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+         }
+
+         .password-container input {
+            padding-right: 45px !important;
+         }
+
+         .password-toggle {
+            position: absolute;
+            right: 12px;
+            cursor: pointer;
+            color: #6c757d;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+         }
+
+         .password-toggle:hover {
+            color: #1e4276;
+         }
+
+         .password-toggle svg {
+            width: 20px;
+            height: 20px;
+         }
          .header {
   background-color: #fff;
   height: 80px;
@@ -456,43 +487,43 @@ body {
                   <div class="item div5">
                      <label for="year_of_join">Year of Join:</label>
                      <select name="batch" id="year_of_join" required>
-                        <option value="" disabled                                                                                                                                                    <?php echo ! isset($_POST['batch']) ? 'selected' : ''; ?>>Select The year</option>
-                        <option value="2020"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2020') ? 'selected' : ''; ?>>2020-24</option>
-                        <option value="2021"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2021') ? 'selected' : ''; ?>>2021-25</option>
-                        <option value="2022"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2022') ? 'selected' : ''; ?>>2022-26</option>
-                        <option value="2023"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2023') ? 'selected' : ''; ?>>2023-27</option>
-                        <option value="2024"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2024') ? 'selected' : ''; ?>>2024-28</option>
-                        <option value="2025"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2025') ? 'selected' : ''; ?>>2025-29</option>
-                        <option value="2026"                                                                                                                                     <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2026') ? 'selected' : ''; ?>>2026-30</option>
+                        <option value="" disabled                                                                                                                                                                                                     <?php echo ! isset($_POST['batch']) ? 'selected' : ''; ?>>Select The year</option>
+                        <option value="2020"                                                                                                                                                                                 <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2020') ? 'selected' : ''; ?>>2020-24</option>
+                        <option value="2021"                                                                                                                                                                                 <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2021') ? 'selected' : ''; ?>>2021-25</option>
+                        <option value="2022"                                                                                                                                                                                 <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2022') ? 'selected' : ''; ?>>2022-26</option>
+                        <option value="2023"                                                                                                                                                                                 <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2023') ? 'selected' : ''; ?>>2023-27</option>
+                        <option value="2024"                                                                                                                                                                                 <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2024') ? 'selected' : ''; ?>>2024-28</option>
+                        <option value="2025"                                                                                                                                                                                 <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2025') ? 'selected' : ''; ?>>2025-29</option>
+                        <option value="2026"                                                                                                                                                                                 <?php echo(isset($_POST['batch']) && $_POST['batch'] == '2026') ? 'selected' : ''; ?>>2026-30</option>
                      </select>
                   </div>
                   <div class="item div5">
                      <label for="degree">Degree</label>
                      <select name="degree" id="degree" required>
-                        <option value="" disabled                                                                                                                                                    <?php echo ! isset($_POST['degree']) ? 'selected' : ''; ?>>Select The Degree</option>
-                        <option value="b.tech"                                                                                                                                           <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'b.tech') ? 'selected' : ''; ?>>B.Tech</option>
-                        <option value="m.tech"                                                                                                                                           <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'm.tech') ? 'selected' : ''; ?>>M.Tech</option>
-                        <option value="B.E"                                                                                                                                  <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'B.E') ? 'selected' : ''; ?>>B.E</option>
-                        <option value="M.E"                                                                                                                                  <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'M.E') ? 'selected' : ''; ?>>M.E</option>
-                        <option value="bba"                                                                                                                                  <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'bba') ? 'selected' : ''; ?>>BBA</option>
-                        <option value="mba"                                                                                                                                  <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'mba') ? 'selected' : ''; ?>>MBA</option>
+                        <option value="" disabled                                                                                                                                                                                                     <?php echo ! isset($_POST['degree']) ? 'selected' : ''; ?>>Select The Degree</option>
+                        <option value="b.tech"                                                                                                                                                                                         <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'b.tech') ? 'selected' : ''; ?>>B.Tech</option>
+                        <option value="m.tech"                                                                                                                                                                                         <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'm.tech') ? 'selected' : ''; ?>>M.Tech</option>
+                        <option value="B.E"                                                                                                                                                                             <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'B.E') ? 'selected' : ''; ?>>B.E</option>
+                        <option value="M.E"                                                                                                                                                                             <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'M.E') ? 'selected' : ''; ?>>M.E</option>
+                        <option value="bba"                                                                                                                                                                             <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'bba') ? 'selected' : ''; ?>>BBA</option>
+                        <option value="mba"                                                                                                                                                                             <?php echo(isset($_POST['degree']) && $_POST['degree'] == 'mba') ? 'selected' : ''; ?>>MBA</option>
                      </select>
                   </div>
                   <div class="item div5">
                      <label for="department">Department</label>
                      <select name="department" id="department" required>
-                        <option value="" disabled                                                                                                                                                    <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select the Department</option>
-                        <option value="IT"                                                                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>IT</option>
-                        <option value="CSE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>CSE</option>
-                        <option value="ECE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>ECE</option>
-                        <option value="EEE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>EEE</option>
-                        <option value="MECH"                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>MECH</option>
-                        <option value="CIVIL"                                                                                                                                        <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>CIVIL</option>
-                        <option value="AIML"                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'AIML') ? 'selected' : ''; ?>>AIML</option>
-                        <option value="ADS"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'ADS') ? 'selected' : ''; ?>>ADS</option>
-                        <option value="FT"                                                                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'FT') ? 'selected' : ''; ?>>FT</option>
-                        <option value="EXE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'EXE') ? 'selected' : ''; ?>>EXE</option>
-                        <option value="CSD"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSD') ? 'selected' : ''; ?>>CSD</option>
+                        <option value="" disabled                                                                                                                                                                                                     <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select the Department</option>
+                        <option value="IT"                                                                                                                                                                         <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>IT</option>
+                        <option value="CSE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>CSE</option>
+                        <option value="ECE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>ECE</option>
+                        <option value="EEE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>EEE</option>
+                        <option value="MECH"                                                                                                                                                                                 <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>MECH</option>
+                        <option value="CIVIL"                                                                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>CIVIL</option>
+                        <option value="AIML"                                                                                                                                                                                 <?php echo(isset($_POST['department']) && $_POST['department'] == 'AIML') ? 'selected' : ''; ?>>AIML</option>
+                        <option value="ADS"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'ADS') ? 'selected' : ''; ?>>ADS</option>
+                        <option value="FT"                                                                                                                                                                         <?php echo(isset($_POST['department']) && $_POST['department'] == 'FT') ? 'selected' : ''; ?>>FT</option>
+                        <option value="EXE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'EXE') ? 'selected' : ''; ?>>EXE</option>
+                        <option value="CSD"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSD') ? 'selected' : ''; ?>>CSD</option>
                      </select>
                   </div>
                   <div class="item div7">
@@ -501,11 +532,27 @@ body {
                   </div>
                   <div class="item div8">
                      <label for="password">Password:</label>
-                     <input type="password" name="password" id="password" placeholder="Password" minlength="6" required />
+                     <div class="password-container">
+                        <input type="password" name="password" id="password" placeholder="Password" minlength="6" required />
+                        <span class="password-toggle" onclick="togglePassword('password')">
+                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                           </svg>
+                        </span>
+                     </div>
                   </div>
                   <div class="item div9">
                      <label for="re-password">Re Enter Password:</label>
-                     <input type="password" name="re-password" id="re-password" placeholder="Re Enter Password" minlength="6" required />
+                     <div class="password-container">
+                        <input type="password" name="re-password" id="re-password" placeholder="Re Enter Password" minlength="6" required />
+                        <span class="password-toggle" onclick="togglePassword('re-password')">
+                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                           </svg>
+                        </span>
+                     </div>
                   </div>
                   <div class="item div11">
                      <input type="submit" value="Register" id="button" />
@@ -518,5 +565,27 @@ body {
          <p>&copy; 2025 Event Management System. All rights reserved.</p>
       </footer>
       <script src="scripts.js"></script>
+      <script>
+         function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleIcon = passwordField.parentElement.querySelector('.password-toggle svg');
+
+            if (passwordField.type === 'password') {
+               passwordField.type = 'text';
+               // Change to eye-off icon
+               toggleIcon.innerHTML = `
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+               `;
+            } else {
+               passwordField.type = 'password';
+               // Change back to eye icon
+               toggleIcon.innerHTML = `
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+               `;
+            }
+         }
+      </script>
    </body>
 </html>

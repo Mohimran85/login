@@ -55,16 +55,42 @@
     // Get comprehensive statistics for teacher
     $teacher_id = $teacher_data['employee_id'];
 
-    // Total events registered by this teacher in staff_event_reg
-    $total_events_sql = "SELECT COUNT(*) as total FROM staff_event_reg WHERE staff_id=? OR name=?";
-    $total_stmt       = $conn->prepare($total_events_sql);
-    if ($total_stmt) {
-        $total_stmt->bind_param("ss", $teacher_id, $teacher_data['name']);
-        $total_stmt->execute();
-        $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
-        $total_stmt->close();
-    } else {
-        $total_events = 0;
+    // Check if current teacher is a counselor and get their ID from teacher_register
+    $is_counselor            = ($teacher_status === 'counselor');
+    $counselor_id            = null;
+    $assigned_students       = null;
+    $assigned_students_count = 0;
+
+    if ($is_counselor) {
+        // Get the teacher's ID from teacher_register table for counselor assignments
+        $counselor_id_sql  = "SELECT id FROM teacher_register WHERE username = ?";
+        $counselor_id_stmt = $conn->prepare($counselor_id_sql);
+        $counselor_id_stmt->bind_param("s", $username);
+        $counselor_id_stmt->execute();
+        $counselor_id_result = $counselor_id_stmt->get_result();
+
+        if ($counselor_id_result->num_rows > 0) {
+            $counselor_data = $counselor_id_result->fetch_assoc();
+            $counselor_id   = $counselor_data['id'];
+
+            // Get assigned students for this counselor
+            $assigned_students_sql = "SELECT ca.student_regno, sr.name, sr.department, sr.year_of_join, ca.assigned_date,
+                                            COUNT(ser.id) as total_events,
+                                            SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prizes_won
+                                     FROM counselor_assignments ca
+                                     JOIN student_register sr ON ca.student_regno = sr.regno
+                                     LEFT JOIN student_event_register ser ON sr.regno = ser.regno
+                                     WHERE ca.counselor_id = ? AND ca.status = 'active'
+                                     GROUP BY ca.student_regno, sr.name, sr.department, sr.year_of_join, ca.assigned_date
+                                     ORDER BY ca.assigned_date DESC, sr.name";
+            $assigned_students_stmt = $conn->prepare($assigned_students_sql);
+            $assigned_students_stmt->bind_param("i", $counselor_id);
+            $assigned_students_stmt->execute();
+            $assigned_students       = $assigned_students_stmt->get_result();
+            $assigned_students_count = $assigned_students->num_rows;
+            $assigned_students_stmt->close();
+        }
+        $counselor_id_stmt->close();
     }
 
     // Total students participated in events (from student_event_register)
@@ -76,16 +102,14 @@
         $total_participants = 0;
     }
 
-    // Recent events registered by this teacher (last 5)
-    $recent_events_sql = "SELECT topic as event_name, event_type, event_date as start_date,
-                         'completed' as status,
-                         organisation, sponsors
-                         FROM staff_event_reg
-                         WHERE staff_id=? OR name=?
-                         ORDER BY event_date DESC, id DESC LIMIT 5";
+    // Recent student activities (last 5)
+    $recent_events_sql = "SELECT ser.event_name, ser.event_type, ser.attended_date as start_date,
+                         ser.prize, ser.organisation, sr.name as student_name, sr.regno
+                         FROM student_event_register ser
+                         JOIN student_register sr ON ser.regno = sr.regno
+                         ORDER BY ser.attended_date DESC, ser.id DESC LIMIT 5";
     $recent_stmt = $conn->prepare($recent_events_sql);
     if ($recent_stmt) {
-        $recent_stmt->bind_param("ss", $teacher_id, $teacher_data['name']);
         $recent_stmt->execute();
         $recent_events = $recent_stmt->get_result();
     } else {
@@ -93,22 +117,15 @@
         $recent_events = null;
     }
 
-    // Event type breakdown for teacher's events
-    $event_types_sql = "SELECT event_type, COUNT(*) as count FROM staff_event_reg
-                       WHERE staff_id=? OR name=?
+    // Event type breakdown for student events
+    $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register
                        GROUP BY event_type ORDER BY count DESC LIMIT 8";
     $types_stmt = $conn->prepare($event_types_sql);
     if ($types_stmt) {
-        $types_stmt->bind_param("ss", $teacher_id, $teacher_data['name']);
         $types_stmt->execute();
         $event_types = $types_stmt->get_result();
     } else {
-        // Fallback: use student event data for chart
-        $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register
-                           GROUP BY event_type ORDER BY count DESC LIMIT 8";
-        $types_stmt = $conn->prepare($event_types_sql);
-        $types_stmt->execute();
-        $event_types = $types_stmt->get_result();
+        $event_types = null;
     }
 
     // Get recently registered students (last 10)
@@ -558,7 +575,7 @@
                 height: 100vh;
                 z-index: -1;
                 backdrop-filter: blur(2px);
-               
+
             }
 
             .main {
@@ -615,6 +632,30 @@
         .alert strong {
             font-weight: 600;
         }
+
+        /* Counselor-specific styles */
+        .counselor-highlight {
+            border-left: 4px solid #28a745 !important;
+        }
+
+        .counselor-badge {
+            background: #d4edda;
+            color: #155724;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+
+        .assigned-student-count {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
     </style>
   </head>
   <body>
@@ -665,7 +706,15 @@
 
         <div class="student-info">
           <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-          <div class="student-regno">ID:                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php echo $is_admin ? '(Admin)' : ''; ?></div>
+          <div class="student-regno">ID:                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
+            <?php
+                if ($is_admin) {
+                    echo '(Admin)';
+                } elseif ($is_counselor) {
+                    echo '(Counselor)';
+                }
+            ?>
+          </div>
         </div>
 
         <nav>
@@ -677,23 +726,25 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="staff_event_reg.php" class="nav-link">
-                <span class="material-symbols-outlined">event_note</span>
-                Add Event Record
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="my_events.php" class="nav-link">
-                <span class="material-symbols-outlined">calendar_month</span>
-                My Events
-              </a>
-            </li>
-            <li class="nav-item">
               <a href="registered_students.php" class="nav-link">
                 <span class="material-symbols-outlined">group</span>
                 Registered Students
               </a>
             </li>
+            <?php if ($is_counselor): ?>
+            <li class="nav-item">
+              <a href="#assigned-students" class="nav-link" onclick="scrollToAssignedStudents()">
+                <span class="material-symbols-outlined">supervisor_account</span>
+                My Assigned Students
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="od_approvals.php" class="nav-link">
+                <span class="material-symbols-outlined">approval</span>
+                OD Approvals
+              </a>
+            </li>
+            <?php endif; ?>
             <?php if ($is_admin): ?>
             <li class="nav-item">
               <a href="../admin/index.php" class="nav-link">
@@ -746,14 +797,22 @@
       <div class="main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back,                                                                                                                                                                                                                                                    <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
-          <p>Add your completed professional development events and track your achievements</p>
+          <h1>Welcome back,                                                                                                                                                                                                                                                                                                          <?php echo explode(' ', $teacher_data['name'])[0]; ?>!</h1>
+          <p>
+            <?php if ($is_counselor): ?>
+              Monitor your assigned students and manage your counseling responsibilities
+            <?php elseif ($is_admin): ?>
+              Monitor student registrations and manage your administrative responsibilities
+            <?php else: ?>
+              Monitor student registrations and manage your teaching responsibilities
+            <?php endif; ?>
+          </p>
         </div>
 
         <!-- Access Denied Alert -->
         <?php if (isset($_SESSION['access_denied'])): ?>
         <div class="alert alert-warning" style="margin: 20px 0; padding: 15px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; color: #856404;">
-          <strong>⚠️ Access Restricted:</strong>                                                                                                                                                             <?php echo $_SESSION['access_denied']; ?>
+          <strong>⚠️ Access Restricted:</strong>                                                                                                                                                                                                                                                                     <?php echo $_SESSION['access_denied']; ?>
           <?php unset($_SESSION['access_denied']); // Clear the message after displaying ?>
         </div>
         <?php endif; ?>
@@ -762,19 +821,21 @@
         <div class="main-card">
           <div class="card">
             <div class="card-inner">
-              <h3>Events Registered</h3>
-              <span class="material-symbols-outlined">event</span>
-            </div>
-            <h1><?php echo $total_events; ?></h1>
-          </div>
-
-          <div class="card">
-            <div class="card-inner">
-              <h3>Total Students</h3>
-              <span class="material-symbols-outlined">group</span>
+              <h3>Student Events</h3>
+              <span class="material-symbols-outlined">school</span>
             </div>
             <h1><?php echo $total_participants; ?></h1>
           </div>
+
+          <?php if ($is_counselor): ?>
+          <div class="card counselor-highlight">
+            <div class="card-inner">
+              <h3>My Assigned Students</h3>
+              <span class="material-symbols-outlined">supervisor_account</span>
+            </div>
+            <h1><?php echo $assigned_students_count; ?></h1>
+          </div>
+          <?php endif; ?>
 
           <div class="card">
             <div class="card-inner">
@@ -782,13 +843,19 @@
               <span class="material-symbols-outlined">bolt</span>
             </div>
             <div class="quick-actions">
-              <a href="staff_event_reg.php" class="action-btn-card">
-                <span class="material-symbols-outlined">add</span>
-                Add Event Record
+              <a href="registered_students.php" class="action-btn-card">
+                <span class="material-symbols-outlined">group</span>
+                View Students
               </a>
-              <a href="my_events.php" class="action-btn-card secondary">
-                <span class="material-symbols-outlined">visibility</span>
-                View My Events
+              <?php if ($is_counselor): ?>
+              <a href="#assigned-students" class="action-btn-card" onclick="scrollToAssignedStudents()">
+                <span class="material-symbols-outlined">supervisor_account</span>
+                My Students
+              </a>
+              <?php endif; ?>
+              <a href="profile.php" class="action-btn-card secondary">
+                <span class="material-symbols-outlined">person</span>
+                View Profile
               </a>
             </div>
           </div>
@@ -800,8 +867,8 @@
           <div class="content-card">
             <div class="card-header">
               <span class="material-symbols-outlined">schedule</span>
-              <h3>My Recent Events</h3>
-              <a href="my_events.php" class="view-all-link">View All</a>
+              <h3>Recent Student Activities</h3>
+              <a href="registered_students.php" class="view-all-link">View All</a>
             </div>
 
             <?php if ($recent_events->num_rows > 0): ?>
@@ -817,8 +884,11 @@
                         <span class="event-type"><?php echo htmlspecialchars($event['event_type']); ?></span>
                         <span class="event-date"><?php echo date('M d, Y', strtotime($event['start_date'])); ?></span>
                         <span class="prize-badge">
-                          ✅ Completed
+                          👤                                                             <?php echo htmlspecialchars($event['student_name']); ?> (<?php echo htmlspecialchars($event['regno']); ?>)
                         </span>
+                        <?php if (! empty($event['prize']) && $event['prize'] !== 'No Prize'): ?>
+                          <span class="prize-badge">🏆<?php echo htmlspecialchars($event['prize']); ?></span>
+                        <?php endif; ?>
                       </p>
                     </div>
                   </div>
@@ -827,8 +897,8 @@
             <?php else: ?>
               <div class="empty-state">
                 <span class="material-symbols-outlined">event_busy</span>
-                <p>No events recorded yet</p>
-                <a href="staff_event_reg.php" class="empty-action">Add your first completed event</a>
+                <p>No recent student activities</p>
+                <a href="registered_students.php" class="empty-action">View all students</a>
               </div>
             <?php endif; ?>
           </div>
@@ -837,7 +907,7 @@
           <div class="content-card">
             <div class="card-header">
               <span class="material-symbols-outlined">pie_chart</span>
-              <h3>Event Categories</h3>
+              <h3>Student Event Categories</h3>
             </div>
 
             <?php if ($event_types->num_rows > 0): ?>
@@ -848,7 +918,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
@@ -859,8 +929,8 @@
             <?php else: ?>
               <div class="empty-state">
                 <span class="material-symbols-outlined">category</span>
-                <p>No event categories yet</p>
-                <a href="staff_event_reg.php" class="empty-action">Start adding completed events</a>
+                <p>No student event categories yet</p>
+                <a href="registered_students.php" class="empty-action">View student activities</a>
               </div>
             <?php endif; ?>
           </div>
@@ -937,12 +1007,12 @@
                       </span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
                         </div>
                       </div>
                     </div>
                     <div style="text-align: center;">
-                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $student['prizes_won']; ?></div>
+                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $student['prizes_won']; ?></div>
                       <small style="color: #666; font-size: 11px;"><?php echo $student['total_events']; ?> events</small>
                     </div>
                   </div>
@@ -972,7 +1042,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($stat['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
@@ -992,6 +1062,62 @@
             <?php endif; ?>
           </div>
         </div>
+
+        <!-- Counselor Assigned Students Section -->
+        <?php if ($is_counselor): ?>
+        <div id="assigned-students" style="margin-top: 30px;">
+          <h2 style="color: #2d5aa0; margin-bottom: 20px; font-size: 24px; display: flex; align-items: center; gap: 10px;">
+            <span class="material-symbols-outlined">supervisor_account</span>
+            My Assigned Students
+          </h2>
+
+          <div class="content-card counselor-highlight">
+            <div class="card-header">
+              <span class="material-symbols-outlined">group</span>
+              <h3>Students Under Your Guidance
+                <span class="assigned-student-count"><?php echo $assigned_students_count; ?> Students</span>
+              </h3>
+            </div>
+
+            <?php if ($assigned_students && $assigned_students->num_rows > 0): ?>
+              <div class="activities-list">
+                <?php while ($student = $assigned_students->fetch_assoc()): ?>
+                  <div class="activity-item">
+                    <div class="activity-icon">
+                      <span class="material-symbols-outlined">person</span>
+                    </div>
+                    <div class="activity-details">
+                      <h4><?php echo htmlspecialchars($student['name']); ?></h4>
+                      <p class="activity-meta">
+                        <span class="event-type">Reg No:                                                         <?php echo htmlspecialchars($student['student_regno']); ?></span>
+                        <span class="event-date"><?php echo htmlspecialchars($student['department']); ?></span>
+                        <span class="prize-badge">Year:                                                        <?php echo htmlspecialchars($student['year_of_join']); ?></span>
+                      </p>
+                      <p class="activity-meta">
+                        <span style="color: #666; font-size: 12px;">
+                          Assigned:                                    <?php echo date('M d, Y', strtotime($student['assigned_date'])); ?>
+                          | Events:<?php echo $student['total_events']; ?>
+                          <?php if ($student['prizes_won'] > 0): ?>
+                            | Prizes: 🏆<?php echo $student['prizes_won']; ?>
+                          <?php endif; ?>
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                <?php endwhile; ?>
+              </div>
+            <?php else: ?>
+              <div class="empty-state">
+                <span class="material-symbols-outlined">group_off</span>
+                <p>No students assigned to you yet</p>
+                <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                  Contact your administrator to assign students to your counseling group.
+                </p>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -1008,6 +1134,17 @@
             } else {
                 sidebar.classList.add('active');
                 body.classList.add('sidebar-open');
+            }
+        }
+
+        // Scroll to assigned students section
+        function scrollToAssignedStudents() {
+            const assignedStudentsSection = document.getElementById('assigned-students');
+            if (assignedStudentsSection) {
+                assignedStudentsSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
             }
         }
 

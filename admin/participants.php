@@ -33,21 +33,16 @@
         $stmt->close();
     }
 
-    // Handle delete operation
+    // Handle delete operation (students only)
     if (isset($_POST['delete_id'])) {
-        $delete_id   = $_POST['delete_id'];
-        $delete_type = $_POST['delete_type'] ?? 'student'; // Default to student for backward compatibility
+        $delete_id = $_POST['delete_id'];
 
-        if ($delete_type === 'teacher') {
-            $delete_sql = "DELETE FROM staff_event_reg WHERE id = ?";
-        } else {
-            $delete_sql = "DELETE FROM student_event_register WHERE id = ?";
-        }
+        $delete_sql = "DELETE FROM student_event_register WHERE id = ?";
 
         $delete_stmt = $conn->prepare($delete_sql);
         $delete_stmt->bind_param("i", $delete_id);
         if ($delete_stmt->execute()) {
-            $success_message = "Participant record deleted successfully!";
+            $success_message = "Student record deleted successfully!";
         } else {
             $error_message = "Error deleting record: " . $conn->error;
         }
@@ -59,7 +54,7 @@
     $filter_department       = isset($_GET['department']) ? $_GET['department'] : '';
     $filter_year             = isset($_GET['year']) ? $_GET['year'] : '';
     $filter_prize            = isset($_GET['prize']) ? $_GET['prize'] : '';
-    $filter_participant_type = isset($_GET['participant_type']) ? $_GET['participant_type'] : 'all'; // New filter
+    $filter_participant_type = isset($_GET['participant_type']) ? $_GET['participant_type'] : 'student'; // Default to students only
     $search_query            = isset($_GET['search']) ? $_GET['search'] : '';
     $entries_param           = isset($_GET['entries']) ? $_GET['entries'] : '10';
     $entries_per_page        = ($entries_param === 'all') ? PHP_INT_MAX : (int) $entries_param;
@@ -676,9 +671,7 @@
                 <div class="filter-group">
                   <label for="participant_type">Participant Type:</label>
                   <select name="participant_type" id="participant_type">
-                    <option value="all"                                                                                                                                                                                                                                                                                  <?php echo($filter_participant_type === 'all') ? 'selected' : ''; ?>>All Participants</option>
-                    <option value="student"                                                                                                                                                                                                                                                                                                              <?php echo($filter_participant_type === 'student') ? 'selected' : ''; ?>>Students Only</option>
-                    <option value="teacher"                                                                                                                                                                                                                                                                                                              <?php echo($filter_participant_type === 'teacher') ? 'selected' : ''; ?>>Teachers Only</option>
+                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($filter_participant_type === 'student') ? 'selected' : ''; ?>>Students Only</option>
                   </select>
                 </div>
 
@@ -727,13 +720,38 @@
                 </div>
 
                 <div class="filter-group">
-                  <label for="year">Year:</label>
+                  <label for="year">Academic Year:</label>
                   <select name="year" id="year">
-                    <option value="">All Years</option>
-                    <option value="I"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($filter_year === 'I') ? 'selected' : ''; ?>>I Year</option>
-                    <option value="II"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($filter_year === 'II') ? 'selected' : ''; ?>>II Year</option>
-                    <option value="III"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo($filter_year === 'III') ? 'selected' : ''; ?>>III Year</option>
-                    <option value="IV"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($filter_year === 'IV') ? 'selected' : ''; ?>>IV Year</option>
+                    <option value="">All Academic Years</option>
+                    <?php
+                        // Get distinct years from the database to see what's actually stored
+                        $years_sql      = "SELECT DISTINCT current_year FROM student_event_register WHERE current_year IS NOT NULL AND current_year != '' ORDER BY current_year DESC";
+                        $years_result   = $conn->query($years_sql);
+                        $existing_years = [];
+
+                        if ($years_result) {
+                            while ($year_row = $years_result->fetch_assoc()) {
+                                $year_value       = $year_row['current_year'];
+                                $existing_years[] = $year_value;
+                                $selected         = ($filter_year === $year_value) ? 'selected' : '';
+                                echo "<option value='" . htmlspecialchars($year_value) . "' $selected>" . htmlspecialchars($year_value) . "</option>";
+                            }
+                        }
+
+                        // Also add the generated academic years for future entries
+                        $current_year_num = date('Y');
+                        for ($i = 0; $i < 10; $i++) {
+                            $start_year    = $current_year_num - $i;
+                            $end_year      = substr($start_year + 1, -2); // Get last 2 digits
+                            $academic_year = $start_year . '-' . $end_year;
+
+                            // Only add if it doesn't already exist in database
+                            if (! in_array($academic_year, $existing_years)) {
+                                $selected = ($filter_year === $academic_year) ? 'selected' : '';
+                                echo "<option value='$academic_year' $selected>$academic_year</option>";
+                            }
+                        }
+                    ?>
                   </select>
                 </div>
 
@@ -741,21 +759,21 @@
                   <label for="prize">Prize Status:</label>
                   <select name="prize" id="prize">
                     <option value="">All</option>
-                    <option value="First"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo($filter_prize === 'First') ? 'selected' : ''; ?>>First Prize</option>
-                    <option value="Second"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($filter_prize === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
-                    <option value="Third"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo($filter_prize === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
-                    <option value="no_prize"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
+                    <option value="First"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($filter_prize === 'First') ? 'selected' : ''; ?>>First Prize</option>
+                    <option value="Second"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($filter_prize === 'Second') ? 'selected' : ''; ?>>Second Prize</option>
+                    <option value="Third"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($filter_prize === 'Third') ? 'selected' : ''; ?>>Third Prize</option>
+                    <option value="no_prize"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
                   </select>
                 </div>
 
                 <div class="filter-group">
                   <label for="entries">Show:</label>
                   <select name="entries" id="entries">
-                    <option value="10"                                                                                                                                                                                                                                                                                                                                                       <?php echo($entries_param === '10') ? 'selected' : ''; ?>>10 entries</option>
-                    <option value="25"                                                                                                                                                                                                                                                                                                                                                       <?php echo($entries_param === '25') ? 'selected' : ''; ?>>25 entries</option>
-                    <option value="50"                                                                                                                                                                                                                                                                                                                                                       <?php echo($entries_param === '50') ? 'selected' : ''; ?>>50 entries</option>
-                    <option value="100"                                                                                                                                                                                                                                                                                                                                                                <?php echo($entries_param === '100') ? 'selected' : ''; ?>>100 entries</option>
-                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                <?php echo($entries_param === 'all') ? 'selected' : ''; ?>>All entries</option>
+                    <option value="10"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($entries_param === '10') ? 'selected' : ''; ?>>10 entries</option>
+                    <option value="25"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($entries_param === '25') ? 'selected' : ''; ?>>25 entries</option>
+                    <option value="50"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($entries_param === '50') ? 'selected' : ''; ?>>50 entries</option>
+                    <option value="100"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($entries_param === '100') ? 'selected' : ''; ?>>100 entries</option>
+                    <option value="all"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($entries_param === 'all') ? 'selected' : ''; ?>>All entries</option>
                   </select>
                 </div>
 
@@ -1009,10 +1027,12 @@
                       // Actions column
                       echo "<td>";
                       echo "<div class='action-buttons'>";
-                      $edit_page = ($row['participant_type'] === 'teacher') ? 'edit_teacher_participant.php' : 'edit_participant.php';
-                      echo "<a href='$edit_page?id=" . $row['id'] . "' class='btn btn-warning' title='Edit'>
-                          <span class='material-symbols-outlined'>edit</span>
-                        </a>";
+                      // Only show edit button for students (teacher event editing removed)
+                      if ($row['participant_type'] === 'student') {
+                          echo "<a href='edit_participant.php?id=" . $row['id'] . "' class='btn btn-warning' title='Edit'>
+                              <span class='material-symbols-outlined'>edit</span>
+                            </a>";
+                      }
                       echo "<button onclick='confirmDelete(" . $row['id'] . ", \"" . $row['participant_type'] . "\")' class='btn btn-danger' title='Delete'>
                           <span class='material-symbols-outlined'>delete</span>
                         </button>";

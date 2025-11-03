@@ -393,6 +393,37 @@ body {
     box-shadow: 0 25px 45px rgba(0, 0, 0, 0.15);
   }
 }
+
+        /* Password toggle styles */
+        .password-container {
+           position: relative;
+           display: flex;
+           align-items: center;
+        }
+
+        .password-container input {
+           padding-right: 45px !important;
+        }
+
+        .password-toggle {
+           position: absolute;
+           right: 12px;
+           cursor: pointer;
+           color: #6c757d;
+           transition: color 0.3s ease;
+           display: flex;
+           align-items: center;
+           z-index: 10;
+        }
+
+        .password-toggle:hover {
+           color: #1e4276;
+        }
+
+        .password-toggle svg {
+           width: 20px;
+           height: 20px;
+        }
     </style>
     <script>
         function checkpassword() {
@@ -401,6 +432,27 @@ body {
             if (pass !== re_pass) {
                 alert("Passwords do not match.");
                 event.preventDefault(); // Cancel form submission
+            }
+        }
+
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            const toggleIcon = passwordField.parentElement.querySelector('.password-toggle svg');
+
+            if (passwordField.type === 'password') {
+               passwordField.type = 'text';
+               // Change to eye-off icon
+               toggleIcon.innerHTML = `
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+               `;
+            } else {
+               passwordField.type = 'password';
+               // Change back to eye icon
+               toggleIcon.innerHTML = `
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+               `;
             }
         }
     </script>
@@ -460,13 +512,13 @@ body {
                 <div class="item div6">
                     <label for="department">Department:</label>
                     <select name="department" required>
-                        <option value="" disabled                                                                                                                                                    <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select The Department</option>
-                        <option value="IT"                                                                                                                               <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>IT</option>
-                        <option value="CSE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>CSE</option>
-                        <option value="ECE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>ECE</option>
-                        <option value="EEE"                                                                                                                                  <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>EEE</option>
-                        <option value="MECH"                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>MECH</option>
-                        <option value="CIVIL"                                                                                                                                        <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>CIVIL</option>
+                        <option value="" disabled                                                                                                                                                                                                     <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select The Department</option>
+                        <option value="IT"                                                                                                                                                                         <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>IT</option>
+                        <option value="CSE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>CSE</option>
+                        <option value="ECE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>ECE</option>
+                        <option value="EEE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>EEE</option>
+                        <option value="MECH"                                                                                                                                                                                 <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>MECH</option>
+                        <option value="CIVIL"                                                                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>CIVIL</option>
                     </select>
                 </div>
                 <div class="item div7">
@@ -475,11 +527,27 @@ body {
                 </div>
                 <div class="item div8">
                     <label for="password">Password:</label>
-                    <input type="password" name="password" id="password" placeholder="Password" required />
+                    <div class="password-container">
+                        <input type="password" name="password" id="password" placeholder="Password" required />
+                        <span class="password-toggle" onclick="togglePassword('password')">
+                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                           </svg>
+                        </span>
+                    </div>
                 </div>
                 <div class="item div9">
                     <label for="re-password">Re Enter Password:</label>
-                    <input type="password" name="re-password" id="re-password" placeholder="Re-enter Password" required />
+                    <div class="password-container">
+                        <input type="password" name="re-password" id="re-password" placeholder="Re-enter Password" required />
+                        <span class="password-toggle" onclick="togglePassword('re-password')">
+                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                              <circle cx="12" cy="12" r="3"></circle>
+                           </svg>
+                        </span>
+                    </div>
                 </div>
                 <div class="item div11">
                     <input type="submit" value="Register" id="button" />

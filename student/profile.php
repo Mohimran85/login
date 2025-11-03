@@ -119,6 +119,25 @@
     // Get statistics for the profile
     $regno = $student_data['regno'];
 
+    // Check if student is assigned to a class counselor
+    $counselor_info = null;
+    $counselor_sql  = "SELECT tr.name as counselor_name, tr.email as counselor_email,
+                            ca.assigned_date, tr.faculty_id as counselor_id
+                     FROM counselor_assignments ca
+                     JOIN teacher_register tr ON ca.counselor_id = tr.id
+                     WHERE ca.student_regno = ? AND ca.status = 'active'
+                     ORDER BY ca.assigned_date DESC
+                     LIMIT 1";
+    $counselor_stmt = $conn->prepare($counselor_sql);
+    $counselor_stmt->bind_param("s", $regno);
+    $counselor_stmt->execute();
+    $counselor_result = $counselor_stmt->get_result();
+
+    if ($counselor_result->num_rows > 0) {
+        $counselor_info = $counselor_result->fetch_assoc();
+    }
+    $counselor_stmt->close();
+
     // Total events participated
     $total_events_sql = "SELECT COUNT(*) as total FROM student_event_register WHERE regno=?";
     $total_stmt       = $conn->prepare($total_events_sql);
@@ -224,6 +243,87 @@
             font-size: 12px;
             color: #6c757d;
             text-transform: uppercase;
+        }
+
+        .counselor-info {
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
+            border-radius: 12px;
+            border-left: 4px solid #28a745;
+        }
+
+        .counselor-info.no-counselor {
+            background: linear-gradient(135deg, #fff3cd 0%, #f8f9fa 100%);
+            border-left-color: #ffc107;
+        }
+
+        .counselor-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #28a745;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .counselor-info.no-counselor .counselor-title {
+            color: #856404;
+        }
+
+        .counselor-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .counselor-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .counselor-id {
+            font-size: 13px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .counselor-email, .assigned-date {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #495057;
+        }
+
+        .counselor-email .material-symbols-outlined,
+        .assigned-date .material-symbols-outlined {
+            font-size: 16px;
+            color: #6c757d;
+        }
+
+        .no-counselor-message {
+            font-size: 14px;
+            color: #856404;
+            font-style: italic;
+        }
+
+        .counselor-display {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            border: 2px solid #28a745 !important;
+            min-height: 60px !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .counselor-display:empty::before {
+            content: "No counselor assigned";
+            color: #6c757d;
+            font-style: italic;
         }
 
         .profile-form {
@@ -432,6 +532,24 @@
             .btn {
                 justify-content: center;
             }
+
+            .counselor-info {
+                padding: 15px;
+                margin-top: 20px;
+            }
+
+            .counselor-details {
+                gap: 6px;
+            }
+
+            .counselor-email, .assigned-date {
+                font-size: 12px;
+            }
+
+            .counselor-display {
+                min-height: 50px !important;
+                padding: 10px !important;
+            }
         }
     </style>
 </head>
@@ -519,7 +637,7 @@
                             <?php echo strtoupper(substr($student_data['name'], 0, 1)); ?>
                         </div>
                         <div class="profile-name"><?php echo htmlspecialchars($student_data['name']); ?></div>
-                        <div class="profile-regno">Registration No:                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($student_data['regno']); ?></div>
+                        <div class="profile-regno">Registration No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($student_data['regno']); ?></div>
 
                         <div class="profile-stats">
                             <div class="stat-item">
@@ -531,15 +649,38 @@
                                 <div class="stat-label">Prizes</div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="info-section">
-                        <div class="info-title">Account Information</div>
-                        <div class="info-text">
-                            <strong>Username:</strong>                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($student_data['username']); ?><br>
-                            <strong>Joined:</strong>                                                                                                                                                                                                                                                                                                                         <?php echo date('M d, Y', strtotime($student_data['created_at'] ?? 'now')); ?><br>
-                            <strong>Status:</strong> <span style="color: #28a745;">Active</span>
+                        <!-- Class Counselor Information -->
+                        <?php if ($counselor_info): ?>
+                        <div class="counselor-info">
+                            <div class="counselor-title">
+                                <span class="material-symbols-outlined">supervisor_account</span>
+                                Class Counselor
+                            </div>
+                            <div class="counselor-details">
+                                <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
+                                <div class="counselor-id">ID:                                                              <?php echo htmlspecialchars($counselor_info['counselor_id']); ?></div>
+                                <div class="counselor-email">
+                                    <span class="material-symbols-outlined">email</span>
+                                    <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
+                                </div>
+                                <div class="assigned-date">
+                                    <span class="material-symbols-outlined">schedule</span>
+                                    Assigned:                                              <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
+                                </div>
+                            </div>
                         </div>
+                        <?php else: ?>
+                        <div class="counselor-info no-counselor">
+                            <div class="counselor-title">
+                                <span class="material-symbols-outlined">info</span>
+                                Class Counselor
+                            </div>
+                            <div class="no-counselor-message">
+                                No class counselor assigned yet
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
@@ -618,14 +759,38 @@
                                 </div>
                                 <select name="department" class="form-select profile-edit" style="display: none;">
                                     <option value="">Select Department</option>
-                                    <option value="CSE"                                                                                                                                                                                                                             <?php echo($student_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
-                                    <option value="IT"                                                                                                                                                                                                                         <?php echo($student_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
-                                    <option value="ECE"                                                                                                                                                                                                                             <?php echo($student_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
-                                    <option value="EEE"                                                                                                                                                                                                                             <?php echo($student_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
-                                    <option value="MECH"                                                                                                                                                                                                                                 <?php echo($student_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
-                                    <option value="CIVIL"                                                                                                                                                                                                                                     <?php echo($student_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
-                                    <option value="BME"                                                                                                                                                                                                                             <?php echo($student_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
+                                    <option value="CSE"                                                                                                                                                                                                                                                                                                                                           <?php echo($student_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
+                                    <option value="IT"                                                                                                                                                                                                                                                                                                                                     <?php echo($student_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
+                                    <option value="ECE"                                                                                                                                                                                                                                                                                                                                           <?php echo($student_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
+                                    <option value="EEE"                                                                                                                                                                                                                                                                                                                                           <?php echo($student_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
+                                    <option value="MECH"                                                                                                                                                                                                                                                                                                                                                 <?php echo($student_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
+                                    <option value="CIVIL"                                                                                                                                                                                                                                                                                                                                                       <?php echo($student_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
+                                    <option value="BME"                                                                                                                                                                                                                                                                                                                                           <?php echo($student_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
                                 </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Class Counselor</label>
+                                <div class="profile-display counselor-display" id="counselor-display">
+                                    <?php if ($counselor_info): ?>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <span style="font-weight: 600; color: #28a745;">
+                                                <?php echo htmlspecialchars($counselor_info['counselor_name']); ?>
+                                            </span>
+                                            <span style="font-size: 12px; color: #6c757d;">
+                                                ID:                                                    <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                                                <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
+                                            </span>
+                                            <span style="font-size: 11px; color: #856404;">
+                                                Assigned:                                                          <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
+                                            </span>
+                                        </div>
+                                    <?php else: ?>
+                                        <span style="color: #6c757d; font-style: italic;">
+                                            No class counselor assigned
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
 
                         </div>
