@@ -37,11 +37,13 @@ if (! isset($_GET['od_id']) || empty($_GET['od_id'])) {
 
 $od_id = (int) $_GET['od_id'];
 
-// Get OD request details with counselor information
+// Get OD request details with counselor information and digital signature
 $od_sql = "SELECT odr.*, tr.name as counselor_name, tr.email as counselor_email,
-                  tr.faculty_id, tr.department
+                  tr.faculty_id, tr.department, ts.signature_type, ts.signature_data,
+                  ts.signature_hash, ts.created_at as signature_created
            FROM od_requests odr
            JOIN teacher_register tr ON odr.counselor_id = tr.id
+           LEFT JOIN teacher_signatures ts ON tr.id = ts.teacher_id AND ts.is_active = TRUE
            WHERE odr.id = ? AND odr.student_regno = ? AND odr.status = 'approved'";
 $od_stmt = $conn->prepare($od_sql);
 $od_stmt->bind_param("is", $od_id, $student_data['regno']);
@@ -54,6 +56,16 @@ if ($od_result->num_rows === 0) {
 }
 
 $od_data = $od_result->fetch_assoc();
+
+// Check if counselor has a digital signature
+$has_digital_signature       = ! empty($od_data['signature_data']);
+$signature_verification_code = '';
+
+if ($has_digital_signature) {
+    // Generate verification code for this specific OD letter
+    $signature_verification_code = hash('sha256', $od_data['signature_hash'] . $od_id . $od_data['student_regno']);
+}
+
 $od_stmt->close();
 $stmt->close();
 $conn->close();
@@ -513,8 +525,33 @@ $html_content .= '
         </div>
 
         <div class="signature-section">
-            <div class="signature-box">
-                <div class="signature-line"></div>
+            <div class="signature-box">';
+
+if ($has_digital_signature) {
+    $html_content .= '<div class="digital-signature">';
+
+    if ($od_data['signature_type'] === 'upload' || $od_data['signature_type'] === 'drawn') {
+        $html_content .= '<img src="../teacher/' . htmlspecialchars($od_data['signature_data']) . '"
+                             alt="Digital Signature"
+                             style="max-width: 200px; max-height: 80px; border: 1px solid #ddd; background: white;">';
+    } elseif ($od_data['signature_type'] === 'text') {
+        $text_data = json_decode($od_data['signature_data'], true);
+        $html_content .= '<div style="font-family: ' . htmlspecialchars($text_data['font']) . ';
+                            font-size: 24px; color: #000; padding: 10px;
+                            border: 1px solid #ddd; background: white; min-height: 60px;
+                            display: flex; align-items: center; justify-content: center;">
+                            ' . htmlspecialchars($text_data['text']) . '
+                          </div>';
+    }
+
+    $html_content .= '<div style="font-size: 10px; color: #666; margin-top: 5px;">
+                        🔐 Digitally Signed | Verification: ' . substr($signature_verification_code, 0, 12) . '...
+                      </div></div>';
+} else {
+    $html_content .= '<div class="signature-line"></div>';
+}
+
+$html_content .= '
                 <div class="signature-title">Class Counselor</div>
                 <div class="signature-name">' . htmlspecialchars($od_data['counselor_name']) . '</div>
                 <div class="signature-name">' . htmlspecialchars($od_data['faculty_id']) . '</div>
@@ -534,7 +571,14 @@ $html_content .= '
         </div>
 
         <div class="footer-note">
-            <p><strong>Note:</strong> This is a digitally generated document from the official Event Management System.</p>
+            <p><strong>Note:</strong> This is a digitally generated document from the official Event Management System.</p>';
+
+if ($has_digital_signature) {
+    $html_content .= '<p><strong>Digital Security:</strong> This document contains a verified digital signature.
+                        Verification Code: ' . $signature_verification_code . '</p>';
+}
+
+$html_content .= '
             <p>🔐 Document Authentication: OD-' . $od_data['id'] . '-' . date('YmdHis') . ' | Generated: ' . $current_date . ' at ' . $current_time . '</p>
             <p>📧 For verification, contact: info@sonatech.ac.in | ☎ +91-427-2331129</p>
             <p style="margin-top: 10px; font-style: italic;">Sona College of Technology - Nurturing Excellence Since 1997</p>

@@ -1,4 +1,13 @@
 <?php
+    // Enable output compression
+    if (! ob_get_level()) {
+        ob_start("ob_gzhandler");
+    }
+
+                                                  // Set caching headers
+    header("Cache-Control: public, max-age=300"); // Cache for 5 minutes
+    header("Expires: " . gmdate("D, d M Y H:i:s", time() + 300) . " GMT");
+
     session_start();
 
     // Check if user is logged in as a teacher
@@ -133,9 +142,18 @@
         $students_data[] = $row;
     }
 
-    // Get filter options
-    $event_types_result = $conn->query("SELECT DISTINCT event_type FROM student_event_register ORDER BY event_type");
-    $departments_result = $conn->query("SELECT DISTINCT department FROM student_register ORDER BY department");
+    // Get filter options (optimize by caching results)
+    $event_types_result = $conn->query("SELECT DISTINCT event_type FROM student_event_register ORDER BY event_type LIMIT 50");
+    $departments_result = $conn->query("SELECT DISTINCT department FROM student_register ORDER BY department LIMIT 50");
+
+    // Get statistics efficiently in a single query
+    $stats_sql = "SELECT
+                    COUNT(DISTINCT ser.regno) as unique_students,
+                    COUNT(*) as total_registrations,
+                    SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prize_winners
+                  FROM student_event_register ser";
+    $stats_result = $conn->query($stats_sql);
+    $stats        = $stats_result->fetch_assoc();
 
     $stmt->close();
     $students_stmt->close();
@@ -151,28 +169,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-    .header {
-  grid-area: header;
-  background-color: #fff;
-  height: 80px;
-  display: flex;
-  font-size: 15px;
-  font-weight: 100;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
-    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
-  color: #1e4276;
-  position: fixed;
-  width: 100%;
-  z-index: 1001;
-  top: 0;
-  left: 0;
-}
+        /* Core Styles */
+        .header {
+            grid-area: header;
+            background-color: #fff;
+            height: 80px;
+            display: flex;
+            font-size: 15px;
+            font-weight: 100;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            color: #1e4276;
+            position: fixed;
+            width: 100%;
+            z-index: 1001;
+            top: 0;
+            left: 0;
+        }
 
-
-
-        .filters-section {
+        .filters-section, .students-table {
             background: white;
             padding: 20px;
             border-radius: 10px;
@@ -187,28 +203,18 @@
             align-items: end;
         }
 
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-        }
-
         .filter-group label {
             font-weight: 500;
             margin-bottom: 5px;
             color: #333;
         }
 
-        .filter-group input,
-        .filter-group select {
+        .filter-group input, .filter-group select {
             padding: 10px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 14px;
-        }
-
-        .filter-actions {
-            display: flex;
-            gap: 10px;
+            width: 100%;
         }
 
         .btn {
@@ -223,32 +229,8 @@
             gap: 5px;
         }
 
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-        }
-
-        .students-table {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #e1e5e9;
-        }
-
-        .table-header {
-            background: #f8f9fa;
-            padding: 20px;
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-        }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
 
         table {
             width: 100%;
@@ -267,9 +249,7 @@
             color: #333;
         }
 
-        tr:hover {
-            background: #f8f9fa;
-        }
+        tr:hover { background: #f8f9fa; }
 
         .prize-badge {
             padding: 4px 8px;
@@ -282,32 +262,6 @@
         .prize-second { background: #c0c0c0; color: #666; }
         .prize-third { background: #cd7f32; color: #fff; }
         .prize-participation { background: #e8f4fd; color: #3498db; }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .pagination a,
-        .pagination span {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            text-decoration: none;
-            color: #333;
-        }
-
-        .pagination .current {
-            background: #3498db;
-            color: white;
-            border-color: #3498db;
-        }
-
-        .pagination a:hover {
-            background: #f8f9fa;
-        }
 
         .stats-row {
             display: grid;
@@ -330,14 +284,25 @@
             color: #3498db;
         }
 
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
         }
 
-        /* Hide mobile cards on desktop by default */
-        .mobile-card-table {
-            display: none;
+        .pagination a, .pagination span {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .pagination .current {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
         }
 
         /* Mobile Responsive Design */
@@ -374,7 +339,7 @@
                 position: fixed;
                 left: -100%;
                 top: 0;
-                width: 280px;
+                width: 100vw;
                 height: 100vh;
                 z-index: 1000;
                 transition: left 0.3s ease;
@@ -702,10 +667,11 @@
         <div class="header-logo">
           <img
             class="logo"
-            src="sona_logo.jpg"
+            src="../asserts/images/Sona Logo.png"
             alt="Sona College Logo"
-            height="60px"
+            height="60"
             width="200"
+            loading="lazy"
           />
         </div>
         <div class="header-title">
@@ -727,7 +693,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                           <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
             </div>
 
             <nav>
@@ -742,6 +708,75 @@
                         <a href="registered_students.php" class="nav-link active">
                             <span class="material-symbols-outlined">group</span>
                             Registered Students
+                        </a>
+                    </li>
+                    <?php
+                        // Check if user is counselor or admin
+                        $user_sql  = "SELECT status FROM teacher_register WHERE username = ?";
+                        $user_stmt = $conn->prepare($user_sql);
+                        $user_stmt->bind_param("s", $username);
+                        $user_stmt->execute();
+                        $user_result = $user_stmt->get_result();
+                        $user_status = 'teacher'; // default
+                        if ($user_result->num_rows > 0) {
+                            $user_data   = $user_result->fetch_assoc();
+                            $user_status = $user_data['status'];
+                        }
+                        $is_counselor = ($user_status === 'counselor' || $user_status === 'admin');
+                        $is_admin     = ($user_status === 'admin');
+                        $user_stmt->close();
+                    ?>
+                    <?php if ($is_counselor): ?>
+                    <li class="nav-item">
+                        <a href="index.php#assigned-students" class="nav-link">
+                            <span class="material-symbols-outlined">supervisor_account</span>
+                            My Assigned Students
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="od_approvals.php" class="nav-link">
+                            <span class="material-symbols-outlined">approval</span>
+                            OD Approvals
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <?php if ($is_admin): ?>
+                    <li class="nav-item">
+                        <a href="../admin/index.php" class="nav-link">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                            Admin Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/user_management.php" class="nav-link">
+                            <span class="material-symbols-outlined">manage_accounts</span>
+                            User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/participants.php" class="nav-link">
+                            <span class="material-symbols-outlined">people</span>
+                            Participants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/reports.php" class="nav-link">
+                            <span class="material-symbols-outlined">bar_chart</span>
+                            Reports
+                        </a>
+                    </li>
+                    <?php else: ?>
+                    <li class="nav-item">
+                        <a href="../admin/user_management.php" class="nav-link">
+                            <span class="material-symbols-outlined">manage_accounts</span>
+                            Teacher Management
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <li class="nav-item">
+                        <a href="digital_signature.php" class="nav-link">
+                            <span class="material-symbols-outlined">draw</span>
+                            Digital Signature
                         </a>
                     </li>
                     <li class="nav-item">
@@ -774,11 +809,11 @@
                     <div class="stat-label">Total Registrations</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number"><?php echo $conn->query("SELECT COUNT(DISTINCT regno) FROM student_event_register")->fetch_assoc()['COUNT(DISTINCT regno)']; ?></div>
+                    <div class="stat-number"><?php echo $stats['unique_students']; ?></div>
                     <div class="stat-label">Unique Students</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number"><?php echo $conn->query("SELECT COUNT(*) FROM student_event_register WHERE prize IN ('First', 'Second', 'Third')")->fetch_assoc()['COUNT(*)']; ?></div>
+                    <div class="stat-number"><?php echo $stats['prize_winners']; ?></div>
                     <div class="stat-label">Prize Winners</div>
                 </div>
             </div>
@@ -822,11 +857,11 @@
                             <label for="prize">Prize Filter</label>
                             <select id="prize" name="prize">
                                 <option value="">All</option>
-                                <option value="winner"                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
-                                <option value="First"                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $prize_filter === 'First' ? 'selected' : ''; ?>>First Prize</option>
-                                <option value="Second"                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $prize_filter === 'Second' ? 'selected' : ''; ?>>Second Prize</option>
-                                <option value="Third"                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $prize_filter === 'Third' ? 'selected' : ''; ?>>Third Prize</option>
-                                <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
+                                <option value="winner"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
+                                <option value="First"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $prize_filter === 'First' ? 'selected' : ''; ?>>First Prize</option>
+                                <option value="Second"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $prize_filter === 'Second' ? 'selected' : ''; ?>>Second Prize</option>
+                                <option value="Third"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $prize_filter === 'Third' ? 'selected' : ''; ?>>Third Prize</option>
+                                <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
                             </select>
                         </div>
 
@@ -914,12 +949,12 @@
                         <?php foreach ($students_data as $student): ?>
                             <div class="student-card">
                                 <h4><?php echo htmlspecialchars($student['event_name']); ?></h4>
-                                <p><strong>• Event Type:</strong>                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($student['event_type']); ?></p>
-                                <p><strong>• Date:</strong>                                                                                                                                                                                                                                                     <?php echo date('M d, Y', strtotime($student['attended_date'])); ?></p>
-                                <p><strong>• Organization:</strong>                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($student['college']); ?></p>
-                                <p><strong>• Department:</strong>                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($student['department']); ?></p>
-                                <p><strong>• Year & Semester:</strong>                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($student['year_of_join']); ?> -<?php echo htmlspecialchars($student['position']); ?></p>
-                                <p><strong>• Location:</strong>                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($student['position']); ?></p>
+                                <p><strong>• Event Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($student['event_type']); ?></p>
+                                <p><strong>• Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo date('M d, Y', strtotime($student['attended_date'])); ?></p>
+                                <p><strong>• Organization:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($student['college']); ?></p>
+                                <p><strong>• Department:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($student['department']); ?></p>
+                                <p><strong>• Year & Semester:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($student['year_of_join']); ?> -<?php echo htmlspecialchars($student['position']); ?></p>
+                                <p><strong>• Location:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($student['position']); ?></p>
                                 <p><strong>• Prize:</strong>
                                     <?php
                                         $prize       = $student['prize'];
@@ -978,11 +1013,13 @@
     </div>
 
     <script>
-        // Mobile menu functionality
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const body = document.body;
+        // Optimized mobile menu functionality
+        const sidebar = document.getElementById('sidebar');
+        const headerMenuIcon = document.querySelector('.header .menu-icon');
+        const closeSidebarBtn = document.querySelector('.close-sidebar');
 
+        function toggleSidebar() {
+            const body = document.body;
             if (sidebar.classList.contains('active')) {
                 sidebar.classList.remove('active');
                 body.classList.remove('sidebar-open');
@@ -992,29 +1029,19 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const headerMenuIcon = document.querySelector('.header .menu-icon');
-            if (headerMenuIcon) {
-                headerMenuIcon.addEventListener('click', toggleSidebar);
+        // Use event delegation for better performance
+        document.addEventListener('click', function(event) {
+            if (headerMenuIcon && headerMenuIcon.contains(event.target)) {
+                toggleSidebar();
+            } else if (closeSidebarBtn && closeSidebarBtn.contains(event.target)) {
+                toggleSidebar();
+            } else if (window.innerWidth <= 768 &&
+                       sidebar &&
+                       sidebar.classList.contains('active') &&
+                       !sidebar.contains(event.target)) {
+                sidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
             }
-
-            const closeSidebarBtn = document.querySelector('.close-sidebar');
-            if (closeSidebarBtn) {
-                closeSidebarBtn.addEventListener('click', toggleSidebar);
-            }
-
-            // Close sidebar when clicking outside on mobile
-            document.addEventListener('click', function(event) {
-                const sidebar = document.getElementById('sidebar');
-                if (window.innerWidth <= 768 &&
-                    sidebar &&
-                    sidebar.classList.contains('active') &&
-                    !sidebar.contains(event.target) &&
-                    !headerMenuIcon.contains(event.target)) {
-                    sidebar.classList.remove('active');
-                    document.body.classList.remove('sidebar-open');
-                }
-            });
         });
     </script>
 </body>

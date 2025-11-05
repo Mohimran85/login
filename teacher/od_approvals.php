@@ -94,12 +94,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>OD Approvals - Teacher Dashboard</title>
     <link rel="stylesheet" href="../student/student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* Prevent mobile zoom and overflow */
+        * {
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+        }
+
         /* Override default margins and paddings for wider content */
         .main {
             padding: 15px !important;
@@ -201,26 +213,139 @@
             background: #f8f9fa;
             padding: 25px;
             border-radius: 12px;
-            margin-bottom: 30px;
-            border-left: 4px solid #0c3878;
+            margin-bottom: 40px;
+            border-left: 6px solid #0c3878;
             display: flex;
             flex-direction: column;
             gap: 20px;
             width: 100%;
             max-width: none;
+            position: relative;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .od-request-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #0c3878, #2d5aa0, #0c3878);
+            border-radius: 12px 12px 0 0;
         }
 
         .od-request-item.pending {
             border-left-color: #ffc107;
             animation: subtle-pulse 3s ease-in-out infinite;
+            background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
+        }
+
+        .od-request-item.pending::before {
+            background: linear-gradient(90deg, #ffc107, #ffeb3b, #ffc107);
+        }
+
+        .od-request-item.approved {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #f0fff4 0%, #f8fff9 100%);
+        }
+
+        .od-request-item.approved::before {
+            background: linear-gradient(90deg, #28a745, #20c997, #28a745);
+        }
+
+        .od-request-item.rejected {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #fff5f5 0%, #fffafa 100%);
+        }
+
+        .od-request-item.rejected::before {
+            background: linear-gradient(90deg, #dc3545, #e74c3c, #dc3545);
         }
 
         @keyframes subtle-pulse {
-            0%, 100% { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
-            50% { box-shadow: 0 6px 25px rgba(255, 193, 7, 0.15); }
+            0%, 100% {
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 8px 25px rgba(255, 193, 7, 0.2);
+                transform: scale(1.01);
+            }
         }
-        .od-request-item.approved { border-left-color: #28a745; }
-        .od-request-item.rejected { border-left-color: #dc3545; }
+
+        /* Request Header with Student Info */
+        .request-header-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border: 2px solid #e9ecef;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .request-header-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #0c3878, #2d5aa0);
+        }
+
+        .student-info-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .student-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0c3878, #2d5aa0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(12, 56, 120, 0.3);
+        }
+
+        .student-details-enhanced {
+            flex: 1;
+        }
+
+        .student-name-large {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .student-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .meta-item .material-symbols-outlined {
+            font-size: 16px;
+            color: #0c3878;
+        }
 
         .od-request-header {
             display: flex;
@@ -458,7 +583,7 @@
         .poster-modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 2000;
             left: 0;
             top: 0;
             width: 100%;
@@ -478,6 +603,7 @@
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            z-index: 2001;
         }
 
         .poster-modal img {
@@ -486,6 +612,7 @@
             max-height: 70vh;
             object-fit: contain;
             border-radius: 10px;
+            transition: transform 0.3s ease;
         }
 
         .poster-modal-close {
@@ -504,6 +631,7 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 2002;
         }
 
         .poster-modal-close:hover {
@@ -511,14 +639,59 @@
             background: #f0f0f0;
         }
 
+        .poster-controls {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 2002;
+        }
+
+        .control-btn {
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #f0f0f0;
+            transform: scale(1.1);
+        }
+
+        .control-btn .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        .poster-modal-footer {
+            text-align: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
 
+        /* Mobile sidebar overlay */
         @media (max-width: 768px) {
             .main {
                 padding: 10px !important;
+                margin: 0 !important;
+                width: 100% !important;
             }
 
             .od-requests-container {
@@ -539,8 +712,13 @@
                 font-size: 14px;
             }
 
-            .od-request-header {
-                padding: 12px;
+            .od-request-item {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .request-header-card {
+                padding: 15px;
             }
 
             .student-info h3 {
@@ -585,6 +763,153 @@
                 gap: 10px;
                 padding: 0 5px;
             }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.8rem;
+            }
+
+            /* Mobile-friendly student info grid */
+            .student-info-grid {
+                grid-template-columns: auto 1fr;
+                grid-template-rows: auto auto;
+                gap: 15px;
+            }
+
+            .student-avatar {
+                grid-row: 1 / 3;
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+
+            .od-status {
+                grid-column: 1 / 3;
+                margin-top: 10px;
+                align-self: center;
+                justify-self: center;
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+
+            .student-name-large {
+                font-size: 18px;
+            }
+
+            .student-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .meta-item {
+                font-size: 13px;
+            }
+
+            .sidebar {
+                width: 100vw !important;
+                min-width: 100vw !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                z-index: 9999 !important;
+                transform: translateX(-100%) !important;
+                transition: transform 0.3s ease !important;
+                background: #ffffff !important;
+                box-shadow: none !important;
+                border-right: none !important;
+                padding: 0 !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            .sidebar.active {
+                transform: translateX(0) !important;
+                z-index: 10000 !important;
+                background: #ffffff !important;
+            }
+
+            .sidebar.active::after {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(255, 255, 255, 1);
+                z-index: -1;
+                backdrop-filter: blur(2px);
+            }
+
+            /* Ensure close button is visible and functional */
+            .close-sidebar {
+                display: flex !important;
+                position: absolute !important;
+                top: 15px !important;
+                right: 15px !important;
+                z-index: 10001 !important;
+            }
+
+            /* Ensure sidebar header has proper spacing */
+            .sidebar-header {
+                padding: 60px 20px 20px 20px !important;
+                position: relative;
+                background: #ffffff !important;
+            }
+
+            /* Fix body when sidebar is open */
+            body.sidebar-open {
+                overflow: hidden !important;
+                position: fixed !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            /* Prevent scrolling issues on mobile */
+            .grid-container {
+                overflow-x: hidden !important;
+            }
+
+            /* Reduce content width to prevent zoom */
+            .od-request-item {
+                width: calc(100vw - 30px) !important;
+                max-width: calc(100vw - 30px) !important;
+                box-sizing: border-box !important;
+            }
+
+            .section-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .request-header-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+        }
+
+        /* Force white background for all sidebar components */
+        .sidebar {
+            background: #ffffff !important;
+        }
+
+        .sidebar-header {
+            background: #ffffff !important;
+        }
+
+        .sidebar nav {
+            background: #ffffff !important;
+        }
+
+        .nav-menu {
+            background: #ffffff !important;
         }
 
         /* Tablet responsive */
@@ -633,6 +958,88 @@
                 padding: 25px;
             }
         }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+            .main {
+                padding: 8px !important;
+            }
+
+            .od-requests-container {
+                padding: 8px;
+                margin: 0 2px;
+            }
+
+            .od-request-item {
+                padding: 12px;
+                margin-bottom: 15px;
+                width: calc(100vw - 20px) !important;
+                max-width: calc(100vw - 20px) !important;
+            }
+
+            .request-header-card {
+                padding: 10px;
+            }
+
+            .student-name-large {
+                font-size: 16px;
+            }
+
+            .student-avatar {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .section-header {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+            .section-header h4 {
+                font-size: 13px;
+            }
+
+            .event-details, .description-box, .approval-form {
+                padding: 10px;
+            }
+
+            .event-detail-item {
+                padding: 6px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                padding: 14px 16px;
+                font-size: 14px;
+            }
+
+            .form-textarea {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .od-status {
+                padding: 6px 12px;
+                font-size: 11px;
+            }
+
+            .meta-item {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -661,7 +1068,7 @@
 
             <div class="student-info"  style="color: white;">
                 <div class="student-name" style="color:white;"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                           <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -673,15 +1080,62 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="registered_students.php" class="nav-link">
+                            <span class="material-symbols-outlined">group</span>
+                            Registered Students
+                        </a>
+                    </li>
+                    <?php if ($is_counselor): ?>
+                    <li class="nav-item">
+                        <a href="index.php#assigned-students" class="nav-link">
+                            <span class="material-symbols-outlined">supervisor_account</span>
+                            My Assigned Students
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="od_approvals.php" class="nav-link active">
                             <span class="material-symbols-outlined">approval</span>
                             OD Approvals
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if ($teacher_data['status'] === 'admin'): ?>
                     <li class="nav-item">
-                        <a href="registered_students.php" class="nav-link">
-                            <span class="material-symbols-outlined">group</span>
-                            My Students
+                        <a href="../admin/index.php" class="nav-link">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                            Admin Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/user_management.php" class="nav-link">
+                            <span class="material-symbols-outlined">manage_accounts</span>
+                            User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/participants.php" class="nav-link">
+                            <span class="material-symbols-outlined">people</span>
+                            Participants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/reports.php" class="nav-link">
+                            <span class="material-symbols-outlined">bar_chart</span>
+                            Reports
+                        </a>
+                    </li>
+                    <?php else: ?>
+                    <li class="nav-item">
+                        <a href="../admin/user_management.php" class="nav-link">
+                            <span class="material-symbols-outlined">manage_accounts</span>
+                            Teacher Management
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <li class="nav-item">
+                        <a href="digital_signature.php" class="nav-link">
+                            <span class="material-symbols-outlined">draw</span>
+                            Digital Signature
                         </a>
                     </li>
                     <li class="nav-item">
@@ -715,21 +1169,51 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-number"><?php echo $stats['total_requests'] ?? 0; ?></div>
-                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-label">Total</div>
                 </div>
                 <div class="stat-card pending">
                     <div class="stat-number"><?php echo $stats['pending_requests'] ?? 0; ?></div>
-                    <div class="stat-label">Pending Requests</div>
+                    <div class="stat-label">Pending</div>
                 </div>
                 <div class="stat-card approved">
                     <div class="stat-number"><?php echo $stats['approved_requests'] ?? 0; ?></div>
-                    <div class="stat-label">Approved Requests</div>
+                    <div class="stat-label">Approved</div>
                 </div>
                 <div class="stat-card rejected">
                     <div class="stat-number"><?php echo $stats['rejected_requests'] ?? 0; ?></div>
-                    <div class="stat-label">Rejected Requests</div>
+                    <div class="stat-label">Rejected</div>
                 </div>
             </div>
+
+            <?php if (($stats['total_requests'] ?? 0) > 0): ?>
+            <!-- Progress Overview -->
+            <div style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                <h3 style="margin: 0 0 15px 0; color: #2c3e50; display: flex; align-items: center; gap: 8px;">
+                    <span class="material-symbols-outlined">trending_up</span>
+                    Review Progress
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 28px; font-weight: bold; color: #ffc107;">
+                            <?php echo round((($stats['pending_requests'] ?? 0) / ($stats['total_requests'] ?? 1)) * 100); ?>%
+                        </div>
+                        <div style="font-size: 12px; color: #6c757d; text-transform: uppercase;">Needs Review</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 28px; font-weight: bold; color: #28a745;">
+                            <?php echo round((($stats['approved_requests'] ?? 0) / ($stats['total_requests'] ?? 1)) * 100); ?>%
+                        </div>
+                        <div style="font-size: 12px; color: #6c757d; text-transform: uppercase;">Approved</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 28px; font-weight: bold; color: #dc3545;">
+                            <?php echo round((($stats['rejected_requests'] ?? 0) / ($stats['total_requests'] ?? 1)) * 100); ?>%
+                        </div>
+                        <div style="font-size: 12px; color: #6c757d; text-transform: uppercase;">Rejected</div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <!-- OD Requests -->
             <div class="od-requests-container">
@@ -741,24 +1225,36 @@
                 <?php if ($od_requests_result->num_rows > 0): ?>
                     <?php while ($request = $od_requests_result->fetch_assoc()): ?>
                     <div class="od-request-item<?php echo $request['status']; ?>">
-                        <!-- Section 1: Student Information -->
-                        <div class="section-card student-section">
-                            <div class="section-header">
-                                <span class="material-symbols-outlined">person</span>
-                                <h4>Student Information</h4>
-                            </div>
-                            <div class="od-request-header">
-                                <div class="student-info">
-                                    <h3><?php echo htmlspecialchars($request['student_name']); ?></h3>
-                                    <div class="student-details">
-                                        Reg No:                                                                                                                                              <?php echo htmlspecialchars($request['student_regno']); ?> |
-                                        <?php echo htmlspecialchars($request['department']); ?> |
-                                        Year:                                                                                                                                        <?php echo htmlspecialchars($request['year_of_join']); ?>
+                        <!-- Enhanced Request Header -->
+                        <div class="request-header-card">
+                            <div class="student-info-grid">
+                                <div class="student-avatar">
+                                    <?php echo strtoupper(substr($request['student_name'], 0, 1)); ?>
+                                </div>
+                                <div class="student-details-enhanced">
+                                    <div class="student-name-large"><?php echo htmlspecialchars($request['student_name']); ?></div>
+                                    <div class="student-meta">
+                                        <div class="meta-item">
+                                            <span class="material-symbols-outlined">badge</span>
+                                            <span><?php echo htmlspecialchars($request['student_regno']); ?></span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="material-symbols-outlined">school</span>
+                                            <span><?php echo htmlspecialchars($request['department']); ?></span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="material-symbols-outlined">calendar_today</span>
+                                            <span>Year                                                                                                                                                                   <?php echo htmlspecialchars($request['year_of_join']); ?></span>
+                                        </div>
+                                        <div class="meta-item">
+                                            <span class="material-symbols-outlined">schedule</span>
+                                            <span><?php echo date('M d, Y h:i A', strtotime($request['request_date'])); ?></span>
+                                        </div>
                                     </div>
                                 </div>
-                                <span class="od-status                                                                                                                                                                   <?php echo $request['status']; ?>">
+                                <div class="od-status                                                                                                                                                                <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
-                                </span>
+                                </div>
                             </div>
                         </div>
 
@@ -846,9 +1342,9 @@
                                             Download Poster
                                         </a>
                                         <div style="text-align: center; font-size: 12px; color: #6c757d; padding: 8px; background: #f8f9fa; border-radius: 6px;">
-                                            <strong>File:</strong>                                                                                                                                                                                                       <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
-                                            <strong>Type:</strong>                                                                                                                                                                                                       <?php echo strtoupper($file_extension); ?> •
-                                            <strong>Size:</strong>                                                                                                                                                                                                       <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
+                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
+                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo strtoupper($file_extension); ?> •
+                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -932,8 +1428,22 @@
     <!-- Poster Modal -->
     <div id="posterModal" class="poster-modal">
         <div class="poster-modal-content">
+            <div class="poster-controls">
+                <button class="control-btn" onclick="rotatePoster(-90)" title="Rotate Left">
+                    <span class="material-symbols-outlined">rotate_left</span>
+                </button>
+                <button class="control-btn" onclick="rotatePoster(90)" title="Rotate Right">
+                    <span class="material-symbols-outlined">rotate_right</span>
+                </button>
+                <button class="control-btn" onclick="resetPosterRotation()" title="Reset Rotation">
+                    <span class="material-symbols-outlined">refresh</span>
+                </button>
+            </div>
             <span class="poster-modal-close" onclick="closePosterModal()">&times;</span>
             <img id="posterModalImage" src="" alt="Event Poster">
+            <div class="poster-modal-footer">
+                <span>📷 <strong>Controls:</strong> Click buttons above or use keyboard: <strong>A/←</strong> rotate left, <strong>D/→</strong> rotate right, <strong>R</strong> reset, <strong>ESC</strong> close</span>
+            </div>
         </div>
     </div>
 
@@ -952,17 +1462,38 @@
             }
         }
 
+        // Close sidebar when clicking outside
+        function closeSidebarOnOutsideClick(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuIcon = document.querySelector('.header .menu-icon');
+
+            if (sidebar.classList.contains('active') &&
+                !sidebar.contains(event.target) &&
+                !menuIcon.contains(event.target)) {
+                toggleSidebar();
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const headerMenuIcon = document.querySelector('.header .menu-icon');
             const closeSidebarBtn = document.querySelector('.close-sidebar');
 
             if (headerMenuIcon) {
-                headerMenuIcon.addEventListener('click', toggleSidebar);
+                headerMenuIcon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
             }
 
             if (closeSidebarBtn) {
-                closeSidebarBtn.addEventListener('click', toggleSidebar);
+                closeSidebarBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
             }
+
+            // Add event listener for outside clicks
+            document.addEventListener('click', closeSidebarOnOutsideClick);
 
             // Auto-hide success messages
             const successMessage = document.querySelector('.message.success');
@@ -977,18 +1508,39 @@
         });
 
         // Poster Modal Functions
+        let currentRotation = 0;
+
         function openPosterModal(posterSrc) {
             const modal = document.getElementById('posterModal');
             const modalImage = document.getElementById('posterModalImage');
             modalImage.src = posterSrc;
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+            // Reset rotation when opening modal
+            currentRotation = 0;
+            modalImage.style.transform = 'rotate(0deg)';
         }
 
         function closePosterModal() {
             const modal = document.getElementById('posterModal');
             modal.style.display = 'none';
             document.body.style.overflow = 'auto'; // Restore scrolling
+
+            // Reset rotation when closing modal
+            currentRotation = 0;
+        }
+
+        function rotatePoster(degrees) {
+            currentRotation += degrees;
+            const modalImage = document.getElementById('posterModalImage');
+            modalImage.style.transform = `rotate(${currentRotation}deg)`;
+        }
+
+        function resetPosterRotation() {
+            currentRotation = 0;
+            const modalImage = document.getElementById('posterModalImage');
+            modalImage.style.transform = 'rotate(0deg)';
         }
 
         // Close modal when clicking outside the image
@@ -998,10 +1550,32 @@
             }
         });
 
-        // Close modal with Escape key
+        // Close modal with Escape key and add rotation shortcuts
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closePosterModal();
+            const modal = document.getElementById('posterModal');
+            if (modal.style.display === 'block') {
+                switch(e.key) {
+                    case 'Escape':
+                        closePosterModal();
+                        break;
+                    case 'ArrowLeft':
+                    case 'a':
+                    case 'A':
+                        e.preventDefault();
+                        rotatePoster(-90);
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                    case 'D':
+                        e.preventDefault();
+                        rotatePoster(90);
+                        break;
+                    case 'r':
+                    case 'R':
+                        e.preventDefault();
+                        resetPosterRotation();
+                        break;
+                }
             }
         });
     </script>

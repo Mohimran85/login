@@ -1004,8 +1004,9 @@ body.sidebar-open {
     background: #ffffff;
     box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15);
     transition: transform 0.3s ease;
-    padding: 20px 0;
+    padding: 0;
     overflow-y: auto;
+    border-right: none;
   }
 
   .close-sidebar {
@@ -1014,6 +1015,7 @@ body.sidebar-open {
 
   .sidebar.active {
     transform: translateX(0);
+    z-index: 1005;
   }
 
   .sidebar.active::before {
@@ -1023,16 +1025,25 @@ body.sidebar-open {
     left: 0;
     width: 100vw;
     height: 100vh;
+    background: rgb(255, 255, 255);
     z-index: -1;
     backdrop-filter: blur(2px);
   }
 
-  .sidebar {
-    z-index: 1004;
+  /* Ensure sidebar header has proper spacing on mobile */
+  .sidebar-header {
+    padding: 25px 20px 20px 20px;
+    margin-bottom: 20px;
   }
 
-  .sidebar.active {
-    z-index: 1005;
+  /* Ensure student info card has proper spacing */
+  .student-info {
+    margin: 0 20px 25px 20px;
+  }
+
+  /* Ensure navigation items have proper spacing */
+  .nav-link {
+    margin: 0 20px;
   }
 
   .mobile-menu-btn {
