@@ -803,8 +803,10 @@
     </div>
     <div class="icon">
       <img
-        src="../asserts/images/Sona Logo.png"
+        src="sona_logo.jpg"
         alt="Sona College Logo"
+        height="60px"
+        width="200"
       />
     </div>
     <div class="header-title">

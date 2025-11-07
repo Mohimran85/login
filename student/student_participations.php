@@ -201,11 +201,11 @@
 
         .filter-input:focus, .filter-select:focus {
             outline: none;
-            border-color: var(--primary-color);
+            border-color: #0066cc;
         }
 
         .filter-btn {
-            background: var(--primary-color);
+            background: #0066cc;
             color: white;
             border: none;
             padding: 12px 20px;
@@ -217,7 +217,7 @@
         }
 
         .filter-btn:hover {
-            background: var(--secondary-color);
+            background: #004499;
         }
 
         .participations-list {
@@ -256,7 +256,7 @@
         .event-name {
             font-size: 18px;
             font-weight: 600;
-            color: var(--primary-color);
+            color: #0066cc;
             margin-bottom: 8px;
         }
 
@@ -318,23 +318,25 @@
         }
 
         .prize-first {
-            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-            color: #856404;
+            background: linear-gradient(135deg, rgba(255, 218, 9, 1) 0%, #ddff04ff 100%);
+            color: white;
         }
 
         .prize-second {
-            background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-            color: #495057;
+            background: linear-gradient(135deg, #454545ff 0%, #5b5b5bff 100%);
+            color: #0066cc;
+            border: 2px solid #0066cc;
         }
 
         .prize-third {
-            background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
-            color: #fff;
+            background: linear-gradient(135deg, #a77700ff 0%, #f7b31fff 100%);
+            color: #004499;
         }
 
         .prize-participation {
-            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-            color: white;
+            background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
+            color: #0066cc;
+            border: 1px solid #0066cc;
         }
 
         .actions-section {
@@ -353,22 +355,23 @@
         }
 
         .btn-download {
-            background: #28a745;
+            background: #0066cc;
             color: white;
         }
 
         .btn-download:hover {
-            background: #218838;
+            background: #004499;
             transform: translateY(-2px);
         }
 
         .btn-view {
-            background: #007bff;
-            color: white;
+            background: #ffffff;
+            color: #0066cc;
+            border: 2px solid #0066cc;
         }
 
         .btn-view:hover {
-            background: #0056b3;
+            background: #f0f8ff;
             transform: translateY(-2px);
         }
 
@@ -394,7 +397,7 @@
         }
 
         .empty-action {
-            background: var(--primary-color);
+            background: #0066cc;
             color: white;
             padding: 12px 24px;
             border-radius: 8px;
@@ -404,7 +407,7 @@
         }
 
         .empty-action:hover {
-            background: var(--secondary-color);
+            background: #004499;
         }
 
         /* Mobile Responsive */
@@ -488,7 +491,7 @@
                 padding: 16px;
                 margin-bottom: 12px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                border-left: 4px solid var(--primary-color);
+                border-left: 4px solid #0066cc;
                 border: 1px solid #e9ecef;
             }
 
@@ -500,7 +503,7 @@
             .event-name {
                 font-size: 17px;
                 font-weight: 600;
-                color: #1e4276;
+                color: #0066cc;
                 margin-bottom: 12px;
                 border-bottom: 1px solid #f0f0f0;
                 padding-bottom: 8px;
@@ -532,7 +535,7 @@
 
             .detail-label {
                 font-size: 14px;
-                color: #1e4276;
+                color: #0066cc;
                 font-weight: 600;
                 margin-bottom: 0;
                 text-transform: none;
@@ -579,7 +582,7 @@
 
         @media (max-width: 480px) {
             .main {
-                padding: 70px 10px 15px 10px;
+                padding: 0px 10px 15px 10px;
             }
 
             .participations-header {
@@ -631,12 +634,12 @@
                 left: 0;
                 right: 0;
                 height: 4px;
-                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+                background: linear-gradient(90deg, #0066cc 0%, #004499 100%);
             }
 
             .participation-card h4 {
                 margin: 0 0 16px 0;
-                color: #2d3748;
+                color: #0066cc;
                 font-size: 18px;
                 font-weight: 700;
                 line-height: 1.2;
@@ -662,7 +665,7 @@
             }
 
             .info-row:hover {
-                background-color: rgba(102, 126, 234, 0.05);
+                background-color: rgba(0, 102, 204, 0.05);
                 margin: 0 -8px;
                 padding: 12px 8px;
                 border-radius: 8px;
@@ -687,7 +690,7 @@
                 content: '';
                 width: 6px;
                 height: 6px;
-                background: #667eea;
+                background: #0066cc;
                 border-radius: 50%;
             }
 
@@ -714,27 +717,29 @@
             }
 
             .prize-first {
-                background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-                color: #b45309;
-                box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+                background: linear-gradient(135deg, #0066cc 0%, #004499 100%);
+                color: white;
+                box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
             }
 
             .prize-second {
-                background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-                color: #374151;
-                box-shadow: 0 2px 8px rgba(192, 192, 192, 0.3);
+                background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+                color: #0066cc;
+                border: 2px solid #0066cc;
+                box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
             }
 
             .prize-third {
-                background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
-                color: #fff;
-                box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
+                background: linear-gradient(135deg, #cce7ff 0%, #99d6ff 100%);
+                color: #004499;
+                box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
             }
 
             .prize-participation {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+                background: linear-gradient(135deg, #e6f3ff 0%, #cce7ff 100%);
+                color: #0066cc;
+                border: 1px solid #0066cc;
+                box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
             }
 
             /* Action Buttons Redesign */
@@ -762,25 +767,26 @@
             }
 
             .btn-download {
-                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                background: linear-gradient(135deg, #00458bff 0%, #004499 100%);
                 color: white;
-                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+              
             }
 
             .btn-download:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+                box-shadow: 0 6px 20px rgba(0, 102, 204, 0.4);
             }
 
             .btn-view {
-                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-                color: white;
-                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+                color: #0066cc;
+                border: 2px solid #09529bff;
+               
             }
 
             .btn-view:hover {
                 transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+                box-shadow: 0 6px 20px rgba(0, 102, 204, 0.3);
             }
 
             /* Empty State */
@@ -815,6 +821,99 @@
             }
         }
 
+        /* Error Popup Modal */
+        .error-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .error-modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+            position: relative;
+        }
+
+        .error-icon {
+            font-size: 64px;
+            color: #0066cc;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0066cc;
+            margin-bottom: 15px;
+        }
+
+        .error-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .error-close-btn {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .error-close-btn:hover {
+            background: #004499;
+        }
+
+        .close-x {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-x:hover {
+            color: #0066cc;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
         /* Ensure no horizontal overflow */
         * {
             max-width: 100%;
@@ -830,7 +929,10 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="icon">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
+                <img src="sona_logo.jpg"
+                alt="Sona College Logo"
+                height="60px"
+                width="200">
             </div>
             <div class="header-title">
                 <p>Event Management System</p>
@@ -946,18 +1048,18 @@
                             <label class="filter-label">Prize Filter</label>
                             <select name="prize" class="filter-select">
                                 <option value="">All Prizes</option>
-                                <option value="won"                                                                                                                                                                                                                                                                                                                   <?php echo($prize_filter === 'won') ? 'selected' : ''; ?>>Events Won</option>
-                                <option value="participation"                                                                                                                                                                                                                                                                                                                                                                               <?php echo($prize_filter === 'participation') ? 'selected' : ''; ?>>Participation Only</option>
+                                <option value="won"                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($prize_filter === 'won') ? 'selected' : ''; ?>>Events Won</option>
+                                <option value="participation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($prize_filter === 'participation') ? 'selected' : ''; ?>>Participation Only</option>
                             </select>
                         </div>
 
                         <div class="filter-group">
                             <label class="filter-label">Sort By</label>
                             <select name="sort" class="filter-select">
-                                <option value="attended_date"                                                                                                                                                                                                                                                                                                                                                                               <?php echo($sort_by === 'attended_date') ? 'selected' : ''; ?>>Date</option>
-                                <option value="event_name"                                                                                                                                                                                                                                                                                                                                                             <?php echo($sort_by === 'event_name') ? 'selected' : ''; ?>>Event Name</option>
-                                <option value="event_type"                                                                                                                                                                                                                                                                                                                                                             <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
-                                <option value="prize"                                                                                                                                                                                                                                                                                                                               <?php echo($sort_by === 'prize') ? 'selected' : ''; ?>>Prize</option>
+                                <option value="attended_date"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($sort_by === 'attended_date') ? 'selected' : ''; ?>>Date</option>
+                                <option value="event_name"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($sort_by === 'event_name') ? 'selected' : ''; ?>>Event Name</option>
+                                <option value="event_type"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
+                                <option value="prize"                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($sort_by === 'prize') ? 'selected' : ''; ?>>Prize</option>
                             </select>
                         </div>
 
@@ -999,7 +1101,7 @@
         default  => 'prize-participation'
 };
 ?>">
-                                            🏆                                                                                                 <?php echo htmlspecialchars($participation['prize']); ?>
+                                            🏆                                                                                                                                                                                                 <?php echo htmlspecialchars($participation['prize']); ?>
                                             <?php if (! empty($participation['prize_amount'])): ?>
                                                 - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
                                             <?php endif; ?>
@@ -1036,15 +1138,15 @@
                                     <div class="detail-group">
                                         <div class="detail-label">Prize:</div>
                                         <div class="detail-value">
-                                            <span class="prize-badge                                                                                                                                         <?php
-                                                                                                                                             echo match ($participation['prize']) {
-                                                                                                                                                 'First'  => 'prize-first',
-                                                                                                                                                 'Second' => 'prize-second',
-                                                                                                                                                 'Third'  => 'prize-third',
-                                                                                                                                                 default  => 'prize-participation'
-                                                                                                                                         };
-                                                                                                                                         ?>">
-                                                🏆                                                                                                         <?php echo htmlspecialchars($participation['prize']); ?>
+                                            <span class="prize-badge                                                                                                                                                                                                                                                                                 <?php
+                                                                                                                                                                                                                                                                                     echo match ($participation['prize']) {
+                                                                                                                                                                                                                                                                                         'First'  => 'prize-first',
+                                                                                                                                                                                                                                                                                         'Second' => 'prize-second',
+                                                                                                                                                                                                                                                                                         'Third'  => 'prize-third',
+                                                                                                                                                                                                                                                                                         default  => 'prize-participation'
+                                                                                                                                                                                                                                                                                 };
+                                                                                                                                                                                                                                                                                 ?>">
+                                                🏆                                                                                                                                                                                                                 <?php echo htmlspecialchars($participation['prize']); ?>
                                                 <?php if (! empty($participation['prize_amount'])): ?>
                                                     - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
                                                 <?php endif; ?>
@@ -1056,15 +1158,17 @@
 
                                 <div class="actions-section">
                                     <?php if (! empty($participation['certificates'])): ?>
-                                        <a href="<?php echo htmlspecialchars($participation['certificates']); ?>"
-                                           class="action-btn btn-download" target="_blank">
+                                        <a href="javascript:void(0)"
+                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['certificates']); ?>', 'Certificate')"
+                                           class="action-btn btn-download">
                                             <span class="material-symbols-outlined">download</span>
                                             Certificate
                                         </a>
                                     <?php endif; ?>
                                     <?php if (! empty($participation['event_poster'])): ?>
-                                        <a href="<?php echo htmlspecialchars($participation['event_poster']); ?>"
-                                           class="action-btn btn-view" target="_blank">
+                                        <a href="javascript:void(0)"
+                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['event_poster']); ?>', 'Event Poster')"
+                                           class="action-btn btn-view">
                                             <span class="material-symbols-outlined">visibility</span>
                                             Event Poster
                                         </a>
@@ -1125,15 +1229,15 @@
                                     <div class="info-row">
                                         <div class="info-label">Prize</div>
                                         <div class="info-value">
-                                            <span class="prize-badge                                                                     <?php
-                                                                         echo match ($participation['prize']) {
-                                                                             'First'  => 'prize-first',
-                                                                             'Second' => 'prize-second',
-                                                                             'Third'  => 'prize-third',
-                                                                             default  => 'prize-participation'
-                                                                     };
-                                                                     ?>">
-                                                🏆                                                     <?php echo htmlspecialchars($participation['prize']); ?>
+                                            <span class="prize-badge                                                                                                                                                                                                             <?php
+                                                                                                                                                                                                                 echo match ($participation['prize']) {
+                                                                                                                                                                                                                     'First'  => 'prize-first',
+                                                                                                                                                                                                                     'Second' => 'prize-second',
+                                                                                                                                                                                                                     'Third'  => 'prize-third',
+                                                                                                                                                                                                                     default  => 'prize-participation'
+                                                                                                                                                                                                             };
+                                                                                                                                                                                                             ?>">
+                                                🏆                                                                                                                                                             <?php echo htmlspecialchars($participation['prize']); ?>
                                                 <?php if (! empty($participation['prize_amount'])): ?>
                                                     - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
                                                 <?php endif; ?>
@@ -1146,15 +1250,17 @@
                                 <?php if (! empty($participation['certificates']) || ! empty($participation['event_poster'])): ?>
                                 <div class="actions-section">
                                     <?php if (! empty($participation['certificates'])): ?>
-                                        <a href="<?php echo htmlspecialchars($participation['certificates']); ?>"
-                                           class="action-btn btn-download" target="_blank">
+                                        <a href="javascript:void(0)"
+                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['certificates']); ?>', 'Certificate')"
+                                           class="action-btn btn-download">
                                             <span class="material-symbols-outlined">download</span>
                                             Certificate
                                         </a>
                                     <?php endif; ?>
                                     <?php if (! empty($participation['event_poster'])): ?>
-                                        <a href="<?php echo htmlspecialchars($participation['event_poster']); ?>"
-                                           class="action-btn btn-view" target="_blank">
+                                        <a href="javascript:void(0)"
+                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['event_poster']); ?>', 'Event Poster')"
+                                           class="action-btn btn-view">
                                             <span class="material-symbols-outlined">visibility</span>
                                             Event Poster
                                         </a>
@@ -1225,7 +1331,62 @@
                 }
             });
         });
+
+        // File error handling
+        function showErrorModal(message) {
+            const modal = document.getElementById('errorModal');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            modal.style.display = 'block';
+        }
+
+        function closeErrorModal() {
+            document.getElementById('errorModal').style.display = 'none';
+        }
+
+        function checkFileAndOpen(url, type) {
+            // Create a temporary link to test if file exists
+            const tempLink = document.createElement('a');
+            tempLink.href = url;
+
+            // Try to fetch the file to check if it exists
+            fetch(url, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        // File exists, open it
+                        window.open(url, '_blank');
+                    } else {
+                        // File not found
+                        showErrorModal(`${type} file not found. The file may have been moved or deleted.`);
+                    }
+                })
+                .catch(error => {
+                    // Network error or file not accessible
+                    showErrorModal(`Unable to access ${type.toLowerCase()} file. Please check your internet connection and try again.`);
+                });
+        }
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('errorModal');
+            if (event.target === modal) {
+                closeErrorModal();
+            }
+        });
     </script>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="error-modal">
+        <div class="error-modal-content">
+            <span class="close-x" onclick="closeErrorModal()">&times;</span>
+            <div class="error-icon">
+                <span class="material-symbols-outlined">error</span>
+            </div>
+            <div class="error-title">File Not Found</div>
+            <div class="error-message" id="errorMessage">The requested file could not be found.</div>
+            <button class="error-close-btn" onclick="closeErrorModal()">OK</button>
+        </div>
+    </div>
 </body>
 </html>
 

@@ -161,7 +161,6 @@ $html_content = '
         }
 
         .college-logo {
-            max-width: 80px;
             height: auto;
             margin-bottom: 10px;
         }
@@ -394,14 +393,15 @@ $html_content = '
     <div class="letter-content">
         <div class="letterhead">
             <div class="letterhead-content">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo" class="college-logo">
+                <img src="sona_logo.jpg" alt="Sona College Logo" class="college-logo" height="100px"
+            width="200" >
                 <div class="college-info">
                     <div class="college-name">SONA COLLEGE OF TECHNOLOGY</div>
                     <div class="college-address">
                         (Autonomous | Affiliated to Anna University)<br>
                         Salem - 636 005, Tamil Nadu, India<br>
                         ☎ +91-427-2331129 | ✉ info@sonatech.ac.in | 🌐 www.sonatech.ac.in<br>
-                        NAAC Accredited with A+ Grade | ISO 9001:2015 Certified
+                        NAAC Accredited with A++ Grade | ISO 9001:2015 Certified
                     </div>
                 </div>
             </div>

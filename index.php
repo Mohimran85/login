@@ -126,7 +126,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Event Management - Login</title>
     <link rel="icon" type="icon/png" sizes="32x32" href="./asserts/sona_logo.jpg" />
     <link rel="stylesheet" href="styles.css" />
@@ -184,60 +184,149 @@ img{
       background-attachment: scroll;
       min-height: 100vh;
       position: relative;
+      overflow-x: hidden;
+   }
+
+   main {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px 15px;
+      box-sizing: border-box;
+      width: 100%;
+      margin: 0;
+   }
+
+   form {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+   }
+
+   .form-container {
+      width: 100%;
+      margin: 0 auto;
+      padding: 30px 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
    }
 
    .header{
-      justify-content: space-around;
+      justify-content: center;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
+      padding: 0 15px;
+      height: 70px;
    }
 
    .header-logo {
       display: none;
    }
 
+   .header-title {
+      font-size: 18px;
+      text-align: center;
+   }
+
    .empty{
       display: none;
    }
 
-   .registration-main{
-      margin-top: 100px;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 15px;
-      padding: 30px 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+   .form-title {
+      font-size: 24px;
+      margin-bottom: 25px;
+      text-align: center;
    }
 
    /* Enhanced input styling for mobile transparency */
-   .registration-main input[type="text"],
-   .registration-main input[type="password"] {
-      background: rgba(255, 255, 255, 0.8);
+   .form-container input[type="text"],
+   .form-container input[type="password"] {
+      background: rgba(255, 255, 255, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(5px);
+      font-size: 16px;
+      padding: 12px 15px;
    }
 
-   .registration-main input[type="text"]:focus,
-   .registration-main input[type="password"]:focus {
-      background: rgba(255, 255, 255, 0.9);
+   .form-container input[type="text"]:focus,
+   .form-container input[type="password"]:focus {
+      background: rgba(255, 255, 255, 1);
       border: 1px solid rgba(30, 66, 118, 0.5);
       box-shadow: 0 0 10px rgba(30, 66, 118, 0.2);
    }
 
    /* Submit button transparency */
-   .registration-main input[type="submit"] {
+   .form-container input[type="submit"] {
       background: rgba(30, 66, 118, 0.9);
       backdrop-filter: blur(5px);
       border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 16px;
+      padding: 12px 20px;
    }
 
-   .registration-main input[type="submit"]:hover {
+   .form-container input[type="submit"]:hover {
       background: rgba(30, 66, 118, 1);
       transform: translateY(-1px);
       box-shadow: 0 4px 15px rgba(30, 66, 118, 0.3);
    }
+
+   .form-container p {
+      font-size: 14px;
+      text-align: center;
+      margin-top: 15px;
+   }
  }
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+   main {
+      padding: 15px 10px;
+      min-height: 100vh;
+   }
+
+   form {
+      max-width: 100%;
+   }
+
+   .form-container {
+      padding: 25px 15px;
+      border-radius: 12px;
+   }
+
+   .header {
+      height: 60px;
+      padding: 0 10px;
+   }
+
+   .header-title {
+      font-size: 16px;
+   }
+
+   .form-title {
+      font-size: 20px;
+      margin-bottom: 20px;
+   }
+
+   .form-container input[type="text"],
+   .form-container input[type="password"] {
+      font-size: 16px;
+      padding: 10px 12px;
+   }
+
+   .form-container input[type="submit"] {
+      font-size: 14px;
+      padding: 10px 15px;
+   }
+
+   .form-container p {
+      font-size: 13px;
+   }
+}
 
 /* Background image for laptop/desktop screens only */
 @media (min-width: 1024px) {

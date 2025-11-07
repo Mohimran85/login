@@ -1,96 +1,94 @@
 <?php
     session_start();
 
+    // Include optimized systems
+    require_once '../includes/DatabaseManager.php';
+    require_once '../includes/CacheManager.php';
+
     // Check if user is logged in as a student
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         header("Location: ../index.php");
         exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    // Initialize optimized managers
+    $db    = DatabaseManager::getInstance();
+    $cache = CacheManager::getInstance();
 
     // Get student data
     $username     = $_SESSION['username'];
     $student_data = null;
 
-    $sql  = "SELECT name, regno FROM student_register WHERE username=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    // Try cache first for student data
+    $student_cache_key = "student_data_" . $username;
+    $student_data      = $cache->get($student_cache_key);
 
-    if ($result->num_rows > 0) {
-        $student_data = $result->fetch_assoc();
-    } else {
-        header("Location: ../index.php");
-        exit();
+    if (! $student_data) {
+        $sql    = "SELECT name, regno FROM student_register WHERE username=?";
+        $result = $db->executeQuery($sql, [$username], 's');
+
+        if (! empty($result)) {
+            $student_data = $result[0];
+            // Cache student data for 1 hour
+            $cache->set($student_cache_key, $student_data, 3600);
+        } else {
+            header("Location: ../index.php");
+            exit();
+        }
     }
-    // Get comprehensive statistics
+
     $regno = $student_data['regno'];
 
-    // Total events participated
-    $total_events_sql = "SELECT COUNT(*) as total FROM student_event_register WHERE regno=?";
-    $total_stmt       = $conn->prepare($total_events_sql);
-    $total_stmt->bind_param("s", $regno);
-    $total_stmt->execute();
-    $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
+    // Try to get dashboard data from cache
+    $dashboard_cache_key = "dashboard_" . $regno;
+    $dashboard_data      = $cache->get($dashboard_cache_key);
 
-    // Events won (with prizes)
-    $events_won_sql = "SELECT COUNT(*) as won FROM student_event_register WHERE regno=? AND prize IN ('First', 'Second', 'Third')";
-    $won_stmt       = $conn->prepare($events_won_sql);
-    $won_stmt->bind_param("s", $regno);
-    $won_stmt->execute();
-    $events_won = $won_stmt->get_result()->fetch_assoc()['won'];
+    if (! $dashboard_data) {
+        // Get all dashboard data in optimized single query
+        $dashboard_stats = $db->getStudentDashboardData($regno);
 
-    // Recent events (last 5)
-    $recent_events_sql = "SELECT event_name, event_type, attended_date, prize FROM student_event_register WHERE regno=? ORDER BY attended_date DESC, id DESC LIMIT 5";
-    $recent_stmt       = $conn->prepare($recent_events_sql);
-    $recent_stmt->bind_param("s", $regno);
-    $recent_stmt->execute();
-    $recent_events = $recent_stmt->get_result();
+        // Get additional data with caching
+        $recent_activities = $db->getRecentActivities($regno, 5);
+        $event_types_data  = $db->getEventTypeBreakdown($regno, 8);
+        $recent_od_data    = $db->getRecentODRequests($regno, 3);
 
-    // Event type breakdown
-    $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register WHERE regno=? GROUP BY event_type ORDER BY count DESC LIMIT 8";
-    $types_stmt      = $conn->prepare($event_types_sql);
-    $types_stmt->bind_param("s", $regno);
-    $types_stmt->execute();
-    $event_types = $types_stmt->get_result();
+        // Combine all data
+        $dashboard_data = [
+            'stats'              => $dashboard_stats,
+            'recent_events'      => $recent_activities,
+            'event_types'        => $event_types_data,
+            'recent_od_requests' => $recent_od_data,
+        ];
 
-    // OD Request statistics
-    $od_stats_sql = "SELECT
-                        COUNT(*) as total_od_requests,
-                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_od,
-                        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_od,
-                        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_od
-                     FROM od_requests WHERE student_regno=?";
-    $od_stats_stmt = $conn->prepare($od_stats_sql);
-    $od_stats_stmt->bind_param("s", $regno);
-    $od_stats_stmt->execute();
-    $od_stats = $od_stats_stmt->get_result()->fetch_assoc();
+        // Cache dashboard data for 5 minutes
+        $cache->set($dashboard_cache_key, $dashboard_data, 300);
+    }
 
-    // Recent OD requests (last 3)
-    $recent_od_sql  = "SELECT event_name, status, request_date, event_date FROM od_requests WHERE student_regno=? ORDER BY request_date DESC LIMIT 3";
-    $recent_od_stmt = $conn->prepare($recent_od_sql);
-    $recent_od_stmt->bind_param("s", $regno);
-    $recent_od_stmt->execute();
-    $recent_od_requests = $recent_od_stmt->get_result();
+    // Extract data for backward compatibility
+    $total_events = $dashboard_data['stats']['total_events'] ?? 0;
+    $events_won   = $dashboard_data['stats']['events_won'] ?? 0;
+    $od_stats     = [
+        'total_od_requests' => $dashboard_data['stats']['total_od_requests'] ?? 0,
+        'pending_od'        => $dashboard_data['stats']['pending_od'] ?? 0,
+        'approved_od'       => $dashboard_data['stats']['approved_od'] ?? 0,
+        'rejected_od'       => $dashboard_data['stats']['rejected_od'] ?? 0,
+    ];
 
-    $stmt->close();
-    $total_stmt->close();
-    $won_stmt->close();
-    $recent_stmt->close();
-    $types_stmt->close();
-    $od_stats_stmt->close();
-    $recent_od_stmt->close();
+    // Convert arrays to objects for compatibility with existing code
+    $recent_events       = (object) ['num_rows' => count($dashboard_data['recent_events'])];
+    $recent_events->data = $dashboard_data['recent_events'];
+
+    $event_types       = (object) ['num_rows' => count($dashboard_data['event_types'])];
+    $event_types->data = $dashboard_data['event_types'];
+
+    $recent_od_requests       = (object) ['num_rows' => count($dashboard_data['recent_od_requests'])];
+    $recent_od_requests->data = $dashboard_data['recent_od_requests'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Student Dashboard - Event Management System</title>
     <!-- css link -->
     <link rel="stylesheet" href="student_dashboard.css" />
@@ -106,6 +104,320 @@
       href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
       rel="stylesheet"
     />
+    <style>
+      /* Mobile Optimizations */
+      @media (max-width: 768px) {
+        body {
+          overflow-x: hidden;
+        }
+
+        .grid-container {
+          grid-template-columns: 1fr;
+          /* grid-template-rows: 70px 1fr; */
+          grid-template-areas:
+            "header"
+            "main";
+          min-height: 100vh;
+          width: 100%;
+          max-width: 100vw;
+        }
+
+        .header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 999;
+          width: 100%;
+          padding: 0 20px;
+          height: 70px;
+        }
+
+        .header .icon img {
+          height: 50px;
+          width: auto;
+        }
+
+        .header-title {
+          font-size: 20px;
+        }
+
+        .sidebar {
+          position: fixed;
+          left: -100%;
+          top: 0;
+          width: 300px;
+          height: 100vh;
+          z-index: 1000;
+          transition: left 0.3s ease;
+        }
+
+        .sidebar.active {
+          left: 0;
+        }
+
+        .main {
+          width: 100% !important;
+          max-width: 100vw;
+          padding: 90px 20px 30px 20px;
+          margin: 0 !important;
+          grid-area: main;
+          box-sizing: border-box;
+          overflow-x: hidden;
+        }
+
+        .welcome-section {
+          padding: 25px 0;
+        }
+
+        .welcome-section h1 {
+          font-size: 28px;
+          margin-bottom: 12px;
+        }
+
+        .welcome-section p {
+          font-size: 16px;
+        }
+
+        .main-card {
+          grid-template-columns: 1fr;
+          gap: 20px;
+          margin-bottom: 30px;
+        }
+
+        .card {
+          padding: 25px 20px;
+          min-height: auto;
+          border-radius: 15px;
+        }
+
+        .card h1 {
+          font-size: 32px;
+        }
+
+        .card h3 {
+          font-size: 16px;
+        }
+
+        .card .material-symbols-outlined {
+          font-size: 32px;
+        }
+
+        .od-stats {
+          gap: 20px;
+        }
+
+        .od-stat-item {
+          padding: 12px 16px;
+          border-radius: 10px;
+        }
+
+        .od-count {
+          font-size: 20px;
+        }
+
+        .od-label {
+          font-size: 13px;
+        }
+
+        .quick-actions {
+          gap: 12px;
+        }
+
+        .action-btn-card {
+          padding: 14px 16px;
+          font-size: 14px;
+          border-radius: 10px;
+        }
+
+        .action-btn-card .material-symbols-outlined {
+          font-size: 20px;
+        }
+
+        .content-grid {
+          grid-template-columns: 1fr;
+          gap: 25px;
+        }
+
+        .content-card {
+          padding: 25px 20px;
+          border-radius: 15px;
+        }
+
+        .card-header h3 {
+          font-size: 18px;
+        }
+
+        .card-header .material-symbols-outlined {
+          font-size: 24px;
+        }
+
+        .activity-item, .od-request-item {
+          padding: 16px 0;
+        }
+
+        .activity-details h4, .od-request-details h4 {
+          font-size: 16px;
+          margin-bottom: 8px;
+        }
+
+        .activity-meta, .od-request-meta {
+          font-size: 14px;
+        }
+
+        .category-item {
+          padding: 15px 0;
+        }
+
+        .category-name {
+          font-size: 15px;
+        }
+
+        .category-count {
+          font-size: 16px;
+        }
+
+        .empty-state {
+          padding: 40px 20px;
+        }
+
+        .empty-state .material-symbols-outlined {
+          font-size: 48px;
+        }
+
+        .empty-state h3 {
+          font-size: 18px;
+        }
+
+        .empty-state p {
+          font-size: 15px;
+        }
+
+        .empty-action {
+          padding: 12px 24px;
+          font-size: 15px;
+          border-radius: 10px;
+        }
+
+        .prize-badge {
+          font-size: 13px;
+          padding: 4px 8px;
+          border-radius: 8px;
+        }
+
+        .view-all-link {
+          font-size: 14px;
+          padding: 8px 12px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .main {
+          padding: 0px 15px 25px 15px;
+        }
+
+        .header {
+          padding: 0 15px;
+        }
+
+        .header .icon img {
+          height: 45px;
+        }
+
+        .welcome-section h1 {
+          font-size: 24px;
+        }
+
+        .welcome-section p {
+          font-size: 15px;
+        }
+
+        .card {
+          padding: 20px 16px;
+        }
+
+        .card h1 {
+          font-size: 28px;
+        }
+
+        .card h3 {
+          font-size: 15px;
+        }
+
+        .card .material-symbols-outlined {
+          font-size: 28px;
+        }
+
+        .content-card {
+          padding: 20px 16px;
+        }
+
+        .card-header h3 {
+          font-size: 17px;
+        }
+
+        .card-header .material-symbols-outlined {
+          font-size: 22px;
+        }
+
+        .activity-details h4, .od-request-details h4 {
+          font-size: 15px;
+        }
+
+        .activity-meta, .od-request-meta {
+          font-size: 13px;
+        }
+
+        .od-stat-item {
+          padding: 10px 14px;
+        }
+
+        .od-count {
+          font-size: 18px;
+        }
+
+        .action-btn-card {
+          padding: 12px 14px;
+          font-size: 13px;
+        }
+
+        .action-btn-card .material-symbols-outlined {
+          font-size: 18px;
+        }
+
+        .category-name {
+          font-size: 14px;
+        }
+
+        .category-count {
+          font-size: 15px;
+        }
+
+        .empty-state {
+          padding: 35px 15px;
+        }
+
+        .empty-state .material-symbols-outlined {
+          font-size: 44px;
+        }
+
+        .empty-action {
+          padding: 11px 20px;
+          font-size: 14px;
+        }
+
+        .prize-badge {
+          font-size: 12px;
+          padding: 3px 7px;
+        }
+      }
+
+      /* Ensure no horizontal overflow */
+      * {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    </style>
   </head>
   <body>
     <!-- <button class="mobile-menu-btn" onclick="toggleSidebar()">
@@ -120,8 +432,10 @@
         </div>
         <div class="icon">
           <img
-            src="../asserts/images/Sona Logo.png"
+            src="sona_logo.jpg"
             alt="Sona College Logo"
+            height="60px"
+            width="200"
           />
         </div>
         <div class="header-title">
@@ -272,7 +586,7 @@
 
             <?php if ($recent_events->num_rows > 0): ?>
               <div class="activities-list">
-                <?php while ($event = $recent_events->fetch_assoc()): ?>
+                <?php foreach ($recent_events->data as $event): ?>
                   <div class="activity-item">
                     <div class="activity-icon">
                       <span class="material-symbols-outlined">event</span>
@@ -288,7 +602,7 @@
                       </p>
                     </div>
                   </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
               </div>
             <?php else: ?>
               <div class="empty-state">
@@ -309,7 +623,7 @@
 
             <?php if ($recent_od_requests->num_rows > 0): ?>
               <div class="od-requests-list">
-                <?php while ($od_request = $recent_od_requests->fetch_assoc()): ?>
+                <?php foreach ($recent_od_requests->data as $od_request): ?>
                   <div class="od-request-item">
                     <div class="od-request-icon">
                       <span class="material-symbols-outlined">description</span>
@@ -324,7 +638,7 @@
                       </p>
                     </div>
                   </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
               </div>
             <?php else: ?>
               <div class="empty-state">
@@ -344,7 +658,7 @@
 
             <?php if ($event_types->num_rows > 0): ?>
               <div class="categories-list">
-                <?php while ($type = $event_types->fetch_assoc()): ?>
+                <?php foreach ($event_types->data as $type): ?>
                   <div class="category-item">
                     <div class="category-info">
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
@@ -356,7 +670,7 @@
                     </div>
                     <span class="category-count"><?php echo $type['count']; ?></span>
                   </div>
-                <?php endwhile; ?>
+                <?php endforeach; ?>
               </div>
             <?php else: ?>
               <div class="empty-state">
@@ -371,6 +685,9 @@
         <!-- charts -->
       </div>
     </div>
+
+    <!-- Include optimized dashboard manager -->
+    <script src="js/dashboard-manager.js"></script>
 
     <!-- Scripts -->
     <script>
@@ -436,5 +753,8 @@
 </html>
 
 <?php
-    $conn->close();
+    // Clean up cache periodically (1% chance)
+    if (rand(1, 100) === 1) {
+        $cache->cleanup();
+    }
 ?>

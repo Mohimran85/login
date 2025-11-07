@@ -199,7 +199,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>OD Request - Event Management System</title>
     <link rel="stylesheet" href="student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
@@ -458,18 +458,186 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .grid-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 1fr;
+                grid-template-areas:
+                    "header"
+                    "main";
+                min-height: 100vh;
+                width: 100%;
+                max-width: 100vw;
+            }
+
+            .header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 999;
+                width: 100%;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                width: 280px;
+                height: 100vh;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .main {
+                width: 100% !important;
+                max-width: 100vw;
+                padding: 80px 15px 20px 15px;
+                margin: 0 !important;
+                grid-area: main;
+                box-sizing: border-box;
+                overflow-x: hidden;
+            }
+
             .od-container {
                 grid-template-columns: 1fr;
                 gap: 20px;
+                margin-bottom: 20px;
             }
 
             .form-grid {
                 grid-template-columns: 1fr;
+                gap: 15px;
             }
 
             .od-form-card, .od-status-card {
-                padding: 20px;
+                padding: 20px 15px;
+                border-radius: 12px;
+                margin-bottom: 15px;
             }
+
+            .card-title {
+                font-size: 18px;
+                margin-bottom: 20px;
+            }
+
+            .form-input, .form-select, .form-textarea {
+                width: 100%;
+                box-sizing: border-box;
+                font-size: 16px; /* Prevents zoom on iOS */
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 10px;
+                padding: 14px 20px;
+            }
+
+            .counselor-info {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .od-request-item {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+
+            .od-request-header {
+                flex-direction: column;
+                align-items: start;
+                gap: 8px;
+            }
+
+            .od-event-name {
+                font-size: 15px;
+                margin-bottom: 5px;
+            }
+
+            .od-details {
+                font-size: 13px;
+                line-height: 1.5;
+            }
+
+            .od-status {
+                align-self: flex-start;
+            }
+
+            .message {
+                padding: 12px 15px;
+                margin-bottom: 15px;
+                font-size: 14px;
+            }
+
+            /* Fix button layout on mobile */
+            .od-request-item .btn {
+                width: auto;
+                flex: 1;
+                min-width: 120px;
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+
+            .od-request-item [style*="display: flex"] {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 70px 10px 15px 10px;
+            }
+
+            .od-form-card, .od-status-card {
+                padding: 15px 10px;
+                border-radius: 10px;
+            }
+
+            .card-title {
+                font-size: 16px;
+                margin-bottom: 15px;
+            }
+
+            .form-input, .form-select, .form-textarea {
+                padding: 10px 12px;
+                font-size: 16px;
+            }
+
+            .btn {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+
+            .counselor-info {
+                padding: 12px;
+            }
+
+            .od-request-item {
+                padding: 12px;
+            }
+
+            .od-event-name {
+                font-size: 14px;
+            }
+
+            .od-details {
+                font-size: 12px;
+            }
+        }
+
+        /* Ensure no horizontal overflow */
+        * {
+            max-width: 100%;
+            box-sizing: border-box;
         }
     </style>
 </head>
@@ -481,7 +649,7 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="icon">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
+                <img src="sona_logo.jpg" alt="Sona College Logo" height="60px" width="200px">
             </div>
             <div class="header-title">
                 <p>Event Management System</p>
@@ -572,7 +740,7 @@
                         </div>
                         <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
                         <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-                            ID:                                                                                                                                                                                                                          <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                            ID:                                                                                                                                                                                                                                                                                        <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                             <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                         </div>
                     </div>
@@ -688,13 +856,13 @@
                         <div class="od-request-item<?php echo $request['status']; ?>">
                             <div class="od-request-header">
                                 <div class="od-event-name"><?php echo htmlspecialchars($request['event_name']); ?></div>
-                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $request['status']; ?>">
+                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </span>
                             </div>
                             <div class="od-details">
-                                <strong>Date:</strong>                                                                                                                                                                                                                                                                               <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                   <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                           <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
+                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
                                 <strong>Location:</strong>
                                 <?php
                                     // Handle backward compatibility for old records
@@ -792,8 +960,8 @@
                                     $register_url = 'student_register.php?' . http_build_query($url_params);
                                 ?>
                                 <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                    <a href="index.php" class="btn btn-primary" style="font-size: 12px; padding: 8px 15px;">
-                                        <span class="material-symbols-outlined" style="font-size: 16px;">home</span>
+                                    <a href="<?php echo htmlspecialchars($register_url); ?>" class="btn btn-primary" style="font-size: 12px; padding: 8px 15px;">
+                                        <span class="material-symbols-outlined" style="font-size: 16px;">add_circle</span>
                                         Register for Event
                                     </a>
                                     <a href="download_od_letter.php?od_id=<?php echo $request['id']; ?>" class="btn btn-secondary" style="font-size: 12px; padding: 8px 15px;" target="_blank">

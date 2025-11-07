@@ -108,7 +108,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Reset Password - Event Management System</title>
     <link rel="icon" type="image/png" sizes="32x32" href="./asserts/images/Sona Logo.png" />
     <link rel="stylesheet" href="styles.css" />
@@ -291,29 +291,80 @@
             background-position: center;
             background-attachment: scroll;
             background-repeat: no-repeat;
+            overflow-x: hidden;
         }
 
         body::before {
             background: linear-gradient(135deg, rgba(30, 66, 118, 0.6), rgba(255, 255, 255, 0.4));
         }
 
+        main {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          padding: 20px 15px;
+          box-sizing: border-box;
+          width: 100%;
+          margin: 0;
+        }
+
         .header {
           justify-content: center;
-          padding: 0 10px;
+          padding: 0 15px;
+          height: 70px;
         }
+
+        .header-title {
+          font-size: 18px;
+        }
+
         .header-logo {
           display: none;
         }
         .empty {
           display: none;
         }
-        .role-main {
-          margin-top: 100px;
-        }
 
         .form-container {
-          margin: 20px 10px;
-          padding: 30px 20px;
+          width: 100%;
+          max-width: 400px;
+          margin: 0 auto;
+          padding: 25px 20px;
+          border-radius: 12px;
+        }
+
+        .form-container h2 {
+          font-size: 22px;
+          margin-bottom: 20px;
+        }
+
+        .info-box {
+          padding: 15px;
+          font-size: 14px;
+          margin: 15px 0;
+        }
+
+        .form-container input[type="text"] {
+          font-size: 16px;
+          padding: 12px 15px;
+        }
+
+        .form-container input[type="submit"] {
+          font-size: 16px;
+          padding: 12px 20px;
+        }
+
+        .success, .error {
+          padding: 15px;
+          font-size: 14px;
+          margin-bottom: 15px;
+        }
+
+        .back-link, .login-link {
+          font-size: 14px;
+          padding: 10px 15px;
         }
       }
 
@@ -324,29 +375,74 @@
             background-position: center;
             background-attachment: scroll;
             background-repeat: no-repeat;
+            overflow-x: hidden;
         }
 
         body::before {
             background: linear-gradient(135deg, rgba(30, 66, 118, 0.7), rgba(255, 255, 255, 0.5));
         }
 
+        main {
+          padding: 15px 10px;
+          min-height: 100vh;
+        }
+
         .header {
           justify-content: center;
           padding: 0 10px;
+          height: 60px;
         }
+
+        .header-title {
+          font-size: 16px;
+        }
+
         .header-logo {
           display: none;
         }
         .empty {
           display: none;
         }
-        .role-main {
-          margin-top: 100px;
-        }
 
         .form-container {
-          margin: 15px 10px;
-          padding: 25px 15px;
+          max-width: 100%;
+          padding: 20px 15px;
+          border-radius: 10px;
+        }
+
+        .form-container h2 {
+          font-size: 20px;
+          margin-bottom: 15px;
+        }
+
+        .info-box {
+          padding: 12px;
+          font-size: 13px;
+          margin: 12px 0;
+        }
+
+        .info-box h4 {
+          font-size: 15px;
+        }
+
+        .form-container input[type="text"] {
+          font-size: 16px;
+          padding: 10px 12px;
+        }
+
+        .form-container input[type="submit"] {
+          font-size: 14px;
+          padding: 10px 15px;
+        }
+
+        .success, .error {
+          padding: 12px;
+          font-size: 13px;
+        }
+
+        .back-link, .login-link {
+          font-size: 13px;
+          padding: 8px 12px;
         }
       }
     </style>
