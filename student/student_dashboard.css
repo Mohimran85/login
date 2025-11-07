@@ -93,11 +93,6 @@ body.sidebar-open {
   background-color: var(--light-color);
 }
 
-.header .icon img {
-  height: 75px;
-  width: 200px;
-  border-radius: 10px;
-}
 
 .header-title {
   flex: 1;

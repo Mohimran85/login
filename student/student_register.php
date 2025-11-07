@@ -32,6 +32,15 @@
         $conn_user->close();
     }
 
+    // Auto-fill functionality: Get event details from URL parameters
+    $auto_event_name     = isset($_GET['event']) ? trim($_GET['event']) : '';
+    $auto_event_type     = isset($_GET['type']) ? trim($_GET['type']) : '';
+    $auto_organisation   = isset($_GET['org']) ? trim($_GET['org']) : '';
+    $auto_attended_date  = isset($_GET['date']) ? trim($_GET['date']) : '';
+    $auto_event_state    = isset($_GET['state']) ? trim($_GET['state']) : '';
+    $auto_event_district = isset($_GET['district']) ? trim($_GET['district']) : '';
+    $auto_department     = isset($_GET['dept']) ? trim($_GET['dept']) : '';
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $servername = "localhost";
         $username   = "root";
@@ -44,10 +53,13 @@
         }
 
         // Sanitize inputs
-        $regno         = isset($_POST['regno']) ? trim($_POST['regno']) : '';
-        $current_year  = isset($_POST['year']) ? trim($_POST['year']) : '';
-        $semester      = isset($_POST['semester']) ? trim($_POST['semester']) : '';
-        $department    = isset($_POST['department']) ? trim($_POST['department']) : '';
+        $regno        = isset($_POST['regno']) ? trim($_POST['regno']) : '';
+        $current_year = isset($_POST['year']) ? trim($_POST['year']) : '';
+        $semester     = isset($_POST['semester']) ? trim($_POST['semester']) : '';
+        // Use department code for database storage, fallback to department field if code not available
+        $department = isset($_POST['department_code']) && ! empty($_POST['department_code'])
+            ? trim($_POST['department_code'])
+            : (isset($_POST['department']) ? trim($_POST['department']) : '');
         $state         = isset($_POST['state']) ? trim($_POST['state']) : '';
         $district      = isset($_POST['district']) ? trim($_POST['district']) : '';
         $event_type    = isset($_POST['eventType']) ? trim($_POST['eventType']) : '';
@@ -57,24 +69,7 @@
         $prize         = isset($_POST['prize']) ? trim($_POST['prize']) : '';
         $prize_amount  = isset($_POST['amount']) ? trim($_POST['amount']) : '';
 
-        // Check for approved OD request
-        $od_check_sql  = "SELECT status FROM od_requests WHERE student_regno = ? AND event_name = ? AND status = 'approved'";
-        $od_check_stmt = $conn->prepare($od_check_sql);
-        $od_check_stmt->bind_param("ss", $regno, $event_name);
-        $od_check_stmt->execute();
-        $od_check_stmt->store_result();
-
-        if ($od_check_stmt->num_rows == 0) {
-            echo "<div style='background: #fff3cd; border: 1px solid #ffecb5; color: #856404; padding: 15px; border-radius: 5px; margin: 20px; text-align: center;'>";
-            echo "<h3>🔒 OD Approval Required</h3>";
-            echo "<p>You need to submit an OD (On Duty) request and get approval from your class counselor before registering for this event.</p>";
-            echo "<p><a href='od_request.php' style='color: #0056b3; text-decoration: none; font-weight: bold;'>➤ Submit OD Request</a></p>";
-            echo "</div>";
-            $od_check_stmt->close();
-            $conn->close();
-            exit;
-        }
-        $od_check_stmt->close();
+        // Note: OD letter is optional for data collection purposes only
 
         $target_dir = "uploads/";
         if (! is_dir($target_dir)) {
@@ -873,12 +868,12 @@
     <main class="registration-main">
   <form action="" method="POST" enctype="multipart/form-data" class="registration-form">
     <div class="registration-container">
-      <h2 class="form-title">📋 Student Event Registration</h2>
+      <h2 class="form-title">  Student Event Registration</h2>
 
       <!-- Personal Information Section -->
       <div class="form-section">
         <div class="form-section-title">
-          <span class="form-section-icon">👤</span>
+          <span class="form-section-icon"></span>
           Personal Information
         </div>
         <div class="parent">
@@ -888,7 +883,7 @@
                    placeholder="Auto-filled from your profile"
                    pattern="[0-9]{2}[A-Z]{2,4}[0-9]{3}" title="Format: 23CS001"
                    maxlength="10" readonly required />
-            <div class="form-field-helper">This is auto-filled from your student profile</div>
+
           </div>
           <div class="item">
             <label for="year">Academic Year:<span class="required-asterisk">*</span></label>
@@ -908,16 +903,29 @@
           </div>
           <div class="item">
             <label for="department">Department:<span class="required-asterisk">*</span></label>
-            <select id="department" name="department" required>
-              <option value="" disabled selected>Select Your Department</option>
-              <option value="CSE">Computer Science and Engineering (CSE)</option>
-              <option value="IT">Information Technology (IT)</option>
-              <option value="ECE">Electronics and Communication Engineering (ECE)</option>
-              <option value="EEE">Electrical and Electronics Engineering (EEE)</option>
-              <option value="MECH">Mechanical Engineering (MECH)</option>
-              <option value="CIVIL">Civil Engineering (CIVIL)</option>
-              <option value="BME">Biomedical Engineering (BME)</option>
-            </select>
+            <input type="text" id="department" name="department"
+                   value="<?php
+                              if (! empty($auto_department)) {
+                                  // Display full department name based on code
+                                  $dept_names = [
+                                      'CSE'   => 'Computer Science and Engineering (CSE)',
+                                      'IT'    => 'Information Technology (IT)',
+                                      'ECE'   => 'Electronics and Communication Engineering (ECE)',
+                                      'EEE'   => 'Electrical and Electronics Engineering (EEE)',
+                                      'MECH'  => 'Mechanical Engineering (MECH)',
+                                      'CIVIL' => 'Civil Engineering (CIVIL)',
+                                      'BME'   => 'Biomedical Engineering (BME)',
+                                  ];
+                                  echo htmlspecialchars($dept_names[$auto_department] ?? $auto_department);
+                              } else {
+                                  echo 'Department will be auto-filled from your profile';
+                          }
+                          ?>"
+                   placeholder="Auto-filled from your profile"
+                   readonly required />
+
+            <!-- Hidden input to maintain the department code for form submission -->
+            <input type="hidden" name="department_code" value="<?php echo htmlspecialchars($auto_department); ?>" />
           </div>
           <div class="item">
             <label for="semester">Semester:<span class="required-asterisk">*</span></label>
@@ -933,21 +941,21 @@
       <!-- Location Information Section -->
       <div class="form-section">
         <div class="form-section-title">
-          <span class="form-section-icon">🗺️</span>
+          <span class="form-section-icon"></span>
           Location Information
         </div>
         <div class="parent">
           <div class="item">
             <label for="state">State:<span class="required-asterisk">*</span></label>
             <select id="state" name="state" required>
-              <option value="" disabled selected>Select State</option>
-              <option value="Tamil Nadu">Tamil Nadu</option>
-              <option value="Kerala">Kerala</option>
-              <option value="Karnataka">Karnataka</option>
-              <option value="Andhra Pradesh">Andhra Pradesh</option>
-              <option value="Telangana">Telangana</option>
-              <option value="Maharashtra">Maharashtra</option>
-              <option value="Goa">Goa</option>
+              <option value="" disabled                                                                                                                      <?php echo empty($auto_event_state) ? 'selected' : ''; ?>>Select State</option>
+              <option value="Tamil Nadu"                                                                                                                         <?php echo($auto_event_state == 'Tamil Nadu') ? 'selected' : ''; ?>>Tamil Nadu</option>
+              <option value="Kerala"                                                                                                             <?php echo($auto_event_state == 'Kerala') ? 'selected' : ''; ?>>Kerala</option>
+              <option value="Karnataka"                                                                                                                      <?php echo($auto_event_state == 'Karnataka') ? 'selected' : ''; ?>>Karnataka</option>
+              <option value="Andhra Pradesh"                                                                                                                                     <?php echo($auto_event_state == 'Andhra Pradesh') ? 'selected' : ''; ?>>Andhra Pradesh</option>
+              <option value="Telangana"                                                                                                                      <?php echo($auto_event_state == 'Telangana') ? 'selected' : ''; ?>>Telangana</option>
+              <option value="Maharashtra"                                                                                                                            <?php echo($auto_event_state == 'Maharashtra') ? 'selected' : ''; ?>>Maharashtra</option>
+              <option value="Goa"                                                                                                    <?php echo($auto_event_state == 'Goa') ? 'selected' : ''; ?>>Goa</option>
             </select>
           </div>
           <div class="item">
@@ -963,33 +971,34 @@
       <!-- Event Information Section -->
       <div class="form-section">
         <div class="form-section-title">
-          <span class="form-section-icon">🎯</span>
+          <span class="form-section-icon"></span>
           Event Information
         </div>
         <div class="parent">
           <div class="item">
             <label for="eventType">Event Type:<span class="required-asterisk">*</span></label>
             <select id="eventType" name="eventType" required>
-              <option value="" disabled selected>Select The Event</option>
-              <option value="Workshop">Workshop</option>
-              <option value="Symposium">Symposium</option>
-              <option value="Conference">Conference</option>
-              <option value="Webinar">Webinar</option>
-              <option value="Competition">Competition</option>
-              <option value="Seminar">Seminar</option>
-              <option value="Hackathon">Hackathon</option>
-              <option value="Training">Training</option>
-              <option value="Certification">Certification</option>
-              <option value="Cultural Event">Cultural Event</option>
-              <option value="Sports Event">Sports Event</option>
-              <option value="Technical Event">Technical Event</option>
-              <option value="Other">Other</option>
+              <option value="" disabled                                                                                                                                                             <?php echo empty($auto_event_type) ? 'selected' : ''; ?>>Select The Event</option>
+              <option value="Workshop"                                                                                                                                                         <?php echo($auto_event_type == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
+              <option value="Symposium"                                                                                                                                                             <?php echo($auto_event_type == 'Symposium') ? 'selected' : ''; ?>>Symposium</option>
+              <option value="Conference"                                                                                                                                                                 <?php echo($auto_event_type == 'Conference') ? 'selected' : ''; ?>>Conference</option>
+              <option value="Webinar"                                                                                                                                                     <?php echo($auto_event_type == 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
+              <option value="Competition  "                                                                                                                                                                             <?php echo($auto_event_type == 'Competition') ? 'selected' : ''; ?>>Competition</option>
+              <option value="Seminar"                                                                                                                                                     <?php echo($auto_event_type == 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
+              <option value="Hackathon"                                                                                                                                                             <?php echo($auto_event_type == 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
+              <option value="Training"                                                                                                                                                         <?php echo($auto_event_type == 'Training') ? 'selected' : ''; ?>>Training</option>
+              <option value="Certification"                                                                                                                                                                             <?php echo($auto_event_type == 'Certification') ? 'selected' : ''; ?>>Certification</option>
+              <option value="Cultural Event"                                                                                                                                                                                 <?php echo($auto_event_type == 'Cultural Event') ? 'selected' : ''; ?>>Cultural Event</option>
+              <option value="Sports Event"                                                                                                                                                                         <?php echo($auto_event_type == 'Sports Event') ? 'selected' : ''; ?>>Sports Event</option>
+              <option value="Technical Event"                                                                                                                                                                                     <?php echo($auto_event_type == 'Technical Event') ? 'selected' : ''; ?>>Technical Event</option>
+              <option value="Other"                                                                                                                                             <?php echo($auto_event_type == 'Other') ? 'selected' : ''; ?>>Other</option>
             </select>
           </div>
           <div class="item">
             <label for="eventName">Event Name:<span class="required-asterisk">*</span></label>
             <input type="text" id="eventName" name="eventName"
                    placeholder="Enter the Event Name"
+                   value="<?php echo htmlspecialchars($auto_event_name); ?>"
                    maxlength="100" required />
             <div class="character-count">
               <span id="eventNameCount">0</span>/100 characters
@@ -997,12 +1006,14 @@
           </div>
           <div class="item">
             <label for="attendedDate">Attended Date:<span class="required-asterisk">*</span></label>
-            <input type="date" id="attendedDate" name="attendedDate" required />
+            <input type="date" id="attendedDate" name="attendedDate"
+                   value="<?php echo htmlspecialchars($auto_attended_date); ?>" required />
           </div>
           <div class="item">
             <label for="organisation">Organisation By:<span class="required-asterisk">*</span></label>
             <input type="text" id="organisation" name="organisation"
                    placeholder="Enter the Organisation Name"
+                   value="<?php echo htmlspecialchars($auto_organisation); ?>"
                    maxlength="80" required />
             <div class="character-count">
               <span id="organisationCount">0</span>/80 characters
@@ -1102,6 +1113,9 @@
         const eventNameCount = document.getElementById('eventNameCount');
 
         if (eventNameInput && eventNameCount) {
+            // Initialize counter for pre-filled values
+            eventNameCount.textContent = eventNameInput.value.length;
+
             eventNameInput.addEventListener('input', function() {
                 eventNameCount.textContent = this.value.length;
             });
@@ -1112,6 +1126,9 @@
         const organisationCount = document.getElementById('organisationCount');
 
         if (organisationInput && organisationCount) {
+            // Initialize counter for pre-filled values
+            organisationCount.textContent = organisationInput.value.length;
+
             organisationInput.addEventListener('input', function() {
                 organisationCount.textContent = this.value.length;
             });
@@ -1229,27 +1246,36 @@
         const districtSelect = document.getElementById('district');
 
         if (stateSelect && districtSelect) {
-            stateSelect.addEventListener('change', function() {
-                const selectedState = this.value;
-
-                // Clear existing district options
-                districtSelect.innerHTML = '<option value="" disabled selected>Select District</option>';
+            // Function to populate districts for a given state
+            function populateDistricts(selectedState, selectedDistrict = '') {
+                districtSelect.innerHTML = '<option value="" disabled>Select District</option>';
 
                 if (selectedState && stateDistricts[selectedState]) {
-                    // Populate districts for selected state
                     stateDistricts[selectedState].forEach(function(district) {
                         const option = document.createElement('option');
                         option.value = district;
                         option.textContent = district;
+                        if (district === selectedDistrict) {
+                            option.selected = true;
+                        }
                         districtSelect.appendChild(option);
                     });
-
-                    // Enable district dropdown
                     districtSelect.disabled = false;
                 } else {
-                    // Disable district dropdown if no state selected
                     districtSelect.disabled = true;
                 }
+            }
+
+            // Auto-fill initialization: Check if state is pre-selected from URL parameters
+            const autoState = '<?php echo htmlspecialchars($auto_event_state); ?>';
+            const autoDistrict = '<?php echo htmlspecialchars($auto_event_district); ?>';
+
+            if (autoState && stateSelect.value === autoState) {
+                populateDistricts(autoState, autoDistrict);
+            }
+
+            stateSelect.addEventListener('change', function() {
+                populateDistricts(this.value);
             });
         }
     });

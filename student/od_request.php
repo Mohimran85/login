@@ -12,6 +12,23 @@
         die("Connection failed: " . $conn->connect_error);
     }
 
+    // Migration: Ensure new columns exist for backward compatibility
+    try {
+        // Check if event_state column exists, if not add it
+        $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_state'");
+        if ($check_column && $check_column->num_rows == 0) {
+            $conn->query("ALTER TABLE od_requests ADD COLUMN event_state VARCHAR(100) DEFAULT ''");
+        }
+
+        // Check if event_district column exists, if not add it
+        $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_district'");
+        if ($check_column && $check_column->num_rows == 0) {
+            $conn->query("ALTER TABLE od_requests ADD COLUMN event_district VARCHAR(100) DEFAULT ''");
+        }
+    } catch (Exception $e) {
+        // Silently continue if migration fails
+    }
+
     // Get student data
     $username     = $_SESSION['username'];
     $student_data = null;
@@ -71,7 +88,8 @@
                 counselor_id INT NOT NULL,
                 event_name VARCHAR(255) NOT NULL,
                 event_description TEXT NOT NULL,
-                event_location VARCHAR(255) NOT NULL,
+                event_state VARCHAR(100) NOT NULL,
+                event_district VARCHAR(100) NOT NULL,
                 event_date DATE NOT NULL,
                 event_time TIME NOT NULL,
                 event_days VARCHAR(20) NOT NULL,
@@ -85,10 +103,24 @@
             )";
             $conn->query($create_table);
 
+            // Migration: Add new columns if they don't exist (for backward compatibility)
+            // Check if event_state column exists, if not add it
+            $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_state'");
+            if ($check_column->num_rows == 0) {
+                $conn->query("ALTER TABLE od_requests ADD COLUMN event_state VARCHAR(100) DEFAULT ''");
+            }
+
+            // Check if event_district column exists, if not add it
+            $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_district'");
+            if ($check_column->num_rows == 0) {
+                $conn->query("ALTER TABLE od_requests ADD COLUMN event_district VARCHAR(100) DEFAULT ''");
+            }
+
             // Insert OD request
             $event_name        = trim($_POST['event_name']);
             $event_description = trim($_POST['event_description']);
-            $event_location    = trim($_POST['event_location']);
+            $event_state       = trim($_POST['event_state']);
+            $event_district    = trim($_POST['event_district']);
             $event_date        = $_POST['event_date'];
             $event_time        = $_POST['event_time'];
             $event_days        = $_POST['event_days'];
@@ -132,9 +164,9 @@
 
             // Only proceed with database insert if no file upload errors
             if (empty($message)) {
-                $insert_sql  = "INSERT INTO od_requests (student_regno, counselor_id, event_name, event_description, event_location, event_date, event_time, event_days, event_poster, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                $insert_sql  = "INSERT INTO od_requests (student_regno, counselor_id, event_name, event_description, event_state, event_district, event_date, event_time, event_days, event_poster, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $insert_stmt = $conn->prepare($insert_sql);
-                $insert_stmt->bind_param("sissssssss", $student_data['regno'], $counselor_info['teacher_id'], $event_name, $event_description, $event_location, $event_date, $event_time, $event_days, $poster_filename, $reason);
+                $insert_stmt->bind_param("sisssssssss", $student_data['regno'], $counselor_info['teacher_id'], $event_name, $event_description, $event_state, $event_district, $event_date, $event_time, $event_days, $poster_filename, $reason);
 
                 if ($insert_stmt->execute()) {
                     $_SESSION['od_success'] = true;
@@ -540,7 +572,7 @@
                         </div>
                         <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
                         <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-                            ID:                                                                                              <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                            ID:                                                                                                                                                                                                                          <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                             <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                         </div>
                     </div>
@@ -564,9 +596,24 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Event Location *</label>
-                                <input type="text" name="event_location" class="form-input" required
-                                       placeholder="Enter event venue/location">
+                                <label class="form-label">Event State *</label>
+                                <select name="event_state" class="form-select" required id="eventState">
+                                    <option value="" disabled selected>Select State</option>
+                                    <option value="Tamil Nadu">Tamil Nadu</option>
+                                    <option value="Kerala">Kerala</option>
+                                    <option value="Karnataka">Karnataka</option>
+                                    <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                    <option value="Telangana">Telangana</option>
+                                    <option value="Maharashtra">Maharashtra</option>
+                                    <option value="Goa">Goa</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Event District *</label>
+                                <select name="event_district" class="form-select" required id="eventDistrict" disabled>
+                                    <option value="" disabled selected>Select District</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
@@ -641,14 +688,24 @@
                         <div class="od-request-item<?php echo $request['status']; ?>">
                             <div class="od-request-header">
                                 <div class="od-event-name"><?php echo htmlspecialchars($request['event_name']); ?></div>
-                                <span class="od-status                                                                                                                                                                   <?php echo $request['status']; ?>">
+                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </span>
                             </div>
                             <div class="od-details">
-                                <strong>Date:</strong>                                                       <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong>                                                           <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
-                                <strong>Location:</strong>                                                           <?php echo htmlspecialchars($request['event_location']); ?><br>
+                                <strong>Date:</strong>                                                                                                                                                                                                                                                                               <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
+                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                   <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Location:</strong>
+                                <?php
+                                    // Handle backward compatibility for old records
+                                    if (! empty($request['event_state']) && ! empty($request['event_district'])) {
+                                        echo htmlspecialchars($request['event_state']) . ', ' . htmlspecialchars($request['event_district']);
+                                    } elseif (! empty($request['event_location'])) {
+                                        echo htmlspecialchars($request['event_location']);
+                                    } else {
+                                        echo 'Location not specified';
+                                }
+                                ?><br>
                                 <?php if (! empty($request['event_poster'])): ?>
                                 <div style="margin: 10px 0;">
                                     <strong>Event Poster:</strong><br>
@@ -686,9 +743,57 @@
                                 <strong>Counselor Remarks:</strong><?php echo htmlspecialchars($request['counselor_remarks']); ?><br>
                                 <?php endif; ?>
                                 <?php if ($request['status'] === 'approved'): ?>
+                                <?php
+                                    // Extract event type from event name or description (smart detection)
+                                    $event_name_lower = strtolower($request['event_name']);
+                                    $event_type       = 'Conference'; // default
+
+                                    if (strpos($event_name_lower, 'workshop') !== false) {
+                                        $event_type = 'Workshop';
+                                    } elseif (strpos($event_name_lower, 'seminar') !== false) {
+                                        $event_type = 'Seminar';
+                                    } elseif (strpos($event_name_lower, 'webinar') !== false) {
+                                        $event_type = 'Webinar';
+                                    } elseif (strpos($event_name_lower, 'competition') !== false) {
+                                        $event_type = 'Competition';
+                                    } elseif (strpos($event_name_lower, 'hackathon') !== false) {
+                                        $event_type = 'Hackathon';
+                                    } elseif (strpos($event_name_lower, 'training') !== false) {
+                                        $event_type = 'Training';
+                                    } elseif (strpos($event_name_lower, 'symposium') !== false) {
+                                        $event_type = 'Symposium';
+                                    } elseif (strpos($event_name_lower, 'certification') !== false) {
+                                        $event_type = 'Certification';
+                                    }
+
+                                    // Prepare URL parameters for auto-fill (with backward compatibility)
+                                    $url_params = [
+                                        'event' => $request['event_name'],
+                                        'type'  => $event_type,
+                                        'date'  => $request['event_date'],
+                                    ];
+
+                                    // Add student's department to auto-fill
+                                    if (isset($student_data['department']) && ! empty($student_data['department'])) {
+                                        $url_params['dept'] = $student_data['department'];
+                                    }
+
+                                    // Handle state and district for new records, fallback to location for old records
+                                    if (! empty($request['event_state']) && ! empty($request['event_district'])) {
+                                        $url_params['org']      = $request['event_state'] . ' State';
+                                        $url_params['state']    = $request['event_state'];
+                                        $url_params['district'] = $request['event_district'];
+                                    } elseif (! empty($request['event_location'])) {
+                                        $url_params['org'] = $request['event_location'];
+                                    } else {
+                                        $url_params['org'] = 'Event Organization';
+                                    }
+
+                                    $register_url = 'student_register.php?' . http_build_query($url_params);
+                                ?>
                                 <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                    <a href="student_register.php?od_id=<?php echo $request['id']; ?>" class="btn btn-primary" style="font-size: 12px; padding: 8px 15px;">
-                                        <span class="material-symbols-outlined" style="font-size: 16px;">add_circle</span>
+                                    <a href="index.php" class="btn btn-primary" style="font-size: 12px; padding: 8px 15px;">
+                                        <span class="material-symbols-outlined" style="font-size: 16px;">home</span>
                                         Register for Event
                                     </a>
                                     <a href="download_od_letter.php?od_id=<?php echo $request['id']; ?>" class="btn btn-secondary" style="font-size: 12px; padding: 8px 15px;" target="_blank">
@@ -727,6 +832,63 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // State-District mapping for OD request form
+            const stateDistricts = {
+                'Tamil Nadu': [
+                    'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli',
+                    'Thoothukudi', 'Dindigul', 'Thanjavur', 'Vellore', 'Erode', 'Tiruppur',
+                    'Karur', 'Namakkal', 'Cuddalore', 'Kancheepuram', 'Viluppuram', 'Sivagangai',
+                    'Ramanathapuram', 'Pudukkottai', 'Nagapattinam', 'Krishnagiri', 'Dharmapuri'
+                ],
+                'Kerala': [
+                    'Thiruvananthapuram', 'Kollam', 'Pathanamthitta', 'Alappuzha', 'Kottayam',
+                    'Idukki', 'Ernakulam', 'Thrissur', 'Palakkad', 'Malappuram', 'Kozhikode',
+                    'Wayanad', 'Kannur', 'Kasaragod'
+                ],
+                'Karnataka': [
+                    'Bengaluru Urban', 'Bengaluru Rural', 'Mysuru', 'Mandya', 'Hassan', 'Shimoga',
+                    'Chitradurga', 'Davanagere', 'Ballari', 'Kalaburagi', 'Bidar', 'Raichur',
+                    'Koppal', 'Gadag', 'Dharwad', 'Uttara Kannada', 'Haveri', 'Belgaum', 'Bagalkot'
+                ],
+                'Andhra Pradesh': [
+                    'Visakhapatnam', 'Vijayawada', 'Guntur', 'Nellore', 'Kurnool', 'Kadapa',
+                    'Tirupati', 'Anantapur', 'Chittoor', 'Eluru', 'Ongole', 'Nandyal'
+                ],
+                'Telangana': [
+                    'Hyderabad', 'Secunderabad', 'Warangal', 'Nizamabad', 'Khammam', 'Karimnagar',
+                    'Mahbubnagar', 'Nalgonda', 'Adilabad', 'Medak', 'Rangareddy'
+                ],
+                'Maharashtra': [
+                    'Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik', 'Aurangabad', 'Solapur',
+                    'Amravati', 'Kolhapur', 'Sangli', 'Jalgaon', 'Akola', 'Latur'
+                ],
+                'Goa': [
+                    'North Goa', 'South Goa'
+                ]
+            };
+
+            const eventStateSelect = document.getElementById('eventState');
+            const eventDistrictSelect = document.getElementById('eventDistrict');
+
+            if (eventStateSelect && eventDistrictSelect) {
+                eventStateSelect.addEventListener('change', function() {
+                    const selectedState = this.value;
+                    eventDistrictSelect.innerHTML = '<option value="" disabled selected>Select District</option>';
+
+                    if (selectedState && stateDistricts[selectedState]) {
+                        eventDistrictSelect.disabled = false;
+                        stateDistricts[selectedState].forEach(function(district) {
+                            const option = document.createElement('option');
+                            option.value = district;
+                            option.textContent = district;
+                            eventDistrictSelect.appendChild(option);
+                        });
+                    } else {
+                        eventDistrictSelect.disabled = true;
+                    }
+                });
+            }
+
             const headerMenuIcon = document.querySelector('.header .menu-icon');
             const closeSidebarBtn = document.querySelector('.close-sidebar');
             const sidebar = document.getElementById('sidebar');

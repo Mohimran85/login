@@ -79,7 +79,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OD Letter -                                             <?php echo htmlspecialchars($student_data['name']); ?></title>
+    <title>OD Letter -                                                                   <?php echo htmlspecialchars($student_data['name']); ?></title>
     <style>
         @media print {
             body {
@@ -297,7 +297,7 @@
                 <strong>Ref No:</strong> SCT/OD/<?php echo date('Y'); ?>/<?php echo str_pad($od_data['id'], 4, '0', STR_PAD_LEFT); ?>
             </div>
             <div class="letter-date">
-                <strong>Date:</strong>                                                                             <?php echo $current_date; ?>
+                <strong>Date:</strong>                                                                                                                   <?php echo $current_date; ?>
             </div>
         </div>
 
@@ -412,7 +412,7 @@
 
         <div class="footer-note">
             <p>This is a computer-generated document and does not require a physical signature when printed from the official portal.</p>
-            <p>Generated on:                                                         <?php echo $current_date; ?> at<?php echo $current_time; ?> | Document ID: OD-<?php echo $od_data['id']; ?>-<?php echo date('YmdHis'); ?></p>
+            <p>Generated on:                                                                                     <?php echo $current_date; ?> at<?php echo $current_time; ?> | Document ID: OD-<?php echo $od_data['id']; ?>-<?php echo date('YmdHis'); ?></p>
         </div>
     </div>
 

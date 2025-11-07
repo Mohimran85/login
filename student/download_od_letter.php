@@ -562,12 +562,6 @@ $html_content .= '
                 <div class="signature-title">Head of Department</div>
                 <div class="signature-name">' . (isset($od_data['department']) ? htmlspecialchars($od_data['department']) : 'Department Name') . '</div>
             </div>
-
-            <div class="signature-box">
-                <div class="signature-line"></div>
-                <div class="signature-title">Principal</div>
-                <div class="signature-name">Dr. [Principal Name]</div>
-            </div>
         </div>
 
         <div class="footer-note">

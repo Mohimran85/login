@@ -434,7 +434,8 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="icon">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
+                <img src="sona_logo.jpg" alt="Sona College Logo" height="60px"
+            width="200">
             </div>
             <div class="header-title">
                 <p>Digital Signature Management</p>

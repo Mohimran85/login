@@ -1050,7 +1050,8 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="icon">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo">
+                <img src="sona_logo.jpg" alt="Sona College Logo" height="60px"
+            width="200">
             </div>
             <div class="header-title">
                 <p>Event Management System</p>
@@ -1068,7 +1069,7 @@
 
             <div class="student-info"  style="color: white;">
                 <div class="student-name" style="color:white;"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -1122,13 +1123,6 @@
                         <a href="../admin/reports.php" class="nav-link">
                             <span class="material-symbols-outlined">bar_chart</span>
                             Reports
-                        </a>
-                    </li>
-                    <?php else: ?>
-                    <li class="nav-item">
-                        <a href="../admin/user_management.php" class="nav-link">
-                            <span class="material-symbols-outlined">manage_accounts</span>
-                            Teacher Management
                         </a>
                     </li>
                     <?php endif; ?>
@@ -1244,7 +1238,7 @@
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">calendar_today</span>
-                                            <span>Year                                                                                                                                                                   <?php echo htmlspecialchars($request['year_of_join']); ?></span>
+                                            <span>Year                                                                                                                                                                                                                         <?php echo htmlspecialchars($request['year_of_join']); ?></span>
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">schedule</span>
@@ -1252,7 +1246,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="od-status                                                                                                                                                                <?php echo $request['status']; ?>">
+                                <div class="od-status                                                                                                                                                                                                                     <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </div>
                             </div>
@@ -1342,9 +1336,9 @@
                                             Download Poster
                                         </a>
                                         <div style="text-align: center; font-size: 12px; color: #6c757d; padding: 8px; background: #f8f9fa; border-radius: 6px;">
-                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
-                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo strtoupper($file_extension); ?> •
-                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
+                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
+                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo strtoupper($file_extension); ?> •
+                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
                                         </div>
                                     </div>
                                 </div>
