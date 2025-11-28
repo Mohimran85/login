@@ -487,40 +487,28 @@
           </div>
           <ul class="sidebar-list">
             <li class="sidebar-list-item active">
-              <a href="index.php" class="sidebar-link">
-                <span class="material-symbols-outlined">dashboard</span>
-                <span class="sidebar-text">Home</span>
-              </a>
+              <span class="material-symbols-outlined">dashboard</span>
+              <a href="index.php">Home</a>
             </li>
             <li class="sidebar-list-item">
-              <a href="participants.php" class="sidebar-link">
-                <span class="material-symbols-outlined">people</span>
-                <span class="sidebar-text">Participants</span>
-              </a>
+              <span class="material-symbols-outlined">people</span>
+              <a href="participants.php">Participants</a>
             </li>
             <li class="sidebar-list-item">
-              <a href="user_management.php" class="sidebar-link">
-                <span class="material-symbols-outlined">manage_accounts</span>
-                <span class="sidebar-text">User Management</span>
-              </a>
+              <span class="material-symbols-outlined">manage_accounts</span>
+              <a href="user_management.php">User Management</a>
             </li>
             <li class="sidebar-list-item">
-              <a href="reports.php" class="sidebar-link">
-                <span class="material-symbols-outlined">bar_chart</span>
-                <span class="sidebar-text">Reports</span>
-              </a>
+              <span class="material-symbols-outlined">bar_chart</span>
+              <a href="reports.php">Reports</a>
             </li>
             <li class="sidebar-list-item">
-              <a href="profile.php" class="sidebar-link">
-                <span class="material-symbols-outlined">account_circle</span>
-                <span class="sidebar-text">Profile</span>
-              </a>
+              <span class="material-symbols-outlined">account_circle</span>
+              <a href="profile.php">Profile</a>
             </li>
             <li class="sidebar-list-item">
-              <a href="logout.php" class="sidebar-link">
-                <span class="material-symbols-outlined">logout</span>
-                <span class="sidebar-text">Logout</span>
-              </a>
+              <span class="material-symbols-outlined">logout</span>
+              <a href="logout.php">Logout</a>
             </li>
           </ul>
         </div>

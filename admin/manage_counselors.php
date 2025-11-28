@@ -158,6 +158,43 @@
         }
     }
 
+    // Handle removing a single student assignment
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['remove_student'])) {
+        $assignment_id = $_POST['assignment_id'];
+        
+        $delete_sql = "DELETE FROM counselor_assignments WHERE id = ?";
+        $delete_stmt = $conn->prepare($delete_sql);
+        $delete_stmt->bind_param("i", $assignment_id);
+        
+        if ($delete_stmt->execute()) {
+            $message = "Student assignment removed successfully!";
+            $message_type = 'success';
+        } else {
+            $message = "Error removing assignment: " . $conn->error;
+            $message_type = 'error';
+        }
+        $delete_stmt->close();
+    }
+
+    // Handle removing all students from a counselor
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['remove_all_students'])) {
+        $counselor_id = $_POST['counselor_id'];
+        
+        $delete_all_sql = "DELETE FROM counselor_assignments WHERE counselor_id = ?";
+        $delete_all_stmt = $conn->prepare($delete_all_sql);
+        $delete_all_stmt->bind_param("i", $counselor_id);
+        
+        if ($delete_all_stmt->execute()) {
+            $affected = $delete_all_stmt->affected_rows;
+            $message = "Successfully removed all $affected student assignments from this counselor!";
+            $message_type = 'success';
+        } else {
+            $message = "Error removing assignments: " . $conn->error;
+            $message_type = 'error';
+        }
+        $delete_all_stmt->close();
+    }
+
     // Get statistics including student assignment counts
     $stats_sql = "SELECT
     (SELECT COUNT(*) FROM teacher_register) as total_teachers,
@@ -566,6 +603,178 @@
             background: #157347;
             transform: translateY(-1px);
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        .modal-header {
+            background: #0c3878;
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .close {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .close:hover {
+            transform: scale(1.2);
+        }
+
+        .modal-body {
+            padding: 30px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .student-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #0c3878;
+            transition: all 0.3s ease;
+        }
+
+        .student-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .student-info {
+            flex: 1;
+        }
+
+        .student-regno {
+            font-weight: 600;
+            color: #0c3878;
+            font-size: 16px;
+        }
+
+        .student-name {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-remove:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state .material-symbols-outlined {
+            font-size: 64px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .btn-view-students {
+            background: #17a2b8;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-view-students:hover {
+            background: #138496;
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .student-count-badge {
+            background: #17a2b8;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -767,7 +976,23 @@
                             </button>
                         </form>
 
-
+                        <?php if ($teacher['status'] == 'counselor' && $teacher['student_count'] > 0): ?>
+                            <button type="button" class="btn btn-view-students" onclick="viewStudents(<?php echo $teacher['id']; ?>, '<?php echo htmlspecialchars($teacher['name'], ENT_QUOTES); ?>')">
+                                <span class="icon-text">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                    View Assigned Students (<?php echo $teacher['student_count']; ?>)
+                                </span>
+                            </button>
+                            <form method="POST" onsubmit="return confirm('Are you sure you want to remove ALL student assignments from this counselor?');" style="margin-top: 10px;">
+                                <input type="hidden" name="counselor_id" value="<?php echo $teacher['id']; ?>">
+                                <button type="submit" name="remove_all_students" class="btn btn-danger">
+                                    <span class="icon-text">
+                                        <span class="material-symbols-outlined">person_remove</span>
+                                        Remove All Students
+                                    </span>
+                                </button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endwhile; ?>
@@ -784,6 +1009,26 @@
         </div>
     </div>
 
+    <!-- Modal for viewing assigned students -->
+    <div id="studentsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Assigned Students</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">hourglass_empty</span>
+                    <p>Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="student-count-badge" id="studentCount">0 students</span>
+                <button class="btn btn-primary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Sidebar functionality
         function navigateToProfile() {
@@ -792,6 +1037,72 @@
 
         function closeSidebar() {
             // Add your sidebar close functionality here
+        }
+
+        // Modal functions
+        function viewStudents(counselorId, counselorName) {
+            const modal = document.getElementById('studentsModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const studentCount = document.getElementById('studentCount');
+            
+            modalTitle.textContent = 'Students Assigned to ' + counselorName;
+            modal.style.display = 'block';
+            
+            // Show loading state
+            modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div>';
+            
+            // Fetch students via AJAX
+            fetch('get_counselor_students.php?counselor_id=' + counselorId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.students.length === 0) {
+                            modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">person_off</span><p>No students assigned</p></div>';
+                            studentCount.textContent = '0 students';
+                        } else {
+                            let html = '<ul class="student-list">';
+                            data.students.forEach(student => {
+                                html += `
+                                    <li class="student-item">
+                                        <div class="student-info">
+                                            <div class="student-regno">${student.regno}</div>
+                                            <div class="student-name">${student.name || 'N/A'}</div>
+                                        </div>
+                                        <form method="POST" style="margin: 0;" onsubmit="return confirm('Remove this student assignment?');">
+                                            <input type="hidden" name="assignment_id" value="${student.assignment_id}">
+                                            <button type="submit" name="remove_student" class="btn-remove">
+                                                <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+                                                Remove
+                                            </button>
+                                        </form>
+                                    </li>
+                                `;
+                            });
+                            html += '</ul>';
+                            modalBody.innerHTML = html;
+                            studentCount.textContent = data.students.length + ' student' + (data.students.length !== 1 ? 's' : '');
+                        }
+                    } else {
+                        modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">error</span><p>Error loading students</p></div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">error</span><p>Error loading students</p></div>';
+                });
+        }
+
+        function closeModal() {
+            document.getElementById('studentsModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('studentsModal');
+            if (event.target == modal) {
+                closeModal();
+            }
         }
     </script>
 </body>

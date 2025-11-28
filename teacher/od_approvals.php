@@ -71,6 +71,12 @@
     $od_requests_stmt->execute();
     $od_requests_result = $od_requests_stmt->get_result();
 
+    // Fetch all results into an array for reuse
+    $od_requests_array = [];
+    while ($row = $od_requests_result->fetch_assoc()) {
+        $od_requests_array[] = $row;
+    }
+
     // Get statistics
     $stats_sql = "SELECT
                     COUNT(*) as total_requests,
@@ -686,6 +692,89 @@
             to { opacity: 1; }
         }
 
+        /* Table Responsive Styles */
+        table {
+            font-size: 14px;
+        }
+
+        table th, table td {
+            white-space: nowrap;
+        }
+
+        @media (max-width: 1024px) {
+            table {
+                font-size: 13px;
+            }
+
+            table th, table td {
+                padding: 12px 10px !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            /* Hide table, show mobile cards */
+            table thead {
+                display: none;
+            }
+
+            table, table tbody, table tr, table td {
+                display: block;
+                width: 100%;
+            }
+
+            table tr {
+                margin-bottom: 20px;
+                border: 2px solid #e9ecef;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                background: white;
+            }
+
+            table td {
+                text-align: left !important;
+                padding: 12px 15px !important;
+                position: relative;
+                border-bottom: 1px solid #f0f0f0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            table td:last-child {
+                border-bottom: none;
+            }
+
+            table td:before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #0c3878;
+                text-transform: uppercase;
+                font-size: 11px;
+                letter-spacing: 0.5px;
+                flex-shrink: 0;
+                min-width: 100px;
+            }
+
+            table td > * {
+                flex: 1;
+                text-align: right;
+            }
+
+            /* Make buttons full width on mobile */
+            table td button,
+            table td a {
+                width: 100%;
+                max-width: 200px;
+                justify-content: center !important;
+            }
+
+            .od-status {
+                display: inline-block !important;
+                margin: 0 !important;
+            }
+        }
+
         /* Mobile sidebar overlay */
         @media (max-width: 768px) {
             .main {
@@ -1069,7 +1158,7 @@
 
             <div class="student-info"  style="color: white;">
                 <div class="student-name" style="color:white;"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -1216,9 +1305,103 @@
                     Student OD Requests
                 </h2>
 
-                <?php if ($od_requests_result->num_rows > 0): ?>
-                    <?php while ($request = $od_requests_result->fetch_assoc()): ?>
-                    <div class="od-request-item<?php echo $request['status']; ?>">
+                <?php if (count($od_requests_array) > 0): ?>
+                    <!-- Table View -->
+                    <div style="overflow-x: auto; margin-bottom: 30px;">
+                        <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                            <thead>
+                                <tr style="background: linear-gradient(135deg, #0c3878 0%, #2d5aa0 100%); color: white;">
+                                    <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 3px solid #f0f0f0;">Student</th>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 3px solid #f0f0f0;">Register No</th>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 3px solid #f0f0f0;">Event Name</th>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 3px solid #f0f0f0;">Event Date</th>
+                                    <th style="padding: 15px; text-align: left; font-weight: 600; border-bottom: 3px solid #f0f0f0;">Location</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: 600; border-bottom: 3px solid #f0f0f0;">Poster</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: 600; border-bottom: 3px solid #f0f0f0;">Status</th>
+                                    <th style="padding: 15px; text-align: center; font-weight: 600; border-bottom: 3px solid #f0f0f0;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($od_requests_array as $request): ?>
+                                <tr style="border-bottom: 1px solid #f0f0f0; transition: background 0.3s ease;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                                    <td data-label="Student" style="padding: 15px; font-weight: 500; color: #2c3e50;">
+                                        <div>
+                                            <?php echo htmlspecialchars($request['student_name']); ?>
+                                            <div style="font-size: 12px; color: #6c757d; margin-top: 3px;">
+                                                <?php echo htmlspecialchars($request['department']); ?>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td data-label="Register No" style="padding: 15px; color: #495057; font-family: 'Courier New', monospace;">
+                                        <span><?php echo htmlspecialchars($request['student_regno']); ?></span>
+                                    </td>
+                                    <td data-label="Event Name" style="padding: 15px; color: #495057;">
+                                        <div>
+                                            <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="<?php echo htmlspecialchars($request['event_name']); ?>">
+                                                <?php echo htmlspecialchars($request['event_name']); ?>
+                                            </div>
+                                            <div style="font-size: 11px; color: #6c757d; margin-top: 3px;">
+                                                <?php echo date('h:i A', strtotime($request['event_time'])); ?>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td data-label="Event Date" style="padding: 15px; color: #495057;">
+                                        <span><?php echo date('M d, Y', strtotime($request['event_date'])); ?></span>
+                                    </td>
+                                    <td data-label="Location" style="padding: 15px; color: #495057;">
+                                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;" title="<?php echo htmlspecialchars($request['event_location']); ?>">
+                                            <?php echo htmlspecialchars($request['event_location']); ?>
+                                        </div>
+                                    </td>
+                                    <td data-label="Poster" style="padding: 15px; text-align: center;">
+                                        <?php if (! empty($request['event_poster'])): ?>
+                                            <?php
+                                                $poster_path    = '../student/uploads/posters/' . $request['event_poster'];
+                                                $file_extension = strtolower(pathinfo($request['event_poster'], PATHINFO_EXTENSION));
+                                            ?>
+                                            <?php if (in_array($file_extension, ['jpg', 'jpeg', 'png']) && file_exists($poster_path)): ?>
+                                                <button onclick="openPosterModal('<?php echo htmlspecialchars($poster_path); ?>')"
+                                                        style="background: #0c3878; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.3s ease;"
+                                                        onmouseover="this.style.background='#2d5aa0'; this.style.transform='scale(1.05)'"
+                                                        onmouseout="this.style.background='#0c3878'; this.style.transform='scale(1)'">
+                                                    <span class="material-symbols-outlined" style="font-size: 18px;">image</span>
+                                                    View
+                                                </button>
+                                            <?php else: ?>
+                                                <a href="<?php echo htmlspecialchars($poster_path); ?>"
+                                                   target="_blank"
+                                                   style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; text-decoration: none; transition: all 0.3s ease;">
+                                                    <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+                                                    PDF
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span style="color: #6c757d; font-size: 12px;">No poster</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td data-label="Status" style="padding: 15px; text-align: center;">
+                                        <span class="od-status                                                               <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                            <?php echo ucfirst($request['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td data-label="Action" style="padding: 15px; text-align: center;">
+                                        <button onclick="viewDetails(<?php echo $request['id']; ?>)"
+                                                style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; font-weight: 600; transition: all 0.3s ease;"
+                                                onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(23,162,184,0.3)'"
+                                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                                            <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+                                            Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Detailed View (Hidden by default) -->
+                    <?php foreach ($od_requests_array as $request): ?>
+                    <div class="od-request-item<?php echo $request['status']; ?>" id="details-<?php echo $request['id']; ?>" style="display: none;">
                         <!-- Enhanced Request Header -->
                         <div class="request-header-card">
                             <div class="student-info-grid">
@@ -1238,7 +1421,7 @@
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">calendar_today</span>
-                                            <span>Year                                                                                                                                                                                                                         <?php echo htmlspecialchars($request['year_of_join']); ?></span>
+                                            <span>Year                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($request['year_of_join']); ?></span>
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">schedule</span>
@@ -1246,7 +1429,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="od-status                                                                                                                                                                                                                     <?php echo $request['status']; ?>">
+                                <div class="od-status                                                                                                                                                                                                                                                                          <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </div>
                             </div>
@@ -1336,9 +1519,9 @@
                                             Download Poster
                                         </a>
                                         <div style="text-align: center; font-size: 12px; color: #6c757d; padding: 8px; background: #f8f9fa; border-radius: 6px;">
-                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
-                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo strtoupper($file_extension); ?> •
-                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
+                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
+                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo strtoupper($file_extension); ?> •
+                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -1407,7 +1590,7 @@
                         </div>
                         <?php endif; ?>
                     </div>
-                    <?php endwhile; ?>
+                    <?php endforeach; ?>
                 <?php else: ?>
                     <div class="empty-state">
                         <span class="material-symbols-outlined">description</span>
@@ -1500,6 +1683,27 @@
                 }, 5000);
             }
         });
+
+        // View Details Function
+        function viewDetails(odId) {
+            const detailsDiv = document.getElementById('details-' + odId);
+            const allDetails = document.querySelectorAll('.od-request-item');
+
+            // Hide all other details
+            allDetails.forEach(detail => {
+                if (detail.id !== 'details-' + odId) {
+                    detail.style.display = 'none';
+                }
+            });
+
+            // Toggle current details
+            if (detailsDiv.style.display === 'none') {
+                detailsDiv.style.display = 'flex';
+                detailsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                detailsDiv.style.display = 'none';
+            }
+        }
 
         // Poster Modal Functions
         let currentRotation = 0;

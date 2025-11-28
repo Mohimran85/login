@@ -149,7 +149,7 @@ p {
 }
 .sidebar-title {
   color: white;
-  text-align: center;
+  /* text-align: center; */
   justify-content: space-between;
   padding: 20px;
 }
