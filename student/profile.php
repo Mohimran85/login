@@ -139,15 +139,15 @@
     }
     $counselor_stmt->close();
 
-    // Total events participated
-    $total_events_sql = "SELECT COUNT(*) as total FROM student_event_register WHERE regno=?";
+    // Total events participated (only approved events count)
+    $total_events_sql = "SELECT COUNT(*) as total FROM student_event_register WHERE regno=? AND verification_status = 'Approved'";
     $total_stmt       = $conn->prepare($total_events_sql);
     $total_stmt->bind_param("s", $regno);
     $total_stmt->execute();
     $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
 
-    // Events won
-    $events_won_sql = "SELECT COUNT(*) as won FROM student_event_register WHERE regno=? AND prize IN ('First', 'Second', 'Third')";
+    // Events won (only approved events count)
+    $events_won_sql = "SELECT COUNT(*) as won FROM student_event_register WHERE regno=? AND verification_status = 'Approved' AND prize IN ('First', 'Second', 'Third')";
     $won_stmt       = $conn->prepare($events_won_sql);
     $won_stmt->bind_param("s", $regno);
     $won_stmt->execute();
@@ -697,7 +697,7 @@
                             <?php echo strtoupper(substr($student_data['name'], 0, 1)); ?>
                         </div>
                         <div class="profile-name"><?php echo htmlspecialchars($student_data['name']); ?></div>
-                        <div class="profile-regno">Registration No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($student_data['regno']); ?></div>
+                        <div class="profile-regno">Registration No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo htmlspecialchars($student_data['regno']); ?></div>
 
                         <div class="profile-stats">
                             <div class="stat-item">
@@ -719,14 +719,14 @@
                             </div>
                             <div class="counselor-details">
                                 <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
-                                <div class="counselor-id">ID:                                                                                                                                                                                        <?php echo htmlspecialchars($counselor_info['counselor_id']); ?></div>
+                                <div class="counselor-id">ID:                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($counselor_info['counselor_id']); ?></div>
                                 <div class="counselor-email">
                                     <span class="material-symbols-outlined">email</span>
                                     <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                                 </div>
                                 <div class="assigned-date">
                                     <span class="material-symbols-outlined">schedule</span>
-                                    Assigned:                                                                                                                                        <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
+                                    Assigned:                                                                                                                                                                                     <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
                                 </div>
                             </div>
                         </div>
@@ -819,13 +819,13 @@
                                 </div>
                                 <select name="department" class="form-select profile-edit" style="display: none;">
                                     <option value="">Select Department</option>
-                                    <option value="CSE"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($student_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
-                                    <option value="IT"                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($student_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
-                                    <option value="ECE"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($student_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
-                                    <option value="EEE"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($student_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
-                                    <option value="MECH"                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($student_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
-                                    <option value="CIVIL"                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($student_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
-                                    <option value="BME"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($student_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
+                                    <option value="CSE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($student_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
+                                    <option value="IT"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($student_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
+                                    <option value="ECE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($student_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
+                                    <option value="EEE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($student_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
+                                    <option value="MECH"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($student_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
+                                    <option value="CIVIL"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($student_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
+                                    <option value="BME"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($student_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
                                 </select>
                             </div>
 
@@ -836,14 +836,14 @@
                                 </div>
                                 <select name="semester" class="form-select profile-edit" style="display: none;">
                                     <option value="">Select Semester</option>
-                                    <option value="1"                                                      <?php echo($student_data['semester'] ?? '') === '1' ? 'selected' : ''; ?>>Semester 1</option>
-                                    <option value="2"                                                      <?php echo($student_data['semester'] ?? '') === '2' ? 'selected' : ''; ?>>Semester 2</option>
-                                    <option value="3"                                                      <?php echo($student_data['semester'] ?? '') === '3' ? 'selected' : ''; ?>>Semester 3</option>
-                                    <option value="4"                                                      <?php echo($student_data['semester'] ?? '') === '4' ? 'selected' : ''; ?>>Semester 4</option>
-                                    <option value="5"                                                      <?php echo($student_data['semester'] ?? '') === '5' ? 'selected' : ''; ?>>Semester 5</option>
-                                    <option value="6"                                                      <?php echo($student_data['semester'] ?? '') === '6' ? 'selected' : ''; ?>>Semester 6</option>
-                                    <option value="7"                                                      <?php echo($student_data['semester'] ?? '') === '7' ? 'selected' : ''; ?>>Semester 7</option>
-                                    <option value="8"                                                      <?php echo($student_data['semester'] ?? '') === '8' ? 'selected' : ''; ?>>Semester 8</option>
+                                    <option value="1"                                                                                                           <?php echo($student_data['semester'] ?? '') === '1' ? 'selected' : ''; ?>>Semester 1</option>
+                                    <option value="2"                                                                                                           <?php echo($student_data['semester'] ?? '') === '2' ? 'selected' : ''; ?>>Semester 2</option>
+                                    <option value="3"                                                                                                           <?php echo($student_data['semester'] ?? '') === '3' ? 'selected' : ''; ?>>Semester 3</option>
+                                    <option value="4"                                                                                                           <?php echo($student_data['semester'] ?? '') === '4' ? 'selected' : ''; ?>>Semester 4</option>
+                                    <option value="5"                                                                                                           <?php echo($student_data['semester'] ?? '') === '5' ? 'selected' : ''; ?>>Semester 5</option>
+                                    <option value="6"                                                                                                           <?php echo($student_data['semester'] ?? '') === '6' ? 'selected' : ''; ?>>Semester 6</option>
+                                    <option value="7"                                                                                                           <?php echo($student_data['semester'] ?? '') === '7' ? 'selected' : ''; ?>>Semester 7</option>
+                                    <option value="8"                                                                                                           <?php echo($student_data['semester'] ?? '') === '8' ? 'selected' : ''; ?>>Semester 8</option>
                                 </select>
                             </div>
 
@@ -856,11 +856,11 @@
                                                 <?php echo htmlspecialchars($counselor_info['counselor_name']); ?>
                                             </span>
                                             <span style="font-size: 12px; color: #6c757d;">
-                                                ID:                                                                                                                                                          <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                                                ID:                                                                                                                                                                                                             <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                                                 <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                                             </span>
                                             <span style="font-size: 11px; color: #856404;">
-                                                Assigned:                                                                                                                                                                            <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
+                                                Assigned:                                                                                                                                                                                                                                     <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
                                             </span>
                                         </div>
                                     <?php else: ?>

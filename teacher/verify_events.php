@@ -1,92 +1,118 @@
 <?php
-// Start session
-session_start();
+    // Start session
+    session_start();
 
-// Check if user is logged in as teacher/counselor
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSION['user_type'] !== 'teacher') {
-    header("Location: ../index.php");
-    exit();
-}
-
-$faculty_id = $_SESSION['faculty_id'] ?? $_SESSION['id'];
-$faculty_name = $_SESSION['name'] ?? 'Counselor';
-
-// Database connection
-$conn = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Get filters from request
-$event_category = isset($_GET['category']) ? $_GET['category'] : 'All';
-$status_filter = isset($_GET['status']) ? $_GET['status'] : 'Pending';
-
-// Handle Approve action
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'approve') {
-    $cert_id = intval($_POST['cert_id']);
-    $update_stmt = $conn->prepare("UPDATE event_certificates SET status = 'Approved', verified_by = ?, verified_date = NOW() WHERE id = ?");
-    $update_stmt->bind_param("ii", $faculty_id, $cert_id);
-    if ($update_stmt->execute()) {
-        $success_message = "✅ Certificate approved successfully!";
-    } else {
-        $error_message = "❌ Error approving certificate: " . $update_stmt->error;
+    // Check if user is logged in
+    if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+        header("Location: ../index.php");
+        exit();
     }
-    $update_stmt->close();
-}
 
-// Handle Reject action
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reject') {
-    $cert_id = intval($_POST['cert_id']);
-    $rejection_reason = trim($_POST['rejection_reason'] ?? '');
-    
-    if (empty($rejection_reason)) {
-        $error_message = " Rejection reason is required.";
-    } else {
-        $update_stmt = $conn->prepare("UPDATE event_certificates SET status = 'Rejected', rejection_reason = ?, verified_by = ?, verified_date = NOW() WHERE id = ?");
-        $update_stmt->bind_param("sii", $rejection_reason, $faculty_id, $cert_id);
+    $faculty_id   = $_SESSION['faculty_id'] ?? $_SESSION['id'] ?? 0;
+    $faculty_name = $_SESSION['name'] ?? 'Counselor';
+    $username     = $_SESSION['username'] ?? '';
+
+    // Database connection
+    $conn = new mysqli("localhost", "root", "", "event_management_system");
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Get filters from request
+    $event_category = isset($_GET['category']) ? $_GET['category'] : 'All';
+    $status_filter  = isset($_GET['status']) ? $_GET['status'] : 'Pending';
+
+    // Handle Approve action
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'approve') {
+        $event_id    = intval($_POST['event_id']);
+        $update_stmt = $conn->prepare("UPDATE student_event_register SET verification_status = 'Approved', verified_by = ?, verified_date = NOW() WHERE id = ?");
+        $update_stmt->bind_param("ii", $faculty_id, $event_id);
         if ($update_stmt->execute()) {
-            $success_message = " Certificate rejected successfully!";
+            $update_stmt->close();
+            $conn->close();
+            // Redirect back to Pending page to continue approving more events
+            header("Location: verify_events.php?success=approved&category=" . urlencode($event_category) . "&status=Pending");
+            exit();
         } else {
-            $error_message = " Error rejecting certificate: " . $update_stmt->error;
+            $error_message = "❌ Error approving registration: " . $update_stmt->error;
+            $update_stmt->close();
         }
-        $update_stmt->close();
     }
-}
 
-// Build SQL query based on filters
-$query = "SELECT ec.id, s.name AS student_name, s.regno, e.event_name, e.organizer, e.event_date, 
-                 ec.category, ec.achievement_level, ec.certificate_file, ec.status, ec.created_at
-          FROM event_certificates ec
-          JOIN student_register s ON ec.student_id = s.id
-          JOIN events e ON ec.event_id = e.id
+    // Handle Reject action
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reject') {
+        $event_id         = intval($_POST['event_id']);
+        $rejection_reason = trim($_POST['rejection_reason'] ?? '');
+
+        if (empty($rejection_reason)) {
+            $error_message = "❌ Rejection reason is required.";
+        } else {
+            $update_stmt = $conn->prepare("UPDATE student_event_register SET verification_status = 'Rejected', rejection_reason = ?, verified_by = ?, verified_date = NOW() WHERE id = ?");
+            $update_stmt->bind_param("sii", $rejection_reason, $faculty_id, $event_id);
+            if ($update_stmt->execute()) {
+                $update_stmt->close();
+                $conn->close();
+                // Redirect back to Pending page to continue processing more events
+                header("Location: verify_events.php?success=rejected&category=" . urlencode($event_category) . "&status=Pending");
+                exit();
+            } else {
+                $error_message = "❌ Error rejecting registration: " . $update_stmt->error;
+                $update_stmt->close();
+            }
+        }
+    }
+
+    // Check for success messages from redirects
+    if (isset($_GET['success'])) {
+        if ($_GET['success'] === 'approved') {
+            $success_message = "✅ Event registration approved successfully!";
+        } elseif ($_GET['success'] === 'rejected') {
+            $success_message = "✅ Event registration rejected successfully!";
+        }
+    }
+
+    // Build SQL query based on filters
+    $query = "SELECT
+                 ser.id,
+                 sr.name AS student_name,
+                 ser.regno,
+                 ser.event_name,
+                 ser.organisation as organizer,
+                 ser.start_date as event_date,
+                 ser.event_type as category,
+                 ser.prize,
+                 COALESCE(ser.verification_status, 'Pending') as status,
+                 ser.start_date as created_at
+          FROM student_event_register ser
+          JOIN student_register sr ON ser.regno = sr.regno
           WHERE 1=1";
 
-// Apply filters
-if ($event_category !== 'All') {
-    $query .= " AND ec.category = '" . $conn->real_escape_string($event_category) . "'";
-}
-$query .= " AND ec.status = '" . $conn->real_escape_string($status_filter) . "'";
+    // Apply filters
+    if ($event_category !== 'All') {
+        $query .= " AND ser.event_type = '" . $conn->real_escape_string($event_category) . "'";
+    }
+    $query .= " AND COALESCE(ser.verification_status, 'Pending') = '" . $conn->real_escape_string($status_filter) . "'";
 
-// Add ordering
-$query .= " ORDER BY ec.created_at DESC";
+    // Add ordering
+    $query .= " ORDER BY ser.start_date DESC";
 
-$result = $conn->query($query);
-if (!$result) {
-    $error_message = "Query Error: " . $conn->error;
-    $result = null;
-}
+    $result = $conn->query($query);
+    if (! $result) {
+        $error_message = "Query Error: " . $conn->error;
+        $result        = null;
+    }
 
-$total_records = $result ? $result->num_rows : 0;
+    $total_records = $result ? $result->num_rows : 0;
 
-// Category colors
-$category_colors = [
-    'Workshop' => '#3498db',
-    'Symposium' => '#9b59b6',
-    'Conference' => '#e74c3c',
-    'Hackathon' => '#8e44ad',
-    'Seminar' => '#2ecc71',
-    'Paper Presentation' => '#f39c12'
-];
+    // Category colors
+    $category_colors = [
+        'Workshop'           => '#3498db',
+        'Symposium'          => '#9b59b6',
+        'Conference'         => '#e74c3c',
+        'Hackathon'          => '#8e44ad',
+        'Seminar'            => '#2ecc71',
+        'Paper Presentation' => '#f39c12',
+    ];
 ?>
 
 <!DOCTYPE html>
@@ -95,7 +121,7 @@ $category_colors = [
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Event Certificate Validation</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -130,28 +156,34 @@ $category_colors = [
 
         .grid-container {
             display: grid;
-            grid-template-columns: 250px 1fr;
+            grid-template-columns: 1fr;
             grid-template-rows: 80px 1fr;
-            grid-template-areas:
-                "sidebar header"
-                "sidebar main";
             min-height: 100vh;
             width: 100%;
         }
 
         /* Header */
         .header {
-            grid-area: header;
-            background: white;
+            background-color: #fff;
+            height: 80px;
             display: flex;
+            font-size: 15px;
+            font-weight: 100;
             align-items: center;
+            justify-content: space-between;
+            box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+            color: #1e4276;
+            position: fixed;
+            width: 100%;
+            z-index: 1001;
+            top: 0;
+            left: 0;
             padding: 0 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-            gap: 20px;
         }
 
         .header-logo img {
             height: 60px;
+            width: 200px;
             object-fit: contain;
             flex-shrink: 0;
         }
@@ -163,7 +195,7 @@ $category_colors = [
 
         .header-title p {
             margin: 0;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 600;
             color: var(--primary-color);
         }
@@ -195,10 +227,19 @@ $category_colors = [
 
         /* Sidebar */
         .sidebar {
-            grid-area: sidebar;
-            background: white;
-            border-right: 1px solid #e0e0e0;
-            overflow-y: auto;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 250px !important;
+            height: 100vh !important;
+            min-height: 100vh !important;
+            max-height: 100vh !important;
+            z-index: 1000 !important;
+            background: #ffffff !important;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15) !important;
+            padding: 20px 0 !important;
+            overflow-y: auto !important;
+            border-right: 1px solid #e0e0e0 !important;
         }
 
         .sidebar-header {
@@ -222,7 +263,7 @@ $category_colors = [
             font-size: 24px;
         }
 
-        .faculty-info {
+        .student-info {
             padding: 15px;
             margin: 15px;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
@@ -230,13 +271,13 @@ $category_colors = [
             color: white;
         }
 
-        .faculty-name {
+        .student-name {
             font-weight: 600;
             font-size: 15px;
             margin-bottom: 5px;
         }
 
-        .faculty-id {
+        .student-regno {
             font-size: 12px;
             color: rgba(255, 255, 255, 0.8);
         }
@@ -275,16 +316,18 @@ $category_colors = [
             font-weight: 600;
         }
 
-        .nav-link i {
-            font-size: 18px;
+        .nav-link .material-symbols-outlined {
+            font-size: 20px;
             width: 20px;
         }
 
         /* Main Content */
         .main {
-            grid-area: main;
+            margin-top: 80px;
+            margin-left: 250px;
             padding: 30px;
             overflow-y: auto;
+            min-height: calc(100vh - 80px);
         }
 
         .page-header {
@@ -718,15 +761,36 @@ $category_colors = [
 
         /* Responsive */
         @media (max-width: 768px) {
-            .grid-container {
-                grid-template-columns: 1fr;
-                grid-template-areas:
-                    "header"
-                    "main";
+            .sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                transform: translateX(-100%) !important;
+                z-index: 1004 !important;
+                background: #ffffff !important;
+                box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15) !important;
+                transition: transform 0.3s ease !important;
+                padding: 20px 0 !important;
+                overflow-y: auto !important;
             }
 
-            .sidebar {
-                display: none;
+            .close-sidebar {
+                display: flex !important;
+            }
+
+            .sidebar.active {
+                transform: translateX(0) !important;
+                z-index: 1005 !important;
+            }
+
+            .main {
+                margin-top: 80px;
+                margin-left: 0;
+                padding: 20px 15px;
             }
 
             .header {
@@ -735,10 +799,6 @@ $category_colors = [
 
             .header-logo img {
                 display: none;
-            }
-
-            .main {
-                padding: 20px 15px;
             }
 
             .filter-row {
@@ -773,10 +833,10 @@ $category_colors = [
         <!-- Header -->
         <div class="header">
             <div class="header-logo">
-                <img src="../asserts/images/Sona Logo.png" alt="Sona College Logo" />
+                <img src="sona_logo.jpg" alt="Sona College Logo" height="60px" width="200" />
             </div>
             <div class="header-title">
-                <p>Event Management System</p>
+                <p>Event Management Dashboard</p>
             </div>
             <div class="header-profile">
                 <div class="profile-info">
@@ -795,52 +855,52 @@ $category_colors = [
                 </div>
             </div>
 
-            <div class="faculty-info">
-                <div class="faculty-name"><?php echo htmlspecialchars($faculty_name); ?></div>
-                <div class="faculty-id">ID: <?php echo htmlspecialchars($faculty_id); ?></div>
+            <div class="student-info">
+                <div class="student-name"><?php echo htmlspecialchars($faculty_name); ?></div>
+                <div class="student-regno">ID:                                               <?php echo htmlspecialchars($faculty_id); ?> (Counselor)</div>
             </div>
 
             <nav>
                 <ul class="nav-menu">
                     <li class="nav-item">
                         <a href="index.php" class="nav-link">
-                            <i class="fas fa-chart-line"></i>
+                            <span class="material-symbols-outlined">dashboard</span>
                             Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="registered_students.php" class="nav-link">
-                            <i class="fas fa-users"></i>
+                            <span class="material-symbols-outlined">group</span>
                             Registered Students
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="assigned_students.php" class="nav-link">
-                            <i class="fas fa-user-check"></i>
+                            <span class="material-symbols-outlined">supervisor_account</span>
                             My Assigned Students
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="od_approvals.php" class="nav-link">
-                            <i class="fas fa-clipboard-check"></i>
+                            <span class="material-symbols-outlined">approval</span>
                             OD Approvals
                         </a>
                     </li>
                     <li class="nav-item active">
                         <a href="verify_events.php" class="nav-link">
-                            <i class="fas fa-certificate"></i>
+                            <span class="material-symbols-outlined">card_giftcard</span>
                             Event Certificate Validation
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="profile.php" class="nav-link">
-                            <i class="fas fa-user-circle"></i>
+                            <span class="material-symbols-outlined">person</span>
                             Profile
                         </a>
                     </li>
                     <li class="nav-item">
                         <a href="../admin/logout.php" class="nav-link">
-                            <i class="fas fa-sign-out-alt"></i>
+                            <span class="material-symbols-outlined">logout</span>
                             Logout
                         </a>
                     </li>
@@ -877,21 +937,24 @@ $category_colors = [
                         <div class="filter-group">
                             <label class="filter-label">Event Category</label>
                             <select name="category" class="filter-select">
-                                <option value="All" <?php echo $event_category === 'All' ? 'selected' : ''; ?>>All Categories</option>
-                                <option value="Workshop" <?php echo $event_category === 'Workshop' ? 'selected' : ''; ?>>Workshop</option>
-                                <option value="Symposium" <?php echo $event_category === 'Symposium' ? 'selected' : ''; ?>>Symposium</option>
-                                <option value="Conference" <?php echo $event_category === 'Conference' ? 'selected' : ''; ?>>Conference</option>
-                                <option value="Hackathon" <?php echo $event_category === 'Hackathon' ? 'selected' : ''; ?>>Hackathon</option>
-                                <option value="Seminar" <?php echo $event_category === 'Seminar' ? 'selected' : ''; ?>>Seminar</option>
-                                <option value="Paper Presentation" <?php echo $event_category === 'Paper Presentation' ? 'selected' : ''; ?>>Paper Presentation</option>
+                                <option value="All"                                                                                                                                                          <?php echo $event_category === 'All' ? 'selected' : ''; ?>>All Categories</option>
+                                <option value="Workshop"                                                                                                                 <?php echo $event_category === 'Workshop' ? 'selected' : ''; ?>>Workshop</option>
+                                <option value="Symposium"                                                                                                                   <?php echo $event_category === 'Symposium' ? 'selected' : ''; ?>>Symposium</option>
+                                <option value="Conference"                                                                                                                     <?php echo $event_category === 'Conference' ? 'selected' : ''; ?>>Conference</option>
+                                <option value="Hackathon"                                                                                                                   <?php echo $event_category === 'Hackathon' ? 'selected' : ''; ?>>Hackathon</option>
+                                <option value="Seminar"                                                                                                               <?php echo $event_category === 'Seminar' ? 'selected' : ''; ?>>Seminar</option>
+                                <option value="Paper Presentation"                                                                                                                                     <?php echo $event_category === 'Paper Presentation' ? 'selected' : ''; ?>>Paper Presentation</option>
+                                <option value="Webinar"                                                                                                               <?php echo $event_category === 'Webinar' ? 'selected' : ''; ?>>Webinar</option>
+                                <option value="Competition"                                                                                                                       <?php echo $event_category === 'Competition' ? 'selected' : ''; ?>>Competition</option>
+                                <option value="Cultural"                                                                                                                 <?php echo $event_category === 'Cultural' ? 'selected' : ''; ?>>Cultural</option>
                             </select>
                         </div>
                         <div class="filter-group">
                             <label class="filter-label">Status</label>
                             <select name="status" class="filter-select">
-                                <option value="Pending" <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="Approved" <?php echo $status_filter === 'Approved' ? 'selected' : ''; ?>>Approved</option>
-                                <option value="Rejected" <?php echo $status_filter === 'Rejected' ? 'selected' : ''; ?>>Rejected</option>
+                                <option value="Pending"                                                                                                                                                                      <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="Approved"                                                                                                                                                                         <?php echo $status_filter === 'Approved' ? 'selected' : ''; ?>>Approved</option>
+                                <option value="Rejected"                                                                                                                                                                         <?php echo $status_filter === 'Rejected' ? 'selected' : ''; ?>>Rejected</option>
                             </select>
                         </div>
                         <div class="filter-group">
@@ -934,23 +997,23 @@ $category_colors = [
                                     <!-- Event Details -->
                                     <td>
                                         <div class="event-name"><?php echo htmlspecialchars($row['event_name']); ?></div>
-                                        <div class="event-meta"><i class="fas fa-building"></i> <?php echo htmlspecialchars($row['organizer']); ?></div>
-                                        <div class="event-meta"><i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($row['event_date'])); ?></div>
+                                        <div class="event-meta"><i class="fas fa-building"></i>                                                                                                                                                                                                                                                                                              <?php echo htmlspecialchars($row['organizer']); ?></div>
+                                        <div class="event-meta"><i class="fas fa-calendar"></i>                                                                                                                                                                                                                                                                                              <?php echo date('M d, Y', strtotime($row['event_date'])); ?></div>
                                     </td>
 
                                     <!-- Category Badge -->
                                     <td>
-                                        <span class="badge" style="background: <?php echo $category_colors[$row['category']] ?? '#6c757d'; ?>;">
+                                        <span class="badge" style="background:                                                                                                                                                                                                                                           <?php echo $category_colors[$row['category']] ?? '#6c757d'; ?>;">
                                             <?php echo htmlspecialchars($row['category']); ?>
                                         </span>
                                     </td>
 
                                     <!-- Achievement Level -->
                                     <td>
-                                        <?php if ($row['achievement_level'] === 'Prize Winner'): ?>
+                                        <?php if (! empty($row['prize']) && in_array($row['prize'], ['First', 'Second', 'Third'])): ?>
                                             <div class="achievement-prize">
                                                 <i class="fas fa-trophy"></i>
-                                                Prize Winner
+                                                <?php echo htmlspecialchars($row['prize']); ?> Prize
                                                 <?php if ($status_filter === 'Pending'): ?>
                                                     <span class="warning-text">⚠ Verify Carefully</span>
                                                 <?php endif; ?>
@@ -962,9 +1025,18 @@ $category_colors = [
 
                                     <!-- Certificate View -->
                                     <td>
-                                        <a href="<?php echo htmlspecialchars($row['certificate_file']); ?>" target="_blank" class="btn btn-view">
-                                            <i class="fas fa-eye"></i> View Cert
-                                        </a>
+                                        <?php if (! empty($row['certificate_file'])): ?>
+                                            <a href="../student/<?php echo htmlspecialchars($row['certificate_file']); ?>" target="_blank" class="btn btn-view">
+                                                <i class="fas fa-eye"></i> View Cert
+                                            </a>
+                                        <?php else: ?>
+                                            <span style="color:#6c757d; font-size: 12px;">No file</span>
+                                        <?php endif; ?>
+                                        <?php if (! empty($row['event_photo'])): ?>
+                                            <a href="../student/<?php echo htmlspecialchars($row['event_photo']); ?>" target="_blank" class="btn btn-view" style="margin-top: 5px;">
+                                                <i class="fas fa-image"></i> Photo
+                                            </a>
+                                        <?php endif; ?>
                                     </td>
 
                                     <!-- Actions -->
@@ -972,9 +1044,9 @@ $category_colors = [
                                         <div class="action-buttons">
                                             <?php if ($status_filter === 'Pending'): ?>
                                                 <form method="POST" style="display: inline;">
-                                                    <input type="hidden" name="cert_id" value="<?php echo $row['id']; ?>">
+                                                    <input type="hidden" name="event_id" value="<?php echo $row['id']; ?>">
                                                     <input type="hidden" name="action" value="approve">
-                                                    <button type="submit" class="btn btn-approve" onclick="return confirm('Approve this certificate?')">
+                                                    <button type="submit" class="btn btn-approve" onclick="return confirm('Approve this event registration?')">
                                                         <i class="fas fa-check-circle"></i> Approve
                                                     </button>
                                                 </form>
@@ -983,7 +1055,7 @@ $category_colors = [
                                                 </button>
                                             <?php else: ?>
                                                 <span style="color:#6c757d; font-size: 12px;">
-                                                    <i class="fas fa-lock"></i> <?php echo htmlspecialchars($status_filter); ?>
+                                                    <i class="fas fa-lock"></i>                                                                                                                                                                                                                                              <?php echo htmlspecialchars($status_filter); ?>
                                                 </span>
                                             <?php endif; ?>
                                         </div>
@@ -1010,29 +1082,29 @@ $category_colors = [
         <div class="modal-content">
             <div class="modal-header">
                 <i class="fas fa-times-circle" style="color: #dc3545;"></i>
-                Reject Certificate
+                Reject Event Registration
             </div>
             <form method="POST" id="rejectForm">
                 <div class="modal-body">
-                    <input type="hidden" name="cert_id" id="modalCertId" value="">
+                    <input type="hidden" name="event_id" id="modalEventId" value="">
                     <input type="hidden" name="action" value="reject">
-                    
+
                     <div class="form-group">
                         <label class="form-label">Rejection Reason *</label>
-                        <textarea name="rejection_reason" class="form-control" placeholder="Please provide a reason for rejecting this certificate..." required></textarea>
+                        <textarea name="rejection_reason" class="form-control" placeholder="Please provide a reason for rejecting this event registration..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-modal btn-modal-cancel" onclick="closeRejectModal()">Cancel</button>
-                    <button type="submit" class="btn-modal btn-modal-confirm">Reject Certificate</button>
+                    <button type="submit" class="btn-modal btn-modal-confirm">Reject Registration</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        function openRejectModal(certId) {
-            document.getElementById('modalCertId').value = certId;
+        function openRejectModal(eventId) {
+            document.getElementById('modalEventId').value = eventId;
             document.getElementById('rejectModal').classList.add('active');
         }
 
@@ -1063,5 +1135,5 @@ $category_colors = [
 </html>
 
 <?php
-$conn->close();
+    $conn->close();
 ?>

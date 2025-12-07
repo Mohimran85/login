@@ -232,7 +232,7 @@
                                              e.organisation, e.prize, e.prize_amount, e.event_poster, e.certificates
                                        FROM student_event_register e
                                        JOIN student_register s ON e.regno = s.regno
-                                       WHERE ($year_conditions) AND e.department=? AND e.semester=? AND e.event_type=?$location_condition");
+                                       WHERE ($year_conditions) AND e.department=? AND e.semester=? AND e.event_type=?$location_condition AND e.verification_status = 'Approved'");
 
                         // Bind parameters: all year patterns + department + semester + event_type
                         $bind_types  = str_repeat('s', count($year_patterns)) . 'sss';

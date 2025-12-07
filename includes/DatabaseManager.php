@@ -187,9 +187,9 @@ class DatabaseManager
                 -- Basic student info
                 s.name, s.regno,
 
-                -- Event statistics
-                (SELECT COUNT(*) FROM student_event_register WHERE regno = ?) as total_events,
-                (SELECT COUNT(*) FROM student_event_register WHERE regno = ? AND prize IN ('First', 'Second', 'Third')) as events_won,
+                -- Event statistics (only approved events count)
+                (SELECT COUNT(*) FROM student_event_register WHERE regno = ? AND verification_status = 'Approved') as total_events,
+                (SELECT COUNT(*) FROM student_event_register WHERE regno = ? AND verification_status = 'Approved' AND prize IN ('First', 'Second', 'Third')) as events_won,
 
                 -- OD statistics
                 (SELECT COUNT(*) FROM od_requests WHERE student_regno = ?) as total_od_requests,
@@ -215,7 +215,7 @@ class DatabaseManager
 
         $sql = "SELECT event_name, event_type, start_date, end_date, no_of_days, prize
                 FROM student_event_register
-                WHERE regno = ?
+                WHERE regno = ? AND verification_status = 'Approved'
                 ORDER BY start_date DESC, id DESC
                 LIMIT ?";
 
