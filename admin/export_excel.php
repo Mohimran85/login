@@ -12,6 +12,113 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Get filter parameters from POST (for reports.php) or GET (for participants.php)
+// Check if this is a reports export (POST with year, department, semester, event_type)
+$is_report_export = isset($_POST['year']) && isset($_POST['department']) && isset($_POST['semester']) && isset($_POST['event_type']);
+
+if ($is_report_export) {
+    // Handle reports export
+    $year       = $_POST['year'];
+    $department = $_POST['department'];
+    $semester   = $_POST['semester'];
+    $event_type = $_POST['event_type'];
+    $location   = isset($_POST['location']) ? $_POST['location'] : '';
+
+    // Validate location is selected
+    if (empty($location)) {
+        die("Error: Location filter must be selected");
+    }
+
+    header("Content-Type: application/vnd.ms-excel");
+    header("Content-Disposition: attachment; filename=reports_" . date('Y-m-d') . ".xls");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+
+    // For academic year format like "2024-2025", we need to map it back to database values
+    $year_patterns = [$year];
+    if (strpos($year, '-') !== false) {
+        $year_parts = explode('-', $year);
+        if (count($year_parts) == 2) {
+            // Add short format like "2024-25"
+            $short_year      = $year_parts[0] . '-' . substr($year_parts[1], -2);
+            $year_patterns[] = $short_year;
+        }
+    }
+
+    // Build the query with OR conditions for year patterns
+    $year_conditions = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
+
+    // Build location filter condition
+    if ($location === 'tamilnadu') {
+        $location_condition = " AND e.state = 'Tamil Nadu'";
+    } else { // outside
+        $location_condition = " AND e.state != 'Tamil Nadu'";
+    }
+
+    $stmt = $conn->prepare("SELECT e.id, e.regno, s.name, e.current_year, e.semester, e.department,
+                                         e.state, e.district, e.event_type, e.event_name, e.start_date, e.end_date, e.no_of_days,
+                                         e.organisation, e.prize, e.prize_amount
+                                   FROM student_event_register e
+                                   JOIN student_register s ON e.regno = s.regno
+                                   WHERE ($year_conditions) AND e.department=? AND e.semester=? AND e.event_type=?$location_condition");
+
+    // Bind parameters: all year patterns + department + semester + event_type
+    $bind_types  = str_repeat('s', count($year_patterns)) . 'sss';
+    $bind_values = array_merge($year_patterns, [$department, $semester, $event_type]);
+    $stmt->bind_param($bind_types, ...$bind_values);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Output Excel table
+    echo "<table border='1'>";
+    echo "<tr>";
+    echo "<th>S.No</th>";
+    echo "<th>Reg No</th>";
+    echo "<th>Name</th>";
+    echo "<th>Academic Year</th>";
+    echo "<th>Semester</th>";
+    echo "<th>Department</th>";
+    echo "<th>State</th>";
+    echo "<th>District</th>";
+    echo "<th>Event Type</th>";
+    echo "<th>Event Name</th>";
+    echo "<th>Start Date</th>";
+    echo "<th>End Date</th>";
+    echo "<th>No of Days</th>";
+    echo "<th>Organisation</th>";
+    echo "<th>Prize</th>";
+    echo "<th>Prize Amount</th>";
+    echo "</tr>";
+
+    $sno = 1;
+    while ($row = $result->fetch_assoc()) {
+        echo "<tr>";
+        echo "<td>" . $sno++ . "</td>";
+        echo "<td>" . htmlspecialchars($row['regno']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['current_year']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['semester']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['department']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['state']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['district']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['event_type']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['event_name']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['start_date']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['end_date']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['no_of_days']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['organisation']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['prize']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['prize_amount']) . "</td>";
+        echo "</tr>";
+    }
+
+    echo "</table>";
+
+    $stmt->close();
+    $conn->close();
+    exit();
+}
+
 // Get filter parameters from GET (same as participants.php)
 $filter_event_type       = isset($_GET['event_type']) ? $_GET['event_type'] : '';
 $filter_department       = isset($_GET['department']) ? $_GET['department'] : '';
@@ -97,8 +204,6 @@ if ($filter_participant_type === 'student') {
             se.organisation,
             se.prize,
             se.prize_amount,
-            se.event_poster,
-            se.certificates,
             'student' as participant_type
         FROM student_event_register se
         LEFT JOIN student_register sr ON se.regno = sr.regno
@@ -119,8 +224,6 @@ if ($filter_participant_type === 'student') {
             te.organisation,
             '' as prize,
             '' as prize_amount,
-            '' as event_poster,
-            te.certificate_path as certificates,
             'teacher' as participant_type
         FROM staff_event_reg te
         LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id
@@ -142,8 +245,6 @@ if ($filter_participant_type === 'student') {
             se.organisation,
             se.prize,
             se.prize_amount,
-            se.event_poster,
-            se.certificates,
             'student' as participant_type
         FROM student_event_register se
         LEFT JOIN student_register sr ON se.regno = sr.regno
@@ -164,8 +265,6 @@ if ($filter_participant_type === 'student') {
             te.organisation,
             '' as prize,
             '' as prize_amount,
-            '' as event_poster,
-            te.certificate_path as certificates,
             'teacher' as participant_type
         FROM staff_event_reg te
         LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id
@@ -194,8 +293,6 @@ echo "<tr>
         <th>Event Date</th>
         <th>Organisation</th>
         <th>Prize</th>
-        <th>Has Poster</th>
-        <th>Has Certificate</th>
       </tr>";
 
 $sno = 1;
@@ -217,17 +314,10 @@ if ($result->num_rows > 0) {
         echo "<td>" . htmlspecialchars(date('d-M-Y', strtotime($row['event_date']))) . "</td>";
         echo "<td>" . htmlspecialchars($row['organisation']) . "</td>";
         echo "<td>" . htmlspecialchars($row['prize'] ?: 'No Prize') . "</td>";
-
-        // File availability
-        $has_poster      = ! empty($row['event_poster']) ? 'Yes' : 'No';
-        $has_certificate = ! empty($row['certificates']) ? 'Yes' : 'No';
-        echo "<td>" . $has_poster . "</td>";
-        echo "<td>" . $has_certificate . "</td>";
-
         echo "</tr>";
     }
 } else {
-    echo "<tr><td colspan='13'>No records found</td></tr>";
+    echo "<tr><td colspan='11'>No records found</td></tr>";
 }
 
 echo "</table>";

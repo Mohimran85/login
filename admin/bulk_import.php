@@ -582,7 +582,7 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="icon">
-                <img class="logo" src="./asserts/sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
+                <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
             </div>
             <div class="header-title">
                 <p>Event Management Dashboard</p>

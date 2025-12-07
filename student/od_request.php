@@ -697,6 +697,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="internship_submission.php" class="nav-link">
+                            <span class="material-symbols-outlined">work</span>
+                            Internship Submission
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="profile.php" class="nav-link">
                             <span class="material-symbols-outlined">person</span>
                             Profile

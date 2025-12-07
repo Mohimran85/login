@@ -35,7 +35,7 @@
     $search            = isset($_GET['search']) ? trim($_GET['search']) : '';
     $event_type_filter = isset($_GET['event_type']) ? $_GET['event_type'] : '';
     $prize_filter      = isset($_GET['prize']) ? $_GET['prize'] : '';
-    $sort_by           = isset($_GET['sort']) ? $_GET['sort'] : 'attended_date';
+    $sort_by           = isset($_GET['sort']) ? $_GET['sort'] : 'start_date';
     $sort_order        = isset($_GET['order']) ? $_GET['order'] : 'DESC';
 
     // Build query with filters
@@ -67,9 +67,9 @@
     $where_clause = implode(" AND ", $where_conditions);
 
     // Validate sort columns
-    $allowed_sorts = ['attended_date', 'event_name', 'event_type', 'prize'];
+    $allowed_sorts = ['start_date', 'event_name', 'event_type', 'prize'];
     if (! in_array($sort_by, $allowed_sorts)) {
-        $sort_by = 'attended_date';
+        $sort_by = 'start_date';
     }
     $sort_order = ($sort_order === 'ASC') ? 'ASC' : 'DESC';
 
@@ -769,7 +769,7 @@
             .btn-download {
                 background: linear-gradient(135deg, #00458bff 0%, #004499 100%);
                 color: white;
-              
+
             }
 
             .btn-download:hover {
@@ -781,7 +781,7 @@
                 background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
                 color: #0066cc;
                 border: 2px solid #09529bff;
-               
+
             }
 
             .btn-view:hover {
@@ -974,6 +974,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a href="internship_submission.php" class="nav-link">
+                            <span class="material-symbols-outlined">work</span>
+                            Internship Submission
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a href="profile.php" class="nav-link">
                             <span class="material-symbols-outlined">person</span>
                             Profile
@@ -1048,18 +1054,18 @@
                             <label class="filter-label">Prize Filter</label>
                             <select name="prize" class="filter-select">
                                 <option value="">All Prizes</option>
-                                <option value="won"                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($prize_filter === 'won') ? 'selected' : ''; ?>>Events Won</option>
-                                <option value="participation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($prize_filter === 'participation') ? 'selected' : ''; ?>>Participation Only</option>
+                                <option value="won"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($prize_filter === 'won') ? 'selected' : ''; ?>>Events Won</option>
+                                <option value="participation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($prize_filter === 'participation') ? 'selected' : ''; ?>>Participation Only</option>
                             </select>
                         </div>
 
                         <div class="filter-group">
                             <label class="filter-label">Sort By</label>
                             <select name="sort" class="filter-select">
-                                <option value="attended_date"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($sort_by === 'attended_date') ? 'selected' : ''; ?>>Date</option>
-                                <option value="event_name"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($sort_by === 'event_name') ? 'selected' : ''; ?>>Event Name</option>
-                                <option value="event_type"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
-                                <option value="prize"                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($sort_by === 'prize') ? 'selected' : ''; ?>>Prize</option>
+                                <option value="start_date"                                                                                                                     <?php echo($sort_by === 'start_date') ? 'selected' : ''; ?>>Date</option>
+                                <option value="event_name"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($sort_by === 'event_name') ? 'selected' : ''; ?>>Event Name</option>
+                                <option value="event_type"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($sort_by === 'event_type') ? 'selected' : ''; ?>>Event Type</option>
+                                <option value="prize"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($sort_by === 'prize') ? 'selected' : ''; ?>>Prize</option>
                             </select>
                         </div>
 
@@ -1086,7 +1092,14 @@
                                     </div>
                                     <div class="meta-item">
                                         <span class="material-symbols-outlined">schedule</span>
-                                        <?php echo date('M d, Y', strtotime($participation['attended_date'])); ?>
+                                        <?php
+                                            if ($participation['start_date'] === $participation['end_date']) {
+                                                echo date('M d, Y', strtotime($participation['start_date']));
+                                            } else {
+                                                echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
+                                            }
+                                        ?>
+                                        (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
                                     </div>
                                     <div class="meta-item">
                                         <span class="material-symbols-outlined">business</span>
@@ -1101,7 +1114,7 @@
         default  => 'prize-participation'
 };
 ?>">
-                                            🏆                                                                                                                                                                                                 <?php echo htmlspecialchars($participation['prize']); ?>
+                                            🏆                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($participation['prize']); ?>
                                             <?php if (! empty($participation['prize_amount'])): ?>
                                                 - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
                                             <?php endif; ?>
@@ -1116,7 +1129,16 @@
                                     </div>
                                     <div class="detail-group">
                                         <div class="detail-label">Date:</div>
-                                        <div class="detail-value"><?php echo date('M d, Y', strtotime($participation['attended_date'])); ?></div>
+                                        <div class="detail-value">
+                                            <?php
+                                                if ($participation['start_date'] === $participation['end_date']) {
+                                                    echo date('M d, Y', strtotime($participation['start_date']));
+                                                } else {
+                                                    echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
+                                                }
+                                            ?>
+                                            (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
+                                        </div>
                                     </div>
                                     <div class="detail-group">
                                         <div class="detail-label">Organization:</div>
@@ -1138,15 +1160,15 @@
                                     <div class="detail-group">
                                         <div class="detail-label">Prize:</div>
                                         <div class="detail-value">
-                                            <span class="prize-badge                                                                                                                                                                                                                                                                                 <?php
-                                                                                                                                                                                                                                                                                     echo match ($participation['prize']) {
-                                                                                                                                                                                                                                                                                         'First'  => 'prize-first',
-                                                                                                                                                                                                                                                                                         'Second' => 'prize-second',
-                                                                                                                                                                                                                                                                                         'Third'  => 'prize-third',
-                                                                                                                                                                                                                                                                                         default  => 'prize-participation'
-                                                                                                                                                                                                                                                                                 };
-                                                                                                                                                                                                                                                                                 ?>">
-                                                🏆                                                                                                                                                                                                                 <?php echo htmlspecialchars($participation['prize']); ?>
+                                            <span class="prize-badge                                                                                                                                                                                                                                                                                                                                                                                                                         <?php
+                                                                                                                                                                                                                                                                                                                                                                                                                             echo match ($participation['prize']) {
+                                                                                                                                                                                                                                                                                                                                                                                                                                 'First'  => 'prize-first',
+                                                                                                                                                                                                                                                                                                                                                                                                                                 'Second' => 'prize-second',
+                                                                                                                                                                                                                                                                                                                                                                                                                                 'Third'  => 'prize-third',
+                                                                                                                                                                                                                                                                                                                                                                                                                                 default  => 'prize-participation'
+                                                                                                                                                                                                                                                                                                                                                                                                                         };
+                                                                                                                                                                                                                                                                                                                                                                                                                         ?>">
+                                                🏆                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($participation['prize']); ?>
                                                 <?php if (! empty($participation['prize_amount'])): ?>
                                                     - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
                                                 <?php endif; ?>
@@ -1207,7 +1229,16 @@
                                     </div>
                                     <div class="info-row">
                                         <div class="info-label">Date</div>
-                                        <div class="info-value"><?php echo date('M d, Y', strtotime($participation['attended_date'])); ?></div>
+                                        <div class="info-value">
+                                            <?php
+                                                if ($participation['start_date'] === $participation['end_date']) {
+                                                    echo date('M d, Y', strtotime($participation['start_date']));
+                                                } else {
+                                                    echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
+                                                }
+                                            ?>
+                                            (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
+                                        </div>
                                     </div>
                                     <div class="info-row">
                                         <div class="info-label">Organization</div>
@@ -1229,15 +1260,15 @@
                                     <div class="info-row">
                                         <div class="info-label">Prize</div>
                                         <div class="info-value">
-                                            <span class="prize-badge                                                                                                                                                                                                             <?php
-                                                                                                                                                                                                                 echo match ($participation['prize']) {
-                                                                                                                                                                                                                     'First'  => 'prize-first',
-                                                                                                                                                                                                                     'Second' => 'prize-second',
-                                                                                                                                                                                                                     'Third'  => 'prize-third',
-                                                                                                                                                                                                                     default  => 'prize-participation'
-                                                                                                                                                                                                             };
-                                                                                                                                                                                                             ?>">
-                                                🏆                                                                                                                                                             <?php echo htmlspecialchars($participation['prize']); ?>
+                                            <span class="prize-badge                                                                                                                                                                                                                                                                                                                                                     <?php
+                                                                                                                                                                                                                                                                                                                                                         echo match ($participation['prize']) {
+                                                                                                                                                                                                                                                                                                                                                             'First'  => 'prize-first',
+                                                                                                                                                                                                                                                                                                                                                             'Second' => 'prize-second',
+                                                                                                                                                                                                                                                                                                                                                             'Third'  => 'prize-third',
+                                                                                                                                                                                                                                                                                                                                                             default  => 'prize-participation'
+                                                                                                                                                                                                                                                                                                                                                     };
+                                                                                                                                                                                                                                                                                                                                                     ?>">
+                                                🏆                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($participation['prize']); ?>
                                                 <?php if (! empty($participation['prize_amount'])): ?>
                                                     - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
                                                 <?php endif; ?>

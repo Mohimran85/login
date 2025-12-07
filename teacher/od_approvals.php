@@ -1188,6 +1188,12 @@
                             OD Approvals
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="verify_events.php" class="nav-link">
+                            <span class="material-symbols-outlined">card_giftcard</span>
+                            Event Certificate Validation
+                        </a>
+                    </li>
                     <?php endif; ?>
                     <?php if ($teacher_data['status'] === 'admin'): ?>
                     <li class="nav-item">

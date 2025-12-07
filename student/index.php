@@ -477,6 +477,12 @@
               </a>
             </li>
             <li class="nav-item">
+              <a href="internship_submission.php" class="nav-link">
+                <span class="material-symbols-outlined">work</span>
+                Internship Submission
+              </a>
+            </li>
+            <li class="nav-item">
               <a href="od_request.php" class="nav-link">
                 <span class="material-symbols-outlined">description</span>
                 OD Request
@@ -595,7 +601,16 @@
                       <h4><?php echo htmlspecialchars($event['event_name']); ?></h4>
                       <p class="activity-meta">
                         <span class="event-type"><?php echo htmlspecialchars($event['event_type']); ?></span>
-                        <span class="event-date"><?php echo date('M d, Y', strtotime($event['attended_date'])); ?></span>
+                        <span class="event-date">
+                          <?php
+                              if ($event['start_date'] === $event['end_date']) {
+                                  echo date('M d, Y', strtotime($event['start_date']));
+                              } else {
+                                  echo date('M d', strtotime($event['start_date'])) . ' - ' . date('M d, Y', strtotime($event['end_date']));
+                              }
+                          ?>
+                          (<?php echo $event['no_of_days']; ?> day<?php echo $event['no_of_days'] > 1 ? 's' : ''; ?>)
+                        </span>
                         <?php if (! empty($event['prize']) && $event['prize'] !== 'No Prize'): ?>
                           <span class="prize-badge">🏆<?php echo htmlspecialchars($event['prize']); ?></span>
                         <?php endif; ?>
@@ -631,7 +646,7 @@
                     <div class="od-request-details">
                       <h4><?php echo htmlspecialchars($od_request['event_name']); ?></h4>
                       <p class="od-request-meta">
-                        <span class="od-status                                               <?php echo $od_request['status']; ?>">
+                        <span class="od-status                                                                                             <?php echo $od_request['status']; ?>">
                           <?php echo ucfirst($od_request['status']); ?>
                         </span>
                         <span class="od-date"><?php echo date('M d, Y', strtotime($od_request['event_date'])); ?></span>
@@ -664,7 +679,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                   <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                     <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>

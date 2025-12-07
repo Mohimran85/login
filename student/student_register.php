@@ -17,7 +17,7 @@
         }
 
         $username  = $_SESSION['username'];
-        $user_sql  = "SELECT name, regno FROM student_register WHERE username=?";
+        $user_sql  = "SELECT name, regno, semester, department FROM student_register WHERE username=?";
         $user_stmt = $conn_user->prepare($user_sql);
         $user_stmt->bind_param("s", $username);
         $user_stmt->execute();
@@ -36,7 +36,8 @@
     $auto_event_name     = isset($_GET['event']) ? trim($_GET['event']) : '';
     $auto_event_type     = isset($_GET['type']) ? trim($_GET['type']) : '';
     $auto_organisation   = isset($_GET['org']) ? trim($_GET['org']) : '';
-    $auto_attended_date  = isset($_GET['date']) ? trim($_GET['date']) : '';
+    $auto_start_date     = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
+    $auto_end_date       = isset($_GET['end_date']) ? trim($_GET['end_date']) : '';
     $auto_event_state    = isset($_GET['state']) ? trim($_GET['state']) : '';
     $auto_event_district = isset($_GET['district']) ? trim($_GET['district']) : '';
     $auto_department     = isset($_GET['dept']) ? trim($_GET['dept']) : '';
@@ -60,14 +61,25 @@
         $department = isset($_POST['department_code']) && ! empty($_POST['department_code'])
             ? trim($_POST['department_code'])
             : (isset($_POST['department']) ? trim($_POST['department']) : '');
-        $state         = isset($_POST['state']) ? trim($_POST['state']) : '';
-        $district      = isset($_POST['district']) ? trim($_POST['district']) : '';
-        $event_type    = isset($_POST['eventType']) ? trim($_POST['eventType']) : '';
-        $event_name    = isset($_POST['eventName']) ? trim($_POST['eventName']) : '';
-        $attended_date = isset($_POST['attendedDate']) ? $_POST['attendedDate'] : '';
-        $organisation  = isset($_POST['organisation']) ? trim($_POST['organisation']) : '';
-        $prize         = isset($_POST['prize']) ? trim($_POST['prize']) : '';
-        $prize_amount  = isset($_POST['amount']) ? trim($_POST['amount']) : '';
+        $state      = isset($_POST['state']) ? trim($_POST['state']) : '';
+        $district   = isset($_POST['district']) ? trim($_POST['district']) : '';
+        $event_type = isset($_POST['eventType']) ? trim($_POST['eventType']) : '';
+        $event_name = isset($_POST['eventName']) ? trim($_POST['eventName']) : '';
+        $start_date = isset($_POST['startDate']) ? $_POST['startDate'] : '';
+        $end_date   = isset($_POST['endDate']) ? $_POST['endDate'] : '';
+
+        // Calculate number of days
+        $no_of_days = 0;
+        if (! empty($start_date) && ! empty($end_date)) {
+            $start      = new DateTime($start_date);
+            $end        = new DateTime($end_date);
+            $interval   = $start->diff($end);
+            $no_of_days = $interval->days + 1; // +1 to include both start and end dates
+        }
+
+        $organisation = isset($_POST['organisation']) ? trim($_POST['organisation']) : '';
+        $prize        = isset($_POST['prize']) ? trim($_POST['prize']) : '';
+        $prize_amount = isset($_POST['amount']) ? trim($_POST['amount']) : '';
 
         // Note: OD letter is optional for data collection purposes only
 
@@ -87,6 +99,7 @@
 
         $event_poster_path = null;
         $certificate_path  = null;
+        $event_photo_path  = null;
 
         // Handle uploaded event poster
         if (isset($_FILES['poster']) && $_FILES['poster']['error'] === UPLOAD_ERR_OK) {
@@ -115,6 +128,27 @@
             }
         }
 
+        // Handle uploaded event photo (optional)
+        if (isset($_FILES['event_photo']) && $_FILES['event_photo']['error'] === UPLOAD_ERR_OK) {
+            $event_photo      = basename($_FILES['event_photo']['name']);
+            $event_photo_sane = preg_replace('/[^A-Za-z0-9_\.-]/', '', $event_photo);
+            $target_path      = $target_dir . uniqid('photo_') . '_' . $event_photo_sane;
+
+            // Validate image file
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime  = finfo_file($finfo, $_FILES["event_photo"]["tmp_name"]);
+            finfo_close($finfo);
+
+            $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (in_array($mime, $allowed_types)) {
+                move_uploaded_file($_FILES["event_photo"]["tmp_name"], $target_path);
+                $event_photo_path = $target_path;
+            } else {
+                echo "<p style='color:red;'>❌ Event photo must be an image file (JPG, PNG, or GIF).</p>";
+                $conn->close();exit;
+            }
+        }
+
         // Duplicate registration check
         $check_sql  = "SELECT id FROM student_event_register WHERE regno = ? AND event_name = ?";
         $check_stmt = $conn->prepare($check_sql);
@@ -132,8 +166,8 @@
 
         // Insert registration
         $sql = "INSERT INTO student_event_register
-        (regno, current_year, semester, state, district, department, event_type, event_name, attended_date, organisation, prize, prize_amount, event_poster, certificates)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        (regno, current_year, semester, state, district, department, event_type, event_name, start_date, end_date, no_of_days, organisation, prize, prize_amount, event_poster, certificates, event_photo)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
 
         if ($stmt === false) {
@@ -141,7 +175,7 @@
         }
 
         $stmt->bind_param(
-            "ssssssssssssss",
+            "ssssssssssissssss",
             $regno,
             $current_year,
             $semester,
@@ -150,16 +184,19 @@
             $department,
             $event_type,
             $event_name,
-            $attended_date,
+            $start_date,
+            $end_date,
+            $no_of_days,
             $organisation,
             $prize,
             $prize_amount,
             $event_poster_path,
-            $certificate_path
+            $certificate_path,
+            $event_photo_path
         );
 
         if ($stmt->execute()) {
-            header("Location: thankyou.php");
+            header("Location: index.php");
             $stmt->close();
             $conn->close();
             exit;
@@ -850,6 +887,12 @@
           </a>
         </li>
         <li class="nav-item">
+          <a href="internship_submission.php" class="nav-link">
+            <span class="material-symbols-outlined">work</span>
+            Internship Submission
+          </a>
+        </li>
+        <li class="nav-item">
           <a href="profile.php" class="nav-link">
             <span class="material-symbols-outlined">person</span>
             Profile
@@ -907,7 +950,17 @@
             <label for="department">Department:<span class="required-asterisk">*</span></label>
             <input type="text" id="department" name="department"
                    value="<?php
+                              // Use URL parameter if available, otherwise use profile data
+                              $display_dept = '';
+                              $dept_code    = '';
+
                               if (! empty($auto_department)) {
+                                  $dept_code = $auto_department;
+                              } elseif (isset($student_data['department']) && ! empty($student_data['department'])) {
+                                  $dept_code = $student_data['department'];
+                              }
+
+                              if ($dept_code) {
                                   // Display full department name based on code
                                   $dept_names = [
                                       'CSE'   => 'Computer Science and Engineering (CSE)',
@@ -918,24 +971,20 @@
                                       'CIVIL' => 'Civil Engineering (CIVIL)',
                                       'BME'   => 'Biomedical Engineering (BME)',
                                   ];
-                                  echo htmlspecialchars($dept_names[$auto_department] ?? $auto_department);
-                              } else {
-                                  echo 'Department will be auto-filled from your profile';
-                          }
+                                  $display_dept = $dept_names[$dept_code] ?? $dept_code;
+                              }
+
+                          echo htmlspecialchars($display_dept);
                           ?>"
                    placeholder="Auto-filled from your profile"
                    readonly required />
 
             <!-- Hidden input to maintain the department code for form submission -->
-            <input type="hidden" name="department_code" value="<?php echo htmlspecialchars($auto_department); ?>" />
+            <input type="hidden" name="department_code" value="<?php echo htmlspecialchars($dept_code ?? ''); ?>" />
           </div>
           <div class="item">
             <label for="semester">Semester:<span class="required-asterisk">*</span></label>
-            <select id="semester" name="semester" required>
-              <option value="" disabled selected>Select Semester</option>
-              <option value="Odd">Odd Semester</option>
-              <option value="Even">Even Semester</option>
-            </select>
+            <input type="text" id="semester" name="semester" value="<?php echo isset($student_data['semester']) ? htmlspecialchars($student_data['semester']) : ''; ?>" readonly required>
           </div>
         </div>
       </div>
@@ -950,14 +999,14 @@
           <div class="item">
             <label for="state">State:<span class="required-asterisk">*</span></label>
             <select id="state" name="state" required>
-              <option value="" disabled                                                                                                                      <?php echo empty($auto_event_state) ? 'selected' : ''; ?>>Select State</option>
-              <option value="Tamil Nadu"                                                                                                                         <?php echo($auto_event_state == 'Tamil Nadu') ? 'selected' : ''; ?>>Tamil Nadu</option>
-              <option value="Kerala"                                                                                                             <?php echo($auto_event_state == 'Kerala') ? 'selected' : ''; ?>>Kerala</option>
-              <option value="Karnataka"                                                                                                                      <?php echo($auto_event_state == 'Karnataka') ? 'selected' : ''; ?>>Karnataka</option>
-              <option value="Andhra Pradesh"                                                                                                                                     <?php echo($auto_event_state == 'Andhra Pradesh') ? 'selected' : ''; ?>>Andhra Pradesh</option>
-              <option value="Telangana"                                                                                                                      <?php echo($auto_event_state == 'Telangana') ? 'selected' : ''; ?>>Telangana</option>
-              <option value="Maharashtra"                                                                                                                            <?php echo($auto_event_state == 'Maharashtra') ? 'selected' : ''; ?>>Maharashtra</option>
-              <option value="Goa"                                                                                                    <?php echo($auto_event_state == 'Goa') ? 'selected' : ''; ?>>Goa</option>
+              <option value="" disabled                                                                                                                                                                                                                                                                                                                         <?php echo empty($auto_event_state) ? 'selected' : ''; ?>>Select State</option>
+              <option value="Tamil Nadu"                                                                                                                                                                                                                                                                                                                                 <?php echo($auto_event_state == 'Tamil Nadu') ? 'selected' : ''; ?>>Tamil Nadu</option>
+              <option value="Kerala"                                                                                                                                                                                                                                                                                                 <?php echo($auto_event_state == 'Kerala') ? 'selected' : ''; ?>>Kerala</option>
+              <option value="Karnataka"                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Karnataka') ? 'selected' : ''; ?>>Karnataka</option>
+              <option value="Andhra Pradesh"                                                                                                                                                                                                                                                                                                                                                                 <?php echo($auto_event_state == 'Andhra Pradesh') ? 'selected' : ''; ?>>Andhra Pradesh</option>
+              <option value="Telangana"                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Telangana') ? 'selected' : ''; ?>>Telangana</option>
+              <option value="Maharashtra"                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Maharashtra') ? 'selected' : ''; ?>>Maharashtra</option>
+              <option value="Goa"                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Goa') ? 'selected' : ''; ?>>Goa</option>
             </select>
           </div>
           <div class="item">
@@ -980,20 +1029,20 @@
           <div class="item">
             <label for="eventType">Event Type:<span class="required-asterisk">*</span></label>
             <select id="eventType" name="eventType" required>
-              <option value="" disabled                                                                                                                                                             <?php echo empty($auto_event_type) ? 'selected' : ''; ?>>Select The Event</option>
-              <option value="Workshop"                                                                                                                                                         <?php echo($auto_event_type == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
-              <option value="Symposium"                                                                                                                                                             <?php echo($auto_event_type == 'Symposium') ? 'selected' : ''; ?>>Symposium</option>
-              <option value="Conference"                                                                                                                                                                 <?php echo($auto_event_type == 'Conference') ? 'selected' : ''; ?>>Conference</option>
-              <option value="Webinar"                                                                                                                                                     <?php echo($auto_event_type == 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
-              <option value="Competition  "                                                                                                                                                                             <?php echo($auto_event_type == 'Competition') ? 'selected' : ''; ?>>Competition</option>
-              <option value="Seminar"                                                                                                                                                     <?php echo($auto_event_type == 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
-              <option value="Hackathon"                                                                                                                                                             <?php echo($auto_event_type == 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
-              <option value="Training"                                                                                                                                                         <?php echo($auto_event_type == 'Training') ? 'selected' : ''; ?>>Training</option>
-              <option value="Certification"                                                                                                                                                                             <?php echo($auto_event_type == 'Certification') ? 'selected' : ''; ?>>Certification</option>
-              <option value="Cultural Event"                                                                                                                                                                                 <?php echo($auto_event_type == 'Cultural Event') ? 'selected' : ''; ?>>Cultural Event</option>
-              <option value="Sports Event"                                                                                                                                                                         <?php echo($auto_event_type == 'Sports Event') ? 'selected' : ''; ?>>Sports Event</option>
-              <option value="Technical Event"                                                                                                                                                                                     <?php echo($auto_event_type == 'Technical Event') ? 'selected' : ''; ?>>Technical Event</option>
-              <option value="Other"                                                                                                                                             <?php echo($auto_event_type == 'Other') ? 'selected' : ''; ?>>Other</option>
+              <option value="" disabled                                                                                                                                                                                                                                                                                                                                                                <?php echo empty($auto_event_type) ? 'selected' : ''; ?>>Select The Event</option>
+              <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                       <?php echo($auto_event_type == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
+              <option value="Symposium"                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_type == 'Symposium') ? 'selected' : ''; ?>>Symposium</option>
+              <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_type == 'Conference') ? 'selected' : ''; ?>>Conference</option>
+              <option value="Webinar"                                                                                                                                                                                                                                                                                                                                              <?php echo($auto_event_type == 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
+              <option value="Competition  "                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo($auto_event_type == 'Competition') ? 'selected' : ''; ?>>Competition</option>
+              <option value="Seminar"                                                                                                                                                                                                                                                                                                                                              <?php echo($auto_event_type == 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
+              <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_type == 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
+              <option value="Training"                                                                                                                                                                                                                                                                                                                                                       <?php echo($auto_event_type == 'Training') ? 'selected' : ''; ?>>Training</option>
+              <option value="Certification"                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo($auto_event_type == 'Certification') ? 'selected' : ''; ?>>Certification</option>
+              <option value="Cultural Event"                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($auto_event_type == 'Cultural Event') ? 'selected' : ''; ?>>Cultural Event</option>
+              <option value="Sports Event"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($auto_event_type == 'Sports Event') ? 'selected' : ''; ?>>Sports Event</option>
+              <option value="Technical Event"                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo($auto_event_type == 'Technical Event') ? 'selected' : ''; ?>>Technical Event</option>
+              <option value="Other"                                                                                                                                                                                                                                                                                                                            <?php echo($auto_event_type == 'Other') ? 'selected' : ''; ?>>Other</option>
             </select>
           </div>
           <div class="item">
@@ -1007,9 +1056,21 @@
             </div>
           </div>
           <div class="item">
-            <label for="attendedDate">Attended Date:<span class="required-asterisk">*</span></label>
-            <input type="date" id="attendedDate" name="attendedDate"
-                   value="<?php echo htmlspecialchars($auto_attended_date); ?>" required />
+            <label for="startDate">Event Start Date:<span class="required-asterisk">*</span></label>
+            <input type="date" id="startDate" name="startDate"
+                   value="<?php echo htmlspecialchars($auto_start_date); ?>" required />
+          </div>
+          <div class="item">
+            <label for="endDate">Event End Date:<span class="required-asterisk">*</span></label>
+            <input type="date" id="endDate" name="endDate"
+                   value="<?php echo htmlspecialchars($auto_end_date); ?>" required />
+          </div>
+          <div class="item">
+            <label for="noOfDays">Number of Days:</label>
+            <input type="number" id="noOfDays" name="noOfDays"
+                   placeholder="Auto-calculated"
+                   readonly style="background-color: #f8f9fa !important; color: #0c3878; font-weight: 600;" />
+            <div class="form-field-helper">Automatically calculated from date range</div>
           </div>
           <div class="item">
             <label for="organisation">Organisation By:<span class="required-asterisk">*</span></label>
@@ -1081,6 +1142,18 @@
             </div>
             <div class="file-size-info">Allowed file types: PDF Only (Max size: 5MB)</div>
             <div class="file-info" id="certificatesInfo"></div>
+          </div>
+          <div class="item">
+            <label for="event_photo">Upload Event Photo (Optional):</label>
+            <div class="file-upload">
+              <input type="file" id="event_photo" name="event_photo" accept="image/jpeg,image/jpg,image/png,image/gif" />
+              <label for="event_photo" class="file-upload-label">
+                <span class="file-upload-icon">📷</span>
+                <span>Choose Event Photo (JPG, PNG, GIF)</span>
+              </label>
+            </div>
+            <div class="file-size-info">Allowed file types: JPG, PNG, GIF (Max size: 5MB)</div>
+            <div class="file-info" id="eventPhotoInfo"></div>
           </div>
         </div>
       </div>
@@ -1155,6 +1228,16 @@
             });
         }
 
+        // Event photo upload handling
+        const eventPhotoInput = document.getElementById('event_photo');
+        const eventPhotoInfo = document.getElementById('eventPhotoInfo');
+
+        if (eventPhotoInput && eventPhotoInfo) {
+            eventPhotoInput.addEventListener('change', function() {
+                handleImageUpload(this, eventPhotoInfo, 'Event Photo');
+            });
+        }
+
         function handleFileUpload(input, infoElement, fileType) {
             const file = input.files[0];
             if (file) {
@@ -1170,6 +1253,37 @@
 
                 if (file.type !== 'application/pdf') {
                     alert('Only PDF files are allowed.');
+                    input.value = '';
+                    infoElement.style.display = 'none';
+                    return;
+                }
+
+                infoElement.innerHTML = `
+                    <span style="color: #155724; font-weight: 500;">✓ ${fileType} Selected</span><br>
+                    <span style="color: #6c757d;">${fileName} (${fileSize} MB)</span>
+                `;
+                infoElement.style.display = 'block';
+            } else {
+                infoElement.style.display = 'none';
+            }
+        }
+
+        function handleImageUpload(input, infoElement, fileType) {
+            const file = input.files[0];
+            if (file) {
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Size in MB
+                const fileName = file.name;
+
+                if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                    alert('File size exceeds 5MB limit. Please choose a smaller file.');
+                    input.value = '';
+                    infoElement.style.display = 'none';
+                    return;
+                }
+
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Only image files (JPG, PNG, GIF) are allowed.');
                     input.value = '';
                     infoElement.style.display = 'none';
                     return;
@@ -1279,6 +1393,39 @@
             stateSelect.addEventListener('change', function() {
                 populateDistricts(this.value);
             });
+        }
+
+        // Auto-calculate number of days when dates change
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const noOfDaysInput = document.getElementById('noOfDays');
+
+        function calculateDays() {
+            if (startDateInput.value && endDateInput.value) {
+                const startDate = new Date(startDateInput.value);
+                const endDate = new Date(endDateInput.value);
+
+                if (endDate >= startDate) {
+                    const timeDiff = endDate.getTime() - startDate.getTime();
+                    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 to include both dates
+                    noOfDaysInput.value = daysDiff;
+                } else {
+                    noOfDaysInput.value = '';
+                    alert('End date must be greater than or equal to start date');
+                }
+            } else {
+                noOfDaysInput.value = '';
+            }
+        }
+
+        if (startDateInput && endDateInput && noOfDaysInput) {
+            startDateInput.addEventListener('change', calculateDays);
+            endDateInput.addEventListener('change', calculateDays);
+
+            // Calculate on page load if dates are pre-filled
+            if (startDateInput.value && endDateInput.value) {
+                calculateDays();
+            }
         }
     });
 </script>

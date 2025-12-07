@@ -213,10 +213,10 @@ class DatabaseManager
     {
         $cacheKey = "recent_activities_" . $regno;
 
-        $sql = "SELECT event_name, event_type, attended_date, prize
+        $sql = "SELECT event_name, event_type, start_date, end_date, no_of_days, prize
                 FROM student_event_register
                 WHERE regno = ?
-                ORDER BY attended_date DESC, id DESC
+                ORDER BY start_date DESC, id DESC
                 LIMIT ?";
 
         return $this->executeQuery($sql, [$regno, $limit], 'si', $cacheKey, 180);

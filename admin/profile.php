@@ -158,7 +158,7 @@
         <div class="header-logo">
           <img
             class="logo"
-            src="./asserts/sona_logo.jpg"
+            src="../sona_logo.jpg"
             alt="Sona College Logo"
             height="60px"
             width="200"
