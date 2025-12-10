@@ -150,16 +150,97 @@
         }
 
         // Duplicate registration check
-        $check_sql  = "SELECT id FROM student_event_register WHERE regno = ? AND event_name = ?";
+        $check_sql  = "SELECT id, event_type, start_date FROM student_event_register WHERE regno = ? AND event_name = ?";
         $check_stmt = $conn->prepare($check_sql);
         $check_stmt->bind_param("ss", $regno, $event_name);
         $check_stmt->execute();
         $check_stmt->store_result();
 
         if ($check_stmt->num_rows > 0) {
-            echo "<p style='color:orange;'>⚠️ You have already registered for this event.</p>";
             $check_stmt->close();
             $conn->close();
+
+            // Show JavaScript alert popup
+            echo "<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <style>
+                    body {
+                        font-family: 'Poppins', sans-serif;
+                        background: #f5f5f5;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        min-height: 100vh;
+                        margin: 0;
+                    }
+                    .alert-box {
+                        background: white;
+                        padding: 30px;
+                        border-radius: 15px;
+                        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+                        text-align: center;
+                        max-width: 400px;
+                        animation: slideIn 0.3s ease;
+                    }
+                    @keyframes slideIn {
+                        from { opacity: 0; transform: translateY(-20px); }
+                        to { opacity: 1; transform: translateY(0); }
+                    }
+                    .alert-icon {
+                        font-size: 48px;
+                        margin-bottom: 15px;
+                    }
+                    .alert-title {
+                        color: #ff9800;
+                        font-size: 24px;
+                        font-weight: 600;
+                        margin-bottom: 10px;
+                    }
+                    .alert-message {
+                        color: #6c757d;
+                        font-size: 16px;
+                        margin-bottom: 25px;
+                        line-height: 1.5;
+                    }
+                    .alert-btn {
+                        background: #0c3878;
+                        color: white;
+                        padding: 12px 30px;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    }
+                    .alert-btn:hover {
+                        background: #094067;
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(12, 56, 120, 0.3);
+                    }
+                </style>
+            </head>
+            <body>
+                <div class='alert-box'>
+                    <div class='alert-icon'>⚠️</div>
+                    <div class='alert-title'>Already Registered!</div>
+                    <div class='alert-message'>
+                        You have already registered for the event:<br>
+                        <strong>" . htmlspecialchars($event_name) . "</strong>
+                    </div>
+                    <button class='alert-btn' onclick='window.history.back()'>Go Back</button>
+                </div>
+                <script>
+                    // Also show browser alert
+                    setTimeout(function() {
+                        alert('⚠️ You have already registered for this event: " . addslashes(htmlspecialchars($event_name)) . "');
+                    }, 100);
+                </script>
+            </body>
+            </html>";
             exit;
         }
         $check_stmt->close();
@@ -999,14 +1080,14 @@
           <div class="item">
             <label for="state">State:<span class="required-asterisk">*</span></label>
             <select id="state" name="state" required>
-              <option value="" disabled                                                                                                                                                                                                                                                                                                                         <?php echo empty($auto_event_state) ? 'selected' : ''; ?>>Select State</option>
-              <option value="Tamil Nadu"                                                                                                                                                                                                                                                                                                                                 <?php echo($auto_event_state == 'Tamil Nadu') ? 'selected' : ''; ?>>Tamil Nadu</option>
-              <option value="Kerala"                                                                                                                                                                                                                                                                                                 <?php echo($auto_event_state == 'Kerala') ? 'selected' : ''; ?>>Kerala</option>
-              <option value="Karnataka"                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Karnataka') ? 'selected' : ''; ?>>Karnataka</option>
-              <option value="Andhra Pradesh"                                                                                                                                                                                                                                                                                                                                                                 <?php echo($auto_event_state == 'Andhra Pradesh') ? 'selected' : ''; ?>>Andhra Pradesh</option>
-              <option value="Telangana"                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Telangana') ? 'selected' : ''; ?>>Telangana</option>
-              <option value="Maharashtra"                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Maharashtra') ? 'selected' : ''; ?>>Maharashtra</option>
-              <option value="Goa"                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Goa') ? 'selected' : ''; ?>>Goa</option>
+              <option value="" disabled                                                                                                                                                                                                                                                                                                                                                                <?php echo empty($auto_event_state) ? 'selected' : ''; ?>>Select State</option>
+              <option value="Tamil Nadu"                                                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Tamil Nadu') ? 'selected' : ''; ?>>Tamil Nadu</option>
+              <option value="Kerala"                                                                                                                                                                                                                                                                                                                                     <?php echo($auto_event_state == 'Kerala') ? 'selected' : ''; ?>>Kerala</option>
+              <option value="Karnataka"                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_state == 'Karnataka') ? 'selected' : ''; ?>>Karnataka</option>
+              <option value="Andhra Pradesh"                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($auto_event_state == 'Andhra Pradesh') ? 'selected' : ''; ?>>Andhra Pradesh</option>
+              <option value="Telangana"                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_state == 'Telangana') ? 'selected' : ''; ?>>Telangana</option>
+              <option value="Maharashtra"                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($auto_event_state == 'Maharashtra') ? 'selected' : ''; ?>>Maharashtra</option>
+              <option value="Goa"                                                                                                                                                                                                                                                                                                          <?php echo($auto_event_state == 'Goa') ? 'selected' : ''; ?>>Goa</option>
             </select>
           </div>
           <div class="item">
@@ -1029,20 +1110,20 @@
           <div class="item">
             <label for="eventType">Event Type:<span class="required-asterisk">*</span></label>
             <select id="eventType" name="eventType" required>
-              <option value="" disabled                                                                                                                                                                                                                                                                                                                                                                <?php echo empty($auto_event_type) ? 'selected' : ''; ?>>Select The Event</option>
-              <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                       <?php echo($auto_event_type == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
-              <option value="Symposium"                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_type == 'Symposium') ? 'selected' : ''; ?>>Symposium</option>
-              <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_type == 'Conference') ? 'selected' : ''; ?>>Conference</option>
-              <option value="Webinar"                                                                                                                                                                                                                                                                                                                                              <?php echo($auto_event_type == 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
-              <option value="Competition  "                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo($auto_event_type == 'Competition') ? 'selected' : ''; ?>>Competition</option>
-              <option value="Seminar"                                                                                                                                                                                                                                                                                                                                              <?php echo($auto_event_type == 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
-              <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_type == 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
-              <option value="Training"                                                                                                                                                                                                                                                                                                                                                       <?php echo($auto_event_type == 'Training') ? 'selected' : ''; ?>>Training</option>
-              <option value="Certification"                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo($auto_event_type == 'Certification') ? 'selected' : ''; ?>>Certification</option>
-              <option value="Cultural Event"                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($auto_event_type == 'Cultural Event') ? 'selected' : ''; ?>>Cultural Event</option>
-              <option value="Sports Event"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($auto_event_type == 'Sports Event') ? 'selected' : ''; ?>>Sports Event</option>
-              <option value="Technical Event"                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo($auto_event_type == 'Technical Event') ? 'selected' : ''; ?>>Technical Event</option>
-              <option value="Other"                                                                                                                                                                                                                                                                                                                            <?php echo($auto_event_type == 'Other') ? 'selected' : ''; ?>>Other</option>
+              <option value="" disabled                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo empty($auto_event_type) ? 'selected' : ''; ?>>Select The Event</option>
+              <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($auto_event_type == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
+              <option value="Symposium"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($auto_event_type == 'Symposium') ? 'selected' : ''; ?>>Symposium</option>
+              <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($auto_event_type == 'Conference') ? 'selected' : ''; ?>>Conference</option>
+              <option value="Webinar"                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($auto_event_type == 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
+              <option value="Competition  "                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($auto_event_type == 'Competition') ? 'selected' : ''; ?>>Competition</option>
+              <option value="Seminar"                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($auto_event_type == 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
+              <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($auto_event_type == 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
+              <option value="Training"                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($auto_event_type == 'Training') ? 'selected' : ''; ?>>Training</option>
+              <option value="Certification"                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($auto_event_type == 'Certification') ? 'selected' : ''; ?>>Certification</option>
+              <option value="Cultural Event"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_type == 'Cultural Event') ? 'selected' : ''; ?>>Cultural Event</option>
+              <option value="Sports Event"                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($auto_event_type == 'Sports Event') ? 'selected' : ''; ?>>Sports Event</option>
+              <option value="Technical Event"                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($auto_event_type == 'Technical Event') ? 'selected' : ''; ?>>Technical Event</option>
+              <option value="Other"                                                                                                                                                                                                                                                                                                                                                               <?php echo($auto_event_type == 'Other') ? 'selected' : ''; ?>>Other</option>
             </select>
           </div>
           <div class="item">
