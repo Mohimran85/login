@@ -12,7 +12,8 @@
 •	Pre event OD must be approved by the CC before the event   ✅
 •	Workshop no winner  ✅
 •	Make the admin responsive
-•	Add it to a domain
+•	Add it to a domain   
 •   split the od letter details in colunmns  
 •	remove link for the excel sheet  ✅
 •   add semester in the profile         ✅
+    add Internships to admin Dashboard   ✅

@@ -52,12 +52,18 @@
         $event_types_data  = $db->getEventTypeBreakdown($regno, 8);
         $recent_od_data    = $db->getRecentODRequests($regno, 3);
 
+        // Get internship count
+        $internship_sql    = "SELECT COUNT(*) as internship_count FROM internship_submissions WHERE regno = ?";
+        $internship_result = $db->executeQuery($internship_sql, [$regno], 's');
+        $internship_count  = $internship_result[0]['internship_count'] ?? 0;
+
         // Combine all data
         $dashboard_data = [
             'stats'              => $dashboard_stats,
             'recent_events'      => $recent_activities,
             'event_types'        => $event_types_data,
             'recent_od_requests' => $recent_od_data,
+            'internship_count'   => $internship_count,
         ];
 
         // Cache dashboard data for 5 minutes
@@ -65,9 +71,10 @@
     }
 
     // Extract data for backward compatibility
-    $total_events = $dashboard_data['stats']['total_events'] ?? 0;
-    $events_won   = $dashboard_data['stats']['events_won'] ?? 0;
-    $od_stats     = [
+    $total_events     = $dashboard_data['stats']['total_events'] ?? 0;
+    $events_won       = $dashboard_data['stats']['events_won'] ?? 0;
+    $internship_count = $dashboard_data['internship_count'] ?? 0;
+    $od_stats         = [
         'total_od_requests' => $dashboard_data['stats']['total_od_requests'] ?? 0,
         'pending_od'        => $dashboard_data['stats']['pending_od'] ?? 0,
         'approved_od'       => $dashboard_data['stats']['approved_od'] ?? 0,
@@ -539,6 +546,14 @@
 
           <div class="card">
             <div class="card-inner">
+              <h3>Internships Completed</h3>
+              <span class="material-symbols-outlined">work</span>
+            </div>
+            <h1><?php echo $internship_count; ?></h1>
+          </div>
+
+          <div class="card">
+            <div class="card-inner">
               <h3>OD Requests</h3>
               <span class="material-symbols-outlined">request_page</span>
             </div>
@@ -646,7 +661,7 @@
                     <div class="od-request-details">
                       <h4><?php echo htmlspecialchars($od_request['event_name']); ?></h4>
                       <p class="od-request-meta">
-                        <span class="od-status                                                                                             <?php echo $od_request['status']; ?>">
+                        <span class="od-status                                                                                                                                           <?php echo $od_request['status']; ?>">
                           <?php echo ucfirst($od_request['status']); ?>
                         </span>
                         <span class="od-date"><?php echo date('M d, Y', strtotime($od_request['event_date'])); ?></span>
@@ -679,7 +694,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                     <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                       <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
