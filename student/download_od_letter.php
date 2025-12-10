@@ -219,6 +219,27 @@ $html_content = '
             border-radius: 0 5px 5px 0;
         }
 
+        .event-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: transparent;
+            border-left: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .event-details .section-title {
+            grid-column: 1 / -1;
+        }
+
+        .event-details-left, .event-details-right {
+            background: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #0c3878;
+            border-radius: 0 5px 5px 0;
+        }
+
         .detail-table {
             width: 100%;
             border-collapse: collapse;
@@ -242,10 +263,10 @@ $html_content = '
         }
 
         .approval-section {
-            margin-top: 40px;
+            margin-top: 20px;
             border: 2px solid #28a745;
             background: linear-gradient(135deg, #f0fff0 0%, #e8f5e8 100%);
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             text-align: center;
         }
@@ -360,6 +381,28 @@ $html_content = '
             color: #856404;
         }
 
+        /* Responsive design for smaller screens */
+        @media (max-width: 768px) {
+            .event-details {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .event-details-left, .event-details-right {
+                padding: 12px;
+            }
+
+            .detail-label {
+                width: 120px;
+                font-size: 13px;
+            }
+
+            .detail-table td {
+                padding: 4px 8px;
+                font-size: 13px;
+            }
+        }
+
         @page {
             margin: 0.75in;
             size: A4;
@@ -372,6 +415,15 @@ $html_content = '
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block; }
+
+            .event-details {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+            }
+
+            .event-details-left, .event-details-right {
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
@@ -419,108 +471,36 @@ $html_content = '
         </div>        <div class="letter-body">
             <p><strong>To Whom It May Concern,</strong></p>
 
-            <p>This is to certify that the following student of our institution has been granted <strong>On Duty (OD) permission</strong> to participate in the mentioned event. The student is hereby authorized to remain absent from regular classes for the specified duration.</p>
+            <p style="text-align: justify; line-height: 1.8;">
+                This is to certify that <strong>' . htmlspecialchars($student_data['name']) . '</strong>,
+                bearing Register Number <strong>' . htmlspecialchars($student_data['regno']) . '</strong>,
+                a student of <strong>' . htmlspecialchars($student_data['degree'] ?? 'N/A') . '</strong>
+                (Year of Join: ' . htmlspecialchars($student_data['year_of_join'] ?? 'N/A') . '),
+                <strong>' . htmlspecialchars($student_data['department'] ?? 'N/A') . '</strong> department,
+                under the guidance of Class Counselor <strong>' . htmlspecialchars($od_data['counselor_name']) . '</strong>
+                (' . htmlspecialchars($od_data['faculty_id']) . '), has been granted On Duty (OD) permission
+                to participate in the mentioned event and is hereby authorized to remain absent from regular
+                classes for the specified duration.
+            </p>
 
-            <div class="student-details">
-                <div class="section-title">STUDENT INFORMATION</div>
-                <table class="detail-table">
-                    <tr>
-                        <td class="detail-label">Student Name:</td>
-                        <td class="detail-value">' . htmlspecialchars($student_data['name']) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Register Number:</td>
-                        <td class="detail-value">' . htmlspecialchars($student_data['regno']) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Course:</td>
-                        <td class="detail-value">' . htmlspecialchars($student_data['degree'] ?? 'N/A') . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Year of Join:</td>
-                        <td class="detail-value">' . htmlspecialchars($student_data['year_of_join'] ?? 'N/A') . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Department:</td>
-                        <td class="detail-value">' . htmlspecialchars($student_data['department'] ?? 'N/A') . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Class Counselor:</td>
-                        <td class="detail-value">' . htmlspecialchars($od_data['counselor_name']) . ' (' . htmlspecialchars($od_data['faculty_id']) . ')</td>
-                    </tr>
-                </table>
-            </div>
+            <p style="text-align: justify; line-height: 1.8;">
+                The student is permitted to attend <strong>' . htmlspecialchars($od_data['event_name']) . '</strong>,
+                scheduled on <strong>' . date('l, F d, Y', strtotime($od_data['event_date'])) . '</strong>
+                at <strong>' . date('h:i A', strtotime($od_data['event_time'])) . '</strong>,
+                to be held at <strong>' . htmlspecialchars($od_data['event_location']) . '</strong>
+                for a duration of <strong>' . (isset($od_data['event_days']) ? htmlspecialchars($od_data['event_days']) . ' day(s)' : 'one day') . '</strong>.
+                ' . htmlspecialchars($od_data['event_description']) . '
+                The purpose of this OD request is: ' . htmlspecialchars($od_data['reason']) . '.
+            </p>
 
-            <div class="event-details">
-                <div class="section-title">EVENT INFORMATION</div>
-                <table class="detail-table">
-                    <tr>
-                        <td class="detail-label">Event Name:</td>
-                        <td class="detail-value"><strong>' . htmlspecialchars($od_data['event_name']) . '</strong></td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Event Date:</td>
-                        <td class="detail-value">' . date('l, F d, Y', strtotime($od_data['event_date'])) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Event Time:</td>
-                        <td class="detail-value">' . date('h:i A', strtotime($od_data['event_time'])) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Duration:</td>
-                        <td class="detail-value">' . (isset($od_data['event_days']) ? htmlspecialchars($od_data['event_days']) . ' day(s)' : 'Not specified') . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Venue:</td>
-                        <td class="detail-value">' . htmlspecialchars($od_data['event_location']) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Description:</td>
-                        <td class="detail-value">' . htmlspecialchars($od_data['event_description']) . '</td>
-                    </tr>
-                    <tr>
-                        <td class="detail-label">Purpose:</td>
-                        <td class="detail-value">' . htmlspecialchars($od_data['reason']) . '</td>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="approval-section">
-                <div class="approval-stamp">✅ OFFICIALLY APPROVED</div>
-                <div class="approval-details">
-                    <table class="detail-table" style="margin: 0;">
-                        <tr>
-                            <td class="detail-label">Approved By:</td>
-                            <td class="detail-value">' . htmlspecialchars($od_data['counselor_name']) . '</td>
-                        </tr>
-                        <tr>
-                            <td class="detail-label">Designation:</td>
-                            <td class="detail-value">Class Counselor</td>
-                        </tr>
-                        <tr>
-                            <td class="detail-label">Approval Date:</td>
-                            <td class="detail-value">' . ($od_data['response_date'] ? date('F d, Y \a\t h:i A', strtotime($od_data['response_date'])) : $current_date) . '</td>
-                        </tr>';
+            <p style="margin-top: 15px; text-align: justify; line-height: 1.8;">
+                This request has been <strong>officially approved</strong> by <strong>' . htmlspecialchars($od_data['counselor_name']) . '</strong> (Class Counselor) on <strong>' . ($od_data['response_date'] ? date('F d, Y \a\t h:i A', strtotime($od_data['response_date'])) : $current_date) . '</strong>';
 
 if (! empty($od_data['counselor_remarks'])) {
-    $html_content .= '
-                        <tr>
-                            <td class="detail-label">Remarks:</td>
-                            <td class="detail-value">' . htmlspecialchars($od_data['counselor_remarks']) . '</td>
-                        </tr>';
+    $html_content .= ' with the following remarks: <em>' . htmlspecialchars($od_data['counselor_remarks']) . '</em>';
 }
 
-$html_content .= '
-                    </table>
-                </div>
-            </div>
-
-            <div class="validity-notice">
-                <strong>⚠️ Important Note:</strong> This OD letter is valid exclusively for the specified event date and duration. The student must resume regular academic activities immediately upon completion of the event. Any extension requires separate approval.
-            </div>
-
-            <p style="margin-top: 30px; text-align: justify;">
-                The above-mentioned student has our permission to participate in the stated event. We request your kind cooperation in allowing the student to attend this academic/co-curricular activity. This letter serves as official documentation for the On Duty permission granted by the institution.
+$html_content .= '. The above-mentioned student has our permission to participate in the stated event. We request your kind cooperation in allowing the student to attend this academic/co-curricular activity. This letter serves as official documentation for the On Duty permission granted by the institution. <strong>Please note:</strong> This OD letter is valid exclusively for the specified event date and duration. The student must resume regular academic activities immediately upon completion of the event.
             </p>
         </div>
 

@@ -26,6 +26,8 @@
     if ($result->num_rows > 0) {
         $teacher_data = $result->fetch_assoc();
         $is_counselor = ($teacher_data['status'] === 'counselor' || $teacher_data['status'] === 'admin');
+        $teacher_name = $teacher_data['name'] ?? 'Teacher';
+        $teacher_dept = $teacher_data['department'] ?? 'N/A';
     } else {
         header("Location: ../index.php");
         exit();
@@ -141,6 +143,267 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #0c3878;
+            --secondary-color: #1e4276;
+            --accent-color: #2d5aa0;
+        }
+
+        * {
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f7fa;
+            overflow-x: hidden;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-areas: "sidebar main";
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 1fr;
+            min-height: 100vh;
+            padding-top: 80px;
+            transition: all 0.3s ease;
+        }
+
+        /* Header Styling */
+        .header {
+            grid-area: header;
+            background-color: #fff;
+            height: 80px;
+            display: flex;
+            font-size: 15px;
+            font-weight: 100;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+            color: #1e4276;
+            position: fixed;
+            width: 100%;
+            z-index: 1001;
+            top: 0;
+            left: 0;
+        }
+
+        .header .menu-icon {
+            display: none;
+            cursor: pointer;
+        }
+
+        .header .menu-icon .material-symbols-outlined {
+            font-size: 28px;
+            color: var(--primary-color);
+        }
+
+        .header .icon img {
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .header-title {
+            flex: 1;
+            text-align: center;
+        }
+
+        .header-title p {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            grid-area: sidebar;
+            background: #ffffff;
+            border-right: 1px solid #e9ecef;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            width: 280px;
+            top: 80px;
+            left: 0;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff !important;
+        }
+
+        .sidebar-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e4276;
+            flex: 1;
+        }
+
+        .close-sidebar {
+            display: none;
+            cursor: pointer;
+            color: #0c3878;
+            font-size: 24px;
+        }
+
+        .student-info {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 20px;
+            margin: 0 20px 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .student-info .student-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: white;
+        }
+
+        .student-info .student-regno {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 10px 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin-bottom: 8px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 20px;
+            color: #495057;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            margin: 0 20px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-link span {
+            font-size: 20px;
+            color: inherit;
+        }
+
+        .main {
+            padding: 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-header h1 {
+            color: var(--primary-color);
+            font-size: 32px;
+            margin: 0 0 10px 0;
+        }
+
+        .page-header p {
+            color: #6c757d;
+            margin: 0;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .grid-container {
+                grid-template-columns: 1fr;
+                grid-template-areas:
+                    "header"
+                    "main";
+                padding-top: 70px;
+            }
+
+            .header {
+                padding: 0 15px;
+                height: 70px;
+            }
+
+            .header .menu-icon {
+                display: block;
+            }
+
+            .header .icon img {
+                height: 50px;
+            }
+
+            .header-title p {
+                font-size: 18px;
+            }
+
+            .sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                width: 300px;
+                height: 100vh;
+                z-index: 10000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .close-sidebar {
+                display: block;
+                position: absolute !important;
+                top: 15px !important;
+                right: 15px !important;
+            }
+
+            .sidebar-header {
+                padding: 60px 20px 20px 20px !important;
+            }
+
+            .main {
+                padding: 20px 15px;
+            }
+
+            body.sidebar-open {
+                overflow: hidden;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 15px 10px;
+            }
+        }
         /* Prevent mobile zoom and overflow */
         * {
             box-sizing: border-box;
@@ -435,18 +698,71 @@
             text-decoration: underline;
         }
 
+        /* Mobile Card View */
+        .mobile-card-view {
+            display: none;
+        }
+
         @media (max-width: 768px) {
-            table {
-                font-size: 12px;
+            .table-container table {
+                display: none;
             }
 
-            table th,
-            table td {
-                padding: 8px 10px;
+            .mobile-card-view {
+                display: block;
+            }
+
+            .internship-card {
+                background: white;
+                border-radius: 10px;
+                padding: 15px;
+                margin-bottom: 15px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                border-left: 4px solid var(--primary-color);
+            }
+
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .card-student-name {
+                font-weight: 600;
+                color: var(--primary-color);
+                font-size: 15px;
+            }
+
+            .card-row {
+                display: flex;
+                margin-bottom: 8px;
+                font-size: 13px;
+            }
+
+            .card-label {
+                font-weight: 600;
+                color: #666;
+                min-width: 100px;
+                flex-shrink: 0;
+            }
+
+            .card-value {
+                color: #333;
+                word-break: break-word;
+            }
+
+            .card-actions {
+                margin-top: 12px;
+                padding-top: 12px;
+                border-top: 1px solid #e9ecef;
             }
 
             .modal-content {
                 padding: 20px;
+                margin: 10px;
             }
 
             .action-btns {
@@ -455,26 +771,143 @@
 
             .btn-sm {
                 width: 100%;
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .internship-card {
+                padding: 12px;
+            }
+
+            .card-student-name {
+                font-size: 14px;
+            }
+
+            .card-row {
+                font-size: 12px;
+            }
+
+            .card-label {
+                min-width: 85px;
             }
         }
     </style>
 </head>
 <body>
     <div class="grid-container">
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar">
-            <div class="sidebar-header">
-                <h2>Internship Approvals</h2>
+        <!-- Header -->
+        <div class="header">
+            <div class="menu-icon" onclick="toggleSidebar()">
+                <span class="material-symbols-outlined">menu</span>
             </div>
-            <ul class="sidebar-menu">
-                <li><a href="index.php">Dashboard</a></li>
-                <li><a href="assigned_students.php">Assigned Students</a></li>
-                <li><a href="od_approvals.php">OD Approvals</a></li>
-                <li class="active"><a href="internship_approvals.php">Internship Approvals</a></li>
-                <li><a href="profile.php">Profile</a></li>
-                <li><a href="logout.php">Logout</a></li>
+            <div class="icon">
+                <img src="../asserts/images/sona_logo.jpg" alt="Logo">
+            </div>
+            <div class="header-title">
+                <p>Event Management System</p>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Teacher Portal</div>
+                <div class="close-sidebar" onclick="toggleSidebar()">
+                    <span class="material-symbols-outlined">close</span>
+                </div>
+            </div>
+
+            <div class="student-info">
+                <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
+                <div class="student-regno">Teacher |                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($teacher_dept); ?></div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.php" class="nav-link">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="registered_students.php" class="nav-link">
+                        <span class="material-symbols-outlined">group</span>
+                        Registered Students
+                    </a>
+                </li>
+                <?php if ($is_counselor): ?>
+                <li class="nav-item">
+                    <a href="index.php#assigned-students" class="nav-link">
+                        <span class="material-symbols-outlined">supervisor_account</span>
+                        My Assigned Students
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="od_approvals.php" class="nav-link">
+                        <span class="material-symbols-outlined">approval</span>
+                        OD Approvals
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="internship_approvals.php" class="nav-link active">
+                        <span class="material-symbols-outlined">school</span>
+                        Internship Approvals
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="verify_events.php" class="nav-link">
+                        <span class="material-symbols-outlined">card_giftcard</span>
+                        Event Certificate Validation
+                    </a>
+                </li>
+                <?php endif; ?>
+                <?php if ($teacher_data['status'] === 'admin'): ?>
+                <li class="nav-item">
+                    <a href="../admin/index.php" class="nav-link">
+                        <span class="material-symbols-outlined">admin_panel_settings</span>
+                        Admin Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="../admin/user_management.php" class="nav-link">
+                        <span class="material-symbols-outlined">manage_accounts</span>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="../admin/participants.php" class="nav-link">
+                        <span class="material-symbols-outlined">people</span>
+                        Participants
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="../admin/reports.php" class="nav-link">
+                        <span class="material-symbols-outlined">bar_chart</span>
+                        Reports
+                    </a>
+                </li>
+                <?php endif; ?>
+                <li class="nav-item">
+                    <a href="digital_signature.php" class="nav-link">
+                        <span class="material-symbols-outlined">draw</span>
+                        Digital Signature
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="profile.php" class="nav-link">
+                        <span class="material-symbols-outlined">person</span>
+                        Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="../admin/logout.php" class="nav-link">
+                        <span class="material-symbols-outlined">logout</span>
+                        Logout
+                    </a>
+                </li>
             </ul>
-        </nav>
+        </div>
 
         <!-- Main Content -->
         <main class="main">
@@ -572,6 +1005,71 @@
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+
+                    <!-- Mobile Card View -->
+                    <div class="mobile-card-view">
+                        <?php foreach ($internship_array as $internship): ?>
+                            <div class="internship-card">
+                                <div class="card-header">
+                                    <span class="card-student-name"><?php echo htmlspecialchars($internship['student_name']); ?></span>
+                                    <?php $status = $internship['approval_status'] ?? 'pending'; ?>
+                                    <span class="status-badge status-<?php echo htmlspecialchars($status); ?>">
+                                        <?php echo ucfirst($status); ?>
+                                    </span>
+                                </div>
+
+                                <div class="card-row">
+                                    <span class="card-label">Reg No:</span>
+                                    <span class="card-value"><?php echo htmlspecialchars($internship['regno']); ?></span>
+                                </div>
+
+                                <div class="card-row">
+                                    <span class="card-label">Company:</span>
+                                    <span class="card-value"><?php echo htmlspecialchars($internship['company_name']); ?></span>
+                                </div>
+
+                                <div class="card-row">
+                                    <span class="card-label">Role:</span>
+                                    <span class="card-value"><?php echo htmlspecialchars($internship['role_title']); ?></span>
+                                </div>
+
+                                <div class="card-row">
+                                    <span class="card-label">Domain:</span>
+                                    <span class="card-value"><?php echo htmlspecialchars($internship['domain']); ?></span>
+                                </div>
+
+                                <div class="card-row">
+                                    <span class="card-label">Duration:</span>
+                                    <span class="card-value">
+                                        <?php
+                                            $start = date('M d, Y', strtotime($internship['start_date']));
+                                            $end   = date('M d, Y', strtotime($internship['end_date']));
+                                            echo "$start - $end";
+                                        ?>
+                                    </span>
+                                </div>
+
+                                <div class="card-row">
+                                    <span class="card-label">Certificate:</span>
+                                    <span class="card-value">
+                                        <?php if ($internship['internship_certificate']): ?>
+                                            <a href="../uploads/<?php echo htmlspecialchars($internship['internship_certificate']); ?>"
+                                               target="_blank" class="certificate-link">View Certificate</a>
+                                        <?php else: ?>
+                                            <span style="color: #999;">Not Available</span>
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+
+                                <div class="card-actions">
+                                    <button class="btn btn-sm btn-primary"
+                                            onclick="openModal(<?php echo $internship['id']; ?>, '<?php echo htmlspecialchars($internship['student_name']); ?>')">
+                                        Review Submission
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 <?php endif; ?>
             </div>
         </main>
@@ -614,6 +1112,27 @@
     </div>
 
     <script>
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const body = document.body;
+
+            sidebar.classList.toggle('active');
+            body.classList.toggle('sidebar-open');
+        }
+
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(e) {
+            const sidebar = document.querySelector('.sidebar');
+            const menuIcon = document.querySelector('.menu-icon');
+
+            if (sidebar.classList.contains('active') &&
+                !sidebar.contains(e.target) &&
+                !menuIcon.contains(e.target)) {
+                sidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
+
         function openModal(internshipId, studentName) {
             document.getElementById('internshipId').value = internshipId;
             document.querySelector('.modal-header h2').textContent = `Review Internship: ${studentName}`;
