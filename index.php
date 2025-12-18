@@ -127,8 +127,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0c3878">
+    <meta name="color-scheme" content="light only">
     <title>Event Management - Login</title>
-    <link rel="icon" type="icon/png" sizes="32x32" href="./asserts/sona_logo.jpg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./asserts/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./asserts/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./asserts/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="./asserts/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="styles.css" />
     <style>
         .header {

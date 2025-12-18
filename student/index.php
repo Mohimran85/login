@@ -96,7 +96,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0c3878">
+    <meta name="color-scheme" content="light only">
     <title>Student Dashboard - Event Management System</title>
+    <!-- Favicon and App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="asserts/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="asserts/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="asserts/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="asserts/images/favicon_io/site.webmanifest">
     <!-- css link -->
     <link rel="stylesheet" href="student_dashboard.css" />
     <!-- google icons -->
@@ -661,7 +668,7 @@
                     <div class="od-request-details">
                       <h4><?php echo htmlspecialchars($od_request['event_name']); ?></h4>
                       <p class="od-request-meta">
-                        <span class="od-status                                                                                                                                           <?php echo $od_request['status']; ?>">
+                        <span class="od-status                                                                                                                                                                                                                                       <?php echo $od_request['status']; ?>">
                           <?php echo ucfirst($od_request['status']); ?>
                         </span>
                         <span class="od-date"><?php echo date('M d, Y', strtotime($od_request['event_date'])); ?></span>
@@ -694,7 +701,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                       <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                           <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>

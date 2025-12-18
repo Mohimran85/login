@@ -101,7 +101,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0c3878">
+    <meta name="color-scheme" content="light only">
     <title>OD Approvals - Teacher Dashboard</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="../student/student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -181,6 +187,7 @@
 
         .section-card {
             width: 100%;
+            max-width: 100%;
             margin-bottom: 25px;
             margin-top: 25px;
             border-radius: 12px;
@@ -188,6 +195,7 @@
             overflow: hidden;
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
         }
 
         .section-card:hover {
@@ -198,21 +206,23 @@
         .section-header {
             background: linear-gradient(135deg, #0c3878 0%, #2d5aa0 100%);
             color: white;
-            padding: 15px 20px;
+            padding: 16px 20px;
             display: flex;
             align-items: center;
             gap: 10px;
             font-weight: 600;
+            border-radius: 12px 12px 0 0;
         }
 
         .section-header h4 {
             margin: 0;
             font-size: 16px;
             letter-spacing: 0.5px;
+            font-weight: 600;
         }
 
         .section-header .material-symbols-outlined {
-            font-size: 20px;
+            font-size: 22px;
         }
 
         .od-request-item {
@@ -221,13 +231,18 @@
             border-radius: 12px;
             margin-bottom: 40px;
             border-left: 6px solid #0c3878;
-            display: flex;
+            display: none;
             flex-direction: column;
             gap: 20px;
             width: 100%;
-            max-width: none;
+            max-width: 100%;
             position: relative;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        .od-request-item.visible {
+            display: flex;
         }
 
         .od-request-item::before {
@@ -282,12 +297,12 @@
 
         /* Request Header with Student Info */
         .request-header-card {
-            background: white;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
             border-radius: 12px;
-            padding: 20px;
+            padding: 25px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-            border: 2px solid #e9ecef;
+            box-shadow: 0 4px 15px rgba(12, 56, 120, 0.1);
+            border: 2px solid #e3f2fd;
             position: relative;
             overflow: hidden;
         }
@@ -298,8 +313,8 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, #0c3878, #2d5aa0);
+            height: 4px;
+            background: linear-gradient(90deg, #0c3878, #2d5aa0, #0c3878);
         }
 
         .student-info-grid {
@@ -307,6 +322,16 @@
             grid-template-columns: auto 1fr auto;
             gap: 20px;
             align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .student-info-grid {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 15px;
+            }
         }
 
         .student-avatar {
@@ -330,8 +355,9 @@
         .student-name-large {
             font-size: 24px;
             font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 5px;
+            color: #0c3878;
+            margin-bottom: 8px;
+            line-height: 1.3;
         }
 
         .student-meta {
@@ -353,15 +379,6 @@
             color: #0c3878;
         }
 
-        .od-request-header {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
         .student-info {
             text-align: center;
             margin-top: 25px;
@@ -375,12 +392,6 @@
             margin: 0 0 8px 0;
             font-size: 20px;
             font-weight: 600;
-        }
-
-        .student-details {
-            font-size: 14px;
-            color: #ffffffff;
-            margin-bottom: 10px;
         }
 
         .od-status {
@@ -415,19 +426,28 @@
         .event-details {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            padding: 20px;
+            gap: 0;
+            padding: 0;
             background: white;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 0 0 12px 12px;
+            overflow: hidden;
         }
 
         .event-detail-item {
             display: flex;
-            flex-direction: column;
-            gap: 5px;
-            padding: 12px;
-            border-bottom: 1px solid #f0f0f0;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            background: white;
+            transition: background 0.2s ease;
+        }
+
+        .event-detail-item:hover {
             background: #f8f9fa;
-            border-radius: 8px;
         }
 
         .event-detail-item:last-child {
@@ -435,30 +455,57 @@
         }
 
         .event-detail-label {
-            font-weight: 600;
-            color: #495057;
+            font-weight: 700;
+            color: #0c3878;
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            min-width: 140px;
+            flex-shrink: 0;
         }
 
         .event-detail-value {
-            color: #333;
+            color: #2c3e50;
             font-size: 15px;
             font-weight: 500;
+            flex: 1;
+            word-wrap: break-word;
+        }
+
+        @media (max-width: 768px) {
+            .event-detail-item {
+                flex-direction: column;
+                gap: 5px;
+                padding: 12px 15px;
+            }
+
+            .event-detail-label {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .event-detail-value {
+                width: 100%;
+            }
         }
 
         .description-box {
             background: white;
             padding: 20px;
-            line-height: 1.6;
+            line-height: 1.8;
             font-size: 15px;
-            color: #333;
+            color: #2c3e50;
+            width: 100%;
+            box-sizing: border-box;
+            word-wrap: break-word;
+            border-radius: 0 0 12px 12px;
         }
 
         .approval-form {
             background: white;
             padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .approval-form h4 {
@@ -480,6 +527,7 @@
             display: flex;
             flex-direction: column;
             width: 100%;
+            box-sizing: border-box;
         }
 
         .form-label {
@@ -497,6 +545,8 @@
             min-height: 80px;
             resize: vertical;
             transition: border-color 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         .form-textarea:focus {
@@ -729,20 +779,31 @@
                 overflow: hidden;
                 box-shadow: 0 4px 15px rgba(0,0,0,0.1);
                 background: white;
+                padding: 15px 15px 10px 15px;
+            }
+
+            table tr:hover {
+                background: white !important;
             }
 
             table td {
                 text-align: left !important;
-                padding: 12px 15px !important;
+                padding: 12px 0 !important;
                 position: relative;
                 border-bottom: 1px solid #f0f0f0;
                 display: flex;
-                justify-content: space-between;
-                align-items: center;
+                flex-direction: column;
+                gap: 8px;
+                align-items: flex-start;
+            }
+
+            table td:first-child {
+                padding-top: 0 !important;
             }
 
             table td:last-child {
                 border-bottom: none;
+                padding-bottom: 0 !important;
             }
 
             table td:before {
@@ -750,28 +811,70 @@
                 font-weight: 700;
                 color: #0c3878;
                 text-transform: uppercase;
-                font-size: 11px;
-                letter-spacing: 0.5px;
-                flex-shrink: 0;
-                min-width: 100px;
+                font-size: 10px;
+                letter-spacing: 0.8px;
+                display: block;
+                width: 100%;
+                margin-bottom: 5px;
+                padding-bottom: 3px;
+                border-bottom: 1px solid #e3f2fd;
             }
 
             table td > * {
-                flex: 1;
-                text-align: right;
+                width: 100%;
+                text-align: left;
+                display: block;
+            }
+
+            table td div {
+                width: 100%;
+            }
+
+            table td span {
+                display: inline-block;
+            }
+
+            /* Fix nested content styling */
+            table td > div {
+                max-width: 100% !important;
+                overflow: visible !important;
+                text-overflow: clip !important;
+            }
+
+            table td > div > div {
+                font-size: 12px;
+                color: #6c757d;
+                margin-top: 3px;
+            }
+
+            table td[data-label="Student"] > div,
+            table td[data-label="Event Name"] > div,
+            table td[data-label="Location"] > div {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
             }
 
             /* Make buttons full width on mobile */
             table td button,
             table td a {
-                width: 100%;
-                max-width: 200px;
+                width: 100% !important;
+                max-width: 100% !important;
                 justify-content: center !important;
+                margin-top: 5px;
+                display: flex !important;
+                align-items: center;
+                gap: 5px;
+                padding: 10px 16px !important;
+                font-size: 14px !important;
             }
 
             .od-status {
                 display: inline-block !important;
-                margin: 0 !important;
+                margin: 5px 0 0 0 !important;
+                width: auto !important;
+                text-align: center;
+                align-self: flex-start !important;
             }
         }
 
@@ -784,12 +887,20 @@
             }
 
             .od-requests-container {
-                padding: 12px;
-                margin: 0 5px;
+                padding: 10px;
+                margin: 0;
+            }
+
+            .od-request-item.visible {
+                display: flex !important;
+                flex-direction: column !important;
             }
 
             .section-card {
                 margin-bottom: 15px;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
             }
 
             .section-header {
@@ -808,38 +919,62 @@
 
             .request-header-card {
                 padding: 15px;
-            }
-
-            .student-info h3 {
-                font-size: 16px;
-            }
-
-            .student-details {
-                font-size: 13px;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
             }
 
             .event-details {
-                padding: 12px;
+                padding: 0;
+                width: 100% !important;
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .description-box, .approval-form {
+                padding: 15px !important;
+                width: 100% !important;
+                font-size: 14px;
+                line-height: 1.6;
             }
 
             .event-detail-item {
-                padding: 8px;
-                margin-bottom: 5px;
+                padding: 12px 15px;
+                margin-bottom: 0;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
             }
 
-            .description-box {
-                padding: 12px;
+            .event-detail-label {
+                width: 100%;
+                text-align: left;
+                font-size: 11px;
+            }
+
+            .event-detail-value {
+                width: 100%;
+                text-align: left;
                 font-size: 14px;
-            }
-
-            .approval-form {
-                padding: 12px;
             }
 
             .btn {
                 padding: 16px 20px;
                 font-size: 15px;
                 font-weight: 700;
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .action-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                width: 100%;
             }
 
             .form-textarea {
@@ -863,24 +998,27 @@
 
             /* Mobile-friendly student info grid */
             .student-info-grid {
-                grid-template-columns: auto 1fr;
-                grid-template-rows: auto auto;
+                display: flex;
+                flex-direction: column;
                 gap: 15px;
+                align-items: center;
+                text-align: center;
             }
 
             .student-avatar {
-                grid-row: 1 / 3;
-                width: 50px;
-                height: 50px;
-                font-size: 20px;
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+
+            .student-details-enhanced {
+                width: 100%;
             }
 
             .od-status {
-                grid-column: 1 / 3;
+                width: auto;
                 margin-top: 10px;
-                align-self: center;
-                justify-self: center;
-                padding: 8px 16px;
+                padding: 8px 20px;
                 font-size: 12px;
             }
 
@@ -891,6 +1029,7 @@
             .student-meta {
                 flex-direction: column;
                 gap: 8px;
+                align-items: center;
             }
 
             .meta-item {
@@ -966,9 +1105,10 @@
 
             /* Reduce content width to prevent zoom */
             .od-request-item {
-                width: calc(100vw - 30px) !important;
-                max-width: calc(100vw - 30px) !important;
+                width: 100% !important;
+                max-width: 100% !important;
                 box-sizing: border-box !important;
+                padding: 15px !important;
             }
 
             .section-card {
@@ -978,6 +1118,22 @@
             }
 
             .request-header-card {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .event-details,
+            .description-box,
+            .approval-form {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 12px !important;
+            }
+
+            .form-textarea,
+            .btn {
                 width: 100% !important;
                 max-width: 100% !important;
                 box-sizing: border-box !important;
@@ -1010,18 +1166,6 @@
             .od-requests-container {
                 padding: 18px;
                 margin: 0 8px;
-            }
-
-            .od-request-header {
-                flex-direction: column;
-                text-align: center;
-                gap: 12px;
-            }
-
-            .event-details {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
             }
 
             .btn {
@@ -1060,10 +1204,10 @@
             }
 
             .od-request-item {
-                padding: 12px;
+                padding: 12px !important;
                 margin-bottom: 15px;
-                width: calc(100vw - 20px) !important;
-                max-width: calc(100vw - 20px) !important;
+                width: 100% !important;
+                max-width: 100% !important;
             }
 
             .request-header-card {
@@ -1090,7 +1234,8 @@
             }
 
             .event-details, .description-box, .approval-form {
-                padding: 10px;
+                padding: 10px !important;
+                width: 100% !important;
             }
 
             .event-detail-item {
@@ -1113,11 +1258,13 @@
             .btn {
                 padding: 14px 16px;
                 font-size: 14px;
+                width: 100% !important;
             }
 
             .form-textarea {
                 font-size: 14px;
                 padding: 10px;
+                width: 100% !important;
             }
 
             .od-status {
@@ -1158,7 +1305,7 @@
 
             <div class="student-info"  style="color: white;">
                 <div class="student-name" style="color:white;"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -1392,7 +1539,7 @@
                                         <?php endif; ?>
                                     </td>
                                     <td data-label="Status" style="padding: 15px; text-align: center;">
-                                        <span class="od-status                                                                                                                             <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                        <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                             <?php echo ucfirst($request['status']); ?>
                                         </span>
                                     </td>
@@ -1433,7 +1580,7 @@
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">calendar_today</span>
-                                            <span>Year                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($request['year_of_join']); ?></span>
+                                            <span>Year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($request['year_of_join']); ?></span>
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">schedule</span>
@@ -1441,7 +1588,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="od-status                                                                                                                                                                                                                                                                                                                               <?php echo $request['status']; ?>">
+                                <div class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </div>
                             </div>
@@ -1531,9 +1678,9 @@
                                             Download Poster
                                         </a>
                                         <div style="text-align: center; font-size: 12px; color: #6c757d; padding: 8px; background: #f8f9fa; border-radius: 6px;">
-                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
-                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo strtoupper($file_extension); ?> •
-                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
+                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
+                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo strtoupper($file_extension); ?> •
+                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -1700,20 +1847,32 @@
         function viewDetails(odId) {
             const detailsDiv = document.getElementById('details-' + odId);
             const allDetails = document.querySelectorAll('.od-request-item');
+            const isVisible = detailsDiv.classList.contains('visible');
 
             // Hide all other details
             allDetails.forEach(detail => {
                 if (detail.id !== 'details-' + odId) {
-                    detail.style.display = 'none';
+                    detail.classList.remove('visible');
                 }
             });
 
             // Toggle current details
-            if (detailsDiv.style.display === 'none') {
-                detailsDiv.style.display = 'flex';
-                detailsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            if (!isVisible) {
+                detailsDiv.classList.add('visible');
+
+                // Prevent zoom on mobile with manual scroll calculation
+                setTimeout(() => {
+                    const headerOffset = 80;
+                    const elementPosition = detailsDiv.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }, 100);
             } else {
-                detailsDiv.style.display = 'none';
+                detailsDiv.classList.remove('visible');
             }
         }
 
