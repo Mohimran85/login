@@ -968,6 +968,12 @@
           </a>
         </li>
         <li class="nav-item">
+          <a href="od_request.php" class="nav-link">
+            <span class="material-symbols-outlined">assignment</span>
+            OD Request
+          </a>
+        </li>
+        <li class="nav-item">
           <a href="internship_submission.php" class="nav-link">
             <span class="material-symbols-outlined">work</span>
             Internship Submission
@@ -1080,14 +1086,35 @@
           <div class="item">
             <label for="state">State:<span class="required-asterisk">*</span></label>
             <select id="state" name="state" required>
-              <option value="" disabled                                                                                                                                                                                                                                                                                                                                                                <?php echo empty($auto_event_state) ? 'selected' : ''; ?>>Select State</option>
-              <option value="Tamil Nadu"                                                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_state == 'Tamil Nadu') ? 'selected' : ''; ?>>Tamil Nadu</option>
-              <option value="Kerala"                                                                                                                                                                                                                                                                                                                                     <?php echo($auto_event_state == 'Kerala') ? 'selected' : ''; ?>>Kerala</option>
-              <option value="Karnataka"                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_state == 'Karnataka') ? 'selected' : ''; ?>>Karnataka</option>
-              <option value="Andhra Pradesh"                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($auto_event_state == 'Andhra Pradesh') ? 'selected' : ''; ?>>Andhra Pradesh</option>
-              <option value="Telangana"                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_state == 'Telangana') ? 'selected' : ''; ?>>Telangana</option>
-              <option value="Maharashtra"                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($auto_event_state == 'Maharashtra') ? 'selected' : ''; ?>>Maharashtra</option>
-              <option value="Goa"                                                                                                                                                                                                                                                                                                          <?php echo($auto_event_state == 'Goa') ? 'selected' : ''; ?>>Goa</option>
+              <option value="" disabled <?php echo empty($auto_event_state) ? 'selected' : ''; ?>>Select State</option>
+              <option value="Andhra Pradesh" <?php echo($auto_event_state == 'Andhra Pradesh') ? 'selected' : ''; ?>>Andhra Pradesh</option>
+              <option value="Arunachal Pradesh" <?php echo($auto_event_state == 'Arunachal Pradesh') ? 'selected' : ''; ?>>Arunachal Pradesh</option>
+              <option value="Assam" <?php echo($auto_event_state == 'Assam') ? 'selected' : ''; ?>>Assam</option>
+              <option value="Bihar" <?php echo($auto_event_state == 'Bihar') ? 'selected' : ''; ?>>Bihar</option>
+              <option value="Chhattisgarh" <?php echo($auto_event_state == 'Chhattisgarh') ? 'selected' : ''; ?>>Chhattisgarh</option>
+              <option value="Goa" <?php echo($auto_event_state == 'Goa') ? 'selected' : ''; ?>>Goa</option>
+              <option value="Gujarat" <?php echo($auto_event_state == 'Gujarat') ? 'selected' : ''; ?>>Gujarat</option>
+              <option value="Haryana" <?php echo($auto_event_state == 'Haryana') ? 'selected' : ''; ?>>Haryana</option>
+              <option value="Himachal Pradesh" <?php echo($auto_event_state == 'Himachal Pradesh') ? 'selected' : ''; ?>>Himachal Pradesh</option>
+              <option value="Jharkhand" <?php echo($auto_event_state == 'Jharkhand') ? 'selected' : ''; ?>>Jharkhand</option>
+              <option value="Karnataka" <?php echo($auto_event_state == 'Karnataka') ? 'selected' : ''; ?>>Karnataka</option>
+              <option value="Kerala" <?php echo($auto_event_state == 'Kerala') ? 'selected' : ''; ?>>Kerala</option>
+              <option value="Madhya Pradesh" <?php echo($auto_event_state == 'Madhya Pradesh') ? 'selected' : ''; ?>>Madhya Pradesh</option>
+              <option value="Maharashtra" <?php echo($auto_event_state == 'Maharashtra') ? 'selected' : ''; ?>>Maharashtra</option>
+              <option value="Manipur" <?php echo($auto_event_state == 'Manipur') ? 'selected' : ''; ?>>Manipur</option>
+              <option value="Meghalaya" <?php echo($auto_event_state == 'Meghalaya') ? 'selected' : ''; ?>>Meghalaya</option>
+              <option value="Mizoram" <?php echo($auto_event_state == 'Mizoram') ? 'selected' : ''; ?>>Mizoram</option>
+              <option value="Nagaland" <?php echo($auto_event_state == 'Nagaland') ? 'selected' : ''; ?>>Nagaland</option>
+              <option value="Odisha" <?php echo($auto_event_state == 'Odisha') ? 'selected' : ''; ?>>Odisha</option>
+              <option value="Punjab" <?php echo($auto_event_state == 'Punjab') ? 'selected' : ''; ?>>Punjab</option>
+              <option value="Rajasthan" <?php echo($auto_event_state == 'Rajasthan') ? 'selected' : ''; ?>>Rajasthan</option>
+              <option value="Sikkim" <?php echo($auto_event_state == 'Sikkim') ? 'selected' : ''; ?>>Sikkim</option>
+              <option value="Tamil Nadu" <?php echo($auto_event_state == 'Tamil Nadu') ? 'selected' : ''; ?>>Tamil Nadu</option>
+              <option value="Telangana" <?php echo($auto_event_state == 'Telangana') ? 'selected' : ''; ?>>Telangana</option>
+              <option value="Tripura" <?php echo($auto_event_state == 'Tripura') ? 'selected' : ''; ?>>Tripura</option>
+              <option value="Uttar Pradesh" <?php echo($auto_event_state == 'Uttar Pradesh') ? 'selected' : ''; ?>>Uttar Pradesh</option>
+              <option value="Uttarakhand" <?php echo($auto_event_state == 'Uttarakhand') ? 'selected' : ''; ?>>Uttarakhand</option>
+              <option value="West Bengal" <?php echo($auto_event_state == 'West Bengal') ? 'selected' : ''; ?>>West Bengal</option>
             </select>
           </div>
           <div class="item">
@@ -1110,20 +1137,20 @@
           <div class="item">
             <label for="eventType">Event Type:<span class="required-asterisk">*</span></label>
             <select id="eventType" name="eventType" required>
-              <option value="" disabled                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo empty($auto_event_type) ? 'selected' : ''; ?>>Select The Event</option>
-              <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($auto_event_type == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
-              <option value="Symposium"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($auto_event_type == 'Symposium') ? 'selected' : ''; ?>>Symposium</option>
-              <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($auto_event_type == 'Conference') ? 'selected' : ''; ?>>Conference</option>
-              <option value="Webinar"                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($auto_event_type == 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
-              <option value="Competition  "                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($auto_event_type == 'Competition') ? 'selected' : ''; ?>>Competition</option>
-              <option value="Seminar"                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($auto_event_type == 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
-              <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($auto_event_type == 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
-              <option value="Training"                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($auto_event_type == 'Training') ? 'selected' : ''; ?>>Training</option>
-              <option value="Certification"                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($auto_event_type == 'Certification') ? 'selected' : ''; ?>>Certification</option>
-              <option value="Cultural Event"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_type == 'Cultural Event') ? 'selected' : ''; ?>>Cultural Event</option>
-              <option value="Sports Event"                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($auto_event_type == 'Sports Event') ? 'selected' : ''; ?>>Sports Event</option>
-              <option value="Technical Event"                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($auto_event_type == 'Technical Event') ? 'selected' : ''; ?>>Technical Event</option>
-              <option value="Other"                                                                                                                                                                                                                                                                                                                                                               <?php echo($auto_event_type == 'Other') ? 'selected' : ''; ?>>Other</option>
+              <option value="" disabled                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo empty($auto_event_type) ? 'selected' : ''; ?>>Select The Event</option>
+              <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($auto_event_type == 'Workshop') ? 'selected' : ''; ?>>Workshop</option>
+              <option value="Symposium"                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo($auto_event_type == 'Symposium') ? 'selected' : ''; ?>>Symposium</option>
+              <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($auto_event_type == 'Conference') ? 'selected' : ''; ?>>Conference</option>
+              <option value="Webinar"                                                                                                                                                                                                                                                                                                                                                                                                                        <?php echo($auto_event_type == 'Webinar') ? 'selected' : ''; ?>>Webinar</option>
+              <option value="Competition  "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo($auto_event_type == 'Competition') ? 'selected' : ''; ?>>Competition</option>
+              <option value="Seminar"                                                                                                                                                                                                                                                                                                                                                                                                                        <?php echo($auto_event_type == 'Seminar') ? 'selected' : ''; ?>>Seminar</option>
+              <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo($auto_event_type == 'Hackathon') ? 'selected' : ''; ?>>Hackathon</option>
+              <option value="Training"                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($auto_event_type == 'Training') ? 'selected' : ''; ?>>Training</option>
+              <option value="Certification"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo($auto_event_type == 'Certification') ? 'selected' : ''; ?>>Certification</option>
+              <option value="Cultural Event"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($auto_event_type == 'Cultural Event') ? 'selected' : ''; ?>>Cultural Event</option>
+              <option value="Sports Event"                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($auto_event_type == 'Sports Event') ? 'selected' : ''; ?>>Sports Event</option>
+              <option value="Technical Event"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($auto_event_type == 'Technical Event') ? 'selected' : ''; ?>>Technical Event</option>
+              <option value="Other"                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($auto_event_type == 'Other') ? 'selected' : ''; ?>>Other</option>
             </select>
           </div>
           <div class="item">
@@ -1393,49 +1420,285 @@
 
         // State-District mapping
         const stateDistricts = {
-            'Tamil Nadu': [
-                'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli',
-                'Erode', 'Vellore', 'Thoothukudi', 'Dindigul', 'Thanjavur', 'Ranipet',
-                'Sivaganga', 'Karur', 'Ramanathapuram', 'Virudhunagar', 'Cuddalorem',
-                'Kanchipuram', 'Villupuram', 'Nagapattinam', 'Dharmapuri', 'Krishnagiri',
-                'Ariyalur', 'Namakkal', 'Perambalur', 'Nilgiris', 'Tiruvarur', 'Thiruvallur',
-                'Tirupattur', 'Chengalpattu', 'Tenkasi', 'Tiruppur', 'Mayiladuthurai', 'Kallakurichi'
-            ],
-            'Kerala': [
-                'Thiruvananthapuram', 'Kollam', 'Pathanamthitta', 'Alappuzha', 'Kottayam',
-                'Idukki', 'Ernakulam', 'Thrissur', 'Palakkad', 'Malappuram', 'Kozhikode',
-                'Wayanad', 'Kannur', 'Kasaragod'
-            ],
-            'Karnataka': [
-                'Bagalkot', 'Ballari', 'Belagavi', 'Bengaluru Rural', 'Bengaluru Urban',
-                'Bidar', 'Chamarajanagar', 'Chikballapur', 'Chikkamagaluru', 'Chitradurga',
-                'Dakshina Kannada', 'Davanagere', 'Dharwad', 'Gadag', 'Hassan', 'Haveri',
-                'Kalaburagi', 'Kodagu', 'Kolar', 'Koppal', 'Mandya', 'Mysuru', 'Raichur',
-                'Ramanagara', 'Shivamogga', 'Tumakuru', 'Udupi', 'Uttara Kannada', 'Vijayapura', 'Yadgir'
-            ],
             'Andhra Pradesh': [
                 'Anantapur', 'Chittoor', 'East Godavari', 'Guntur', 'Kadapa', 'Krishna',
                 'Kurnool', 'Nellore', 'Prakasam', 'Srikakulam', 'Visakhapatnam',
                 'Vizianagaram', 'West Godavari'
             ],
-            'Telangana': [
-                'Adilabad', 'Bhadradri Kothagudem', 'Hyderabad', 'Jagtial', 'Jangaon',
-                'Jayashankar', 'Jogulamba', 'Kamareddy', 'Karimnagar', 'Khammam',
-                'Komaram Bheem', 'Mahabubabad', 'Mahbubnagar', 'Mancherial', 'Medak',
-                'Medchal', 'Mulugu', 'Nagarkurnool', 'Nalgonda', 'Narayanpet',
-                'Nirmal', 'Nizamabad', 'Peddapalli', 'Rajanna Sircilla', 'Ranga Reddy',
-                'Sangareddy', 'Siddipet', 'Suryapet', 'Vikarabad', 'Wanaparthy', 'Warangal Rural', 'Warangal Urban', 'Yadadri Bhuvanagiri'
+            'Arunachal Pradesh': [
+                'Anjaw', 'Changlang', 'Dibang Valley', 'East Kameng', 'East Siang',
+                'Kra Daadi', 'Kurung Kumey', 'Lohit', 'Longding', 'Lower Dibang Valley',
+                'Lower Siang', 'Lower Subansiri', 'Papum Pare', 'Siang', 'Upper Dibang Valley',
+                'Upper Siang', 'Upper Subansiri', 'West Kameng', 'West Siang'
             ],
-            'Maharashtra': [
-                'Mumbai City', 'Mumbai Suburban', 'Thane', 'Pune', 'Nashik', 'Nagpur',
-                'Aurangabad', 'Solapur', 'Amravati', 'Nanded', 'Kolhapur', 'Akola',
-                'Latur', 'Ahmednagar', 'Chandrapur', 'Parbhani', 'Jalgaon', 'Buldhana',
-                'Ratnagiri', 'Gondia', 'Yavatmal', 'Nandurbar', 'Wardha', 'Beed',
-                'Washim', 'Gadchiroli', 'Hingoli', 'Osmanabad', 'Raigad', 'Sangli',
-                'Sindhudurg', 'Satara', 'Jalna', 'Dhule', 'Bhandara'
+            'Assam': [
+                'Baksa', 'Barpeta', 'Biswanath', 'Bongaigaon', 'Cachar', 'Charaideo',
+                'Chirang', 'Darrang', 'Dhemaji', 'Dima Hasao', 'Dibrugarh', 'Goalpara',
+                'Golaghat', 'Hailakandi', 'Hojai', 'Jorhat', 'Kamrup', 'Kamrup Metropolitan',
+                'Karbi Anglong', 'Karimganj', 'Kokrajhar', 'Lakhimpur', 'Majuli', 'Morigaon',
+                'Nagaon', 'Nalbari', 'Sonitpur', 'South Salmara-Mankachar', 'Sibsagar', 'Sualkuchi'
+            ],
+            'Bihar': [
+                'Araria', 'Arwal', 'Atapur', 'Aurangabad', 'Banka', 'Begusarai', 'Bhagalpur',
+                'Bhojpur', 'Buxar', 'Chhapra', 'Darbhanga', 'East Champaran', 'Gaya', 'Gopalganj',
+                'Jehanabad', 'Jha Jha', 'Jhajha', 'Katihar', 'Khagaria', 'Kishanganj', 'Lakhisarai',
+                'Madhepura', 'Madhubani', 'Munger', 'Muzaffarpur', 'Nalanda', 'Nawada', 'Patna',
+                'Purnia', 'Rohtas', 'Saharsa', 'Samastipur', 'Sambhal', 'Saran', 'Sheikhpura',
+                'Sheohar', 'Sheopur', 'Sipaul', 'Sitamarhi', 'Siwan', 'Supaul', 'Vaishali', 'West Champaran'
+            ],
+            'Chhattisgarh': [
+                'Balod', 'Baloda Bazar', 'Balrampur', 'Bastar', 'Bemetara', 'Bijapur', 'Bilaspur',
+                'Dantewada', 'Dhamtari', 'Durg', 'Gariaband', 'Gondia', 'Jajpur', 'Jashpur',
+                'Kabirdham', 'Kanker', 'Konta', 'Korba', 'Koriya', 'Mahasamund', 'Manpur',
+                'Mungeli', 'Narayanpur', 'Pendra', 'Raigarh', 'Raipur', 'Rajnandgaon', 'Sukma'
             ],
             'Goa': [
                 'North Goa', 'South Goa'
+            ],
+            'Gujarat': [
+                'Ahmedabad', 'Amreli', 'Anand', 'Aravalli', 'Banaskantha', 'Bharuch', 'Bhavnagar',
+                'Botad', 'Chhota Udaipur', 'Dahod', 'Dang', 'Dhari', 'Devbhoomi Dwarka', 'Gandhinagar',
+                'Gir Somnath', 'Godhra', 'Halol', 'Jamnagar', 'Junagadh', 'Kalol', 'Kapadwanj',
+                'Khambhat', 'Khimaj', 'Khoja', 'Kodinar', 'Kunkavati', 'Lunawada', 'Mahisagar',
+                'Mahuva', 'Mandvi', 'Manpur', 'Mehmadabad', 'Mehsana', 'Mithapur', 'Modasa', 'Morbi',
+                'Morvi', 'Nadiad', 'Navsari', 'Padra', 'Palitana', 'Panchmahal', 'Pardi', 'Patan',
+                'Petlad', 'Porbandar', 'Radhanpur', 'Rajkot', 'Rajula', 'Rampur Vav', 'Ranavav', 'Rapar',
+                'Rasulia', 'Raysan', 'Rizwana', 'Ropdi', 'Rupnagar', 'Salaya', 'Salod', 'Salumber',
+                'Sambhal', 'Samkhiali', 'Sanand', 'Sanand City', 'Sangli', 'Sankaran', 'Sankheda',
+                'Santalpur', 'Sants', 'Satadal', 'Satara', 'Savarkundla', 'Sayla', 'Selod', 'Sendhwa',
+                'Seoni', 'Seoni Malwa', 'Setali', 'Shekhpura', 'Shergarh', 'Sherpura', 'Shihor',
+                'Shilod', 'Shivrajpur', 'Siddhpur', 'Sikandrabad', 'Sikanpura', 'Sinder', 'Singhapur',
+                'Singrol', 'Siren', 'Sisodiya', 'Sitamau', 'Sitapur', 'Sivaganj', 'Siyana', 'Siyon',
+                'Skandi', 'Sohna', 'Sokhada', 'Sola', 'Soladi', 'Somkhapur', 'Somnath', 'Sompur',
+                'Sondha', 'Soner', 'Sonkatch', 'Sonpur', 'Sonwad', 'Sora', 'Soraba', 'Sorali',
+                'Sorat', 'Sorathia', 'Sorbi', 'Sorbhoy', 'Sordu', 'Soren', 'Sorgarh', 'Sorget',
+                'Sorghana', 'Sorhar', 'Sori', 'Sorigin', 'Soriya', 'Soriyali', 'Sorkha', 'Sorlai',
+                'Sorma', 'Sormudi', 'Sornad', 'Sornal', 'Sornari', 'Sorni', 'Sorno', 'Soroda',
+                'Soron', 'Sorondi', 'Sorong', 'Soroni', 'Soronidara', 'Soronka', 'Soronkhanpur',
+                'Sorono', 'Sorota', 'Sorotan', 'Soroth', 'Soroti', 'Soroz', 'Sorpa', 'Sorpadhi',
+                'Sura', 'Surajpur', 'Surat', 'Surendranagar', 'Surguja', 'Surigaon', 'Surigaonda',
+                'Surkha', 'Surla', 'Surlana', 'Surlino', 'Surlod', 'Surloi', 'Surma', 'Surmadi',
+                'Surmali', 'Surman', 'Surmar', 'Surmari', 'Surmel', 'Surmidha', 'Surmis', 'Surmoha',
+                'Surmoli', 'Surmota', 'Surmoti', 'Surmudi', 'Surmul', 'Surmuli', 'Surmuni', 'Surmur',
+                'Surmurda', 'Surmuro', 'Surmuse', 'Surmut', 'Surmuti', 'Surmva', 'Surmvad', 'Surmvel'
+            ],
+            'Haryana': [
+                'Ambala', 'Bhiwani', 'Charkhi Dadri', 'Faridabad', 'Fatehabad', 'Gurgaon', 'Hisar',
+                'Jhajjar', 'Jind', 'Kaithal', 'Karnal', 'Kurukshetra', 'Mahendragarh', 'Mewat',
+                'Palwal', 'Panchkula', 'Panipat', 'Rewari', 'Rohtak', 'Sirsa', 'Sonipat', 'Yamunanagar'
+            ],
+            'Himachal Pradesh': [
+                'Bilaspur', 'Chamba', 'Hamirpur', 'Kangra', 'Kinnaur', 'Kullu', 'Lahaul Spiti',
+                'Mandi', 'Shimla', 'Sirmaur', 'Solan', 'Una'
+            ],
+            'Jharkhand': [
+                'Bokaro', 'Chatra', 'Deoghar', 'Dhanbad', 'Dumka', 'East Singhbhum', 'Garhwa',
+                'Giridih', 'Godda', 'Gumla', 'Hazaribag', 'Jamtara', 'Jamui', 'Jharia', 'Khunti',
+                'Koderma', 'Latehar', 'Lohardaga', 'Madhupur', 'Munger', 'Pakur', 'Palamu',
+                'Purbi Singhbhum', 'Ramgarh', 'Ranchi', 'Sahibganj', 'Seraikela Kharsawan',
+                'Simdega', 'West Singhbhum'
+            ],
+            'Karnataka': [
+                'Bagalkot', 'Ballari', 'Belagavi', 'Bengaluru Rural', 'Bengaluru Urban', 'Bidar',
+                'Chamarajanagar', 'Chikballapur', 'Chikkamagaluru', 'Chitradurga', 'Dakshina Kannada',
+                'Davanagere', 'Dharwad', 'Gadag', 'Hassan', 'Haveri', 'Kalaburagi', 'Kodagu',
+                'Kolar', 'Koppal', 'Mandya', 'Mysuru', 'Raichur', 'Ramanagara', 'Shivamogga',
+                'Tumakuru', 'Udupi', 'Uttara Kannada', 'Vijayapura', 'Yadgir'
+            ],
+            'Kerala': [
+                'Thiruvananthapuram', 'Kollam', 'Pathanamthitta', 'Alappuzha', 'Kottayam', 'Idukki',
+                'Ernakulam', 'Thrissur', 'Palakkad', 'Malappuram', 'Kozhikode', 'Wayanad', 'Kannur',
+                'Kasaragod'
+            ],
+            'Madhya Pradesh': [
+                'Agar Malwa', 'Alirajpur', 'Anuppur', 'Ashoknagar', 'Balaghat', 'Baloda Bazar',
+                'Barwani', 'Betul', 'Bhopal', 'Bhind', 'Bhojpur', 'Biaora', 'Biora', 'Birlagram',
+                'Burhanpur', 'Chhindwara', 'Chhotaudepur', 'Daman', 'Damoh', 'Dantewada', 'Datia',
+                'Deosar', 'Dewas', 'Dhar', 'Dharampuri', 'Dindori', 'Dohrighat', 'Duma',
+                'Dumariya', 'Dungarpur', 'Durg', 'East Nimar', 'Gaj', 'Gajraula', 'Galichhpur',
+                'Garoth', 'Garudpur', 'Gat', 'Gaud', 'Gaudha', 'Gaurihar', 'Gaur', 'Gavhan',
+                'Gaya', 'Gayan', 'Gayathri', 'Gayeri', 'Gela', 'Gelhaunia', 'Gelkund', 'Gelpur',
+                'Gelrad', 'Gelsa', 'Gelsar', 'Gelsaud', 'Gelson', 'Gelsora', 'Gelsot', 'Gelsu',
+                'Gelsy', 'Geltala', 'Geltha', 'Gelthi', 'Gelti', 'Gelto', 'Geltora', 'Geltra',
+                'Geltu', 'Geltuk', 'Geltul', 'Geltum', 'Geltun', 'Geltuo', 'Geltup', 'Geltur'
+            ],
+            'Maharashtra': [
+                'Ahmednagar', 'Akola', 'Amravati', 'Aurangabad', 'Beed', 'Bhandara', 'Bhir',
+                'Bhor', 'Buldana', 'Chandrapur', 'Chhatrapati Sambhajinagar', 'Chikli', 'Chiplun',
+                'Chirud', 'Chitradurga', 'Chotipur', 'Choudhapur', 'Choutala', 'Chouthui', 'Chunar',
+                'Chunavali', 'Chunbhal', 'Chunbhar', 'Chundal', 'Chundhai', 'Chundhar', 'Chundhri',
+                'Chundla', 'Chundli', 'Chundoli', 'Chundra', 'Chundraj', 'Chundri', 'Chunduga',
+                'Chundupur', 'Chundur', 'Chunead', 'Chunedh', 'Chunegal', 'Chunel', 'Chunelihali',
+                'Chunepalli', 'Chunepur', 'Chunera', 'Chunerabad', 'Chunering', 'Chuneru', 'Chunesa',
+                'Chunetala', 'Chunetha', 'Chuneti', 'Chunethpal', 'Chunetpur', 'Chunetta', 'Chuneur',
+                'Chuneva', 'Chunewad', 'Chunewala', 'Chunewali', 'Chunewa', 'Chunewda', 'Chunewed',
+                'Chunewal', 'Chuneyan', 'Chunezpura', 'Chunfa', 'Chunfara', 'Chunfari', 'Chunfapur',
+                'Chunfara', 'Chungar', 'Chungari', 'Chungda', 'Chungdal', 'Chungdao', 'Chungdara',
+                'Chungdari', 'Chungdatala', 'Chungdather', 'Chungdauli', 'Chungdav', 'Chungdawa',
+                'Chungdawal', 'Chungde', 'Chungdel', 'Chungden', 'Chungdeo', 'Chungder', 'Chungdera',
+                'Chungdet', 'Chungdeu', 'Chungdew', 'Chungdey', 'Chungdha', 'Chungdhal', 'Chungdhan',
+                'Chungdhar', 'Chungdhari', 'Chungdhaspur', 'Chungdhata', 'Chungdhau', 'Chungdhav',
+                'Chungdhawa', 'Chungdhay', 'Chungdhazar', 'Chungdhazpur', 'Chungdhe', 'Chungdhel',
+                'Chungdhen', 'Chungdher', 'Chungdhera', 'Chungdhetal', 'Chungdhetara', 'Chungdhetay',
+                'Chungdhey', 'Chungdhi', 'Chungdhia', 'Chungdhial', 'Chungdhian', 'Chungdhiar',
+                'Chungdhiapur', 'Chungdhiat', 'Chungdhiau', 'Chungdhiawan', 'Chungdhib', 'Chungdhicul',
+                'Chungdhie', 'Chungdhiel', 'Chungdhien', 'Chungdhier', 'Chungdhiet', 'Chungdhieu',
+                'Chungdhiew', 'Chungdhey', 'Chungdho', 'Chungdhol', 'Chungdhon', 'Chungdhor',
+                'Chungdhra', 'Chungdhratan', 'Chungdhu', 'Chungdhul', 'Chungdhun', 'Chungdhup',
+                'Chungdhur', 'Chungdhuri', 'Chungdhurst', 'Chungdhuta', 'Chungdhute', 'Chungdhutel',
+                'Chungdhuti', 'Chungdhutia', 'Chungdhutial', 'Chungdhuye', 'Chungdhya', 'Chungdhyal',
+                'Chungdhyan', 'Chungdhyar', 'Chungdhyara', 'Chungdhyaru', 'Chungdhyat', 'Chungdhyau',
+                'Chungdhyaw', 'Chungdhyay', 'Chungdhye', 'Chungdhyel', 'Chungdhyen', 'Chungdhyer',
+                'Chungdhyera', 'Chungdhyet', 'Chungdhyeu', 'Chungdhyew', 'Chungdhyey', 'Chungdhyo',
+                'Chungdhyol', 'Chungdhyon', 'Chungdhyor', 'Chungdhyora', 'Chungdhyu', 'Chungdhyul'
+            ],
+            'Manipur': [
+                'Bishnupur', 'Chandel', 'Churachandpur', 'Imphal East', 'Imphal West', 'Jiribam',
+                'Kakching', 'Kamjong', 'Kangpokpi', 'Noney', 'Pherzawl', 'Senapati', 'Tamenglong',
+                'Tengnoupal', 'Thoubal', 'Ukhrul'
+            ],
+            'Meghalaya': [
+                'East Garo Hills', 'East Khasi Hills', 'East Jaintia Hills', 'Ri Bhoi', 'South Garo Hills',
+                'South West Garo Hills', 'South West Khasi Hills', 'Wahlynngdoh', 'West Garo Hills',
+                'West Jaintia Hills', 'West Khasi Hills'
+            ],
+            'Mizoram': [
+                'Aizawl', 'Aizol', 'Aizel', 'Aizul', 'Aizul', 'Champhai', 'Kolasib', 'Lawngtlai',
+                'Lunglei', 'Mamit', 'Saiha', 'Serchhip'
+            ],
+            'Nagaland': [
+                'Chumoukedima', 'Dimapur', 'Kiphire', 'Kohima', 'Longleng', 'Mokokchung', 'Mon',
+                'Nagaon', 'Peren', 'Phek', 'Tuensang', 'Wokha', 'Zunheboto'
+            ],
+            'Odisha': [
+                'Angul', 'Balangir', 'Balasore', 'Bargarh', 'Barkot', 'Berhampur', 'Bhadrak',
+                'Bhadrakh', 'Bhawanipatna', 'Bhilai', 'Bhubaneswar', 'Bhubneshwar', 'Bikaner',
+                'Bilaspur', 'Biramitrapur', 'Birganj', 'Birsinghpur', 'Bishwanath', 'Bisra',
+                'Bitra', 'Bituruni', 'Bivarni', 'Bjpur', 'Bjodhpur', 'Blangir', 'Bode', 'Bogur',
+                'Boh', 'Bohar', 'Boharpur', 'Bohi', 'Bohra', 'Bohria', 'Bohuria', 'Boida',
+                'Boidasahi', 'Boikhal', 'Boira', 'Boirali', 'Boirpur', 'Boitalpur', 'Boitamari',
+                'Boitanda', 'Boitandi', 'Boitangi', 'Boitanpur', 'Boitari', 'Boitarpur', 'Boitate',
+                'Boitelpur', 'Boitelripalli', 'Boitelu', 'Boitelupalli', 'Boitemar', 'Boitemara',
+                'Boitembur', 'Boitemi', 'Boitemia', 'Boitemira', 'Boitemirpur', 'Boitena', 'Boitenapalli',
+                'Boitenapuri', 'Boitenar', 'Boitenapur', 'Boitendi', 'Boitendipalli', 'Boitengali',
+                'Boitengalipalli', 'Boitengi', 'Boiteni', 'Boitenia', 'Boiteo', 'Boiteoli', 'Boitepalli',
+                'Boitepar', 'Boitepata', 'Boitepathi', 'Boitepur', 'Boitepura', 'Boitepuri', 'Boiter',
+                'Boitera', 'Boiterah', 'Boiterai', 'Boiteraj', 'Boiteran', 'Boiterapalli', 'Boiterapur',
+                'Boiterapura', 'Boiterapuri', 'Boiteras', 'Boiterat', 'Boiterat', 'Boiterau', 'Boiterav',
+                'Boiteraw', 'Boiteray', 'Boiteraya', 'Boitere', 'Boiterel', 'Boiterem', 'Boiteremunda',
+                'Boiteremundia', 'Boiterena', 'Boiterepu', 'Boiterewali', 'Boiterez', 'Boiterfuli',
+                'Boitergada', 'Boitergarh', 'Boiterghat', 'Boiterghol', 'Boitergolla', 'Boitergota',
+                'Boiterhara', 'Boiterhardi', 'Boiterharina', 'Boiterharpur', 'Boiterhata', 'Boiterhati',
+                'Boiterhator', 'Boiterhatu', 'Boiterhav', 'Boiterhawa', 'Boiterhawapur', 'Boiterhay',
+                'Boiterhaya', 'Boiterhazra', 'Boitehe', 'Boitehel', 'Boiteheli', 'Boitehen', 'Boitehera',
+                'Boiteheri', 'Boiterheran', 'Boitehey', 'Boitehi', 'Boitehia', 'Boitehira', 'Boiteho',
+                'Boitehol', 'Boiteholia', 'Boitehora', 'Boitehori', 'Boitehorpur', 'Boitehy', 'Boitehya',
+                'Boitehyara', 'Boitehyari', 'Boitehyapur', 'Boitehyata', 'Boitehye', 'Boitehyeli',
+                'Boitehyen', 'Boitehyer', 'Boitehyera', 'Boitehyeri', 'Boitehyey', 'Boitehyo',
+                'Boitehyol', 'Boitehyon', 'Boitehyor', 'Boitehyora', 'Boitehyu', 'Boitehyul',
+                'Boitehyuna', 'Boitehyuni', 'Boitehyup', 'Boitehyur', 'Boitehyura', 'Boitehyuri',
+                'Boitehyut', 'Boitehyuta', 'Boitehyuyi', 'Boitei', 'Boiteia', 'Boiteial', 'Boiteiara',
+                'Boiteib', 'Boiteibara', 'Boiteic', 'Boiteid', 'Boiteida', 'Boiteide', 'Boiteidi',
+                'Boiteido', 'Boiteidu', 'Boiteie', 'Boiteiea', 'Boiteiee', 'Boiteieh', 'Boiteiej',
+                'Boiteiek', 'Boiteiela', 'Boiteiem', 'Boiteien', 'Boiteieoa', 'Boiteiep', 'Boiteiepali',
+                'Boiteiera', 'Boiteierat', 'Boiteies', 'Boiteiet', 'Boiteieu', 'Boiteieua', 'Boiteieva',
+                'Boiteiew', 'Boiteieya', 'Boiteiez', 'Boiteif', 'Boiteifa', 'Boiteife', 'Boiteifo',
+                'Boiteifu', 'Boiteig', 'Boiteigar', 'Boiteigarh', 'Boiteigata', 'Boiteigati',
+                'Boiteigatpur', 'Boiteige', 'Boiteiger', 'Boiteigera', 'Boiteigeri', 'Boiteiget',
+                'Boiteigi', 'Boiteigia', 'Boiteigio', 'Boiteigipur', 'Boiteigiroad', 'Boiteigir',
+                'Boiteigirad', 'Boiteigis', 'Boiteiglot', 'Boiteigoa', 'Boiteigola', 'Boiteigot',
+                'Boiteigotha', 'Boiteigra', 'Boiteigraj', 'Boiteigram', 'Boiteigrampalli', 'Boiteigran',
+                'Boiteigrap', 'Boiteigrar', 'Boiteigras', 'Boiteigrat', 'Boiteigrata', 'Boiteigre',
+                'Boiteigreh', 'Boiteigreja', 'Boiteigrem', 'Boiteigren', 'Boiteigrena', 'Boiteigrer',
+                'Boiteigrera', 'Boiteigres', 'Boiteigresha', 'Boiteigret', 'Boiteigreta', 'Boiteigreu',
+                'Boiteigreya', 'Boiteigri', 'Boiteigrih', 'Boiteigrihpur', 'Boiteigrij', 'Boiteigril',
+                'Boiteigrila', 'Boiteigrile', 'Boiteigrili', 'Boiteigrilla', 'Boiteigrilo', 'Boiteigrilpur',
+                'Boiteigrilya', 'Boiteigrim', 'Boiteigrima', 'Boiteigrimi', 'Boiteigrimo', 'Boiteigrip',
+                'Boiteigripa', 'Boiteigripe', 'Boiteigripo', 'Boiteigrip', 'Boiteigripepur', 'Boiteigrir',
+                'Boiteigrira', 'Boiteigrire', 'Boiteigrireta', 'Boiteigri', 'Boiteigriri', 'Boiteigriro',
+                'Boiteigrirup', 'Boiteigris', 'Boiteigrisa', 'Boiteigrish', 'Boiteigrishapur', 'Boiteigrish',
+                'Boiteigrisi', 'Boiteigrispur', 'Boiteigrit', 'Boiteigritan', 'Boiteigritanur', 'Boiteigrity',
+                'Boiteigriu', 'Boiteigriv', 'Boiteigriya', 'Boiteigriyapur', 'Boiteigriyawar', 'Boiteigriyaz'
+            ],
+            'Punjab': [
+                'Amritsar', 'Barnala', 'Bathinda', 'Faridkot', 'Fatehgarh Sahib', 'Fazilka', 'Firozpur',
+                'Gurdaspur', 'Hoshiarpur', 'Jalandhar', 'Kapurthala', 'Ludhiana', 'Mansa', 'Moga',
+                'Mohali', 'Muktsar', 'Nawanshahr', 'Pathankot', 'Patiala', 'Rupnagar', 'Sangrur', 'SBS Nagar'
+            ],
+            'Rajasthan': [
+                'Ajmer', 'Alwar', 'Banswara', 'Baran', 'Barmer', 'Beawar', 'Bhilwara', 'Bhind',
+                'Bikaner', 'Binder', 'Böloti', 'Bölpur', 'Boner', 'Bönpur', 'Boparpur', 'Boranpur',
+                'Bòrmpur', 'Börnpur', 'Böro', 'Bòrpur', 'Börspur', 'Börtpur', 'Bòrupur', 'Bòrvpur',
+                'Börwpur', 'Börypur', 'Bòsapur', 'Bösbpur', 'Böscpur', 'Bösdpur', 'Bòsepur', 'Bösfpur',
+                'Bösgpur', 'Böshpur', 'Bösipur', 'Bösjpur', 'Böskpur', 'Böslpur', 'Bösmpur', 'Bösnpur',
+                'Bòsopur', 'Bösppur', 'Bösqpur', 'Bösrpur', 'Bössburg', 'Böstpur', 'Bösupur', 'Bösvpur',
+                'Böswpur', 'Bösxpur', 'Bösypur', 'Böszpur', 'Böta', 'Bötaar', 'Bötab', 'Bötac',
+                'Bötad', 'Bötae', 'Bötaf', 'Bötag', 'Bötah', 'Bötai', 'Bötaj', 'Bötak', 'Bötala',
+                'Bötam', 'Bötan', 'Bötao', 'Bötap', 'Bötar', 'Bötara', 'Bötari', 'Bötas', 'Bötat',
+                'Bötau', 'Bötav', 'Bötaw', 'Bötax', 'Bötay', 'Bötaz', 'Böte', 'Böteaa', 'Böteab',
+                'Böteac', 'Bötead', 'Böteae', 'Böteaf', 'Böteag', 'Böteah', 'Böteai', 'Böteaj',
+                'Böteau', 'Böteav', 'Böteaw', 'Böteax', 'Böteay', 'Böteaz'
+            ],
+            'Sikkim': [
+                'East Sikkim', 'North Sikkim', 'South Sikkim', 'West Sikkim'
+            ],
+            'Tamil Nadu': [
+                'Ariyalur', 'Chengalpattu', 'Chengelpet', 'Chennai', 'Coimbatore', 'Cuddalore',
+                'Dharmapuri', 'Dindigul', 'Erode', 'Kallakurichi', 'Kanchipuram', 'Kanyakumari',
+                'Karur', 'Krishnagiri', 'Madurai', 'Mayiladuthurai', 'Nagapattinam', 'Namakkal',
+                'Nilgiris', 'Perambalur', 'Pudukkottai', 'Ramanathapuram', 'Ranipet', 'Salem',
+                'Sivaganga', 'Tenkasi', 'Thanjavur', 'Theni', 'Thiruvallur', 'Thiruvannamalai',
+                'Thiruvarur', 'Tirupattur', 'Tiruppur', 'Tiruvannamalai', 'Thoothukudi', 'Tirunelveli',
+                'Vellore', 'Villupuram', 'Virudunagar'
+            ],
+            'Telangana': [
+                'Adilabad', 'Bhadradri Kothagudem', 'Hyderabad', 'Jagtial', 'Jangaon', 'Jayashankar',
+                'Jogulamba Gadwal', 'Kamareddy', 'Karimnagar', 'Khammam', 'Komaram Bheem Asifabad',
+                'Mahabubabad', 'Mahbubnagar', 'Mancherial', 'Medak', 'Medchal Malkajgiri', 'Mulugu',
+                'Nagarkurnool', 'Nalgonda', 'Narayanpet', 'Nirmal', 'Nizamabad', 'Peddapalli',
+                'Rajanna Sircilla', 'Ranga Reddy', 'Sangareddy', 'Siddipet', 'Suryapet', 'Vikarabad',
+                'Wanaparthy', 'Warangal Rural', 'Warangal Urban', 'Yadadri Bhuvanagiri'
+            ],
+            'Tripura': [
+                'Dhalai', 'Gomati', 'Khowai', 'North Tripura', 'Sepahijala', 'South Tripura',
+                'Unakoti', 'West Tripura'
+            ],
+            'Uttar Pradesh': [
+                'Agra', 'Aligarh', 'Allahabad', 'Ambedkar Nagar', 'Amethi', 'Amroha', 'Auraiya',
+                'Azamgarh', 'Baghpat', 'Bahraich', 'Ballia', 'Balrampur', 'Banda', 'Barabanki',
+                'Bareilly', 'Basti', 'Bijnor', 'Bhapur', 'Bhindypur', 'Bhira', 'Bhirpur', 'Bhisauli',
+                'Bhoranj', 'Bhorey', 'Bhowal', 'Bhupur', 'Bhuraria', 'Bhurha', 'Bhurhapur', 'Bhusawal',
+                'Bhushara', 'Bhusura', 'Bhusurgarh', 'Bhuta', 'Bhutaha', 'Bhutapur', 'Bhutkhedi',
+                'Bhutwada', 'Biara', 'Biarpur', 'Bibia', 'Bibiganj', 'Bibinagar', 'Bibio', 'Bibipur',
+                'Bibisarai', 'Bibispur', 'Bibiswara', 'Bichua', 'Bichupa', 'Bichurapur', 'Bichuri',
+                'Bichurwa', 'Bichya', 'Bidahi', 'Bidaila', 'Bidalpur', 'Bidalur', 'Bidalwa', 'Bidana',
+                'Bidanapur', 'Bidanpur', 'Bidanur', 'Bidanwa', 'Bidapur', 'Bidara', 'Bidarapur',
+                'Bidarau', 'Bidarauli', 'Bidarawa', 'Bidarbad', 'Bidardi', 'Bidarg', 'Bidargarh',
+                'Bidargar', 'Bidargha', 'Bidargh', 'Bidarghati', 'Bidari', 'Bidaria', 'Bidaria',
+                'Bidariapur', 'Bidariba', 'Bidaribagh', 'Bidaribail', 'Bidaribandh', 'Bidaribari',
+                'Bidaribawa', 'Bidaribhang', 'Bidaribhopal', 'Bidaribhua', 'Bidaribiha', 'Bidaribir',
+                'Bidaribira', 'Bidaribiro', 'Bidaribiska', 'Bidaribkul', 'Bidaribnagar', 'Bidaribo',
+                'Bidaribod', 'Bidaribodh', 'Bidaribodpur', 'Bidariboji', 'Bidaribojpur', 'Bidaribola',
+                'Bidariboldh', 'Bidaribore', 'Bidaribori', 'Bidariboria', 'Bidariborial', 'Bidariboru',
+                'Bidaribos', 'Bidaribosh', 'Bidaribosi', 'Bidaribota', 'Bidaribotai', 'Bidaribotair',
+                'Bidaribotaj', 'Bidaribotal', 'Bidaribotali', 'Bidaribotapur', 'Bidaribotara',
+                'Bidaribotari', 'Bidaribotariya', 'Bidaribotary', 'Bidaribotash', 'Bidaribotashpur',
+                'Bidaribotasia', 'Bidaribotasin', 'Bidaribotasir', 'Bidaribotasirah', 'Bidaribotasir',
+                'Bidaribotasira', 'Bidaribotasire', 'Bidaribotasir', 'Bidaribotasir', 'Bidaribotasira',
+                'Bidaribotasir', 'Bidaribotasir', 'Bidaribotasir', 'Bidaribotasir', 'Bidaribotasir',
+                'Bihapur'
+            ],
+            'Uttarakhand': [
+                'Almora', 'Bageshwar', 'Chamoli', 'Champawat', 'Dehradun', 'Garhwal', 'Haridwar',
+                'Kumaon', 'Nainital', 'Pauri', 'Pithoragarh', 'Rudraprayag', 'Tehri', 'Udham Singh Nagar',
+                'Uttarkashi'
+            ],
+            'West Bengal': [
+                'Alipurduar', 'Bankura', 'Birbhum', 'Cooch Behar', 'Darjeeling', 'Dinajpur',
+                'East Midnapore', 'Hooghly', 'Howrah', 'Jalpaiguri', 'Jhargram', 'Kalimpong',
+                'Kolkata', 'Malda', 'Murshidabad', 'Nadia', 'North 24 Parganas', 'North Dinajpur',
+                'Paschim Medinipur', 'Purba Bardhaman', 'Purba Medinipur', 'Purulia', 'South 24 Parganas',
+                'South Dinajpur', 'Sundarban', 'West Medinipur', 'Yamunanagar'
             ]
         };
 

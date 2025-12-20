@@ -65,6 +65,10 @@
     }
     $counselor_stmt->close();
 
+    $student_state    = isset($student_data['state']) ? trim($student_data['state']) : '';
+    $student_district = isset($student_data['district']) ? trim($student_data['district']) : '';
+    $student_location = trim($student_state . ($student_state && $student_district ? ', ' : '') . $student_district);
+
     $message      = '';
     $message_type = '';
 
@@ -103,28 +107,21 @@
             )";
             $conn->query($create_table);
 
-            // Migration: Add new columns if they don't exist (for backward compatibility)
-            // Check if event_state column exists, if not add it
-            $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_state'");
-            if ($check_column->num_rows == 0) {
-                $conn->query("ALTER TABLE od_requests ADD COLUMN event_state VARCHAR(100) DEFAULT ''");
-            }
-
-            // Check if event_district column exists, if not add it
-            $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_district'");
-            if ($check_column->num_rows == 0) {
-                $conn->query("ALTER TABLE od_requests ADD COLUMN event_district VARCHAR(100) DEFAULT ''");
-            }
-
             // Insert OD request
             $event_name        = trim($_POST['event_name']);
             $event_description = trim($_POST['event_description']);
-            $event_state       = trim($_POST['event_state']);
-            $event_district    = trim($_POST['event_district']);
+            $event_state       = $student_state;
+            $event_district    = $student_district;
             $event_date        = $_POST['event_date'];
             $event_time        = $_POST['event_time'];
             $event_days        = $_POST['event_days'];
             $reason            = trim($_POST['reason']);
+
+            // Require location to come from saved profile
+            if ($event_state === '' || $event_district === '') {
+                $message      = "Your profile is missing State/District. Please update it in Profile before submitting an OD request.";
+                $message_type = 'error';
+            }
 
             // Handle file upload
             $poster_filename = null;
@@ -685,12 +682,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="od_request.php" class="nav-link active">
-                            <span class="material-symbols-outlined">request_page</span>
-                            OD Request
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="student_register.php" class="nav-link">
                             <span class="material-symbols-outlined">add_circle</span>
                             Register Event
@@ -706,6 +697,12 @@
                         <a href="internship_submission.php" class="nav-link">
                             <span class="material-symbols-outlined">work</span>
                             Internship Submission
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="od_request.php" class="nav-link active">
+                            <span class="material-symbols-outlined">description</span>
+                            OD Request
                         </a>
                     </li>
                     <li class="nav-item">
@@ -752,7 +749,7 @@
                         </div>
                         <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
                         <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-                            ID:                                                                                                                                                                                                                                                                                                                                                      <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                             <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                         </div>
                     </div>
@@ -776,24 +773,9 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Event State *</label>
-                                <select name="event_state" class="form-select" required id="eventState">
-                                    <option value="" disabled selected>Select State</option>
-                                    <option value="Tamil Nadu">Tamil Nadu</option>
-                                    <option value="Kerala">Kerala</option>
-                                    <option value="Karnataka">Karnataka</option>
-                                    <option value="Andhra Pradesh">Andhra Pradesh</option>
-                                    <option value="Telangana">Telangana</option>
-                                    <option value="Maharashtra">Maharashtra</option>
-                                    <option value="Goa">Goa</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Event District *</label>
-                                <select name="event_district" class="form-select" required id="eventDistrict" disabled>
-                                    <option value="" disabled selected>Select District</option>
-                                </select>
+                                <label class="form-label">Event Location (from your profile)</label>
+                                <input type="text" class="form-input" value="<?php echo htmlspecialchars($student_location ?: 'Update your State and District in Profile'); ?>" readonly>
+                                <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">To change this, update State/District in your Profile.</small>
                             </div>
 
                             <div class="form-group">
@@ -868,13 +850,13 @@
                         <div class="od-request-item<?php echo $request['status']; ?>">
                             <div class="od-request-header">
                                 <div class="od-event-name"><?php echo htmlspecialchars($request['event_name']); ?></div>
-                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $request['status']; ?>">
+                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </span>
                             </div>
                             <div class="od-details">
-                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
+                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
                                 <strong>Location:</strong>
                                 <?php
                                     // Handle backward compatibility for old records
@@ -1012,63 +994,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // State-District mapping for OD request form
-            const stateDistricts = {
-                'Tamil Nadu': [
-                    'Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem', 'Tirunelveli',
-                    'Thoothukudi', 'Dindigul', 'Thanjavur', 'Vellore', 'Erode', 'Tiruppur',
-                    'Karur', 'Namakkal', 'Cuddalore', 'Kancheepuram', 'Viluppuram', 'Sivagangai',
-                    'Ramanathapuram', 'Pudukkottai', 'Nagapattinam', 'Krishnagiri', 'Dharmapuri'
-                ],
-                'Kerala': [
-                    'Thiruvananthapuram', 'Kollam', 'Pathanamthitta', 'Alappuzha', 'Kottayam',
-                    'Idukki', 'Ernakulam', 'Thrissur', 'Palakkad', 'Malappuram', 'Kozhikode',
-                    'Wayanad', 'Kannur', 'Kasaragod'
-                ],
-                'Karnataka': [
-                    'Bengaluru Urban', 'Bengaluru Rural', 'Mysuru', 'Mandya', 'Hassan', 'Shimoga',
-                    'Chitradurga', 'Davanagere', 'Ballari', 'Kalaburagi', 'Bidar', 'Raichur',
-                    'Koppal', 'Gadag', 'Dharwad', 'Uttara Kannada', 'Haveri', 'Belgaum', 'Bagalkot'
-                ],
-                'Andhra Pradesh': [
-                    'Visakhapatnam', 'Vijayawada', 'Guntur', 'Nellore', 'Kurnool', 'Kadapa',
-                    'Tirupati', 'Anantapur', 'Chittoor', 'Eluru', 'Ongole', 'Nandyal'
-                ],
-                'Telangana': [
-                    'Hyderabad', 'Secunderabad', 'Warangal', 'Nizamabad', 'Khammam', 'Karimnagar',
-                    'Mahbubnagar', 'Nalgonda', 'Adilabad', 'Medak', 'Rangareddy'
-                ],
-                'Maharashtra': [
-                    'Mumbai', 'Pune', 'Nagpur', 'Thane', 'Nashik', 'Aurangabad', 'Solapur',
-                    'Amravati', 'Kolhapur', 'Sangli', 'Jalgaon', 'Akola', 'Latur'
-                ],
-                'Goa': [
-                    'North Goa', 'South Goa'
-                ]
-            };
-
-            const eventStateSelect = document.getElementById('eventState');
-            const eventDistrictSelect = document.getElementById('eventDistrict');
-
-            if (eventStateSelect && eventDistrictSelect) {
-                eventStateSelect.addEventListener('change', function() {
-                    const selectedState = this.value;
-                    eventDistrictSelect.innerHTML = '<option value="" disabled selected>Select District</option>';
-
-                    if (selectedState && stateDistricts[selectedState]) {
-                        eventDistrictSelect.disabled = false;
-                        stateDistricts[selectedState].forEach(function(district) {
-                            const option = document.createElement('option');
-                            option.value = district;
-                            option.textContent = district;
-                            eventDistrictSelect.appendChild(option);
-                        });
-                    } else {
-                        eventDistrictSelect.disabled = true;
-                    }
-                });
-            }
-
             const headerMenuIcon = document.querySelector('.header .menu-icon');
             const closeSidebarBtn = document.querySelector('.close-sidebar');
             const sidebar = document.getElementById('sidebar');
@@ -1085,9 +1010,9 @@
             const successMessage = document.querySelector('.message.success');
             if (successMessage) {
                 // Show popup for OD submission success
-                setTimeout(function() {
-                    alert('✅ OD Request Submitted Successfully!\\n\\nYour On Duty (OD) request has been submitted and is now pending approval from your class counselor. You will be notified once your request is reviewed.');
-                }, 500);
+                    setTimeout(function() {
+                        alert('✅ OD Request Submitted Successfully!\n\nYour On Duty (OD) request has been submitted and is now pending approval from your class counselor. You will be notified once your request is reviewed.');
+                    }, 500);
 
                 setTimeout(() => {
                     successMessage.style.opacity = '0';

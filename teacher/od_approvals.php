@@ -124,21 +124,58 @@
             position: relative;
         }
 
+        /* Header */
+        .header {
+            grid-area: header;
+            background-color: #fff;
+            height: 80px;
+            display: flex;
+            font-size: 15px;
+            font-weight: 100;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+            color: #1e4276;
+            position: fixed;
+            width: 100%;
+            z-index: 1001;
+            top: 0;
+            left: 0;
+            padding: 0 30px;
+        }
+
         /* Override default margins and paddings for wider content */
         .main {
-            padding: 15px !important;
-            margin: 0 !important;
+            padding: 20px;
+            min-height: calc(100vh - 80px);
         }
 
         .grid-container {
-            padding: 0 !important;
-            margin: 0 !important;
+            display: grid;
+            grid-template-areas: "sidebar main";
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 1fr;
+            min-height: 100vh;
+            padding-top: 80px;
+            transition: all 0.3s ease;
         }
 
         /* Sidebar width optimization */
         .sidebar {
-            width: 250px !important;
-            min-width: 250px !important;
+            grid-area: sidebar;
+            background: #ffffff;
+            border-right: 1px solid #e9ecef;
+            padding: 20px 0;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+            position: fixed;
+            width: 280px;
+            top: 80px;
+            left: 0;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+            z-index: 1000;
         }
 
         /* Statistics grid full width */
@@ -635,6 +672,92 @@
             opacity: 0.5;
         }
 
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0c3878;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .filter-input, .filter-select {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #0c3878;
+            box-shadow: 0 0 0 3px rgba(12, 56, 120, 0.1);
+        }
+
+        .filter-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .filter-btn-primary {
+            background: linear-gradient(135deg, #0c3878 0%, #2d5aa0 100%);
+            color: white;
+        }
+
+        .filter-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(12, 56, 120, 0.3);
+        }
+
+        .filter-btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .filter-btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Poster Modal Styles */
         .poster-modal {
             display: none;
@@ -735,6 +858,152 @@
             border-top: 1px solid #e9ecef;
             font-size: 12px;
             color: #6c757d;
+        }
+
+        /* OD Details Modal */
+        .od-details-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .od-details-modal-content {
+            position: relative;
+            background: white;
+            margin: 30px auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1000px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .od-details-modal-header {
+            background: linear-gradient(135deg, #0c3878 0%, #2d5aa0 100%);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .od-details-modal-header h3 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+
+        .od-details-modal-close {
+            cursor: pointer;
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .od-details-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .od-details-modal-body {
+            padding: 25px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        /* Vertical list layout for modal content */
+        .od-details-modal-body .od-request-item {
+            display: flex !important;
+            flex-direction: column;
+            gap: 20px;
+            padding: 0;
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            margin: 0;
+        }
+
+        .od-details-modal-body .od-request-item::before {
+            display: none;
+        }
+
+        .od-details-modal-body .section-card {
+            margin: 0 0 15px 0;
+            width: 100%;
+            display: block;
+        }
+
+        .od-details-modal-body .request-header-card {
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .od-details-modal-content {
+                width: 95%;
+                margin: 20px auto;
+            }
+
+            .od-details-modal-header {
+                padding: 15px 20px;
+            }
+
+            .od-details-modal-header h3 {
+                font-size: 16px;
+            }
+
+            .od-details-modal-body {
+                padding: 15px;
+                max-height: calc(100vh - 150px);
+            }
+
+            .od-request-item.visible {
+                margin-bottom: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .od-details-modal-content {
+                width: 98%;
+                margin: 10px auto;
+            }
+
+            .od-details-modal-header {
+                padding: 12px 15px;
+            }
+
+            .od-details-modal-body {
+                padding: 12px;
+            }
         }
 
         @keyframes fadeIn {
@@ -1305,7 +1574,7 @@
 
             <div class="student-info"  style="color: white;">
                 <div class="student-name" style="color:white;"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -1465,6 +1734,41 @@
                 </h2>
 
                 <?php if (count($od_requests_array) > 0): ?>
+                    <!-- Filter Section -->
+                    <div class="filter-section">
+                        <div class="filter-grid">
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">person_search</span>
+                                    Search by Name
+                                </label>
+                                <input type="text" id="filterName" class="filter-input" placeholder="Enter student name...">
+                            </div>
+                            <div class="filter-group">
+                                <label class="filter-label">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">filter_alt</span>
+                                    Filter by Status
+                                </label>
+                                <select id="filterStatus" class="filter-select">
+                                    <option value="">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+                            <div class="filter-group" style="display: flex; flex-direction: row; gap: 10px;">
+                                <button onclick="applyFilters()" class="filter-btn filter-btn-primary" style="flex: 1;">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">search</span>
+                                    Apply
+                                </button>
+                                <button onclick="clearFilters()" class="filter-btn filter-btn-secondary" style="flex: 1;">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Table View -->
                     <div style="overflow-x: auto; margin-bottom: 30px;">
                         <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
@@ -1539,7 +1843,7 @@
                                         <?php endif; ?>
                                     </td>
                                     <td data-label="Status" style="padding: 15px; text-align: center;">
-                                        <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                        <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                             <?php echo ucfirst($request['status']); ?>
                                         </span>
                                     </td>
@@ -1580,7 +1884,7 @@
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">calendar_today</span>
-                                            <span>Year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($request['year_of_join']); ?></span>
+                                            <span>Year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($request['year_of_join']); ?></span>
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">schedule</span>
@@ -1588,7 +1892,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo $request['status']; ?>">
+                                <div class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </div>
                             </div>
@@ -1678,9 +1982,9 @@
                                             Download Poster
                                         </a>
                                         <div style="text-align: center; font-size: 12px; color: #6c757d; padding: 8px; background: #f8f9fa; border-radius: 6px;">
-                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
-                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo strtoupper($file_extension); ?> •
-                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
+                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
+                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo strtoupper($file_extension); ?> •
+                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -1757,6 +2061,22 @@
                         <p>No students have submitted OD requests yet.</p>
                     </div>
                 <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- OD Details Modal -->
+    <div id="odDetailsModal" class="od-details-modal">
+        <div class="od-details-modal-content">
+            <div class="od-details-modal-header">
+                <h3>
+                    <span class="material-symbols-outlined">description</span>
+                    OD Request Details
+                </h3>
+                <span class="od-details-modal-close" onclick="closeOdDetailsModal()">&times;</span>
+            </div>
+            <div class="od-details-modal-body" id="odDetailsModalBody">
+                <!-- Content will be loaded here -->
             </div>
         </div>
     </div>
@@ -1841,40 +2161,124 @@
                     }, 300);
                 }, 5000);
             }
+
+            // Add filter event listeners
+            const filterName = document.getElementById('filterName');
+            const filterStatus = document.getElementById('filterStatus');
+
+            if (filterName) {
+                filterName.addEventListener('keyup', function(e) {
+                    if (e.key === 'Enter') {
+                        applyFilters();
+                    }
+                });
+            }
         });
+
+        // Filter Functions
+        function applyFilters() {
+            const nameFilter = document.getElementById('filterName').value.toLowerCase();
+            const statusFilter = document.getElementById('filterStatus').value.toLowerCase();
+            const tableRows = document.querySelectorAll('table tbody tr');
+            let visibleCount = 0;
+
+            tableRows.forEach(row => {
+                const studentName = row.querySelector('td[data-label="Student"]').textContent.toLowerCase();
+                const statusElement = row.querySelector('.od-status');
+                const status = statusElement.textContent.toLowerCase().trim();
+
+                const nameMatch = nameFilter === '' || studentName.includes(nameFilter);
+                const statusMatch = statusFilter === '' || status === statusFilter;
+
+                if (nameMatch && statusMatch) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Show message if no results
+            updateFilterMessage(visibleCount);
+        }
+
+        function clearFilters() {
+            document.getElementById('filterName').value = '';
+            document.getElementById('filterStatus').value = '';
+            applyFilters();
+        }
+
+        function updateFilterMessage(count) {
+            let messageDiv = document.getElementById('filterMessage');
+
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.id = 'filterMessage';
+                messageDiv.style.cssText = 'padding: 15px; text-align: center; background: #fff3cd; color: #856404; border-radius: 8px; margin: 15px 0; border: 1px solid #ffeaa7;';
+                const table = document.querySelector('table');
+                table.parentNode.insertBefore(messageDiv, table);
+            }
+
+            if (count === 0) {
+                messageDiv.innerHTML = '<span class="material-symbols-outlined" style="vertical-align: middle;">info</span> No OD requests match your filter criteria.';
+                messageDiv.style.display = 'block';
+            } else {
+                messageDiv.style.display = 'none';
+            }
+        }
 
         // View Details Function
         function viewDetails(odId) {
             const detailsDiv = document.getElementById('details-' + odId);
-            const allDetails = document.querySelectorAll('.od-request-item');
-            const isVisible = detailsDiv.classList.contains('visible');
+            if (!detailsDiv) return;
 
-            // Hide all other details
-            allDetails.forEach(detail => {
-                if (detail.id !== 'details-' + odId) {
-                    detail.classList.remove('visible');
-                }
+            const modal = document.getElementById('odDetailsModal');
+            const modalBody = document.getElementById('odDetailsModalBody');
+
+            // Clone the details content
+            const clonedContent = detailsDiv.cloneNode(true);
+            clonedContent.id = 'modal-details-' + odId;
+            clonedContent.classList.add('visible');
+
+            // Force vertical layout with inline styles
+            clonedContent.style.display = 'flex';
+            clonedContent.style.flexDirection = 'column';
+            clonedContent.style.gap = '20px';
+            clonedContent.style.margin = '0';
+            clonedContent.style.padding = '0';
+            clonedContent.style.background = 'transparent';
+            clonedContent.style.border = 'none';
+            clonedContent.style.boxShadow = 'none';
+
+            // Ensure all section cards display as block
+            const sectionCards = clonedContent.querySelectorAll('.section-card');
+            sectionCards.forEach(card => {
+                card.style.display = 'block';
+                card.style.width = '100%';
+                card.style.marginBottom = '15px';
             });
 
-            // Toggle current details
-            if (!isVisible) {
-                detailsDiv.classList.add('visible');
+            // Clear previous content and add new
+            modalBody.innerHTML = '';
+            modalBody.appendChild(clonedContent);
 
-                // Prevent zoom on mobile with manual scroll calculation
-                setTimeout(() => {
-                    const headerOffset = 80;
-                    const elementPosition = detailsDiv.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
-                    });
-                }, 100);
-            } else {
-                detailsDiv.classList.remove('visible');
-            }
+            // Show modal
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
         }
+
+        function closeOdDetailsModal() {
+            const modal = document.getElementById('odDetailsModal');
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('odDetailsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeOdDetailsModal();
+            }
+        });
 
         // Poster Modal Functions
         let currentRotation = 0;
@@ -1921,12 +2325,20 @@
 
         // Close modal with Escape key and add rotation shortcuts
         document.addEventListener('keydown', function(e) {
-            const modal = document.getElementById('posterModal');
-            if (modal.style.display === 'block') {
+            const posterModal = document.getElementById('posterModal');
+            const odDetailsModal = document.getElementById('odDetailsModal');
+
+            if (e.key === 'Escape') {
+                if (posterModal.style.display === 'block') {
+                    closePosterModal();
+                }
+                if (odDetailsModal.style.display === 'block') {
+                    closeOdDetailsModal();
+                }
+            }
+
+            if (posterModal.style.display === 'block') {
                 switch(e.key) {
-                    case 'Escape':
-                        closePosterModal();
-                        break;
                     case 'ArrowLeft':
                     case 'a':
                     case 'A':
