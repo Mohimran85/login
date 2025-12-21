@@ -99,7 +99,7 @@
             background: white;
             color: #000;
         }
-
+        
         .letterhead {
             text-align: center;
             border-bottom: 3px solid #0c3878;

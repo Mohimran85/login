@@ -321,6 +321,7 @@
         }
 
         .main {
+            grid-area: main;
             padding: 20px;
             min-height: calc(100vh - 80px);
         }
@@ -422,21 +423,10 @@
             position: relative;
         }
 
-        /* Override default margins and paddings for wider content */
-        .main {
-            padding: 15px !important;
-            margin: 0 !important;
-        }
-
-        .grid-container {
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
         /* Sidebar width optimization */
         .sidebar {
-            width: 250px !important;
-            min-width: 250px !important;
+            width: 280px !important;
+            min-width: 280px !important;
         }
 
         /* Statistics grid full width */
@@ -804,29 +794,38 @@
     <div class="grid-container">
         <!-- Header -->
         <div class="header">
-            <div class="menu-icon" onclick="toggleSidebar()">
+            <div class="menu-icon" onclick="openSidebar()">
                 <span class="material-symbols-outlined">menu</span>
             </div>
-            <div class="icon">
-                <img src="../asserts/images/sona_logo.jpg" alt="Logo">
+            <div class="header-logo">
+                <img class="logo" src="sona_logo.jpg" alt="Sona College Logo" height="60px" width="200" />
             </div>
             <div class="header-title">
-                <p>Event Management System</p>
+                <p>Event Management Dashboard</p>
             </div>
+        </div>
+        <div>
+            <!-- empty -->
         </div>
 
         <!-- Sidebar -->
-        <div class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-title">Teacher Portal</div>
-                <div class="close-sidebar" onclick="toggleSidebar()">
+                <div class="close-sidebar">
                     <span class="material-symbols-outlined">close</span>
                 </div>
             </div>
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
-                <div class="student-regno">Teacher |                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_dept); ?></div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_dept); ?>
+                    <?php
+                        if ($is_counselor) {
+                            echo '(Counselor)';
+                        }
+                    ?>
+                </div>
             </div>
 
             <ul class="nav-menu">
@@ -913,10 +912,10 @@
                     </a>
                 </li>
             </ul>
-        </div>
+        </aside>
 
         <!-- Main Content -->
-        <main class="main">
+        <div class="main">
             <div class="page-header">
                 <h1>Internship Approvals</h1>
                 <p>Review and approve internship submissions from assigned students</p>
@@ -1002,7 +1001,7 @@
                                     <td>
                                         <div class="action-btns">
                                             <button class="btn btn-sm btn-primary"
-                                                    onclick="openModal(<?php echo $internship['id']; ?>, '<?php echo htmlspecialchars($internship['student_name']); ?>')">
+                                                    onclick='openModal(<?php echo json_encode($internship); ?>)'>
                                                 Review
                                             </button>
                                         </div>
@@ -1069,7 +1068,7 @@
 
                                 <div class="card-actions">
                                     <button class="btn btn-sm btn-primary"
-                                            onclick="openModal(<?php echo $internship['id']; ?>, '<?php echo htmlspecialchars($internship['student_name']); ?>')">
+                                            onclick='openModal(<?php echo json_encode($internship); ?>)'>
                                         Review Submission
                                     </button>
                                 </div>
@@ -1078,7 +1077,7 @@
                     </div>
                 <?php endif; ?>
             </div>
-        </main>
+        </div>
     </div>
 
     <!-- Review Modal -->
@@ -1089,6 +1088,51 @@
                 <button class="close-btn" onclick="closeModal()">&times;</button>
             </div>
 
+            <!-- Internship Details Section -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: #0c3878; font-size: 18px; margin-bottom: 15px;">Submission Details</h3>
+
+                <div style="display: grid; gap: 12px;">
+                    <div style="display: flex; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Student Name:</strong>
+                        <span id="modalStudentName" style="color: #212529;"></span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Reg No:</strong>
+                        <span id="modalRegNo" style="color: #212529;"></span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Department:</strong>
+                        <span id="modalDepartment" style="color: #212529;"></span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Company:</strong>
+                        <span id="modalCompany" style="color: #212529;"></span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Role/Title:</strong>
+                        <span id="modalRole" style="color: #212529;"></span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Domain:</strong>
+                        <span id="modalDomain" style="color: #212529;"></span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Duration:</strong>
+                        <span id="modalDuration" style="color: #212529;"></span>
+                    </div>
+                    <div style="display: flex; border-bottom: 1px solid #dee2e6; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Submission Date:</strong>
+                        <span id="modalSubmissionDate" style="color: #212529;"></span>
+                    </div>
+                    <div style="display: flex; padding-bottom: 8px;">
+                        <strong style="min-width: 140px; color: #495057;">Certificate:</strong>
+                        <span id="modalCertificate" style="color: #212529;"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approval Form -->
             <form method="POST">
                 <input type="hidden" id="internshipId" name="internship_id" value="">
 
@@ -1118,30 +1162,101 @@
     </div>
 
     <script>
+        // Mobile menu toggle function
         function toggleSidebar() {
-            const sidebar = document.querySelector('.sidebar');
+            const sidebar = document.getElementById('sidebar');
             const body = document.body;
 
-            sidebar.classList.toggle('active');
-            body.classList.toggle('sidebar-open');
+            if (sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                body.classList.remove('sidebar-open');
+            } else {
+                sidebar.classList.add('active');
+                body.classList.add('sidebar-open');
+            }
         }
 
-        // Close sidebar when clicking outside
-        document.addEventListener('click', function(e) {
-            const sidebar = document.querySelector('.sidebar');
-            const menuIcon = document.querySelector('.menu-icon');
+        // Alias for compatibility
+        function openSidebar() {
+            toggleSidebar();
+        }
 
-            if (sidebar.classList.contains('active') &&
-                !sidebar.contains(e.target) &&
-                !menuIcon.contains(e.target)) {
-                sidebar.classList.remove('active');
-                document.body.classList.remove('sidebar-open');
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu button functionality
+            const sidebar = document.getElementById('sidebar');
+
+            // Header menu icon functionality
+            const headerMenuIcon = document.querySelector('.header .menu-icon');
+            if (headerMenuIcon) {
+                headerMenuIcon.addEventListener('click', toggleSidebar);
             }
+
+            // Close sidebar button functionality
+            const closeSidebarBtn = document.querySelector('.close-sidebar');
+            if (closeSidebarBtn) {
+                closeSidebarBtn.addEventListener('click', toggleSidebar);
+            }
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768 &&
+                    sidebar &&
+                    sidebar.classList.contains('active') &&
+                    !sidebar.contains(event.target) &&
+                    (!headerMenuIcon || !headerMenuIcon.contains(event.target))) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768 && sidebar) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
         });
 
-        function openModal(internshipId, studentName) {
-            document.getElementById('internshipId').value = internshipId;
-            document.querySelector('.modal-header h2').textContent = `Review Internship: ${studentName}`;
+        function openModal(internshipData) {
+            // Set form data
+            document.getElementById('internshipId').value = internshipData.id;
+
+            // Populate details
+            document.getElementById('modalStudentName').textContent = internshipData.student_name || 'N/A';
+            document.getElementById('modalRegNo').textContent = internshipData.regno || 'N/A';
+            document.getElementById('modalDepartment').textContent = internshipData.department || 'N/A';
+            document.getElementById('modalCompany').textContent = internshipData.company_name || 'N/A';
+            document.getElementById('modalRole').textContent = internshipData.role_title || 'N/A';
+            document.getElementById('modalDomain').textContent = internshipData.domain || 'N/A';
+
+            // Format duration
+            if (internshipData.start_date && internshipData.end_date) {
+                const startDate = new Date(internshipData.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const endDate = new Date(internshipData.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                document.getElementById('modalDuration').textContent = `${startDate} - ${endDate}`;
+            } else {
+                document.getElementById('modalDuration').textContent = 'N/A';
+            }
+
+            // Submission date
+            if (internshipData.submission_date) {
+                const subDate = new Date(internshipData.submission_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                document.getElementById('modalSubmissionDate').textContent = subDate;
+            } else {
+                document.getElementById('modalSubmissionDate').textContent = 'N/A';
+            }
+
+            // Certificate link
+            const certElement = document.getElementById('modalCertificate');
+            if (internshipData.internship_certificate) {
+                certElement.innerHTML = `<a href="../uploads/${internshipData.internship_certificate}" target="_blank" class="certificate-link">View Certificate</a>`;
+            } else {
+                certElement.innerHTML = '<span style="color: #999;">Not Available</span>';
+            }
+
+            // Show modal
             document.getElementById('reviewModal').classList.add('show');
         }
 
