@@ -113,7 +113,7 @@
                 mkdir($upload_dir, 0755, true);
             }
 
-            // Handle Internship Certificate upload (required)
+            // Handle Internship Certificate upload with compression (required)
             if (isset($_FILES['internship_certificate']) && $_FILES['internship_certificate']['error'] !== UPLOAD_ERR_NO_FILE) {
                 if ($_FILES['internship_certificate']['error'] === UPLOAD_ERR_OK) {
                     $cert_file     = $_FILES['internship_certificate'];
@@ -125,12 +125,25 @@
                     } elseif ($cert_file['size'] > $max_file_size) {
                         $error_message = "❌ Internship Certificate file size must be less than 5MB.";
                     } else {
-                        $file_ext     = pathinfo($cert_file['name'], PATHINFO_EXTENSION);
-                        $new_filename = 'cert_' . $logged_in_regno . '_' . time() . '.' . $file_ext;
-                        $file_path    = $upload_dir . $new_filename;
+                        $file_ext      = pathinfo($cert_file['name'], PATHINFO_EXTENSION);
+                        $base_filename = $upload_dir . 'cert_' . $logged_in_regno . '_' . time();
 
-                        if (move_uploaded_file($cert_file['tmp_name'], $file_path)) {
-                            $internship_cert_path = 'internship_submissions/' . $new_filename;
+                        // Compress and save the file
+                        $compression_result = FileCompressor::compressUploadedFile(
+                            $cert_file['tmp_name'],
+                            $base_filename,
+                            $file_ext,
+                            85
+                        );
+
+                        if ($compression_result['success']) {
+                            $internship_cert_path = 'internship_submissions/' . basename($compression_result['path']);
+                            error_log(sprintf(
+                                "Internship Cert compressed: %s -> %s (%.2f%% saved)",
+                                FileCompressor::formatSize($compression_result['original_size']),
+                                FileCompressor::formatSize($compression_result['compressed_size']),
+                                $compression_result['savings_percent']
+                            ));
                         } else {
                             $error_message = "❌ Failed to upload Internship Certificate.";
                         }
@@ -142,7 +155,7 @@
                 $error_message = "❌ Internship Certificate is required.";
             }
 
-            // Handle Offer Letter upload (optional)
+            // Handle Offer Letter upload with compression (optional)
             if (empty($error_message) && isset($_FILES['offer_letter']) && $_FILES['offer_letter']['error'] !== UPLOAD_ERR_NO_FILE) {
                 if ($_FILES['offer_letter']['error'] === UPLOAD_ERR_OK) {
                     $offer_file    = $_FILES['offer_letter'];
@@ -154,12 +167,19 @@
                     } elseif ($offer_file['size'] > $max_file_size) {
                         $error_message = "❌ Offer Letter file size must be less than 5MB.";
                     } else {
-                        $file_ext     = pathinfo($offer_file['name'], PATHINFO_EXTENSION);
-                        $new_filename = 'offer_' . $logged_in_regno . '_' . time() . '.' . $file_ext;
-                        $file_path    = $upload_dir . $new_filename;
+                        $file_ext      = pathinfo($offer_file['name'], PATHINFO_EXTENSION);
+                        $base_filename = $upload_dir . 'offer_' . $logged_in_regno . '_' . time();
 
-                        if (move_uploaded_file($offer_file['tmp_name'], $file_path)) {
-                            $offer_letter_path = 'internship_submissions/' . $new_filename;
+                        // Compress and save the file
+                        $compression_result = FileCompressor::compressUploadedFile(
+                            $offer_file['tmp_name'],
+                            $base_filename,
+                            $file_ext,
+                            85
+                        );
+
+                        if ($compression_result['success']) {
+                            $offer_letter_path = 'internship_submissions/' . basename($compression_result['path']);
                         }
                     }
                 }
@@ -1081,14 +1101,14 @@
               <label for="domain">Domain <span class="required-asterisk">*</span></label>
               <select id="domain" name="domain" required>
                 <option value="">Select Domain</option>
-                <option value="Web Development"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo($form_data['domain'] ?? '') === 'Web Development' ? 'selected' : ''; ?>>Web Development</option>
-                <option value="AI/ML"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($form_data['domain'] ?? '') === 'AI/ML' ? 'selected' : ''; ?>>AI/ML</option>
-                <option value="IoT"                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <?php echo($form_data['domain'] ?? '') === 'IoT' ? 'selected' : ''; ?>>IoT</option>
-                <option value="Data Science"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($form_data['domain'] ?? '') === 'Data Science' ? 'selected' : ''; ?>>Data Science</option>
-                <option value="Cybersecurity"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo($form_data['domain'] ?? '') === 'Cybersecurity' ? 'selected' : ''; ?>>Cybersecurity</option>
-                <option value="Cloud Computing"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo($form_data['domain'] ?? '') === 'Cloud Computing' ? 'selected' : ''; ?>>Cloud Computing</option>
-                <option value="Mobile Development"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($form_data['domain'] ?? '') === 'Mobile Development' ? 'selected' : ''; ?>>Mobile Development</option>
-                <option value="Other"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($form_data['domain'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
+                <option value="Web Development"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($form_data['domain'] ?? '') === 'Web Development' ? 'selected' : ''; ?>>Web Development</option>
+                <option value="AI/ML"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($form_data['domain'] ?? '') === 'AI/ML' ? 'selected' : ''; ?>>AI/ML</option>
+                <option value="IoT"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($form_data['domain'] ?? '') === 'IoT' ? 'selected' : ''; ?>>IoT</option>
+                <option value="Data Science"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($form_data['domain'] ?? '') === 'Data Science' ? 'selected' : ''; ?>>Data Science</option>
+                <option value="Cybersecurity"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($form_data['domain'] ?? '') === 'Cybersecurity' ? 'selected' : ''; ?>>Cybersecurity</option>
+                <option value="Cloud Computing"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($form_data['domain'] ?? '') === 'Cloud Computing' ? 'selected' : ''; ?>>Cloud Computing</option>
+                <option value="Mobile Development"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($form_data['domain'] ?? '') === 'Mobile Development' ? 'selected' : ''; ?>>Mobile Development</option>
+                <option value="Other"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($form_data['domain'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
               </select>
             </div>
 
@@ -1096,9 +1116,9 @@
               <label for="mode">Mode <span class="required-asterisk">*</span></label>
               <select id="mode" name="mode" required>
                 <option value="">Select Mode</option>
-                <option value="On-site"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo($form_data['mode'] ?? '') === 'On-site' ? 'selected' : ''; ?>>On-site</option>
-                <option value="Remote"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($form_data['mode'] ?? '') === 'Remote' ? 'selected' : ''; ?>>Remote</option>
-                <option value="Hybrid"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($form_data['mode'] ?? '') === 'Hybrid' ? 'selected' : ''; ?>>Hybrid</option>
+                <option value="On-site"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($form_data['mode'] ?? '') === 'On-site' ? 'selected' : ''; ?>>On-site</option>
+                <option value="Remote"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($form_data['mode'] ?? '') === 'Remote' ? 'selected' : ''; ?>>Remote</option>
+                <option value="Hybrid"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($form_data['mode'] ?? '') === 'Hybrid' ? 'selected' : ''; ?>>Hybrid</option>
               </select>
             </div>
 

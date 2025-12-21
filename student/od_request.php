@@ -1,6 +1,9 @@
 <?php
     session_start();
 
+    // Include file compression utility
+    require_once '../includes/FileCompressor.php';
+
     // Check if user is logged in as a student
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         header("Location: ../index.php");
@@ -123,7 +126,7 @@
                 $message_type = 'error';
             }
 
-            // Handle file upload
+            // Handle file upload with compression
             $poster_filename = null;
             if (isset($_FILES['event_poster']) && $_FILES['event_poster']['error'] === UPLOAD_ERR_OK) {
                 $upload_dir = 'uploads/posters/';
@@ -141,10 +144,26 @@
                 if (in_array($file_extension, $allowed_types)) {
                     // Validate file size (5MB max)
                     if ($_FILES['event_poster']['size'] <= 5 * 1024 * 1024) {
-                        $poster_filename = 'poster_' . $student_data['regno'] . '_' . time() . '.' . $file_extension;
-                        $upload_path     = $upload_dir . $poster_filename;
+                        $base_filename = $upload_dir . 'poster_' . $student_data['regno'] . '_' . time();
 
-                        if (! move_uploaded_file($_FILES['event_poster']['tmp_name'], $upload_path)) {
+                        // Compress and save the file
+                        $compression_result = FileCompressor::compressUploadedFile(
+                            $_FILES['event_poster']['tmp_name'],
+                            $base_filename,
+                            $file_extension,
+                            85// 85% quality
+                        );
+
+                        if ($compression_result['success']) {
+                            $poster_filename = basename($compression_result['path']);
+                            // Log compression savings
+                            error_log(sprintf(
+                                "OD Poster compressed: %s -> %s (%.2f%% saved)",
+                                FileCompressor::formatSize($compression_result['original_size']),
+                                FileCompressor::formatSize($compression_result['compressed_size']),
+                                $compression_result['savings_percent']
+                            ));
+                        } else {
                             $message         = "Error uploading poster file.";
                             $message_type    = 'error';
                             $poster_filename = null;
@@ -749,7 +768,7 @@
                         </div>
                         <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
                         <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                             <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                         </div>
                     </div>
@@ -850,13 +869,13 @@
                         <div class="od-request-item<?php echo $request['status']; ?>">
                             <div class="od-request-header">
                                 <div class="od-event-name"><?php echo htmlspecialchars($request['event_name']); ?></div>
-                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $request['status']; ?>">
+                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </span>
                             </div>
                             <div class="od-details">
-                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
+                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
                                 <strong>Location:</strong>
                                 <?php
                                     // Handle backward compatibility for old records

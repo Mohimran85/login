@@ -1,6 +1,9 @@
 <?php
     session_start();
 
+    // Include file compression utility
+    require_once '../includes/FileCompressor.php';
+
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
         header("Location: ../index.php");
@@ -54,10 +57,18 @@
 
             if (in_array($file['type'], $allowed_types) && $file['size'] <= 2097152) { // 2MB limit
                 $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $filename       = 'signature_' . $teacher_data['id'] . '_' . time() . '.' . $file_extension;
-                $file_path      = $upload_dir . $filename;
+                $base_filename  = $upload_dir . 'signature_' . $teacher_data['id'] . '_' . time();
 
-                if (move_uploaded_file($file['tmp_name'], $file_path)) {
+                // Compress and save signature (90% quality for signatures)
+                $compression_result = FileCompressor::compressUploadedFile(
+                    $file['tmp_name'],
+                    $base_filename,
+                    $file_extension,
+                    90
+                );
+
+                if ($compression_result['success']) {
+                    $file_path = $compression_result['path'];
                     // Deactivate old signatures
                     $deactivate_sql  = "UPDATE teacher_signatures SET is_active = FALSE WHERE teacher_id = ?";
                     $deactivate_stmt = $conn->prepare($deactivate_sql);
@@ -459,7 +470,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                         <?php echo htmlspecialchars($teacher_data['faculty_id']); ?></div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_data['faculty_id']); ?></div>
             </div>
 
             <nav>
@@ -554,7 +565,7 @@
                     <?php endif; ?>
                 </div>
                 <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                    Created:                                                                                                                 <?php echo date('M d, Y h:i A', strtotime($current_signature['created_at'])); ?>
+                    Created:                                                                                                                                             <?php echo date('M d, Y h:i A', strtotime($current_signature['created_at'])); ?>
                 </p>
             </div>
             <?php endif; ?>
