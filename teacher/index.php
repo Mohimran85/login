@@ -713,12 +713,12 @@
 
         <div class="student-info">
           <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-          <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
+          <div class="student-regno">ID: <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
             <?php
                 if ($is_admin) {
-                    echo '(Admin)';
+                    echo ' (Admin)';
                 } elseif ($is_counselor) {
-                    echo '(Counselor)';
+                    echo ' (Counselor)';
                 }
             ?>
           </div>

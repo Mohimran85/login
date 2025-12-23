@@ -18,8 +18,10 @@
     // Get teacher data
     $username     = $_SESSION['username'];
     $teacher_data = null;
+    $is_admin     = false;
+    $is_counselor = false;
 
-    $sql  = "SELECT * FROM teacher_register WHERE username=?";
+    $sql  = "SELECT *, faculty_id as employee_id FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -27,6 +29,8 @@
 
     if ($result->num_rows > 0) {
         $teacher_data = $result->fetch_assoc();
+        $is_admin     = ($teacher_data['status'] === 'admin');
+        $is_counselor = ($teacher_data['status'] === 'counselor' || $is_admin);
     } else {
         header("Location: ../index.php");
         exit();
@@ -470,7 +474,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_data['faculty_id']); ?></div>
+                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <nav>
@@ -487,12 +491,58 @@
                             Registered Students
                         </a>
                     </li>
+                    <?php if ($is_counselor): ?>
+                    <li class="nav-item">
+                        <a href="assigned_students.php" class="nav-link">
+                            <span class="material-symbols-outlined">supervisor_account</span>
+                            My Assigned Students
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a href="od_approvals.php" class="nav-link">
                             <span class="material-symbols-outlined">approval</span>
                             OD Approvals
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="internship_approvals.php" class="nav-link">
+                            <span class="material-symbols-outlined">school</span>
+                            Internship Approvals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="verify_events.php" class="nav-link">
+                            <span class="material-symbols-outlined">card_giftcard</span>
+                            Event Certificate Validation
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <?php if ($is_admin): ?>
+                    <li class="nav-item">
+                        <a href="../admin/index.php" class="nav-link">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                            Admin Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/user_management.php" class="nav-link">
+                            <span class="material-symbols-outlined">manage_accounts</span>
+                            User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/participants.php" class="nav-link">
+                            <span class="material-symbols-outlined">people</span>
+                            Participants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/reports.php" class="nav-link">
+                            <span class="material-symbols-outlined">bar_chart</span>
+                            Reports
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a href="digital_signature.php" class="nav-link active">
                             <span class="material-symbols-outlined">draw</span>
@@ -565,7 +615,7 @@
                     <?php endif; ?>
                 </div>
                 <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                    Created:                                                                                                                                             <?php echo date('M d, Y h:i A', strtotime($current_signature['created_at'])); ?>
+                    Created:                                                                                                                                                                                                     <?php echo date('M d, Y h:i A', strtotime($current_signature['created_at'])); ?>
                 </p>
             </div>
             <?php endif; ?>

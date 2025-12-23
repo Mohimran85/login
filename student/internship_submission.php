@@ -460,18 +460,15 @@
 
     .main {
       grid-area: main;
-      padding: 30px;
+      padding: 0 15px 20px 15px;
     }
 
     .registration-form {
       background: white;
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(12, 56, 120, 0.1);
-      border: 1px solid #e1e8ed;
-      padding: 40px;
-      max-width: 1000px;
+      border-radius: 0;
+      padding: 20px;
       width: 100%;
-      margin: 0 auto;
+      margin: 0;
     }
 
     .form-title {
@@ -786,19 +783,32 @@
       }
 
       .sidebar {
-        position: fixed;
-        left: -100%;
-        top: 0;
-        width: 300px;
-        height: 100vh;
-        background: white;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        max-height: 100vh !important;
+        transform: translateX(-100%) !important;
+        z-index: 10000 !important;
+        background: white !important;
         border-right: 1px solid #e0e0e0;
-        z-index: 1000;
-        transition: left 0.3s ease;
+        box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15) !important;
+        transition: transform 0.3s ease !important;
+        overflow-y: auto !important;
       }
 
       .sidebar.active {
-        left: 0;
+        transform: translateX(0) !important;
+        z-index: 10001 !important;
+      }
+
+      body.sidebar-open {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+        height: 100%;
       }
 
       .close-sidebar {
@@ -806,18 +816,17 @@
       }
 
       .main {
-        padding: 90px 20px 30px 20px;
+        padding: 50px 10px 30px 10px;
         margin: 0;
         grid-area: main;
         box-sizing: border-box;
       }
 
       .registration-form {
-        padding: 25px;
-        margin: 10px;
-        border-radius: 10px;
-        max-width: 100%;
-        width: calc(100% - 20px);
+        padding: 15px;
+        margin: 0;
+        border-radius: 0;
+        width: 100%;
       }
 
       .parent {
@@ -864,9 +873,15 @@
 
     /* Extra small devices */
     @media (max-width: 480px) {
+      .main {
+        padding: 30px 5px 20px 5px;
+      }
+
       .registration-form {
-        padding: 15px;
-        margin: 5px;
+        padding: 10px;
+        margin: 0;
+        border-radius: 0;
+        width: 100%;
       }
 
       .form-title {
@@ -874,7 +889,7 @@
       }
 
       .form-section {
-        padding: 15px;
+        padding: 10px;
       }
 
       input[type="text"],
@@ -1101,14 +1116,14 @@
               <label for="domain">Domain <span class="required-asterisk">*</span></label>
               <select id="domain" name="domain" required>
                 <option value="">Select Domain</option>
-                <option value="Web Development"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($form_data['domain'] ?? '') === 'Web Development' ? 'selected' : ''; ?>>Web Development</option>
-                <option value="AI/ML"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($form_data['domain'] ?? '') === 'AI/ML' ? 'selected' : ''; ?>>AI/ML</option>
-                <option value="IoT"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($form_data['domain'] ?? '') === 'IoT' ? 'selected' : ''; ?>>IoT</option>
-                <option value="Data Science"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($form_data['domain'] ?? '') === 'Data Science' ? 'selected' : ''; ?>>Data Science</option>
-                <option value="Cybersecurity"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($form_data['domain'] ?? '') === 'Cybersecurity' ? 'selected' : ''; ?>>Cybersecurity</option>
-                <option value="Cloud Computing"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($form_data['domain'] ?? '') === 'Cloud Computing' ? 'selected' : ''; ?>>Cloud Computing</option>
-                <option value="Mobile Development"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($form_data['domain'] ?? '') === 'Mobile Development' ? 'selected' : ''; ?>>Mobile Development</option>
-                <option value="Other"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($form_data['domain'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
+                <option value="Web Development"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['domain'] ?? '') === 'Web Development' ? 'selected' : ''; ?>>Web Development</option>
+                <option value="AI/ML"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['domain'] ?? '') === 'AI/ML' ? 'selected' : ''; ?>>AI/ML</option>
+                <option value="IoT"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['domain'] ?? '') === 'IoT' ? 'selected' : ''; ?>>IoT</option>
+                <option value="Data Science"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['domain'] ?? '') === 'Data Science' ? 'selected' : ''; ?>>Data Science</option>
+                <option value="Cybersecurity"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['domain'] ?? '') === 'Cybersecurity' ? 'selected' : ''; ?>>Cybersecurity</option>
+                <option value="Cloud Computing"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['domain'] ?? '') === 'Cloud Computing' ? 'selected' : ''; ?>>Cloud Computing</option>
+                <option value="Mobile Development"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['domain'] ?? '') === 'Mobile Development' ? 'selected' : ''; ?>>Mobile Development</option>
+                <option value="Other"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['domain'] ?? '') === 'Other' ? 'selected' : ''; ?>>Other</option>
               </select>
             </div>
 
@@ -1116,9 +1131,9 @@
               <label for="mode">Mode <span class="required-asterisk">*</span></label>
               <select id="mode" name="mode" required>
                 <option value="">Select Mode</option>
-                <option value="On-site"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo($form_data['mode'] ?? '') === 'On-site' ? 'selected' : ''; ?>>On-site</option>
-                <option value="Remote"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($form_data['mode'] ?? '') === 'Remote' ? 'selected' : ''; ?>>Remote</option>
-                <option value="Hybrid"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($form_data['mode'] ?? '') === 'Hybrid' ? 'selected' : ''; ?>>Hybrid</option>
+                <option value="On-site"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['mode'] ?? '') === 'On-site' ? 'selected' : ''; ?>>On-site</option>
+                <option value="Remote"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['mode'] ?? '') === 'Remote' ? 'selected' : ''; ?>>Remote</option>
+                <option value="Hybrid"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($form_data['mode'] ?? '') === 'Hybrid' ? 'selected' : ''; ?>>Hybrid</option>
               </select>
             </div>
 

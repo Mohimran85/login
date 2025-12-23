@@ -41,6 +41,7 @@
     // Get filters from request
     $event_category = isset($_GET['category']) ? $_GET['category'] : 'All';
     $status_filter  = isset($_GET['status']) ? $_GET['status'] : 'Pending';
+    $search_filter  = isset($_GET['search']) ? trim($_GET['search']) : '';
 
     // Handle Approve action
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'approve') {
@@ -101,6 +102,8 @@
                  ser.start_date as event_date,
                  ser.event_type as category,
                  ser.prize,
+                 ser.certificates as certificate_file,
+                 ser.event_photo,
                  COALESCE(ser.verification_status, 'Pending') as status,
                  ser.start_date as created_at
           FROM student_event_register ser
@@ -112,6 +115,12 @@
         $query .= " AND ser.event_type = '" . $conn->real_escape_string($event_category) . "'";
     }
     $query .= " AND COALESCE(ser.verification_status, 'Pending') = '" . $conn->real_escape_string($status_filter) . "'";
+
+    // Apply search filter
+    if (! empty($search_filter)) {
+        $search_escaped = $conn->real_escape_string($search_filter);
+        $query .= " AND (sr.name LIKE '%" . $search_escaped . "%' OR ser.regno LIKE '%" . $search_escaped . "%')";
+    }
 
     // Add ordering
     $query .= " ORDER BY ser.start_date DESC";
@@ -810,16 +819,86 @@
             margin-bottom: 10px;
         }
 
+        /* Mobile Card View */
+        .mobile-card-view {
+            display: none;
+        }
+
+        .event-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .card-student-name {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 15px;
+        }
+
+        .card-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .card-label {
+            font-weight: 600;
+            color: #666;
+            min-width: 100px;
+            flex-shrink: 0;
+        }
+
+        .card-value {
+            color: #333;
+            word-break: break-word;
+        }
+
+        .card-actions {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e9ecef;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
+            body {
+                overflow-x: hidden;
+            }
+
             .grid-container {
                 grid-template-areas: "main";
                 grid-template-columns: 1fr;
-                padding-top: 80px;
+                padding-top: 70px;
+            }
+
+            .header {
+                padding: 0 15px;
+                height: 70px;
             }
 
             .menu-icon {
                 display: block !important;
+            }
+
+            .header-logo {
+                display: none;
+            }
+
+            .header-title p {
+                font-size: 16px;
             }
 
             .sidebar {
@@ -828,8 +907,10 @@
                 left: 0 !important;
                 width: 100vw !important;
                 height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
                 transform: translateX(-100%) !important;
-                z-index: 1004 !important;
+                z-index: 10000 !important;
                 background: #ffffff !important;
                 box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15) !important;
                 transition: transform 0.3s ease !important;
@@ -837,25 +918,46 @@
                 overflow-y: auto !important;
             }
 
-            .close-sidebar {
-                display: flex !important;
-            }
-
             .sidebar.active {
                 transform: translateX(0) !important;
-                z-index: 1005 !important;
+                z-index: 10001 !important;
+            }
+
+            .sidebar.active::before {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: -1;
+                backdrop-filter: blur(2px);
+            }
+
+            .close-sidebar {
+                display: flex !important;
+                position: absolute !important;
+                top: 15px !important;
+                right: 15px !important;
+            }
+
+            .sidebar-header {
+                padding: 60px 20px 20px 20px !important;
             }
 
             .main {
-                padding: 20px 15px;
+                padding: 15px;
             }
 
-            .header {
-                padding: 0 15px;
+            body.sidebar-open {
+                overflow: hidden;
+                position: fixed;
+                width: 100%;
+                height: 100%;
             }
 
-            .header-logo img {
-                display: none;
+            .page-title {
+                font-size: 22px;
             }
 
             .filter-row {
@@ -866,21 +968,51 @@
                 width: 100%;
             }
 
-            table {
-                font-size: 12px;
+            .table-container table {
+                display: none;
             }
 
-            th, td {
-                padding: 10px 12px;
+            .mobile-card-view {
+                display: block;
             }
 
             .action-buttons {
+                display: flex;
                 flex-direction: column;
+                gap: 8px;
             }
 
             .btn {
                 width: 100%;
                 justify-content: center;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                max-height: 85vh;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main {
+                padding: 10px;
+            }
+
+            .event-card {
+                padding: 12px;
+            }
+
+            .card-student-name {
+                font-size: 14px;
+            }
+
+            .card-row {
+                font-size: 12px;
+            }
+
+            .card-label {
+                min-width: 85px;
             }
         }
     </style>
@@ -889,7 +1021,7 @@
     <div class="grid-container">
         <!-- Header -->
         <div class="header">
-            <div class="menu-icon" onclick="openSidebar()">
+            <div class="menu-icon">
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="header-logo">
@@ -907,14 +1039,14 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-title">Teacher Portal</div>
-                <div class="close-sidebar" onclick="closeSidebar()">
+                <div class="close-sidebar">
                     <span class="material-symbols-outlined">close</span>
                 </div>
             </div>
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name'] ?? $faculty_name); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                         <?php echo htmlspecialchars($teacher_data['employee_id'] ?? $faculty_id); ?>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id'] ?? $faculty_id); ?>
                     <?php
                         if ($is_admin) {
                             echo ' (Admin)';
@@ -1006,26 +1138,30 @@
                 <form method="GET" action="">
                     <div class="filter-row">
                         <div class="filter-group">
+                            <label class="filter-label">Search</label>
+                            <input type="text" name="search" class="filter-select" placeholder="Name or Reg No" value="<?php echo htmlspecialchars($search_filter); ?>" style="padding: 10px 12px;">
+                        </div>
+                        <div class="filter-group">
                             <label class="filter-label">Event Category</label>
                             <select name="category" class="filter-select">
-                                <option value="All"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $event_category === 'All' ? 'selected' : ''; ?>>All Categories</option>
-                                <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $event_category === 'Workshop' ? 'selected' : ''; ?>>Workshop</option>
-                                <option value="Symposium"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <?php echo $event_category === 'Symposium' ? 'selected' : ''; ?>>Symposium</option>
-                                <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $event_category === 'Conference' ? 'selected' : ''; ?>>Conference</option>
-                                <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <?php echo $event_category === 'Hackathon' ? 'selected' : ''; ?>>Hackathon</option>
-                                <option value="Seminar"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $event_category === 'Seminar' ? 'selected' : ''; ?>>Seminar</option>
-                                <option value="Paper Presentation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $event_category === 'Paper Presentation' ? 'selected' : ''; ?>>Paper Presentation</option>
-                                <option value="Webinar"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $event_category === 'Webinar' ? 'selected' : ''; ?>>Webinar</option>
-                                <option value="Competition"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo $event_category === 'Competition' ? 'selected' : ''; ?>>Competition</option>
-                                <option value="Cultural"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $event_category === 'Cultural' ? 'selected' : ''; ?>>Cultural</option>
+                                <option value="All"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $event_category === 'All' ? 'selected' : ''; ?>>All Categories</option>
+                                <option value="Workshop"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $event_category === 'Workshop' ? 'selected' : ''; ?>>Workshop</option>
+                                <option value="Symposium"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo $event_category === 'Symposium' ? 'selected' : ''; ?>>Symposium</option>
+                                <option value="Conference"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $event_category === 'Conference' ? 'selected' : ''; ?>>Conference</option>
+                                <option value="Hackathon"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo $event_category === 'Hackathon' ? 'selected' : ''; ?>>Hackathon</option>
+                                <option value="Seminar"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo $event_category === 'Seminar' ? 'selected' : ''; ?>>Seminar</option>
+                                <option value="Paper Presentation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $event_category === 'Paper Presentation' ? 'selected' : ''; ?>>Paper Presentation</option>
+                                <option value="Webinar"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo $event_category === 'Webinar' ? 'selected' : ''; ?>>Webinar</option>
+                                <option value="Competition"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo $event_category === 'Competition' ? 'selected' : ''; ?>>Competition</option>
+                                <option value="Cultural"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $event_category === 'Cultural' ? 'selected' : ''; ?>>Cultural</option>
                             </select>
                         </div>
                         <div class="filter-group">
                             <label class="filter-label">Status</label>
                             <select name="status" class="filter-select">
-                                <option value="Pending"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>Pending</option>
-                                <option value="Approved"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $status_filter === 'Approved' ? 'selected' : ''; ?>>Approved</option>
-                                <option value="Rejected"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $status_filter === 'Rejected' ? 'selected' : ''; ?>>Rejected</option>
+                                <option value="Pending"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="Approved"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $status_filter === 'Approved' ? 'selected' : ''; ?>>Approved</option>
+                                <option value="Rejected"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $status_filter === 'Rejected' ? 'selected' : ''; ?>>Rejected</option>
                             </select>
                         </div>
                         <div class="filter-group">
@@ -1068,13 +1204,13 @@
                                     <!-- Event Details -->
                                     <td>
                                         <div class="event-name"><?php echo htmlspecialchars($row['event_name']); ?></div>
-                                        <div class="event-meta"><i class="fas fa-building"></i>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($row['organizer']); ?></div>
-                                        <div class="event-meta"><i class="fas fa-calendar"></i>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo date('M d, Y', strtotime($row['event_date'])); ?></div>
+                                        <div class="event-meta"><i class="fas fa-building"></i>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($row['organizer']); ?></div>
+                                        <div class="event-meta"><i class="fas fa-calendar"></i>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo date('M d, Y', strtotime($row['event_date'])); ?></div>
                                     </td>
 
                                     <!-- Category Badge -->
                                     <td>
-                                        <span class="badge" style="background:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $category_colors[$row['category']] ?? '#6c757d'; ?>;">
+                                        <span class="badge" style="background:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $category_colors[$row['category']] ?? '#6c757d'; ?>;">
                                             <?php echo htmlspecialchars($row['category']); ?>
                                         </span>
                                     </td>
@@ -1085,9 +1221,6 @@
                                             <div class="achievement-prize">
                                                 <i class="fas fa-trophy"></i>
                                                 <?php echo htmlspecialchars($row['prize']); ?> Prize
-                                                <?php if ($status_filter === 'Pending'): ?>
-                                                    <span class="warning-text">⚠ Verify Carefully</span>
-                                                <?php endif; ?>
                                             </div>
                                         <?php else: ?>
                                             <span class="achievement-participant">Participant</span>
@@ -1119,7 +1252,7 @@
                                                 </button>
                                             <?php else: ?>
                                                 <span style="color:#6c757d; font-size: 12px;">
-                                                    <i class="fas fa-lock"></i>                                                                                <?php echo htmlspecialchars($status_filter); ?>
+                                                    <i class="fas fa-lock"></i>                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo htmlspecialchars($status_filter); ?>
                                                 </span>
                                             <?php endif; ?>
                                         </div>
@@ -1128,6 +1261,68 @@
                             <?php endwhile; ?>
                         </tbody>
                     </table>
+
+                    <!-- Mobile Card View -->
+                    <div class="mobile-card-view">
+                        <?php
+                            // Reset result pointer for mobile view
+                            $result->data_seek(0);
+                        while ($row = $result->fetch_assoc()): ?>
+                            <div class="event-card">
+                                <div class="card-header">
+                                    <div class="card-student-name"><?php echo htmlspecialchars($row['student_name']); ?></div>
+                                    <span class="badge" style="background-color:                                                                                                                                                                 <?php echo $category_colors[$row['category']] ?? '#6c757d'; ?>">
+                                        <?php echo htmlspecialchars($row['category']); ?>
+                                    </span>
+                                </div>
+                                <div class="card-row">
+                                    <span class="card-label">Reg No:</span>
+                                    <span class="card-value"><?php echo htmlspecialchars($row['regno']); ?></span>
+                                </div>
+                                <div class="card-row">
+                                    <span class="card-label">Event:</span>
+                                    <span class="card-value"><?php echo htmlspecialchars($row['event_name']); ?></span>
+                                </div>
+                                <div class="card-row">
+                                    <span class="card-label">Organizer:</span>
+                                    <span class="card-value"><?php echo htmlspecialchars($row['organizer']); ?></span>
+                                </div>
+                                <div class="card-row">
+                                    <span class="card-label">Date:</span>
+                                    <span class="card-value"><?php echo date('M d, Y', strtotime($row['event_date'])); ?></span>
+                                </div>
+                                <div class="card-row">
+                                    <span class="card-label">Prize:</span>
+                                    <span class="card-value">
+                                        <?php if (! empty($row['prize']) && $row['prize'] !== 'No Prize'): ?>
+                                            <span class="achievement-prize">🏆<?php echo htmlspecialchars($row['prize']); ?></span>
+                                        <?php else: ?>
+                                            <span class="achievement-participant">Participant</span>
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+                                <div class="card-actions">
+                                    <div class="action-buttons">
+                                        <button class="btn btn-view" onclick="openEventDetailsModal(<?php echo htmlspecialchars(json_encode($row)); ?>)">
+                                            <span class="material-symbols-outlined">visibility</span> View
+                                        </button>
+                                        <?php if ($row['status'] === 'Pending'): ?>
+                                            <form method="POST" style="display: inline; width: 100%;">
+                                                <input type="hidden" name="event_id" value="<?php echo $row['id']; ?>">
+                                                <input type="hidden" name="action" value="approve">
+                                                <button type="submit" class="btn btn-approve">
+                                                    <span class="material-symbols-outlined">check_circle</span> Approve
+                                                </button>
+                                            </form>
+                                            <button class="btn btn-reject" onclick="openRejectModal(<?php echo $row['id']; ?>)">
+                                                <span class="material-symbols-outlined">cancel</span> Reject
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
                 <?php else: ?>
                     <div class="empty-state">
                         <div class="empty-icon">
@@ -1183,13 +1378,56 @@
     </div>
 
     <script>
-        function openSidebar() {
-            document.getElementById('sidebar').classList.add('active');
+        // Mobile menu toggle function
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const body = document.body;
+
+            if (sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                body.classList.remove('sidebar-open');
+            } else {
+                sidebar.classList.add('active');
+                body.classList.add('sidebar-open');
+            }
         }
 
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('active');
-        }
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+
+            // Header menu icon functionality
+            const headerMenuIcon = document.querySelector('.header .menu-icon');
+            if (headerMenuIcon) {
+                headerMenuIcon.addEventListener('click', toggleSidebar);
+            }
+
+            // Close sidebar button functionality
+            const closeSidebarBtn = document.querySelector('.close-sidebar');
+            if (closeSidebarBtn) {
+                closeSidebarBtn.addEventListener('click', toggleSidebar);
+            }
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768 &&
+                    sidebar &&
+                    sidebar.classList.contains('active') &&
+                    !sidebar.contains(event.target) &&
+                    (!headerMenuIcon || !headerMenuIcon.contains(event.target))) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768 && sidebar) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+        });
 
         function openEventDetailsModal(eventData) {
             const modal = document.getElementById('eventDetailsModal');

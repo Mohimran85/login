@@ -16,8 +16,9 @@
     $username     = $_SESSION['username'];
     $teacher_data = null;
     $is_counselor = false;
+    $is_admin     = false;
 
-    $sql  = "SELECT * FROM teacher_register WHERE username=?";
+    $sql  = "SELECT *, faculty_id as employee_id FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -25,7 +26,8 @@
 
     if ($result->num_rows > 0) {
         $teacher_data = $result->fetch_assoc();
-        $is_counselor = ($teacher_data['status'] === 'counselor' || $teacher_data['status'] === 'admin');
+        $is_admin     = ($teacher_data['status'] === 'admin');
+        $is_counselor = ($teacher_data['status'] === 'counselor' || $is_admin);
         $teacher_name = $teacher_data['name'] ?? 'Teacher';
         $teacher_dept = $teacher_data['department'] ?? 'N/A';
     } else {
@@ -195,6 +197,7 @@
             z-index: 1001;
             top: 0;
             left: 0;
+            padding: 0 20px;
         }
 
         .header .menu-icon {
@@ -207,8 +210,14 @@
             color: var(--primary-color);
         }
 
-        .header .icon img {
+        .header-logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-logo .logo {
             height: 60px;
+            width: auto;
             object-fit: contain;
         }
 
@@ -364,30 +373,49 @@
                 display: block;
             }
 
-            .header .icon img {
-                height: 50px;
+            .header .header-logo {
+                display: none;
             }
 
             .header-title p {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             .sidebar {
-                position: fixed;
-                left: -100%;
-                top: 0;
-                width: 300px;
-                height: 100vh;
-                z-index: 10000;
-                transition: left 0.3s ease;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                transform: translateX(-100%) !important;
+                z-index: 10000 !important;
+                background: #ffffff !important;
+                box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15) !important;
+                transition: transform 0.3s ease !important;
+                padding: 20px 0 !important;
+                overflow-y: auto !important;
             }
 
             .sidebar.active {
+                transform: translateX(0) !important;
+                z-index: 10001 !important;
+            }
+
+            .sidebar.active::before {
+                content: "";
+                position: fixed;
+                top: 0;
                 left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: -1;
+                backdrop-filter: blur(2px);
             }
 
             .close-sidebar {
-                display: block;
+                display: flex !important;
                 position: absolute !important;
                 top: 15px !important;
                 right: 15px !important;
@@ -403,6 +431,9 @@
 
             body.sidebar-open {
                 overflow: hidden;
+                position: fixed;
+                width: 100%;
+                height: 100%;
             }
         }
 
@@ -421,12 +452,6 @@
             overflow-x: hidden;
             width: 100%;
             position: relative;
-        }
-
-        /* Sidebar width optimization */
-        .sidebar {
-            width: 280px !important;
-            min-width: 280px !important;
         }
 
         /* Statistics grid full width */
@@ -794,7 +819,7 @@
     <div class="grid-container">
         <!-- Header -->
         <div class="header">
-            <div class="menu-icon" onclick="openSidebar()">
+            <div class="menu-icon">
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="header-logo">
@@ -803,9 +828,9 @@
             <div class="header-title">
                 <p>Event Management Dashboard</p>
             </div>
-        </div>
-        <div>
-            <!-- empty -->
+            <div>
+                <!-- empty -->
+            </div>
         </div>
 
         <!-- Sidebar -->
@@ -819,13 +844,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_dept); ?>
-                    <?php
-                        if ($is_counselor) {
-                            echo '(Counselor)';
-                        }
-                    ?>
-                </div>
+                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <ul class="nav-menu">
@@ -843,7 +862,7 @@
                 </li>
                 <?php if ($is_counselor): ?>
                 <li class="nav-item">
-                    <a href="index.php#assigned-students" class="nav-link">
+                    <a href="assigned_students.php" class="nav-link">
                         <span class="material-symbols-outlined">supervisor_account</span>
                         My Assigned Students
                     </a>
@@ -1174,11 +1193,6 @@
                 sidebar.classList.add('active');
                 body.classList.add('sidebar-open');
             }
-        }
-
-        // Alias for compatibility
-        function openSidebar() {
-            toggleSidebar();
         }
 
         // Wait for DOM to load

@@ -598,6 +598,11 @@
 
             .mobile-cards {
                 display: block;
+                background: white;
+            }
+
+            .students-table {
+                background: white !important;
             }
 
             .student-card {
@@ -631,15 +636,14 @@
             }
 
             .student-info {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
+                /* Keep the gradient background from parent styles */
             }
 
             .info-row {
                 display: flex;
                 justify-content: space-between;
                 font-size: 13px;
+                background: white;
             }
 
             .info-label {
@@ -681,7 +685,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
+                <div class="student-regno">ID:                                               <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
                 <div class="badge badge-info" style="margin-top: 10px; text-align: center;">Class Counselor</div>
             </div>
 
@@ -709,6 +713,12 @@
                         <a href="od_approvals.php" class="nav-link">
                             <span class="material-symbols-outlined">approval</span>
                             OD Approvals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="internship_approvals.php" class="nav-link">
+                            <span class="material-symbols-outlined">school</span>
+                            Internship Approvals
                         </a>
                     </li>
                     <li class="nav-item">
@@ -801,7 +811,7 @@
                                 <option value="">All Semesters</option>
                                 <?php for ($i = 1; $i <= 8; $i++): ?>
                                     <option value="<?php echo $i; ?>"<?php echo $semester_filter == $i ? 'selected' : ''; ?>>
-                                        Semester                                                                                                 <?php echo $i; ?>
+                                        Semester                                                                                                                                                                                                 <?php echo $i; ?>
                                     </option>
                                 <?php endfor; ?>
                             </select>
@@ -863,7 +873,7 @@
                                             <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select">
                                                 <?php for ($s = 1; $s <= 8; $s++): ?>
                                                     <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
-                                                        Semester                                                                 <?php echo $s; ?>
+                                                        Semester                                                                                                                                                                                                 <?php echo $s; ?>
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>
