@@ -55,15 +55,16 @@
                 $column_username = $table === 'student_register' ? 'username' : 'username';
                 $column_email    = $table === 'student_register' ? 'personal_email' : 'email';
 
-                $sql  = "SELECT password FROM $table WHERE $column_username=? OR $column_email=? LIMIT 1";
+                $sql  = "SELECT username, password FROM $table WHERE $column_username=? OR $column_email=? LIMIT 1";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("ss", $username, $username);
                 $stmt->execute();
                 $stmt->store_result();
 
                 if ($stmt->num_rows === 1) {
-                    $user_found = true;
-                    $stmt->bind_result($hashed_password);
+                    $user_found      = true;
+                    $actual_username = "";
+                    $stmt->bind_result($actual_username, $hashed_password);
                     $stmt->fetch();
                     $stmt->close();
                     break;
@@ -76,7 +77,7 @@
                     // Password correct: user logged in successfully
                     // Start a session and save user info
                     session_start();
-                    $_SESSION['username']  = $username;
+                    $_SESSION['username']  = $actual_username; // Use actual username, not the login input
                     $_SESSION['role']      = ($table === 'student_register') ? 'student' : 'teacher';
                     $_SESSION['logged_in'] = true;
 
@@ -87,7 +88,7 @@
                         // For teachers, check their role/status before allowing admin access
                         $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
                         $teacher_status_stmt = $conn->prepare($teacher_status_sql);
-                        $teacher_status_stmt->bind_param("s", $username);
+                        $teacher_status_stmt->bind_param("s", $actual_username); // Use actual username
                         $teacher_status_stmt->execute();
                         $teacher_status_result = $teacher_status_stmt->get_result();
 

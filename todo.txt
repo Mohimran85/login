@@ -17,3 +17,5 @@
 •	remove link for the excel sheet  ✅
 •   add semester in the profile         ✅
     add Internships to admin Dashboard   ✅
+
+    change student profile to disable semester and departement 

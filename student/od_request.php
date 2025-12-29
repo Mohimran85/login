@@ -102,6 +102,7 @@
                 event_days VARCHAR(20) NOT NULL,
                 event_poster VARCHAR(255) NULL,
                 reason TEXT NOT NULL,
+                group_members TEXT NULL,
                 request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
                 counselor_remarks TEXT,
@@ -109,6 +110,12 @@
                 FOREIGN KEY (counselor_id) REFERENCES teacher_register(id) ON DELETE CASCADE
             )";
             $conn->query($create_table);
+
+            // Ensure group_members column exists (migration for existing tables)
+            $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'group_members'");
+            if ($check_column && $check_column->num_rows == 0) {
+                $conn->query("ALTER TABLE od_requests ADD COLUMN group_members TEXT NULL AFTER reason");
+            }
 
             // Insert OD request
             $event_name        = trim($_POST['event_name']);
@@ -180,9 +187,19 @@
 
             // Only proceed with database insert if no file upload errors
             if (empty($message)) {
-                $insert_sql  = "INSERT INTO od_requests (student_regno, counselor_id, event_name, event_description, event_state, event_district, event_date, event_time, event_days, event_poster, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                // Handle group members
+                $group_members = '';
+                if (isset($_POST['group_members']) && is_array($_POST['group_members'])) {
+                    // Filter out empty values and trim whitespace
+                    $members = array_filter(array_map('trim', $_POST['group_members']));
+                    if (! empty($members)) {
+                        $group_members = implode(',', $members);
+                    }
+                }
+
+                $insert_sql  = "INSERT INTO od_requests (student_regno, counselor_id, event_name, event_description, event_state, event_district, event_date, event_time, event_days, event_poster, reason, group_members) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 $insert_stmt = $conn->prepare($insert_sql);
-                $insert_stmt->bind_param("sisssssssss", $student_data['regno'], $counselor_info['teacher_id'], $event_name, $event_description, $event_state, $event_district, $event_date, $event_time, $event_days, $poster_filename, $reason);
+                $insert_stmt->bind_param("sissssssssss", $student_data['regno'], $counselor_info['teacher_id'], $event_name, $event_description, $event_state, $event_district, $event_date, $event_time, $event_days, $poster_filename, $reason, $group_members);
 
                 if ($insert_stmt->execute()) {
                     $_SESSION['od_success'] = true;
@@ -199,10 +216,13 @@
         }
     }
 
-    // Get student's OD requests
-    $od_requests_sql  = "SELECT * FROM od_requests WHERE student_regno = ? ORDER BY request_date DESC";
+    // Get student's OD requests (including those where they are a group member)
+    $od_requests_sql = "SELECT * FROM od_requests
+                         WHERE student_regno = ?
+                         OR FIND_IN_SET(?, REPLACE(group_members, ',', ','))
+                         ORDER BY request_date DESC";
     $od_requests_stmt = $conn->prepare($od_requests_sql);
-    $od_requests_stmt->bind_param("s", $student_data['regno']);
+    $od_requests_stmt->bind_param("ss", $student_data['regno'], $student_data['regno']);
     $od_requests_stmt->execute();
     $od_requests_result = $od_requests_stmt->get_result();
     $od_requests_stmt->close();
@@ -782,7 +802,7 @@
                         </div>
                         <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
                         <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                             <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                         </div>
                     </div>
@@ -880,6 +900,23 @@
                             </div>
 
                             <div class="form-group full-width">
+                                <label class="form-label">
+                                    Group Members (Optional - For Group OD)
+                                    <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle; color: #17a2b8;">group</span>
+                                </label>
+                                <div id="groupMembersContainer" style="margin-bottom: 10px;">
+                                    <!-- Group member inputs will be added here -->
+                                </div>
+                                <button type="button" onclick="addGroupMember()" class="btn" style="background: #17a2b8; width: auto; padding: 8px 16px; font-size: 14px; margin-bottom: 10px;">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                                    Add Group Member
+                                </button>
+                                <small style="color: #6c757d; font-size: 12px; display: block;">
+                                    If this is a group OD request, add registration numbers of other group members. They will also be able to view and download the OD letter.
+                                </small>
+                            </div>
+
+                            <div class="form-group full-width">
                                 <label class="form-label">Event Poster</label>
                                 <input type="file" name="event_poster" class="form-input" accept="image/*,.pdf">
                                 <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">
@@ -920,13 +957,13 @@
                         <div class="od-request-item<?php echo $request['status']; ?>">
                             <div class="od-request-header">
                                 <div class="od-event-name"><?php echo htmlspecialchars($request['event_name']); ?></div>
-                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $request['status']; ?>">
+                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </span>
                             </div>
                             <div class="od-details">
-                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
+                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
                                 <strong>Location:</strong>
                                 <?php
                                     // Handle backward compatibility for old records
@@ -938,6 +975,27 @@
                                         echo 'Location not specified';
                                 }
                                 ?><br>
+
+                                <?php if (! empty($request['group_members'])): ?>
+                                <?php
+                                    $group_regnos    = array_filter(array_map('trim', explode(',', $request['group_members'])));
+                                    $is_group_member = in_array($student_data['regno'], $group_regnos);
+                                ?>
+                                <div style="margin: 10px 0; padding: 10px; background: #e7f3ff; border-left: 3px solid #17a2b8; border-radius: 4px;">
+                                    <strong style="color: #17a2b8;">
+                                        <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">group</span>
+                                        Group OD                                                                                                 <?php echo $is_group_member ? '(You are a member)' : ''; ?>
+                                    </strong><br>
+                                    <small style="color: #666; font-size: 12px;">
+                                        <?php echo count($group_regnos); ?> additional member(s):
+                                        <?php echo htmlspecialchars(implode(', ', array_slice($group_regnos, 0, 3))); ?>
+                                        <?php if (count($group_regnos) > 3): ?>
+                                        and<?php echo count($group_regnos) - 3; ?> more
+                                        <?php endif; ?>
+                                    </small>
+                                </div>
+                                <?php endif; ?>
+
                                 <?php if (! empty($request['event_poster'])): ?>
                                 <div style="margin: 10px 0;">
                                     <strong>Event Poster:</strong><br>
@@ -1147,6 +1205,51 @@
                 }, 5000);
             }
         });
+
+        // Group Members Management
+        let groupMemberCount = 0;
+
+        function addGroupMember() {
+            groupMemberCount++;
+            const container = document.getElementById('groupMembersContainer');
+
+            const memberDiv = document.createElement('div');
+            memberDiv.className = 'group-member-input';
+            memberDiv.id = `group-member-${groupMemberCount}`;
+            memberDiv.style.cssText = 'display: flex; gap: 10px; align-items: center; margin-bottom: 10px; background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #dee2e6;';
+
+            memberDiv.innerHTML = `
+                <span class="material-symbols-outlined" style="color: #17a2b8; font-size: 20px;">person</span>
+                <input type="text"
+                       name="group_members[]"
+                       class="form-input"
+                       placeholder="Enter registration number"
+                       style="flex: 1; margin: 0; padding: 8px 12px;"
+                       pattern="[A-Za-z0-9]+"
+                       title="Registration number should contain only letters and numbers">
+                <button type="button"
+                        onclick="removeGroupMember(${groupMemberCount})"
+                        style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s ease;"
+                        onmouseover="this.style.background='#c82333'"
+                        onmouseout="this.style.background='#dc3545'">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+                    Remove
+                </button>
+            `;
+
+            container.appendChild(memberDiv);
+        }
+
+        function removeGroupMember(id) {
+            const element = document.getElementById(`group-member-${id}`);
+            if (element) {
+                element.style.opacity = '0';
+                element.style.transform = 'translateX(-10px)';
+                setTimeout(() => {
+                    element.remove();
+                }, 300);
+            }
+        }
     </script>
 </body>
 </html>

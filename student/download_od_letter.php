@@ -38,15 +38,19 @@ if (! isset($_GET['od_id']) || empty($_GET['od_id'])) {
 $od_id = (int) $_GET['od_id'];
 
 // Get OD request details with counselor information and digital signature
+// Allow access if student is the main requester OR a group member
 $od_sql = "SELECT odr.*, tr.name as counselor_name, tr.email as counselor_email,
                   tr.faculty_id, tr.department, ts.signature_type, ts.signature_data,
                   ts.signature_hash, ts.created_at as signature_created
            FROM od_requests odr
            JOIN teacher_register tr ON odr.counselor_id = tr.id
            LEFT JOIN teacher_signatures ts ON tr.id = ts.teacher_id AND ts.is_active = TRUE
-           WHERE odr.id = ? AND odr.student_regno = ? AND odr.status = 'approved'";
+           WHERE odr.id = ?
+           AND (odr.student_regno = ?
+                OR FIND_IN_SET(?, REPLACE(odr.group_members, ',', ',')))
+           AND odr.status = 'approved'";
 $od_stmt = $conn->prepare($od_sql);
-$od_stmt->bind_param("is", $od_id, $student_data['regno']);
+$od_stmt->bind_param("iss", $od_id, $student_data['regno'], $student_data['regno']);
 $od_stmt->execute();
 $od_result = $od_stmt->get_result();
 
@@ -57,6 +61,29 @@ if ($od_result->num_rows === 0) {
 
 $od_data = $od_result->fetch_assoc();
 
+// Fetch group members details if this is a group OD (BEFORE closing connection)
+$group_members_details = [];
+if (! empty($od_data['group_members'])) {
+    $group_regnos = array_filter(array_map('trim', explode(',', $od_data['group_members'])));
+
+    if (! empty($group_regnos)) {
+        // Escape each regno for SQL safety
+        $escaped_regnos = array_map(function ($regno) use ($conn) {
+            return "'" . $conn->real_escape_string($regno) . "'";
+        }, $group_regnos);
+
+        $regnos_list  = implode(',', $escaped_regnos);
+        $group_sql    = "SELECT regno, name, department FROM student_register WHERE regno IN ($regnos_list)";
+        $group_result = $conn->query($group_sql);
+
+        if ($group_result) {
+            while ($member = $group_result->fetch_assoc()) {
+                $group_members_details[] = $member;
+            }
+        }
+    }
+}
+
 // Check if counselor has a digital signature
 $has_digital_signature       = ! empty($od_data['signature_data']);
 $signature_verification_code = '';
@@ -66,6 +93,7 @@ if ($has_digital_signature) {
     $signature_verification_code = hash('sha256', $od_data['signature_hash'] . $od_id . $od_data['student_regno']);
 }
 
+// Close database connections AFTER fetching all data including group members
 $od_stmt->close();
 $stmt->close();
 $conn->close();
@@ -478,13 +506,54 @@ $html_content = '
                 (Year of Join: ' . htmlspecialchars($student_data['year_of_join'] ?? 'N/A') . '),
                 <strong>' . htmlspecialchars($student_data['department'] ?? 'N/A') . '</strong> department,
                 under the guidance of Class Counselor <strong>' . htmlspecialchars($od_data['counselor_name']) . '</strong>
-                (' . htmlspecialchars($od_data['faculty_id']) . '), has been granted On Duty (OD) permission
-                to participate in the mentioned event and is hereby authorized to remain absent from regular
+                (' . htmlspecialchars($od_data['faculty_id']) . '), ' . (empty($group_members_details) ? 'has' : 'along with the team members listed below, have') . ' been granted On Duty (OD) permission
+                to participate in the mentioned event and ' . (empty($group_members_details) ? 'is' : 'are') . ' hereby authorized to remain absent from regular
                 classes for the specified duration.
-            </p>
+            </p>';
 
+// Add group members information if this is a group OD
+if (! empty($group_members_details)) {
+    $html_content .= '
+            <div class="student-details" style="background: #e3f2fd; border-left-color: #2196f3;">
+                <div class="section-title" style="color: #1976d2; border-bottom-color: #2196f3;">
+                    👥 GROUP OD - Additional Team Members
+                </div>
+                <p style="margin: 10px 0 5px 0; font-weight: bold; color: #0c3878;">
+                    This is a group OD request. The following students are also part of this event participation:
+                </p>
+                <table class="detail-table" style="margin-top: 15px;">
+                    <thead>
+                        <tr style="background: #bbdefb;">
+                            <th style="padding: 8px; text-align: left; border: 1px solid #90caf9;">S.No</th>
+                            <th style="padding: 8px; text-align: left; border: 1px solid #90caf9;">Register Number</th>
+                            <th style="padding: 8px; text-align: left; border: 1px solid #90caf9;">Student Name</th>
+                            <th style="padding: 8px; text-align: left; border: 1px solid #90caf9;">Department</th>
+                        </tr>
+                    </thead>
+                    <tbody>';
+
+    foreach ($group_members_details as $index => $member) {
+        $html_content .= '
+                        <tr>
+                            <td style="padding: 6px 8px; border: 1px solid #e3f2fd;">' . ($index + 1) . '</td>
+                            <td style="padding: 6px 8px; border: 1px solid #e3f2fd; font-weight: bold;">' . htmlspecialchars($member['regno']) . '</td>
+                            <td style="padding: 6px 8px; border: 1px solid #e3f2fd;">' . htmlspecialchars($member['name']) . '</td>
+                            <td style="padding: 6px 8px; border: 1px solid #e3f2fd;">' . htmlspecialchars($member['department']) . '</td>
+                        </tr>';
+    }
+
+    $html_content .= '
+                    </tbody>
+                </table>
+                <p style="margin: 15px 0 5px 0; font-size: 12px; color: #666; font-style: italic;">
+                    Total members in this group: ' . (count($group_members_details) + 1) . ' (including primary requester)
+                </p>
+            </div>';
+}
+
+$html_content .= '
             <p style="text-align: justify; line-height: 1.8;">
-                The student is permitted to attend <strong>' . htmlspecialchars($od_data['event_name']) . '</strong>,
+                ' . (empty($group_members_details) ? 'The student is' : 'The students are') . ' permitted to attend <strong>' . htmlspecialchars($od_data['event_name']) . '</strong>,
                 scheduled on <strong>' . date('l, F d, Y', strtotime($od_data['event_date'])) . '</strong>
                 at <strong>' . date('h:i A', strtotime($od_data['event_time'])) . '</strong>,
                 to be held at <strong>' . htmlspecialchars($od_data['event_location']) . '</strong>

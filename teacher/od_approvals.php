@@ -61,7 +61,7 @@
     }
 
     // Get OD requests for this counselor
-    $od_requests_sql = "SELECT od.*, sr.name as student_name, sr.department, sr.year_of_join
+    $od_requests_sql = "SELECT od.*, sr.name as student_name, sr.department, sr.year_of_join, od.group_members
                         FROM od_requests od
                         JOIN student_register sr ON od.student_regno = sr.regno
                         WHERE od.counselor_id = ?
@@ -93,7 +93,8 @@
     $stmt->close();
     $od_requests_stmt->close();
     $stats_stmt->close();
-    $conn->close();
+    // Keep connection open for group members queries
+    // $conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -422,6 +423,87 @@
             padding: 20px;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
             border: 1px solid #e9ecef;
+        }
+
+        .group-members-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .group-members-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #0c3878;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .group-members-header .material-symbols-outlined {
+            font-size: 22px;
+            color: #17a2b8;
+        }
+
+        .group-members-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .group-member-item {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .group-member-item:hover {
+            border-color: #17a2b8;
+            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .group-member-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .group-member-details {
+            flex: 1;
+        }
+
+        .group-member-regno {
+            font-weight: 600;
+            color: #0c3878;
+            font-size: 13px;
+        }
+
+        .group-member-name {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .group-members-list {
+                grid-template-columns: 1fr;
+            }
         }
 
         .student-info h3 {
@@ -1587,7 +1669,7 @@
 
             <div class="student-info"  style="color: white;">
                 <div class="student-name" style="color:white;"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -1825,8 +1907,24 @@
                                         <span><?php echo date('M d, Y', strtotime($request['event_date'])); ?></span>
                                     </td>
                                     <td data-label="Location" style="padding: 15px; color: #495057;">
-                                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;" title="<?php echo htmlspecialchars($request['event_location']); ?>">
-                                            <?php echo htmlspecialchars($request['event_location']); ?>
+                                        <div style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;" title="<?php
+                                                                                                                             if (! empty($request['event_state']) && ! empty($request['event_district'])) {
+                                                                                                                                 echo htmlspecialchars($request['event_district'] . ', ' . $request['event_state']);
+                                                                                                                             } elseif (! empty($request['event_location'])) {
+                                                                                                                                 echo htmlspecialchars($request['event_location']);
+                                                                                                                             } else {
+                                                                                                                                 echo 'Not specified';
+                                                                                                                         }
+                                                                                                                         ?>">
+                                            <?php
+                                                if (! empty($request['event_state']) && ! empty($request['event_district'])) {
+                                                    echo htmlspecialchars($request['event_district'] . ', ' . $request['event_state']);
+                                                } elseif (! empty($request['event_location'])) {
+                                                    echo htmlspecialchars($request['event_location']);
+                                                } else {
+                                                    echo '<em style="color: #999;">Not specified</em>';
+                                                }
+                                            ?>
                                         </div>
                                     </td>
                                     <td data-label="Poster" style="padding: 15px; text-align: center;">
@@ -1856,7 +1954,7 @@
                                         <?php endif; ?>
                                     </td>
                                     <td data-label="Status" style="padding: 15px; text-align: center;">
-                                        <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                        <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                             <?php echo ucfirst($request['status']); ?>
                                         </span>
                                     </td>
@@ -1897,7 +1995,7 @@
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">calendar_today</span>
-                                            <span>Year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($request['year_of_join']); ?></span>
+                                            <span>Year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($request['year_of_join']); ?></span>
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">schedule</span>
@@ -1905,11 +2003,58 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo $request['status']; ?>">
+                                <div class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Group Members Section (if group OD) -->
+                        <?php if (! empty($request['group_members'])): ?>
+                        <?php
+                            // Fetch group members details
+                            $group_regnos          = array_filter(array_map('trim', explode(',', $request['group_members'])));
+                            $group_members_details = [];
+
+                            if (! empty($group_regnos)) {
+                                // Escape each regno for SQL safety
+                                $escaped_regnos = array_map(function ($regno) use ($conn) {
+                                    return "'" . $conn->real_escape_string($regno) . "'";
+                                }, $group_regnos);
+
+                                $regnos_list  = implode(',', $escaped_regnos);
+                                $group_sql    = "SELECT regno, name FROM student_register WHERE regno IN ($regnos_list)";
+                                $group_result = $conn->query($group_sql);
+
+                                if ($group_result) {
+                                    while ($member = $group_result->fetch_assoc()) {
+                                        $group_members_details[] = $member;
+                                    }
+                                }
+                            }
+                        ?>
+                        <div class="section-card">
+                            <div class="section-header">
+                                <span class="material-symbols-outlined">group</span>
+                                <h4>Group Members (<?php echo count($group_members_details); ?>)</h4>
+                            </div>
+                            <div class="group-members-section">
+                                <div class="group-members-list">
+                                    <?php foreach ($group_members_details as $index => $member): ?>
+                                    <div class="group-member-item">
+                                        <div class="group-member-icon">
+                                            <?php echo strtoupper(substr($member['name'], 0, 1)); ?>
+                                        </div>
+                                        <div class="group-member-details">
+                                            <div class="group-member-regno"><?php echo htmlspecialchars($member['regno']); ?></div>
+                                            <div class="group-member-name"><?php echo htmlspecialchars($member['name']); ?></div>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
 
                         <!-- Section 2: Event Details -->
                         <div class="section-card event-section">
@@ -1924,7 +2069,18 @@
                                 </div>
                                 <div class="event-detail-item">
                                     <span class="event-detail-label">Location:</span>
-                                    <span class="event-detail-value"><?php echo htmlspecialchars($request['event_location']); ?></span>
+                                    <span class="event-detail-value">
+                                        <?php
+                                            // Display state and district if available, otherwise show event_location
+                                            if (! empty($request['event_state']) && ! empty($request['event_district'])) {
+                                                echo htmlspecialchars($request['event_district']) . ', ' . htmlspecialchars($request['event_state']);
+                                            } elseif (! empty($request['event_location'])) {
+                                                echo htmlspecialchars($request['event_location']);
+                                            } else {
+                                                echo '<em style="color: #999;">Not specified</em>';
+                                            }
+                                        ?>
+                                    </span>
                                 </div>
                                 <div class="event-detail-item">
                                     <span class="event-detail-label">Event Date:</span>
@@ -1995,9 +2151,9 @@
                                             Download Poster
                                         </a>
                                         <div style="text-align: center; font-size: 12px; color: #6c757d; padding: 8px; background: #f8f9fa; border-radius: 6px;">
-                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
-                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo strtoupper($file_extension); ?> •
-                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
+                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
+                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo strtoupper($file_extension); ?> •
+                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -2373,5 +2529,9 @@
             }
         });
     </script>
+    <?php
+        // Close database connection
+        $conn->close();
+    ?>
 </body>
 </html>
