@@ -19,3 +19,4 @@
     add Internships to admin Dashboard   ✅
 
     change student profile to disable semester and departement 
+    remove double scroll in admin user management

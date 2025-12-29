@@ -1647,22 +1647,16 @@ a {
   }
 }
 
-/* Dark mode support (optional) */
+/* Dark mode support - DISABLED to prevent automatic dark mode
 @media (prefers-color-scheme: dark) {
-  /* .enhanced-category-card {
-    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  } */
-
   .category-summary,
   .performance-indicators,
   .category-details,
   #enhanced-category-chart {
-    /* background: rgba(30, 41, 59, 0.95); */
     color: #e2e8f0;
   }
 
   .category-table {
-    /* background: #1e293b; */
     color: #e2e8f0;
   }
 
@@ -1678,6 +1672,7 @@ a {
     );
   }
 }
+*/
 
 /* Print styles */
 @media print {

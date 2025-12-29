@@ -451,7 +451,11 @@ function initEnhancedCategoryChart() {
               <strong>Staff:</strong> ${category.staff_participations}
             </div>
             <div style="margin-bottom: 4px;">
-              <strong>Success Rate:</strong> ${category.success_rate}%
+              <strong>Success Rate:</strong> ${
+                category.is_competitive
+                  ? category.success_rate + "%"
+                  : "N/A (Non-competitive)"
+              }
             </div>
           </div>
         `;
@@ -519,12 +523,22 @@ function prepareChartData(view) {
       break;
 
     case "success":
+      // Filter to show only competitive events in success rate chart
+      const competitiveCategories = window.categoryAnalytics.filter(
+        (cat) => cat.is_competitive
+      );
       series = [
         {
           name: "Success Rate (%)",
-          data: window.categoryAnalytics.map((cat) => cat.success_rate),
+          data: competitiveCategories.map((cat) => cat.success_rate),
         },
       ];
+      // Update categories for success chart to show only competitive events
+      categoryChart.updateOptions({
+        xaxis: {
+          categories: competitiveCategories.map((cat) => cat.name),
+        },
+      });
       yAxisTitle = "Success Rate (%)";
       break;
 
