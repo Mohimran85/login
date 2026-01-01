@@ -13,59 +13,91 @@ if ($conn->connect_error) {
 }
 
 // Get filter parameters from POST (for reports.php) or GET (for participants.php)
-// Check if this is a reports export (POST with year, department, semester, event_type)
-$is_report_export = isset($_POST['year']) && isset($_POST['department']) && isset($_POST['semester']) && isset($_POST['event_type']);
+// Check if this is a reports export (POST with at least one filter parameter)
+$is_report_export = isset($_POST['year']) || isset($_POST['department']) || isset($_POST['semester']) || isset($_POST['event_type']) || isset($_POST['location']);
 
 if ($is_report_export) {
     // Handle reports export
-    $year       = $_POST['year'];
-    $department = $_POST['department'];
-    $semester   = $_POST['semester'];
-    $event_type = $_POST['event_type'];
-    $location   = isset($_POST['location']) ? $_POST['location'] : '';
-
-    // Validate location is selected
-    if (empty($location)) {
-        die("Error: Location filter must be selected");
-    }
+    $year       = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
+    $department = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
+    $semester   = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
+    $event_type = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
+    $location   = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
 
     header("Content-Type: application/vnd.ms-excel");
     header("Content-Disposition: attachment; filename=reports_" . date('Y-m-d') . ".xls");
     header("Pragma: no-cache");
     header("Expires: 0");
 
-    // For academic year format like "2024-2025", we need to map it back to database values
-    $year_patterns = [$year];
-    if (strpos($year, '-') !== false) {
-        $year_parts = explode('-', $year);
-        if (count($year_parts) == 2) {
-            // Add short format like "2024-25"
-            $short_year      = $year_parts[0] . '-' . substr($year_parts[1], -2);
-            $year_patterns[] = $short_year;
+    // Build dynamic WHERE clause
+    $where_conditions = ["e.verification_status = 'Approved'"];
+    $bind_types       = "";
+    $bind_values      = [];
+
+    // Add year filter if selected
+    if ($year !== null) {
+        $year_patterns = [$year];
+        if (strpos($year, '-') !== false) {
+            $year_parts = explode('-', $year);
+            if (count($year_parts) == 2) {
+                $short_year      = $year_parts[0] . '-' . substr($year_parts[1], -2);
+                $year_patterns[] = $short_year;
+            }
+        }
+        $year_conditions    = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
+        $where_conditions[] = "($year_conditions)";
+        foreach ($year_patterns as $pattern) {
+            $bind_types .= 's';
+            $bind_values[] = $pattern;
         }
     }
 
-    // Build the query with OR conditions for year patterns
-    $year_conditions = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
-
-    // Build location filter condition
-    if ($location === 'tamilnadu') {
-        $location_condition = " AND e.state = 'Tamil Nadu'";
-    } else { // outside
-        $location_condition = " AND e.state != 'Tamil Nadu'";
+    // Add department filter if selected
+    if ($department !== null) {
+        $where_conditions[] = "e.department = ?";
+        $bind_types .= 's';
+        $bind_values[] = $department;
     }
 
-    $stmt = $conn->prepare("SELECT e.id, e.regno, s.name, e.current_year, e.semester, e.department,
-                                         e.state, e.district, e.event_type, e.event_name, e.start_date, e.end_date, e.no_of_days,
-                                         e.organisation, e.prize, e.prize_amount
-                                   FROM student_event_register e
-                                   JOIN student_register s ON e.regno = s.regno
-                                   WHERE ($year_conditions) AND e.department=? AND e.semester=? AND e.event_type=?$location_condition");
+    // Add semester filter if selected
+    if ($semester !== null) {
+        $where_conditions[] = "e.semester = ?";
+        $bind_types .= 's';
+        $bind_values[] = $semester;
+    }
 
-    // Bind parameters: all year patterns + department + semester + event_type
-    $bind_types  = str_repeat('s', count($year_patterns)) . 'sss';
-    $bind_values = array_merge($year_patterns, [$department, $semester, $event_type]);
-    $stmt->bind_param($bind_types, ...$bind_values);
+    // Add event type filter if selected
+    if ($event_type !== null) {
+        $where_conditions[] = "e.event_type = ?";
+        $bind_types .= 's';
+        $bind_values[] = $event_type;
+    }
+
+    // Add location filter if selected
+    if ($location !== null) {
+        if ($location === 'tamilnadu') {
+            $where_conditions[] = "(LOWER(e.state) = 'tamil nadu' OR LOWER(e.state) = 'tamilnadu')";
+        } else {
+            $where_conditions[] = "(LOWER(e.state) != 'tamil nadu' AND LOWER(e.state) != 'tamilnadu' AND e.state IS NOT NULL AND e.state != '')";
+        }
+    }
+
+    // Build final SQL query
+    $where_clause = implode(' AND ', $where_conditions);
+    $sql          = "SELECT e.id, e.regno, s.name, e.current_year, e.semester, e.department,
+                 e.state, e.district, e.event_type, e.event_name, e.start_date, e.end_date, e.no_of_days,
+                 e.organisation, e.prize, e.prize_amount
+           FROM student_event_register e
+           JOIN student_register s ON e.regno = s.regno
+           WHERE $where_clause";
+
+    $stmt = $conn->prepare($sql);
+
+    // Bind parameters only if there are any
+    if (! empty($bind_values)) {
+        $stmt->bind_param($bind_types, ...$bind_values);
+    }
+
     $stmt->execute();
     $result = $stmt->get_result();
 

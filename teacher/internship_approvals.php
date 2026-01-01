@@ -844,7 +844,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
-                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
+                <div class="student-regno">ID:                                                                                                                                           <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <ul class="nav-menu">
@@ -1151,6 +1151,12 @@
                 </div>
             </div>
 
+            <!-- Internship Report Section -->
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0; color: #0c3878; font-size: 18px; margin-bottom: 15px;">Internship Report</h3>
+                <div id="modalBriefReport" style="background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #0c3878; min-height: 120px; color: #212529; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;"></div>
+            </div>
+
             <!-- Approval Form -->
             <form method="POST">
                 <input type="hidden" id="internshipId" name="internship_id" value="">
@@ -1268,6 +1274,15 @@
                 certElement.innerHTML = `<a href="../uploads/${internshipData.internship_certificate}" target="_blank" class="certificate-link">View Certificate</a>`;
             } else {
                 certElement.innerHTML = '<span style="color: #999;">Not Available</span>';
+            }
+
+            // Brief report
+            const reportElement = document.getElementById('modalBriefReport');
+            if (internshipData.brief_report) {
+                reportElement.textContent = internshipData.brief_report;
+            } else {
+                reportElement.textContent = 'No report submitted';
+                reportElement.style.color = '#999';
             }
 
             // Show modal

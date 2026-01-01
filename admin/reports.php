@@ -113,7 +113,7 @@
                 <div class="card">
                     <div class="inner-card">
                         <label for="year">Academic Year:</label>
-                        <select name="year" id="year" required>
+                        <select name="year" id="year">
                             <option value="">Select Academic Year</option>
                             <?php
                                 // Generate last 10 academic years starting from current year
@@ -132,7 +132,7 @@
                 <div class="card">
                     <div class="inner-card">
                         <label for="department">Department:</label>
-                        <select name="department" id="department" required>
+                        <select name="department" id="department">
                             <option value="">Select Department</option>
                             <option value="IT">IT</option>
                             <option value="CSE">CSE</option>
@@ -145,7 +145,7 @@
                 <div class="card">
                     <div class="inner-card">
                         <label for="semester">Semester:</label>
-                        <select name="semester" id="semester" required>
+                        <select name="semester" id="semester">
                             <option value="">Select Semester</option>
                             <option value="1">Semester 1</option>
                             <option value="2">Semester 2</option>
@@ -162,7 +162,7 @@
                 <div class="card">
                     <div class="inner-card">
                         <label for="event_type">Event Type:</label>
-                        <select name="event_type" id="event_type" required>
+                        <select name="event_type" id="event_type">
                             <option value="">Select Event Type</option>
                             <option value="Workshop">Workshop</option>
                             <option value="Seminar">Seminar</option>
@@ -175,7 +175,7 @@
                 <div class="card">
                     <div class="inner-card">
                         <label for="location">Location:</label>
-                        <select name="location" id="location" required>
+                        <select name="location" id="location">
                             <option value="">Select Location</option>
                             <option value="tamilnadu">Tamil Nadu</option>
                             <option value="outside">Outside Tamil Nadu</option>
@@ -200,135 +200,210 @@
                         die("Connection failed: " . $conn->connect_error);
                     }
 
-                    $year       = $_POST['year'];
-                    $department = $_POST['department'];
-                    $semester   = $_POST['semester'];
-                    $event_type = $_POST['event_type'];
-                    $location   = isset($_POST['location']) ? $_POST['location'] : '';
+                    $year       = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
+                    $department = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
+                    $semester   = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
+                    $event_type = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
+                    $location   = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
 
-                    // Validate that location is selected
-                    if (empty($location)) {
-                        echo "<p style='color: red;'>Please select a location filter (Tamil Nadu or Outside Tamil Nadu)</p>";
-                        $conn->close();
-                    } else {
-                        // For academic year format like "2024-2025", we need to map it back to database values
-                        // The database might store it as "2024-25" or the full year, so we'll search for both patterns
+                    // Build dynamic WHERE clause
+                    $where_conditions = ["e.verification_status = 'Approved'"];
+                    $bind_types       = "";
+                    $bind_values      = [];
+
+                    // Add year filter if selected
+                    if ($year !== null) {
                         $year_patterns = [$year];
                         if (strpos($year, '-') !== false) {
                             $year_parts = explode('-', $year);
                             if (count($year_parts) == 2) {
-                                // Add short format like "2024-25"
                                 $short_year      = $year_parts[0] . '-' . substr($year_parts[1], -2);
                                 $year_patterns[] = $short_year;
                             }
                         }
-
-                        // Build the query with OR conditions for year patterns
-                        $year_conditions = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
-
-                        // Build location filter condition
-                        if ($location === 'tamilnadu') {
-                            $location_condition = " AND e.state = 'Tamil Nadu'";
-                        } else { // outside
-                            $location_condition = " AND e.state != 'Tamil Nadu'";
+                        $year_conditions    = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
+                        $where_conditions[] = "($year_conditions)";
+                        foreach ($year_patterns as $pattern) {
+                            $bind_types .= 's';
+                            $bind_values[] = $pattern;
                         }
+                    }
 
-                        $stmt = $conn->prepare("SELECT e.id, e.regno, s.name, e.current_year, e.semester, e.department,
-                                             e.state, e.district, e.event_type, e.event_name, e.start_date, e.end_date, e.no_of_days,
-                                             e.organisation, e.prize, e.prize_amount, e.event_poster, e.certificates
-                                       FROM student_event_register e
-                                       JOIN student_register s ON e.regno = s.regno
-                                       WHERE ($year_conditions) AND e.department=? AND e.semester=? AND e.event_type=?$location_condition AND e.verification_status = 'Approved'");
+                    // Add department filter if selected
+                    if ($department !== null) {
+                        $where_conditions[] = "e.department = ?";
+                        $bind_types .= 's';
+                        $bind_values[] = $department;
+                    }
 
-                        // Bind parameters: all year patterns + department + semester + event_type
-                        $bind_types  = str_repeat('s', count($year_patterns)) . 'sss';
-                        $bind_values = array_merge($year_patterns, [$department, $semester, $event_type]);
+                    // Add semester filter if selected
+                    if ($semester !== null) {
+                        $where_conditions[] = "e.semester = ?";
+                        $bind_types .= 's';
+                        $bind_values[] = $semester;
+                    }
+
+                    // Add event type filter if selected
+                    if ($event_type !== null) {
+                        $where_conditions[] = "e.event_type = ?";
+                        $bind_types .= 's';
+                        $bind_values[] = $event_type;
+                    }
+
+                    // Add location filter if selected
+                    if ($location !== null) {
+                        if ($location === 'tamilnadu') {
+                            $where_conditions[] = "(LOWER(e.state) = 'tamil nadu' OR LOWER(e.state) = 'tamilnadu')";
+                        } else {
+                            $where_conditions[] = "(LOWER(e.state) != 'tamil nadu' AND LOWER(e.state) != 'tamilnadu' AND e.state IS NOT NULL AND e.state != '')";
+                        }
+                    }
+
+                    // Build final SQL query
+                    $where_clause = implode(' AND ', $where_conditions);
+                    $sql          = "SELECT e.id, e.regno, s.name, e.current_year, e.semester, e.department,
+                                 e.state, e.district, e.event_type, e.event_name, e.start_date, e.end_date, e.no_of_days,
+                                 e.organisation, e.prize, e.prize_amount, e.event_poster, e.certificates
+                           FROM student_event_register e
+                           JOIN student_register s ON e.regno = s.regno
+                           WHERE $where_clause";
+
+                    $stmt = $conn->prepare($sql);
+
+                    // Bind parameters only if there are any
+                    if (! empty($bind_values)) {
                         $stmt->bind_param($bind_types, ...$bind_values);
-                        $stmt->execute();
-                        $result = $stmt->get_result();
+                    }
 
-                        if ($result->num_rows > 0) {
-                            echo "<table class='report-table'>";
-                            echo "<thead>";
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+
+                    if ($result->num_rows > 0) {
+                        echo "<table class='report-table'>";
+                        echo "<thead>";
+                        echo "<tr>";
+                        echo "<th>S.No</th>";
+                        echo "<th>Reg No</th>";
+                        echo "<th>Name</th>";
+                        echo "<th>Academic Year</th>";
+                        echo "<th>Semester</th>";
+                        echo "<th>Department</th>";
+                        echo "<th>State</th>";
+                        echo "<th>District</th>";
+                        echo "<th>Event Type</th>";
+                        echo "<th>Event Name</th>";
+                        echo "<th>Start Date</th>";
+                        echo "<th>End Date</th>";
+                        echo "<th>No of Days</th>";
+                        echo "<th>Organisation</th>";
+                        echo "<th>Prize</th>";
+                        echo "<th>Prize Amount</th>";
+                        echo "<th>Event Poster</th>";
+                        echo "<th>Certificates</th>";
+                        echo "</tr>";
+                        echo "</thead>";
+                        echo "<tbody>";
+
+                        $sno = 1;
+                        while ($row = $result->fetch_assoc()) {
                             echo "<tr>";
-                            echo "<th>S.No</th>";
-                            echo "<th>Reg No</th>";
-                            echo "<th>Name</th>";
-                            echo "<th>Academic Year</th>";
-                            echo "<th>Semester</th>";
-                            echo "<th>Department</th>";
-                            echo "<th>State</th>";
-                            echo "<th>District</th>";
-                            echo "<th>Event Type</th>";
-                            echo "<th>Event Name</th>";
-                            echo "<th>Start Date</th>";
-                            echo "<th>End Date</th>";
-                            echo "<th>No of Days</th>";
-                            echo "<th>Organisation</th>";
-                            echo "<th>Prize</th>";
-                            echo "<th>Prize Amount</th>";
-                            echo "<th>Event Poster</th>";
-                            echo "<th>Certificates</th>";
-                            echo "</tr>";
-                            echo "</thead>";
-                            echo "<tbody>";
+                            echo "<td>" . $sno++ . "</td>";
+                            echo "<td>" . htmlspecialchars($row['regno']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['current_year']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['semester']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['department']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['state']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['district']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['event_type']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['event_name']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['start_date']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['end_date']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['no_of_days']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['organisation']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['prize']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['prize_amount']) . "</td>";
 
-                            $sno = 1;
-                            while ($row = $result->fetch_assoc()) {
-                                echo "<tr>";
-                                echo "<td>" . $sno++ . "</td>";
-                                echo "<td>" . htmlspecialchars($row['regno']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['current_year']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['semester']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['department']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['state']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['district']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['event_type']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['event_name']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['start_date']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['end_date']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['no_of_days']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['organisation']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['prize']) . "</td>";
-                                echo "<td>" . htmlspecialchars($row['prize_amount']) . "</td>";
-
-                                // Event Poster Download (BLOB version)
-                                if (! empty($row['event_poster'])) {
-                                    echo "<td><a href='download.php?id=" . $row['id'] . "&type=poster' target='_blank'>Download Poster</a></td>";
-                                } else {
-                                    echo "<td><span style='color:gray;'>No Poster</span></td>";
-                                }
-
-                                // Certificate Download (BLOB version)
-                                if (! empty($row['certificates'])) {
-                                    echo "<td><a href='download.php?id=" . $row['id'] . "&type=certificate' target='_blank'>Download Certificate</a></td>";
-                                } else {
-                                    echo "<td><span style='color:gray;'>No Certificate</span></td>";
-                                }
-
-                                echo "</tr>";
+                            // Event Poster Download (BLOB version)
+                            if (! empty($row['event_poster'])) {
+                                echo "<td><a href='download.php?id=" . $row['id'] . "&type=poster' target='_blank'>Download Poster</a></td>";
+                            } else {
+                                echo "<td><span style='color:gray;'>No Poster</span></td>";
                             }
 
-                            echo "</tbody>";
-                            echo "</table>";
+                            // Certificate Download (BLOB version)
+                            if (! empty($row['certificates'])) {
+                                echo "<td><a href='download.php?id=" . $row['id'] . "&type=certificate' target='_blank'>Download Certificate</a></td>";
+                            } else {
+                                echo "<td><span style='color:gray;'>No Certificate</span></td>";
+                            }
 
-                            echo "<form method='POST' action='export_excel.php' target='_blank'>";
-                            echo "<input type='hidden' name='year' value='" . htmlspecialchars($year) . "'>";
-                            echo "<input type='hidden' name='department' value='" . htmlspecialchars($department) . "'>";
-                            echo "<input type='hidden' name='semester' value='" . htmlspecialchars($semester) . "'>";
-                            echo "<input type='hidden' name='event_type' value='" . htmlspecialchars($event_type) . "'>";
-                            echo "<input type='hidden' name='location' value='" . htmlspecialchars($location) . "'>";
-                            echo "<button type='submit'>Download as Excel</button>";
-                            echo "</form>";
-
-                        } else {
-                            echo "<p>No records found.</p>";
+                            echo "</tr>";
                         }
 
-                        $stmt->close();
-                        $conn->close();
-                    } // End of location validation check
+                        echo "</tbody>";
+                        echo "</table>";
+
+                        echo "<div style='display: flex; gap: 10px; margin-top: 20px;'>";
+
+                        // Excel export button
+                        echo "<form method='POST' action='export_excel.php' target='_blank' style='margin: 0;'>";
+                        if ($year !== null) {
+                            echo "<input type='hidden' name='year' value='" . htmlspecialchars($year) . "'>";
+                        }
+
+                        if ($department !== null) {
+                            echo "<input type='hidden' name='department' value='" . htmlspecialchars($department) . "'>";
+                        }
+
+                        if ($semester !== null) {
+                            echo "<input type='hidden' name='semester' value='" . htmlspecialchars($semester) . "'>";
+                        }
+
+                        if ($event_type !== null) {
+                            echo "<input type='hidden' name='event_type' value='" . htmlspecialchars($event_type) . "'>";
+                        }
+
+                        if ($location !== null) {
+                            echo "<input type='hidden' name='location' value='" . htmlspecialchars($location) . "'>";
+                        }
+
+                        echo "<button type='submit'>Download as Excel</button>";
+                        echo "</form>";
+
+                        // Download all certificates button
+                        echo "<form method='POST' action='download_certificates.php' target='_blank' style='margin: 0;'>";
+                        if ($year !== null) {
+                            echo "<input type='hidden' name='year' value='" . htmlspecialchars($year) . "'>";
+                        }
+
+                        if ($department !== null) {
+                            echo "<input type='hidden' name='department' value='" . htmlspecialchars($department) . "'>";
+                        }
+
+                        if ($semester !== null) {
+                            echo "<input type='hidden' name='semester' value='" . htmlspecialchars($semester) . "'>";
+                        }
+
+                        if ($event_type !== null) {
+                            echo "<input type='hidden' name='event_type' value='" . htmlspecialchars($event_type) . "'>";
+                        }
+
+                        if ($location !== null) {
+                            echo "<input type='hidden' name='location' value='" . htmlspecialchars($location) . "'>";
+                        }
+
+                        echo "<button type='submit' style='background-color: #28a745; border-color: #28a745;'>Download All Certificates</button>";
+                        echo "</form>";
+
+                        echo "</div>";
+
+                    } else {
+                        echo "<p>No records found.</p>";
+                    }
+
+                    $stmt->close();
+                    $conn->close();
                 }
             ?>
         </div>
