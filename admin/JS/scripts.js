@@ -234,37 +234,71 @@ var areaChartOption = {
         "December",
       ];
 
-      const events = series[0][dataPointIndex];
-      const participations = series[1][dataPointIndex];
-      const wins = series[2][dataPointIndex];
-      const successRate =
-        participations > 0 ? ((wins / participations) * 100).toFixed(1) : "0";
-      const avgParticipants =
-        events > 0 ? (participations / events).toFixed(1) : "0";
+      // Check if this is YoY comparison mode (4 series) or overview mode (3 series)
+      if (series.length === 4) {
+        // Year-over-Year Comparison Mode
+        const currentEvents = series[0][dataPointIndex];
+        const prevEvents = series[1][dataPointIndex];
+        const currentParticipations = series[2][dataPointIndex];
+        const prevParticipations = series[3][dataPointIndex];
 
-      return `
-        <div style="padding: 12px; min-width: 200px;">
-          <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">
-            ${monthNames[dataPointIndex]} ${
-        window.currentYear || new Date().getFullYear()
+        return `
+          <div style="padding: 12px; min-width: 220px;">
+            <div style="font-weight: 600; margin-bottom: 8px; color: #374151; border-bottom: 1px solid #e5e7eb; padding-bottom: 4px;">
+              ${monthNames[dataPointIndex]}
+            </div>
+            <div style="margin-bottom: 6px;">
+              <div style="margin-bottom: 2px;">
+                <span style="color: #008FFB;">●</span> <strong>${window.currentYear} Events: ${currentEvents}</strong>
+              </div>
+              <div style="font-size: 11px; color: #6B7280; margin-left: 12px;">
+                ${window.previousYear} Events: ${prevEvents}
+              </div>
+            </div>
+            <div>
+              <div style="margin-bottom: 2px;">
+                <span style="color: #00E396;">●</span> <strong>${window.currentYear} Participations: ${currentParticipations}</strong>
+              </div>
+              <div style="font-size: 11px; color: #6B7280; margin-left: 12px;">
+                ${window.previousYear} Participations: ${prevParticipations}
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        // Overview Mode (3 series: Events, Participations, Prize Winners)
+        const events = series[0][dataPointIndex];
+        const participations = series[1][dataPointIndex];
+        const wins = series[2][dataPointIndex];
+        const successRate =
+          participations > 0 ? ((wins / participations) * 100).toFixed(1) : "0";
+        const avgParticipants =
+          events > 0 ? (participations / events).toFixed(1) : "0";
+
+        return `
+          <div style="padding: 12px; min-width: 200px;">
+            <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">
+              ${monthNames[dataPointIndex]} ${
+          window.currentYear || new Date().getFullYear()
+        }
+            </div>
+            <div style="margin-bottom: 4px;">
+              <span style="color: #008FFB;">●</span> Events: <strong>${events}</strong>
+            </div>
+            <div style="margin-bottom: 4px;">
+              <span style="color: #00E396;">●</span> Participations: <strong>${participations}</strong>
+            </div>
+            <div style="margin-bottom: 4px;">
+              <span style="color: #FEB019;">●</span> Prize Winners: <strong>${wins}</strong>
+            </div>
+            <hr style="margin: 8px 0; border: none; border-top: 1px solid #e5e7eb;">
+            <div style="font-size: 11px; color: #6B7280;">
+              <div>Success Rate: ${successRate}%</div>
+              <div>Avg Participants/Event: ${avgParticipants}</div>
+            </div>
+          </div>
+        `;
       }
-          </div>
-          <div style="margin-bottom: 4px;">
-            <span style="color: #008FFB;">●</span> Events: <strong>${events}</strong>
-          </div>
-          <div style="margin-bottom: 4px;">
-            <span style="color: #00E396;">●</span> Participations: <strong>${participations}</strong>
-          </div>
-          <div style="margin-bottom: 4px;">
-            <span style="color: #FEB019;">●</span> Prize Winners: <strong>${wins}</strong>
-          </div>
-          <hr style="margin: 8px 0; border: none; border-top: 1px solid #e5e7eb;">
-          <div style="font-size: 11px; color: #6B7280;">
-            <div>Success Rate: ${successRate}%</div>
-            <div>Avg Participants/Event: ${avgParticipants}</div>
-          </div>
-        </div>
-      `;
     },
   },
   legend: {
@@ -1205,45 +1239,90 @@ function updateAreaChartForComparisonView() {
   if (typeof areaChart !== "undefined") {
     // Update with distinct colors and styles for better differentiation
     areaChart.updateOptions({
-      colors: ["#008FFB", "#0066CC", "#00E396", "#00B377"], // Blue shades for current year, Green shades for previous year
+      colors: ["#008FFB", "#B3D9FF", "#00E396", "#B3F5E0"], // Solid blue for current year events, light blue for previous year events, solid green for current participations, light green for previous participations
       stroke: {
         curve: "smooth",
-        width: [3, 2, 3, 2], // Thicker lines for current year
-        dashArray: [0, 5, 0, 5], // Dashed lines for previous year
+        width: [4, 3, 4, 3], // Thicker lines for current year
+        dashArray: [0, 8, 0, 8], // Solid for current year, dashed for previous year
       },
       markers: {
-        size: [5, 4, 5, 4], // Larger markers for current year
+        size: [6, 4, 6, 4], // Larger markers for current year
+      },
+      fill: {
+        type: ["gradient", "solid", "gradient", "solid"],
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: [0.4, 0, 0.3, 0],
+          opacityTo: [0.1, 0, 0.1, 0],
+        },
+        opacity: [0.35, 0.15, 0.35, 0.15], // More opacity for current year
+      },
+      legend: {
+        position: "top",
+        horizontalAlign: "center",
+        fontSize: "13px",
+        markers: {
+          width: 12,
+          height: 12,
+        },
+        itemMargin: {
+          horizontal: 10,
+          vertical: 5,
+        },
       },
       title: {
-        text: `Year-over-Year Comparison: ${window.currentYear} vs ${window.previousYear}`,
+        text: `Year-over-Year Comparison: ${window.currentYear} (Solid) vs ${window.previousYear} (Dashed)`,
         style: {
           fontSize: "16px",
           fontWeight: 600,
           color: "#374151",
         },
       },
+      tooltip: {
+        shared: true,
+        intersect: false,
+        x: {
+          formatter: function (value, { dataPointIndex }) {
+            const monthNames = [
+              "January",
+              "February",
+              "March",
+              "April",
+              "May",
+              "June",
+              "July",
+              "August",
+              "September",
+              "October",
+              "November",
+              "December",
+            ];
+            return monthNames[dataPointIndex];
+          },
+        },
+      },
     });
 
     areaChart.updateSeries([
       {
-        name: `${window.currentYear} Student Events`,
-        type: "line",
+        name: `${window.currentYear} Events`,
+        type: "area",
         data: window.monthlyEvents || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       },
       {
-        name: `${window.previousYear} Student Events`,
+        name: `${window.previousYear} Events`,
         type: "line",
         data: window.previousYearEvents || [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
       },
       {
-        name: `${window.currentYear} Student Participations`,
-        type: "line",
+        name: `${window.currentYear} Participations`,
+        type: "area",
         data: window.monthlyParticipations || [
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ],
       },
       {
-        name: `${window.previousYear} Student Participations`,
+        name: `${window.previousYear} Participations`,
         type: "line",
         data: window.previousYearParticipations || [
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

@@ -1,5 +1,7 @@
 <?php
 session_start();
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 // Check if user is logged in
 if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -79,7 +81,7 @@ if ($location !== null) {
 
 // Build final SQL query - only get records with certificates
 $where_clause = implode(' AND ', $where_conditions);
-$sql          = "SELECT e.id, e.regno, s.name, e.certificates
+$sql          = "SELECT e.id, e.regno, s.name, e.event_name, e.certificates
        FROM student_event_register e
        JOIN student_register s ON e.regno = s.regno
        WHERE $where_clause AND e.certificates IS NOT NULL AND e.certificates != ''";
@@ -105,26 +107,60 @@ if ($result->num_rows > 0) {
         // Clean the name and regno for filename (remove special characters)
         $clean_name  = preg_replace('/[^a-zA-Z0-9_-]/', '_', $row['name']);
         $clean_regno = preg_replace('/[^a-zA-Z0-9_-]/', '_', $row['regno']);
+        $clean_event = preg_replace('/[^a-zA-Z0-9_-]/', '_', $row['event_name']);
 
-        // Determine file extension from BLOB data
-        $finfo     = new finfo(FILEINFO_MIME_TYPE);
-        $mime_type = $finfo->buffer($row['certificates']);
+        $certData = $row['certificates'];
 
-        $extension = 'pdf'; // default
-        if (strpos($mime_type, 'image/jpeg') !== false) {
-            $extension = 'jpg';
-        } elseif (strpos($mime_type, 'image/png') !== false) {
-            $extension = 'png';
-        } elseif (strpos($mime_type, 'application/pdf') !== false) {
-            $extension = 'pdf';
+        // Check if it's a file path or BLOB data
+        $isFilePath = (strlen($certData) < 500 && preg_match('/^[a-zA-Z0-9_\/\.\-]+$/', $certData));
+
+        if ($isFilePath) {
+            // It's a file path - try multiple possible locations
+            $possiblePaths = [
+                "../" . $certData,
+                "../student/" . $certData,
+                "../../" . $certData,
+            ];
+
+            $actualFile = null;
+            foreach ($possiblePaths as $testPath) {
+                if (file_exists($testPath)) {
+                    $actualFile = $testPath;
+                    break;
+                }
+            }
+
+            if (! $actualFile) {
+                continue; // Skip this file if not found
+            }
+
+            $fileData  = file_get_contents($actualFile);
+            $finfo     = new finfo(FILEINFO_MIME_TYPE);
+            $mime_type = $finfo->file($actualFile);
+            $extension = pathinfo($actualFile, PATHINFO_EXTENSION);
+
+        } else {
+            // It's BLOB data
+            $fileData  = $certData;
+            $finfo     = new finfo(FILEINFO_MIME_TYPE);
+            $mime_type = $finfo->buffer($fileData);
+
+            $extension = 'pdf'; // default
+            if (strpos($mime_type, 'image/jpeg') !== false) {
+                $extension = 'jpg';
+            } elseif (strpos($mime_type, 'image/png') !== false) {
+                $extension = 'png';
+            } elseif (strpos($mime_type, 'application/pdf') !== false) {
+                $extension = 'pdf';
+            }
         }
 
-        // Create filename: Name_RegNo.extension
-        $filename = $clean_name . '_' . $clean_regno . '.' . $extension;
+        // Create filename: Name_RegNo_EventName.extension (unique for each event)
+        $filename = $clean_name . '_' . $clean_regno . '_' . $clean_event . '.' . $extension;
         $filepath = $temp_dir . '/' . $filename;
 
         // Save the certificate to file
-        file_put_contents($filepath, $row['certificates']);
+        file_put_contents($filepath, $fileData);
         $file_count++;
     }
 

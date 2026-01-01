@@ -333,9 +333,7 @@
 
                             // Certificate Download (BLOB version)
                             if (! empty($row['certificates'])) {
-                                echo "<td><a href='download.php?id=" . $row['id'] . "&type=certificate' target='_blank'>Download Certificate</a></td>";
-                            } else {
-                                echo "<td><span style='color:gray;'>No Certificate</span></td>";
+                                echo "<td><a href='download_new.php?id=" . $row['id'] . "&type=certificate' target='_blank'>Download Certificate</a></td>";
                             }
 
                             echo "</tr>";

@@ -299,20 +299,18 @@
         $student_events_result = $conn->query($student_events_sql);
         $student_events_count  = $student_events_result ? (int) $student_events_result->fetch_assoc()['count'] : 0;
 
-        // Count DISTINCT student participations for this month with enhanced uniqueness
-        $student_parts_sql = "SELECT COUNT(DISTINCT CONCAT(regno, '-', event_name, '-', DATE(start_date), '-', COALESCE(event_type, 'unknown'))) as count
+        // Count ALL student participations for this month (each record = 1 participation)
+        $student_parts_sql = "SELECT COUNT(*) as count
                                  FROM student_event_register
-                                 WHERE $date_condition AND regno IS NOT NULL AND event_name IS NOT NULL
-                                 AND regno != '' AND event_name != '' AND verification_status = 'Approved'";
+                                 WHERE $date_condition AND verification_status = 'Approved'";
         $student_parts_result = $conn->query($student_parts_sql);
         $student_parts_count  = $student_parts_result ? (int) $student_parts_result->fetch_assoc()['count'] : 0;
 
-        // Count DISTINCT prize winners for this month with enhanced uniqueness
-        $wins_sql = "SELECT COUNT(DISTINCT CONCAT(regno, '-', event_name, '-', DATE(start_date))) as count
+        // Count ALL prize winners for this month (each prize record = 1 winner)
+        $wins_sql = "SELECT COUNT(*) as count
                      FROM student_event_register
                      WHERE $date_condition AND prize IN ('First', 'Second', 'Third')
-                     AND regno IS NOT NULL AND event_name IS NOT NULL
-                     AND regno != '' AND event_name != '' AND verification_status = 'Approved'";
+                     AND verification_status = 'Approved'";
         $wins_result = $conn->query($wins_sql);
         $wins_count  = $wins_result ? (int) $wins_result->fetch_assoc()['count'] : 0;
 
@@ -323,18 +321,16 @@
         $prev_events_result = $conn->query($prev_events_sql);
         $prev_events_count  = $prev_events_result ? (int) $prev_events_result->fetch_assoc()['count'] : 0;
 
-        $prev_parts_sql = "SELECT COUNT(DISTINCT CONCAT(regno, '-', event_name, '-', DATE(start_date), '-', COALESCE(event_type, 'unknown'))) as count
+        $prev_parts_sql = "SELECT COUNT(*) as count
                               FROM student_event_register
-                              WHERE $previous_year_condition AND regno IS NOT NULL AND event_name IS NOT NULL
-                              AND regno != '' AND event_name != '' AND verification_status = 'Approved'";
+                              WHERE $previous_year_condition AND verification_status = 'Approved'";
         $prev_parts_result = $conn->query($prev_parts_sql);
         $prev_parts_count  = $prev_parts_result ? (int) $prev_parts_result->fetch_assoc()['count'] : 0;
 
-        $prev_wins_sql = "SELECT COUNT(DISTINCT CONCAT(regno, '-', event_name, '-', DATE(start_date))) as count
+        $prev_wins_sql = "SELECT COUNT(*) as count
                           FROM student_event_register
                           WHERE $previous_year_condition AND prize IN ('First', 'Second', 'Third')
-                          AND regno IS NOT NULL AND event_name IS NOT NULL
-                          AND regno != '' AND event_name != '' AND verification_status = 'Approved'";
+                          AND verification_status = 'Approved'";
         $prev_wins_result = $conn->query($prev_wins_sql);
         $prev_wins_count  = $prev_wins_result ? (int) $prev_wins_result->fetch_assoc()['count'] : 0;
 
