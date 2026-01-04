@@ -616,7 +616,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="od_request.php" class="nav-link">
-                            <span class="material-symbols-outlined">assignment</span>
+                            <span class="material-symbols-outlined">person_raised_hand</span>
                             OD Request
                         </a>
                     </li>
@@ -661,7 +661,7 @@
                             <?php echo strtoupper(substr($student_data['name'], 0, 1)); ?>
                         </div>
                         <div class="profile-name"><?php echo htmlspecialchars($student_data['name']); ?></div>
-                        <div class="profile-regno">Registration No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo htmlspecialchars($student_data['regno']); ?></div>
+                        <div class="profile-regno">Registration No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($student_data['regno']); ?></div>
 
                         <div class="profile-stats">
                             <div class="stat-item">
@@ -683,14 +683,14 @@
                             </div>
                             <div class="counselor-details">
                                 <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
-                                <div class="counselor-id">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($counselor_info['counselor_id']); ?></div>
+                                <div class="counselor-id">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo htmlspecialchars($counselor_info['counselor_id']); ?></div>
                                 <div class="counselor-email">
                                     <span class="material-symbols-outlined">email</span>
                                     <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                                 </div>
                                 <div class="assigned-date">
                                     <span class="material-symbols-outlined">schedule</span>
-                                    Assigned:                                                                                                                                                                                                                                                                                                                                                                         <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
+                                    Assigned:                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
                                 </div>
                             </div>
                         </div>
@@ -781,11 +781,11 @@
                                                 <?php echo htmlspecialchars($counselor_info['counselor_name']); ?>
                                             </span>
                                             <span style="font-size: 12px; color: #6c757d;">
-                                                ID:                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                                                ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                                                 <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                                             </span>
                                             <span style="font-size: 11px; color: #856404;">
-                                                Assigned:                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
+                                                Assigned:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
                                             </span>
                                         </div>
                                     <?php else: ?>

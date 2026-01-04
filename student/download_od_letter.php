@@ -302,7 +302,7 @@ $html_content = '
         }
 
         .signature-section {
-            margin-top: 30px;
+            margin-top: 100px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -495,7 +495,7 @@ $html_content = '
 
                 <strong>' . htmlspecialchars($student_data['department'] ?? 'N/A') . '</strong> department,
                 under the guidance of Class Counselor <strong>' . htmlspecialchars($od_data['counselor_name']) . '</strong>, ' . (empty($group_members_details) ? 'has' : 'along with the team members listed below, have') . ' been granted On Duty (OD) permission
-                to participate in the mentioned event and ' . (empty($group_members_details) ? 'is' : 'are') . ' hereby authorized to remain absent from regular
+                to participate in the mentioned event and ' . (empty($group_members_details) ? 'is' : 'are') . ' hereby authorized to remain OD from regular
                 classes for the specified duration.
             </p>';
 

@@ -512,7 +512,7 @@
             </li>
             <li class="nav-item">
               <a href="od_request.php" class="nav-link">
-                <span class="material-symbols-outlined">description</span>
+                <span class="material-symbols-outlined">person_raised_hand</span>
                 OD Request
               </a>
             </li>
@@ -682,7 +682,7 @@
                     <div class="od-request-details">
                       <h4><?php echo htmlspecialchars($od_request['event_name']); ?></h4>
                       <p class="od-request-meta">
-                        <span class="od-status                                                                                                                                                                                                                                                                                     <?php echo $od_request['status']; ?>">
+                        <span class="od-status                                                                                                                                                                                                                                                                                                                                   <?php echo $od_request['status']; ?>">
                           <?php echo ucfirst($od_request['status']); ?>
                         </span>
                         <span class="od-date"><?php echo date('M d, Y', strtotime($od_request['event_date'])); ?></span>
@@ -715,7 +715,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>

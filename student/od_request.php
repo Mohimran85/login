@@ -766,7 +766,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="od_request.php" class="nav-link active">
-                            <span class="material-symbols-outlined">description</span>
+                            <span class="material-symbols-outlined">person_raised_hand</span>
                             OD Request
                         </a>
                     </li>
@@ -801,7 +801,7 @@
                 <!-- OD Request Form -->
                 <div class="od-form-card">
                     <div class="card-title">
-                        <span class="material-symbols-outlined">request_page</span>
+                        <span class="material-symbols-outlined">person_raised_hand</span>
                         Request OD for Event Participation
                     </div>
 
@@ -814,7 +814,7 @@
                         </div>
                         <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
                         <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                             <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                         </div>
                     </div>
@@ -990,13 +990,13 @@
                         <div class="od-request-item<?php echo $request['status']; ?>">
                             <div class="od-request-header">
                                 <div class="od-event-name"><?php echo htmlspecialchars($request['event_name']); ?></div>
-                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $request['status']; ?>">
+                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </span>
                             </div>
                             <div class="od-details">
-                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
+                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
                                 <strong>Location:</strong>
                                 <?php
                                     // Handle backward compatibility for old records
@@ -1017,7 +1017,7 @@
                                 <div style="margin: 10px 0; padding: 10px; background: #e7f3ff; border-left: 3px solid #17a2b8; border-radius: 4px;">
                                     <strong style="color: #17a2b8;">
                                         <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">group</span>
-                                        Group OD                                                                                                                                                                                                                                                                                                 <?php echo $is_group_member ? '(You are a member)' : ''; ?>
+                                        Group OD                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $is_group_member ? '(You are a member)' : ''; ?>
                                     </strong><br>
                                     <small style="color: #666; font-size: 12px;">
                                         <?php echo count($group_regnos); ?> additional member(s):
@@ -1195,6 +1195,22 @@
 
             if (closeSidebarBtn) {
                 closeSidebarBtn.addEventListener('click', toggleSidebar);
+            }
+
+            // File size validation for event poster
+            const posterInput = document.querySelector('input[name="event_poster"]');
+            if (posterInput) {
+                posterInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                        if (file.size > maxSize) {
+                            alert('❌ File size exceeds 5MB limit!\n\nPlease select a file smaller than 5MB.\nCurrent file size: ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB');
+                            e.target.value = ''; // Clear the file input
+                            return false;
+                        }
+                    }
+                });
             }
 
             // State-District cascading dropdown

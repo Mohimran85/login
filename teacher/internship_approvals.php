@@ -209,9 +209,9 @@
             color: var(--primary-color);
         }
 
-       
 
-       
+
+
         .header-title {
             flex: 1;
             text-align: center;
@@ -283,7 +283,7 @@
 
         .student-info .student-regno {
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.8);
+            color: white;
         }
 
         .nav-menu {
@@ -558,11 +558,11 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 1002;
             left: 0;
-            top: 0;
+            top: 80px;
             width: 100%;
-            height: 100%;
+            height: calc(100% - 80px);
             background-color: rgba(0, 0, 0, 0.5);
             padding: 20px;
         }
@@ -580,7 +580,7 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             max-width: 600px;
             width: 100%;
-            max-height: 90vh;
+            max-height: calc(100vh - 120px);
             overflow-y: auto;
         }
 
@@ -841,7 +841,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <ul class="nav-menu">

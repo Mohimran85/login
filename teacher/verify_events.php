@@ -331,12 +331,11 @@
             font-weight: 600;
             font-size: 15px;
             margin-bottom: 5px;
-            color: white;
         }
 
         .student-regno {
             font-size: 12px;
-            color: white;
+            color: rgba(255, 255, 255, 1);
         }
 
         .nav-menu {
@@ -565,7 +564,7 @@
 
         .student-regno {
             font-size: 12px;
-            color: white;
+            color: #ffffffff;
             margin-top: 3px;
         }
 

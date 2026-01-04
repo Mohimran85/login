@@ -316,8 +316,6 @@ a {
   grid-area: main;
   margin-top: 85px;
   scroll-behavior: smooth;
-  overflow-y: auto;
-  max-height: calc(100vh - 85px);
 }
 
 /* Custom scrollbar for main content */
