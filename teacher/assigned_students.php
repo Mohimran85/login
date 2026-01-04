@@ -685,8 +685,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
-                <div class="badge badge-info" style="margin-top: 10px; text-align: center;">Class Counselor</div>
+                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -811,7 +810,7 @@
                                 <option value="">All Semesters</option>
                                 <?php for ($i = 1; $i <= 8; $i++): ?>
                                     <option value="<?php echo $i; ?>"<?php echo $semester_filter == $i ? 'selected' : ''; ?>>
-                                        Semester                                                                                                                                                                                                                                                 <?php echo $i; ?>
+                                        Semester                                                                                                                                                                                                                                                                                                                                                 <?php echo $i; ?>
                                     </option>
                                 <?php endfor; ?>
                             </select>
@@ -873,7 +872,7 @@
                                             <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select">
                                                 <?php for ($s = 1; $s <= 8; $s++): ?>
                                                     <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
-                                                        Semester                                                                                                                                                                                                                                                                 <?php echo $s; ?>
+                                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>
@@ -903,13 +902,6 @@
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
-                    </div>
-
-                    <div style="margin-top: 20px; text-align: right;">
-                        <button type="submit" name="update_all_semesters" class="btn btn-primary">
-                            <span class="material-symbols-outlined">save</span>
-                            Update All Semesters
-                        </button>
                     </div>
 
                     <!-- Mobile Cards View -->
@@ -979,9 +971,9 @@
                     </div>
 
                     <div style="margin-top: 20px; text-align: center;">
-                        <button type="submit" name="update_all_semesters" class="btn btn-primary" style="width: 100%;">
+                        <button type="submit" name="update_all_semesters" class="btn btn-primary">
                             <span class="material-symbols-outlined">save</span>
-                            Update All Semesters
+                            Update Semesters
                         </button>
                     </div>
                     </form>

@@ -152,8 +152,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #0c3878;
-            --secondary-color: #1e4276;
+            --primary-color: #1e4276;
+            --secondary-color: #2d5aa0;
             --accent-color: #2d5aa0;
         }
 
@@ -197,7 +197,6 @@
             z-index: 1001;
             top: 0;
             left: 0;
-            padding: 0 20px;
         }
 
         .header .menu-icon {
@@ -210,17 +209,9 @@
             color: var(--primary-color);
         }
 
-        .header-logo {
-            display: flex;
-            align-items: center;
-        }
+       
 
-        .header-logo .logo {
-            height: 60px;
-            width: auto;
-            object-fit: contain;
-        }
-
+       
         .header-title {
             flex: 1;
             text-align: center;
@@ -823,8 +814,14 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="header-logo">
-                <img class="logo" src="sona_logo.jpg" alt="Sona College Logo" height="60px" width="200" />
-            </div>
+          <img
+            class="logo"
+            src="sona_logo.jpg"
+            alt="Sona College Logo"
+            height="60px"
+            width="200"
+          />
+        </div>
             <div class="header-title">
                 <p>Event Management Dashboard</p>
             </div>
@@ -844,7 +841,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <ul class="nav-menu">
