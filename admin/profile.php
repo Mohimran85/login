@@ -204,8 +204,8 @@
               <a href="user_management.php">User Management</a>
             </li>
             <li class="sidebar-list-item">
-              <span class="material-symbols-outlined">upload</span>
-              <a href="bulk_import.php">Bulk Import</a>
+              <span class="material-symbols-outlined">school</span>
+              <a href="manage_counselors.php">Manage Counselors</a>
             </li>
             <li class="sidebar-list-item">
               <span class="material-symbols-outlined">bar_chart</span>

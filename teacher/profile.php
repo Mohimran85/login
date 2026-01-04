@@ -523,7 +523,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                               <?php echo htmlspecialchars($teacher_data['employee_id'] ?? $teacher_data['regno'] ?? 'N/A'); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
+                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id'] ?? $teacher_data['regno'] ?? 'N/A'); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <nav>
@@ -542,7 +542,7 @@
                     </li>
                     <?php if ($is_counselor): ?>
                     <li class="nav-item">
-                        <a href="index.php#assigned-students" class="nav-link">
+                        <a href="assigned_students.php" class="nav-link">
                             <span class="material-symbols-outlined">supervisor_account</span>
                             My Assigned Students
                         </a>
@@ -551,6 +551,12 @@
                         <a href="od_approvals.php" class="nav-link">
                             <span class="material-symbols-outlined">approval</span>
                             OD Approvals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="internship_approvals.php" class="nav-link">
+                            <span class="material-symbols-outlined">school</span>
+                            Internship Approvals
                         </a>
                     </li>
                     <li class="nav-item">
@@ -571,6 +577,12 @@
                         <a href="../admin/user_management.php" class="nav-link">
                             <span class="material-symbols-outlined">manage_accounts</span>
                             User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/manage_counselors.php" class="nav-link">
+                            <span class="material-symbols-outlined">school</span>
+                            Manage Counselors
                         </a>
                     </li>
                     <li class="nav-item">
@@ -621,7 +633,7 @@
                             <?php echo strtoupper(substr($teacher_data['name'], 0, 1)); ?>
                         </div>
                         <div class="profile-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                        <div class="profile-regno">Faculty ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($teacher_data['faculty_id'] ?? $teacher_data['regno'] ?? 'N/A'); ?></div>
+                        <div class="profile-regno">Faculty ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($teacher_data['faculty_id'] ?? $teacher_data['regno'] ?? 'N/A'); ?></div>
 
                         <div class="profile-stats">
                             <div class="stat-item">
@@ -713,13 +725,13 @@
                                 </div>
                                 <select name="department" class="form-select profile-edit" style="display: none;">
                                     <option value="">Select Department</option>
-                                    <option value="CSE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($teacher_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
-                                    <option value="IT"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($teacher_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
-                                    <option value="ECE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($teacher_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
-                                    <option value="EEE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($teacher_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
-                                    <option value="MECH"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($teacher_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
-                                    <option value="CIVIL"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($teacher_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
-                                    <option value="BME"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($teacher_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
+                                    <option value="CSE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($teacher_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
+                                    <option value="IT"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($teacher_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
+                                    <option value="ECE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($teacher_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
+                                    <option value="EEE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($teacher_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
+                                    <option value="MECH"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($teacher_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
+                                    <option value="CIVIL"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($teacher_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
+                                    <option value="BME"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($teacher_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
                                 </select>
                             </div>
                         </div>

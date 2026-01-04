@@ -544,12 +544,6 @@
                     </li>
                     <?php endif; ?>
                     <li class="nav-item">
-                        <a href="digital_signature.php" class="nav-link active">
-                            <span class="material-symbols-outlined">draw</span>
-                            Digital Signature
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="profile.php" class="nav-link">
                             <span class="material-symbols-outlined">person</span>
                             Profile

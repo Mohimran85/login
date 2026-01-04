@@ -20,3 +20,4 @@
 
     change student profile to disable semester and departement 
     remove double scroll in admin user management
+    move the events up in the my participation page(student)

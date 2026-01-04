@@ -94,6 +94,10 @@
                   <span class="material-symbols-outlined">manage_accounts</span>
                   <a href="user_management.php">User Management</a>
                 </li>
+                <li class="sidebar-list-item">
+                  <span class="material-symbols-outlined">school</span>
+                  <a href="manage_counselors.php">Manage Counselors</a>
+                </li>
                 <li class="sidebar-list-item active">
                   <span class="material-symbols-outlined">bar_chart</span>
                   <a href="reports.php">Reports</a>
@@ -102,7 +106,10 @@
                   <span class="material-symbols-outlined">account_circle</span>
                   <a href="profile.php">Profile</a>
                 </li>
-                <li class="sidebar-list-item"><a href="logout.php">Logout</a></li>
+                <li class="sidebar-list-item">
+                  <span class="material-symbols-outlined">logout</span>
+                  <a href="logout.php">Logout</a>
+                </li>
             </ul>
         </div>
     </aside>

@@ -685,7 +685,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                               <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
+                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
                 <div class="badge badge-info" style="margin-top: 10px; text-align: center;">Class Counselor</div>
             </div>
 
@@ -698,15 +698,15 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="assigned_students.php" class="nav-link active">
+                        <a href="registered_students.php" class="nav-link">
                             <span class="material-symbols-outlined">group</span>
-                            My Assigned Students
+                            Registered Students
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="registered_students.php" class="nav-link">
-                            <span class="material-symbols-outlined">event_note</span>
-                            All Event Registrations
+                        <a href="assigned_students.php" class="nav-link active">
+                            <span class="material-symbols-outlined">supervisor_account</span>
+                            My Assigned Students
                         </a>
                     </li>
                     <li class="nav-item">
@@ -811,7 +811,7 @@
                                 <option value="">All Semesters</option>
                                 <?php for ($i = 1; $i <= 8; $i++): ?>
                                     <option value="<?php echo $i; ?>"<?php echo $semester_filter == $i ? 'selected' : ''; ?>>
-                                        Semester                                                                                                                                                                                                 <?php echo $i; ?>
+                                        Semester                                                                                                                                                                                                                                                 <?php echo $i; ?>
                                     </option>
                                 <?php endfor; ?>
                             </select>
@@ -873,7 +873,7 @@
                                             <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select">
                                                 <?php for ($s = 1; $s <= 8; $s++): ?>
                                                     <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
-                                                        Semester                                                                                                                                                                                                 <?php echo $s; ?>
+                                                        Semester                                                                                                                                                                                                                                                                 <?php echo $s; ?>
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>

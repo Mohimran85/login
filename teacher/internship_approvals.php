@@ -844,7 +844,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
-                <div class="student-regno">ID:                                                                                                                                           <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <ul class="nav-menu">
@@ -900,6 +900,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="../admin/manage_counselors.php" class="nav-link">
+                        <span class="material-symbols-outlined">school</span>
+                        Manage Counselors
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="../admin/participants.php" class="nav-link">
                         <span class="material-symbols-outlined">people</span>
                         Participants
@@ -912,12 +918,6 @@
                     </a>
                 </li>
                 <?php endif; ?>
-                <li class="nav-item">
-                    <a href="digital_signature.php" class="nav-link">
-                        <span class="material-symbols-outlined">draw</span>
-                        Digital Signature
-                    </a>
-                </li>
                 <li class="nav-item">
                     <a href="profile.php" class="nav-link">
                         <span class="material-symbols-outlined">person</span>
