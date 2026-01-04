@@ -339,26 +339,3 @@ class CacheManager
         throw new Exception("Cannot unserialize singleton");
     }
 }
-
-/**
- * Cache Helper Functions
- */
-function cache_get($key)
-{
-    return CacheManager::getInstance()->get($key);
-}
-
-function cache_set($key, $data, $duration = 300)
-{
-    return CacheManager::getInstance()->set($key, $data, $duration);
-}
-
-function cache_delete($key)
-{
-    return CacheManager::getInstance()->delete($key);
-}
-
-function cache_cleanup()
-{
-    return CacheManager::getInstance()->cleanup();
-}

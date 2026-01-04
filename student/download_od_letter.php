@@ -37,14 +37,12 @@ if (! isset($_GET['od_id']) || empty($_GET['od_id'])) {
 
 $od_id = (int) $_GET['od_id'];
 
-// Get OD request details with counselor information and digital signature
+// Get OD request details with counselor information
 // Allow access if student is the main requester OR a group member
 $od_sql = "SELECT odr.*, tr.name as counselor_name, tr.email as counselor_email,
-                  tr.faculty_id, tr.department, ts.signature_type, ts.signature_data,
-                  ts.signature_hash, ts.created_at as signature_created
+                  tr.faculty_id, tr.department
            FROM od_requests odr
            JOIN teacher_register tr ON odr.counselor_id = tr.id
-           LEFT JOIN teacher_signatures ts ON tr.id = ts.teacher_id AND ts.is_active = TRUE
            WHERE odr.id = ?
            AND (odr.student_regno = ?
                 OR FIND_IN_SET(?, REPLACE(odr.group_members, ',', ',')))
@@ -82,15 +80,6 @@ if (! empty($od_data['group_members'])) {
             }
         }
     }
-}
-
-// Check if counselor has a digital signature
-$has_digital_signature       = ! empty($od_data['signature_data']);
-$signature_verification_code = '';
-
-if ($has_digital_signature) {
-    // Generate verification code for this specific OD letter
-    $signature_verification_code = hash('sha256', $od_data['signature_hash'] . $od_id . $od_data['student_regno']);
 }
 
 // Close database connections AFTER fetching all data including group members
@@ -212,7 +201,7 @@ $html_content = '
             font-size: 18px;
             font-weight: bold;
             text-decoration: underline;
-            margin: 30px 0 20px 0;
+            margin: 15px 0 15px 0;
             text-align: center;
             color: #0c3878;
             letter-spacing: 2px;
@@ -226,7 +215,7 @@ $html_content = '
         .letter-header {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             font-size: 12px;
         }
 
@@ -235,14 +224,14 @@ $html_content = '
         }
 
         .letter-body {
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             text-align: justify;
         }
 
         .student-details, .event-details {
-            margin: 20px 0;
+            margin: 12px 0;
             background: #f9f9f9;
-            padding: 15px;
+            padding: 10px;
             border-left: 4px solid #0c3878;
             border-radius: 0 5px 5px 0;
         }
@@ -250,11 +239,11 @@ $html_content = '
         .event-details {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            gap: 15px;
             background: transparent;
             border-left: none;
             padding: 0;
-            margin: 20px 0;
+            margin: 12px 0;
         }
 
         .event-details .section-title {
@@ -263,7 +252,7 @@ $html_content = '
 
         .event-details-left, .event-details-right {
             background: #f9f9f9;
-            padding: 15px;
+            padding: 10px;
             border-left: 4px solid #0c3878;
             border-radius: 0 5px 5px 0;
         }
@@ -291,10 +280,10 @@ $html_content = '
         }
 
         .approval-section {
-            margin-top: 20px;
+            margin-top: 12px;
             border: 2px solid #28a745;
             background: linear-gradient(135deg, #f0fff0 0%, #e8f5e8 100%);
-            padding: 15px;
+            padding: 10px;
             border-radius: 10px;
             text-align: center;
         }
@@ -303,17 +292,17 @@ $html_content = '
             font-size: 18px;
             font-weight: bold;
             color: #28a745;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
 
         .approval-details {
             text-align: left;
-            margin-top: 15px;
+            margin-top: 8px;
         }
 
         .signature-section {
-            margin-top: 60px;
+            margin-top: 30px;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
@@ -327,8 +316,8 @@ $html_content = '
         .signature-line {
             border-top: 1px solid #000;
             margin-bottom: 5px;
-            height: 60px;
-            margin-top: 20px;
+            height: 40px;
+            margin-top: 10px;
         }
 
         .signature-title {
@@ -343,13 +332,13 @@ $html_content = '
         }
 
         .footer-note {
-            margin-top: 40px;
+            margin-top: 20px;
             font-size: 9px;
             color: #888;
             text-align: center;
             border-top: 1px solid #ddd;
-            padding-top: 15px;
-            line-height: 1.4;
+            padding-top: 10px;
+            line-height: 1.3;
         }
 
         .download-section {
@@ -499,60 +488,38 @@ $html_content = '
         </div>        <div class="letter-body">
             <p><strong>To Whom It May Concern,</strong></p>
 
-            <p style="text-align: justify; line-height: 1.8;">
+            <p style="text-align: justify; line-height: 1.5;">
                 This is to certify that <strong>' . htmlspecialchars($student_data['name']) . '</strong>,
                 bearing Register Number <strong>' . htmlspecialchars($student_data['regno']) . '</strong>,
                 a student of <strong>' . htmlspecialchars($student_data['degree'] ?? 'N/A') . '</strong>
-                (Year of Join: ' . htmlspecialchars($student_data['year_of_join'] ?? 'N/A') . '),
+
                 <strong>' . htmlspecialchars($student_data['department'] ?? 'N/A') . '</strong> department,
-                under the guidance of Class Counselor <strong>' . htmlspecialchars($od_data['counselor_name']) . '</strong>
-                (' . htmlspecialchars($od_data['faculty_id']) . '), ' . (empty($group_members_details) ? 'has' : 'along with the team members listed below, have') . ' been granted On Duty (OD) permission
+                under the guidance of Class Counselor <strong>' . htmlspecialchars($od_data['counselor_name']) . '</strong>, ' . (empty($group_members_details) ? 'has' : 'along with the team members listed below, have') . ' been granted On Duty (OD) permission
                 to participate in the mentioned event and ' . (empty($group_members_details) ? 'is' : 'are') . ' hereby authorized to remain absent from regular
                 classes for the specified duration.
             </p>';
 
 // Add group members information if this is a group OD
 if (! empty($group_members_details)) {
-    $html_content .= '
-            <div class="student-details" style="background: #e3f2fd; border-left-color: #2196f3;">
-                <div class="section-title" style="color: #1976d2; border-bottom-color: #2196f3;">
-                    👥 GROUP OD - Additional Team Members
-                </div>
-                <p style="margin: 10px 0 5px 0; font-weight: bold; color: #0c3878;">
-                    This is a group OD request. The following students are also part of this event participation:
-                </p>
-                <table class="detail-table" style="margin-top: 15px;">
-                    <thead>
-                        <tr style="background: #bbdefb;">
-                            <th style="padding: 8px; text-align: left; border: 1px solid #90caf9;">S.No</th>
-                            <th style="padding: 8px; text-align: left; border: 1px solid #90caf9;">Register Number</th>
-                            <th style="padding: 8px; text-align: left; border: 1px solid #90caf9;">Student Name</th>
-                            <th style="padding: 8px; text-align: left; border: 1px solid #90caf9;">Department</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
-
-    foreach ($group_members_details as $index => $member) {
-        $html_content .= '
-                        <tr>
-                            <td style="padding: 6px 8px; border: 1px solid #e3f2fd;">' . ($index + 1) . '</td>
-                            <td style="padding: 6px 8px; border: 1px solid #e3f2fd; font-weight: bold;">' . htmlspecialchars($member['regno']) . '</td>
-                            <td style="padding: 6px 8px; border: 1px solid #e3f2fd;">' . htmlspecialchars($member['name']) . '</td>
-                            <td style="padding: 6px 8px; border: 1px solid #e3f2fd;">' . htmlspecialchars($member['department']) . '</td>
-                        </tr>';
+    // Build the list of team members as a comma-separated text
+    $member_names = [];
+    foreach ($group_members_details as $member) {
+        $member_names[] = htmlspecialchars($member['name']) . ' (' . htmlspecialchars($member['regno']) . ')';
     }
+    $members_text = implode(', ', $member_names);
 
     $html_content .= '
-                    </tbody>
-                </table>
-                <p style="margin: 15px 0 5px 0; font-size: 12px; color: #666; font-style: italic;">
-                    Total members in this group: ' . (count($group_members_details) + 1) . ' (including primary requester)
+            <div class="student-details" style="background: #e3f2fd; border-left-color: #2196f3; padding: 12px 15px;">
+                <p style="margin: 0; line-height: 1.6;">
+                    <strong style="color: #1976d2;"> GROUP OD:</strong>
+                    This is a group participation request. Additional team members: <strong>' . $members_text . '</strong>.
+                    Total participants: <strong>' . (count($group_members_details) + 1) . '</strong> (including primary requester).
                 </p>
             </div>';
 }
 
 $html_content .= '
-            <p style="text-align: justify; line-height: 1.8;">
+            <p style="text-align: justify; line-height: 1.5;">
                 ' . (empty($group_members_details) ? 'The student is' : 'The students are') . ' permitted to attend <strong>' . htmlspecialchars($od_data['event_name']) . '</strong>,
                 scheduled on <strong>' . date('l, F d, Y', strtotime($od_data['event_date'])) . '</strong>
                 at <strong>' . date('h:i A', strtotime($od_data['event_time'])) . '</strong>,
@@ -574,58 +541,19 @@ $html_content .= '. The above-mentioned student has our permission to participat
         </div>
 
         <div class="signature-section">
-            <div class="signature-box">';
-
-if ($has_digital_signature) {
-    $html_content .= '<div class="digital-signature">';
-
-    if ($od_data['signature_type'] === 'upload' || $od_data['signature_type'] === 'drawn') {
-        $html_content .= '<img src="../teacher/' . htmlspecialchars($od_data['signature_data']) . '"
-                             alt="Digital Signature"
-                             style="max-width: 200px; max-height: 80px; border: 1px solid #ddd; background: white;">';
-    } elseif ($od_data['signature_type'] === 'text') {
-        $text_data = json_decode($od_data['signature_data'], true);
-        $html_content .= '<div style="font-family: ' . htmlspecialchars($text_data['font']) . ';
-                            font-size: 24px; color: #000; padding: 10px;
-                            border: 1px solid #ddd; background: white; min-height: 60px;
-                            display: flex; align-items: center; justify-content: center;">
-                            ' . htmlspecialchars($text_data['text']) . '
-                          </div>';
-    }
-
-    $html_content .= '<div style="font-size: 10px; color: #666; margin-top: 5px;">
-                        🔐 Digitally Signed | Verification: ' . substr($signature_verification_code, 0, 12) . '...
-                      </div></div>';
-} else {
-    $html_content .= '<div class="signature-line"></div>';
-}
-
-$html_content .= '
+            <div class="signature-box">
+                <div class="signature-line"></div>
                 <div class="signature-title">Class Counselor</div>
                 <div class="signature-name">' . htmlspecialchars($od_data['counselor_name']) . '</div>
-                <div class="signature-name">' . htmlspecialchars($od_data['faculty_id']) . '</div>
             </div>
 
             <div class="signature-box">
                 <div class="signature-line"></div>
                 <div class="signature-title">Head of Department</div>
-                <div class="signature-name">' . (isset($od_data['department']) ? htmlspecialchars($od_data['department']) : 'Department Name') . '</div>
             </div>
         </div>
 
-        <div class="footer-note">
-            <p><strong>Note:</strong> This is a digitally generated document from the official Event Management System.</p>';
 
-if ($has_digital_signature) {
-    $html_content .= '<p><strong>Digital Security:</strong> This document contains a verified digital signature.
-                        Verification Code: ' . $signature_verification_code . '</p>';
-}
-
-$html_content .= '
-            <p>🔐 Document Authentication: OD-' . $od_data['id'] . '-' . date('YmdHis') . ' | Generated: ' . $current_date . ' at ' . $current_time . '</p>
-            <p>📧 For verification, contact: info@sonatech.ac.in | ☎ +91-427-2331129</p>
-            <p style="margin-top: 10px; font-style: italic;">Sona College of Technology - Nurturing Excellence Since 1997</p>
-        </div>
     </div>
 
     <script>

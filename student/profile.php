@@ -34,38 +34,7 @@
 
     // Handle profile update
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (isset($_POST['update_profile'])) {
-            // Handle profile information update
-            $name           = trim($_POST['name']);
-            $personal_email = trim($_POST['personal_email']);
-            $department     = trim($_POST['department']);
-            $semester       = trim($_POST['semester']);
-
-            // Validate inputs
-            if (empty($name) || empty($personal_email)) {
-                $message      = "Name and email are required fields.";
-                $message_type = "error";
-            } else {
-                // Update profile
-                $update_sql  = "UPDATE student_register SET name=?, personal_email=?, department=?, semester=? WHERE username=?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("sssss", $name, $personal_email, $department, $semester, $username);
-
-                if ($update_stmt->execute()) {
-                    $message      = "Profile updated successfully!";
-                    $message_type = "success";
-
-                    // Refresh student data
-                    $stmt->execute();
-                    $result       = $stmt->get_result();
-                    $student_data = $result->fetch_assoc();
-                } else {
-                    $message      = "Error updating profile: " . htmlspecialchars($update_stmt->error);
-                    $message_type = "error";
-                }
-                $update_stmt->close();
-            }
-        } elseif (isset($_POST['update_password'])) {
+        if (isset($_POST['update_password'])) {
             // Handle password update
             $current_password = $_POST['current_password'];
             $new_password     = $_POST['new_password'];
@@ -494,23 +463,6 @@
             min-height: 20px;
         }
 
-        .profile-edit {
-            display: none;
-        }
-
-        .edit-mode .profile-display {
-            display: none;
-        }
-
-        .edit-mode .profile-edit {
-            display: block !important;
-        }
-
-        #editToggleBtn {
-            font-size: 12px;
-            padding: 8px 15px;
-        }
-
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .profile-container {
@@ -709,7 +661,7 @@
                             <?php echo strtoupper(substr($student_data['name'], 0, 1)); ?>
                         </div>
                         <div class="profile-name"><?php echo htmlspecialchars($student_data['name']); ?></div>
-                        <div class="profile-regno">Registration No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo htmlspecialchars($student_data['regno']); ?></div>
+                        <div class="profile-regno">Registration No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo htmlspecialchars($student_data['regno']); ?></div>
 
                         <div class="profile-stats">
                             <div class="stat-item">
@@ -731,14 +683,14 @@
                             </div>
                             <div class="counselor-details">
                                 <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
-                                <div class="counselor-id">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo htmlspecialchars($counselor_info['counselor_id']); ?></div>
+                                <div class="counselor-id">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($counselor_info['counselor_id']); ?></div>
                                 <div class="counselor-email">
                                     <span class="material-symbols-outlined">email</span>
                                     <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                                 </div>
                                 <div class="assigned-date">
                                     <span class="material-symbols-outlined">schedule</span>
-                                    Assigned:                                                                                                                                                                                                                                                                                                                            <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
+                                    Assigned:                                                                                                                                                                                                                                                                                                                                                                         <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
                                 </div>
                             </div>
                         </div>
@@ -758,63 +710,45 @@
 
                 <!-- Profile Form -->
                 <div class="profile-form">
-                    <div class="form-title" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <span class="material-symbols-outlined">person</span>
-                            <span id="profile-title">Profile Information</span>
-                        </div>
-                        <button type="button" id="editToggleBtn" class="btn btn-primary" onclick="toggleEditMode()">
-                            <span class="material-symbols-outlined">edit</span>
-                            Edit
-                        </button>
+                    <div class="form-title">
+                        <span class="material-symbols-outlined">person</span>
+                        <span>Profile Information</span>
                     </div>
 
-                    <!-- Profile Information Display/Edit -->
-                    <form method="POST" action="" id="profileForm">
+                    <!-- Profile Information Display -->
+                    <div id="profileForm">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Full Name</label>
-                                <div class="profile-display" id="name-display">
+                                <div class="profile-display">
                                     <?php echo htmlspecialchars($student_data['name']); ?>
                                 </div>
-                                <input type="text" name="name" class="form-input profile-edit"
-                                       value="<?php echo htmlspecialchars($student_data['name']); ?>"
-                                       style="display: none;" required>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Registration Number</label>
-                                <div class="profile-display" id="regno-display">
+                                <div class="profile-display">
                                     <?php echo htmlspecialchars($student_data['regno']); ?>
                                 </div>
-                                <input type="text" name="regno" class="form-input profile-edit readonly-field"
-                                       value="<?php echo htmlspecialchars($student_data['regno']); ?>"
-                                       style="display: none;" readonly title="Registration number cannot be changed">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Username</label>
-                                <div class="profile-display" id="username-display">
+                                <div class="profile-display">
                                     <?php echo htmlspecialchars($student_data['username']); ?>
                                 </div>
-                                <input type="text" name="username" class="form-input profile-edit readonly-field"
-                                       value="<?php echo htmlspecialchars($student_data['username']); ?>"
-                                       style="display: none;" readonly title="Username cannot be changed">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Personal Email</label>
-                                <div class="profile-display" id="email-display">
+                                <div class="profile-display">
                                     <?php echo htmlspecialchars($student_data['personal_email']); ?>
                                 </div>
-                                <input type="email" name="personal_email" class="form-input profile-edit"
-                                       value="<?php echo htmlspecialchars($student_data['personal_email']); ?>"
-                                       style="display: none;" required>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Department</label>
-                                <div class="profile-display" id="department-display">
+                                <div class="profile-display">
                                     <?php
                                         $dept_names = [
                                             'CSE'   => 'Computer Science and Engineering',
@@ -829,50 +763,29 @@
                                         echo htmlspecialchars($dept_names[$dept] ?? ($dept ?: 'Not specified'));
                                     ?>
                                 </div>
-                                <select name="department" class="form-select profile-edit" style="display: none;">
-                                    <option value="">Select Department</option>
-                                    <option value="CSE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($student_data['department'] ?? '') === 'CSE' ? 'selected' : ''; ?>>Computer Science and Engineering (CSE)</option>
-                                    <option value="IT"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo($student_data['department'] ?? '') === 'IT' ? 'selected' : ''; ?>>Information Technology (IT)</option>
-                                    <option value="ECE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($student_data['department'] ?? '') === 'ECE' ? 'selected' : ''; ?>>Electronics and Communication Engineering (ECE)</option>
-                                    <option value="EEE"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($student_data['department'] ?? '') === 'EEE' ? 'selected' : ''; ?>>Electrical and Electronics Engineering (EEE)</option>
-                                    <option value="MECH"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($student_data['department'] ?? '') === 'MECH' ? 'selected' : ''; ?>>Mechanical Engineering (MECH)</option>
-                                    <option value="CIVIL"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo($student_data['department'] ?? '') === 'CIVIL' ? 'selected' : ''; ?>>Civil Engineering (CIVIL)</option>
-                                    <option value="BME"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo($student_data['department'] ?? '') === 'BME' ? 'selected' : ''; ?>>Biomedical Engineering (BME)</option>
-                                </select>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Semester</label>
-                                <div class="profile-display" id="semester-display">
+                                <div class="profile-display">
                                     <?php echo htmlspecialchars($student_data['semester'] ?? 'Not specified'); ?>
                                 </div>
-                                <select name="semester" class="form-select profile-edit" style="display: none;">
-                                    <option value="">Select Semester</option>
-                                    <option value="1"                                                                                                                                                                                                                                                                          <?php echo($student_data['semester'] ?? '') === '1' ? 'selected' : ''; ?>>Semester 1</option>
-                                    <option value="2"                                                                                                                                                                                                                                                                          <?php echo($student_data['semester'] ?? '') === '2' ? 'selected' : ''; ?>>Semester 2</option>
-                                    <option value="3"                                                                                                                                                                                                                                                                          <?php echo($student_data['semester'] ?? '') === '3' ? 'selected' : ''; ?>>Semester 3</option>
-                                    <option value="4"                                                                                                                                                                                                                                                                          <?php echo($student_data['semester'] ?? '') === '4' ? 'selected' : ''; ?>>Semester 4</option>
-                                    <option value="5"                                                                                                                                                                                                                                                                          <?php echo($student_data['semester'] ?? '') === '5' ? 'selected' : ''; ?>>Semester 5</option>
-                                    <option value="6"                                                                                                                                                                                                                                                                          <?php echo($student_data['semester'] ?? '') === '6' ? 'selected' : ''; ?>>Semester 6</option>
-                                    <option value="7"                                                                                                                                                                                                                                                                          <?php echo($student_data['semester'] ?? '') === '7' ? 'selected' : ''; ?>>Semester 7</option>
-                                    <option value="8"                                                                                                                                                                                                                                                                          <?php echo($student_data['semester'] ?? '') === '8' ? 'selected' : ''; ?>>Semester 8</option>
-                                </select>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Class Counselor</label>
-                                <div class="profile-display counselor-display" id="counselor-display">
+                                <div class="profile-display counselor-display">
                                     <?php if ($counselor_info): ?>
                                         <div style="display: flex; flex-direction: column; gap: 4px;">
                                             <span style="font-weight: 600; color: #28a745;">
                                                 <?php echo htmlspecialchars($counselor_info['counselor_name']); ?>
                                             </span>
                                             <span style="font-size: 12px; color: #6c757d;">
-                                                ID:                                                                                                                                                                                                                                                                                                                                                                      <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                                                ID:                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                                                 <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                                             </span>
                                             <span style="font-size: 11px; color: #856404;">
-                                                Assigned:                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
+                                                Assigned:                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo date('M d, Y', strtotime($counselor_info['assigned_date'])); ?>
                                             </span>
                                         </div>
                                     <?php else: ?>
@@ -885,24 +798,13 @@
 
                         </div>
 
-                        <div class="form-buttons" id="editButtons" style="display: none;">
-                            <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
-                                <span class="material-symbols-outlined">close</span>
-                                Cancel
-                            </button>
-                            <button type="submit" name="update_profile" class="btn btn-primary">
-                                <span class="material-symbols-outlined">save</span>
-                                Save Changes
-                            </button>
-                        </div>
-
-                        <div class="form-buttons" id="viewButtons">
+                        <div class="form-buttons">
                             <a href="index.php" class="btn btn-secondary">
                                 <span class="material-symbols-outlined">arrow_back</span>
                                 Back to Dashboard
                             </a>
                         </div>
-                    </form>
+                    </div>
 
                     <!-- Password Update Section -->
                     <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e9ecef;">
@@ -1035,46 +937,7 @@
             }
         });
 
-        // Edit mode toggle functions
-        function toggleEditMode() {
-            const form = document.getElementById('profileForm');
-            const editBtn = document.getElementById('editToggleBtn');
-            const title = document.getElementById('profile-title');
-            const editButtons = document.getElementById('editButtons');
-            const viewButtons = document.getElementById('viewButtons');
 
-            if (form.classList.contains('edit-mode')) {
-                // Cancel edit mode
-                cancelEdit();
-            } else {
-                // Enter edit mode
-                form.classList.add('edit-mode');
-                editBtn.innerHTML = '<span class="material-symbols-outlined">close</span> Cancel';
-                title.textContent = 'Edit Profile Information';
-                editButtons.style.display = 'flex';
-                viewButtons.style.display = 'none';
-            }
-        }
-
-        function cancelEdit() {
-            const form = document.getElementById('profileForm');
-            const editBtn = document.getElementById('editToggleBtn');
-            const title = document.getElementById('profile-title');
-            const editButtons = document.getElementById('editButtons');
-            const viewButtons = document.getElementById('viewButtons');
-
-            // Exit edit mode
-            form.classList.remove('edit-mode');
-            editBtn.innerHTML = '<span class="material-symbols-outlined">edit</span> Edit';
-            title.textContent = 'Profile Information';
-            editButtons.style.display = 'none';
-            viewButtons.style.display = 'flex';
-
-            // Reset form values to original
-            form.reset();
-            // Reload the page to restore original values
-            location.reload();
-        }
     </script>
 </body>
 </html>

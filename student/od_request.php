@@ -127,6 +127,18 @@
             $event_days        = $_POST['event_days'];
             $reason            = trim($_POST['reason']);
 
+            // Validate event description word count (50 words max)
+            $word_count = str_word_count($event_description);
+            if ($word_count > 50) {
+                $error_message = "Event description must not exceed 50 words. Current: $word_count words.";
+            }
+
+            // Validate reason word count (50 words max)
+            $reason_word_count = str_word_count($reason);
+            if ($reason_word_count > 50) {
+                $error_message = "Reason for OD must not exceed 50 words. Current: $reason_word_count words.";
+            }
+
             // Validate event location fields
             if (empty($event_state) || empty($event_district)) {
                 $message      = "Please provide both Event State and Event District.";
@@ -802,7 +814,7 @@
                         </div>
                         <div class="counselor-name"><?php echo htmlspecialchars($counselor_info['counselor_name']); ?></div>
                         <div style="font-size: 12px; color: #6c757d; margin-top: 5px;">
-                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
+                            ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($counselor_info['counselor_id']); ?> |
                             <?php echo htmlspecialchars($counselor_info['counselor_email']); ?>
                         </div>
                     </div>
@@ -894,9 +906,16 @@
                             </div>
 
                             <div class="form-group full-width">
-                                <label class="form-label">Event Description *</label>
-                                <textarea name="event_description" class="form-textarea" required
-                                          placeholder="Describe what the event is about, activities involved, etc."></textarea>
+                                <label class="form-label">
+                                    Event Description *
+                                    <span style="font-size: 13px; color: #6b7280;">(Max 50 words)</span>
+                                </label>
+                                <textarea name="event_description" id="eventDescription" class="form-textarea" required
+                                          placeholder="Describe what the event is about, activities involved, etc."
+                                          oninput="countWords(this, 50, 'wordCount')"></textarea>
+                                <div style="text-align: right; margin-top: 5px;">
+                                    <span id="wordCount" style="font-size: 13px; color: #6b7280;">0 / 50 words</span>
+                                </div>
                             </div>
 
                             <div class="form-group full-width">
@@ -925,9 +944,16 @@
                             </div>
 
                             <div class="form-group full-width">
-                                <label class="form-label">Reason for OD *</label>
-                                <textarea name="reason" class="form-textarea" required
-                                          placeholder="Explain why you need OD for this event participation"></textarea>
+                                <label class="form-label">
+                                    Reason for OD *
+                                    <span style="font-size: 13px; color: #6b7280;">(Max 50 words)</span>
+                                </label>
+                                <textarea name="reason" id="reasonForOD" class="form-textarea" required
+                                          placeholder="Explain why you need OD for this event participation"
+                                          oninput="countWords(this, 50, 'reasonWordCount')"></textarea>
+                                <div style="text-align: right; margin-top: 5px;">
+                                    <span id="reasonWordCount" style="font-size: 13px; color: #6b7280;">0 / 50 words</span>
+                                </div>
                             </div>
                         </div>
 
@@ -957,13 +983,13 @@
                         <div class="od-request-item<?php echo $request['status']; ?>">
                             <div class="od-request-header">
                                 <div class="od-event-name"><?php echo htmlspecialchars($request['event_name']); ?></div>
-                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $request['status']; ?>">
+                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </span>
                             </div>
                             <div class="od-details">
-                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
+                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
                                 <strong>Location:</strong>
                                 <?php
                                     // Handle backward compatibility for old records
@@ -984,7 +1010,7 @@
                                 <div style="margin: 10px 0; padding: 10px; background: #e7f3ff; border-left: 3px solid #17a2b8; border-radius: 4px;">
                                     <strong style="color: #17a2b8;">
                                         <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle;">group</span>
-                                        Group OD                                                                                                                                                 <?php echo $is_group_member ? '(You are a member)' : ''; ?>
+                                        Group OD                                                                                                                                                                                                 <?php echo $is_group_member ? '(You are a member)' : ''; ?>
                                     </strong><br>
                                     <small style="color: #666; font-size: 12px;">
                                         <?php echo count($group_regnos); ?> additional member(s):
@@ -1248,6 +1274,62 @@
                 }, 300);
             }
         }
+
+        // Word counter function for event description and reason
+        function countWords(textarea, maxWords, counterId = 'wordCount') {
+            const text = textarea.value.trim();
+            const words = text === '' ? 0 : text.split(/\s+/).length;
+            const wordCountElement = document.getElementById(counterId);
+
+            // Update counter display
+            wordCountElement.textContent = `${words} / ${maxWords} words`;
+
+            // Change color based on word count
+            if (words > maxWords) {
+                wordCountElement.style.color = '#ef4444'; // Red
+                textarea.style.borderColor = '#ef4444';
+            } else if (words > maxWords * 0.9) {
+                wordCountElement.style.color = '#f59e0b'; // Orange warning
+                textarea.style.borderColor = '#f59e0b';
+            } else {
+                wordCountElement.style.color = '#10b981'; // Green
+                textarea.style.borderColor = '#d1d5db';
+            }
+
+            // Prevent further input if limit exceeded
+            const warningId = `wordLimitWarning_${counterId}`;
+            if (words > maxWords) {
+                // Show warning
+                if (!document.getElementById(warningId)) {
+                    const warning = document.createElement('div');
+                    warning.id = warningId;
+                    warning.style.cssText = 'color: #ef4444; font-size: 12px; margin-top: 5px;';
+                    warning.textContent = `⚠ Word limit exceeded! Please reduce to ${maxWords} words or less.`;
+                    wordCountElement.parentNode.appendChild(warning);
+                }
+            } else {
+                // Remove warning if exists
+                const warning = document.getElementById(warningId);
+                if (warning) {
+                    warning.remove();
+                }
+            }
+        }
+
+        // Initialize word counter on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const eventDescTextarea = document.getElementById('eventDescription');
+            if (eventDescTextarea) {
+                // Trigger count on load in case of pre-filled data
+                countWords(eventDescTextarea, 50, 'wordCount');
+            }
+
+            const reasonTextarea = document.getElementById('reasonForOD');
+            if (reasonTextarea) {
+                // Trigger count on load in case of pre-filled data
+                countWords(reasonTextarea, 50, 'reasonWordCount');
+            }
+        });
     </script>
 </body>
 </html>

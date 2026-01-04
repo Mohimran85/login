@@ -481,8 +481,9 @@ function initEnhancedCategoryChart() {
               <strong>Events:</strong> ${category.total_events}
             </div>
             <div style="margin-bottom: 4px;">
-              <strong>Students:</strong> ${category.student_participations} | 
-              <strong>Staff:</strong> ${category.staff_participations}
+              <strong>Unique Participants:</strong> ${
+                category.total_participants
+              }
             </div>
             <div style="margin-bottom: 4px;">
               <strong>Success Rate:</strong> ${
@@ -789,7 +790,7 @@ function createDistributionChart(chartType) {
 
   switch (chartType) {
     case "student-detail":
-      // Detailed view of student events
+      // Detailed view of student events with zoom-to-weekly capability
       chartOptions = {
         series: [
           {
@@ -805,6 +806,44 @@ function createDistributionChart(chartType) {
           type: "area",
           height: 400,
           stacked: false,
+          zoom: {
+            enabled: true,
+            type: "x",
+            autoScaleYaxis: true,
+          },
+          toolbar: {
+            show: true,
+            tools: {
+              download: true,
+              zoom: true,
+              zoomin: true,
+              zoomout: true,
+              pan: true,
+              reset: true,
+            },
+            autoSelected: "zoom",
+          },
+          events: {
+            zoomed: function (chartContext, { xaxis, yaxis }) {
+              console.log("Chart zoomed!");
+              const range = xaxis.max - xaxis.min;
+              console.log("Zoom range:", range);
+
+              // If zoomed into 3 months or less, switch to weekly view
+              if (range <= 3) {
+                loadWeeklyData(Math.floor(xaxis.min), Math.floor(xaxis.max));
+              }
+            },
+            beforeResetZoom: function (chartContext, opts) {
+              console.log("Resetting zoom - back to monthly view");
+              return {
+                xaxis: {
+                  min: undefined,
+                  max: undefined,
+                },
+              };
+            },
+          },
           responsive: [
             {
               breakpoint: 768,
@@ -847,8 +886,16 @@ function createDistributionChart(chartType) {
           position: "top",
         },
         title: {
-          text: "Student Events Performance",
+          text: "Student Events Performance (Zoom for Weekly View)",
           align: "left",
+        },
+        subtitle: {
+          text: "Zoom into 3 months or less to see weekly breakdown",
+          align: "left",
+          style: {
+            fontSize: "12px",
+            color: "#6b7280",
+          },
         },
         tooltip: {
           shared: true,
@@ -1345,4 +1392,55 @@ function refreshTrendData() {
       console.log("Trend data refreshed!");
     }, 500);
   }
+}
+
+// Load weekly data when zoomed
+function loadWeeklyData(startMonth, endMonth) {
+  console.log(`Loading weekly data from month ${startMonth} to ${endMonth}`);
+
+  const year = window.currentYear || new Date().getFullYear();
+
+  // Fetch weekly data via AJAX
+  fetch(
+    `ajax/get_weekly_data.php?year=${year}&start_month=${startMonth}&end_month=${endMonth}`
+  )
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.success && distributionChart) {
+        console.log("Weekly data loaded:", data);
+
+        // Update chart with weekly data
+        distributionChart.updateOptions({
+          xaxis: {
+            categories: data.weeks,
+          },
+          title: {
+            text: "Student Events Performance (Weekly View)",
+            align: "left",
+          },
+          subtitle: {
+            text: `Week-by-week breakdown for ${data.date_range}`,
+            align: "left",
+            style: {
+              fontSize: "12px",
+              color: "#6b7280",
+            },
+          },
+        });
+
+        distributionChart.updateSeries([
+          {
+            name: "Student Events",
+            data: data.weekly_events,
+          },
+          {
+            name: "Prize Winners",
+            data: data.weekly_wins,
+          },
+        ]);
+      }
+    })
+    .catch((error) => {
+      console.error("Error loading weekly data:", error);
+    });
 }
