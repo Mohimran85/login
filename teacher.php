@@ -462,10 +462,10 @@ body {
         <div class="header-logo">
           <img
             class="logo"
-            src="./asserts/images/Sona Logo.png"
+            src="sona_logo.jpg"
             alt="Sona College Logo"
             height="60px"
-            width="200px"
+            width="200"
           />
         </div>
         <div class="header-title">
@@ -513,12 +513,17 @@ body {
                     <label for="department">Department:</label>
                     <select name="department" required>
                         <option value="" disabled                                                                                                                                                                                                     <?php echo ! isset($_POST['department']) ? 'selected' : ''; ?>>Select The Department</option>
-                        <option value="IT"                                                                                                                                                                         <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>IT</option>
-                        <option value="CSE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>CSE</option>
-                        <option value="ECE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>ECE</option>
-                        <option value="EEE"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>EEE</option>
-                        <option value="MECH"                                                                                                                                                                                 <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>MECH</option>
-                        <option value="CIVIL"                                                                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>CIVIL</option>
+                        <option value="Information Technology"                                                                                                                                                                         <?php echo(isset($_POST['department']) && $_POST['department'] == 'IT') ? 'selected' : ''; ?>>Information Technology</option>
+                        <option value="Computer Science and Engineering"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSE') ? 'selected' : ''; ?>>Computer Science and Engineering</option>
+                        <option value="Electronics and Communication Engineering"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'ECE') ? 'selected' : ''; ?>>Electronics and Communication Engineering</option>
+                        <option value="Electrical and Electronics Engineering"                                                                                                                                                                             <?php echo(isset($_POST['department']) && $_POST['department'] == 'EEE') ? 'selected' : ''; ?>>Electrical and Electronics Engineering</option>
+                        <option value="Mechanical Engineering"                                                                                                                                                                                 <?php echo(isset($_POST['department']) && $_POST['department'] == 'MECH') ? 'selected' : ''; ?>>Mechanical Engineering</option>
+                        <option value="Civil Engineering"                                                                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'CIVIL') ? 'selected' : ''; ?>>Civil Engineering</option>
+                        <option value="Artificial Intelligence and Machine Learning"                                                                                                                                                                                                                     <?php echo(isset($_POST['department']) && $_POST['department'] == 'AIML') ? 'selected' : ''; ?>>Artificial Intelligence and Machine Learning</option>
+                        <option value="Artificial Intelligence and Data Science"                                                                                                                                                                                                              <?php echo(isset($_POST['department']) && $_POST['department'] == 'ADS') ? 'selected' : ''; ?>>Artificial Intelligence and Data Science</option>
+                        <option value="Fashion Technology"                                                                                                                                                                                                       <?php echo(isset($_POST['department']) && $_POST['department'] == 'FT') ? 'selected' : ''; ?>>Fashion Technology</option>
+                        <option value="EXE"                                                                                                                                                                                                              <?php echo(isset($_POST['department']) && $_POST['department'] == 'EXE') ? 'selected' : ''; ?>>EXE</option>
+                        <option value="Computer Science and Design"                                                                                                                                                                                                              <?php echo(isset($_POST['department']) && $_POST['department'] == 'CSD') ? 'selected' : ''; ?>>Computer Science and Design</option>
                     </select>
                 </div>
                 <div class="item div7">

@@ -156,7 +156,6 @@
   box-sizing: border-box;
 }
 .header-logo {
-   flex-shrink: 0;
    margin-left: 10px;
 }
 img{
@@ -392,7 +391,7 @@ img{
             src="sona_logo.jpg"
             alt="Sona College Logo"
             height="60px"
-            width="200px"
+            width="200"
           />
         </div>
         <div class="header-title">

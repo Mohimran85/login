@@ -258,9 +258,32 @@
         $department     = $row['department'];
         $year_of_join   = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
         $degree         = ! empty($row['degree']) ? $row['degree'] : '';
-        $dob            = ! empty($row['dob']) ? $row['dob'] : null;
-        $password       = password_hash('sona123', PASSWORD_DEFAULT); // Hash the default password
-        $status         = 'student';
+
+        // Parse DOB - handle various date formats
+        $dob = null;
+        if (! empty($row['dob'])) {
+            // Try to parse different date formats
+            $dob_input = trim($row['dob']);
+
+            // Check if it's an Excel serial date number (numeric value > 1000)
+            if (is_numeric($dob_input) && $dob_input > 1000) {
+                // Excel date serial number (days since 1900-01-01)
+                $unix_date = ($dob_input - 25569) * 86400;
+                $dob       = date('Y-m-d', $unix_date);
+            } else {
+                // Try to parse as a date string
+                $timestamp = strtotime($dob_input);
+                if ($timestamp !== false) {
+                    $dob = date('Y-m-d', $timestamp);
+                } else {
+                    // If parsing fails, leave as null
+                    $dob = null;
+                }
+            }
+        }
+
+        $password = password_hash('sona123', PASSWORD_DEFAULT); // Hash the default password
+        $status   = 'student';
 
         // Insert student with all available fields
         $insert_sql  = "INSERT INTO student_register (name, dob, username, regno, year_of_join, degree, department, personal_email, password, status, reg_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
@@ -662,15 +685,15 @@
 
                 <!-- Import Steps -->
                 <div class="import-steps">
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo ! $show_preview && empty($import_results) ? 'active' : ''; ?>">
+                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo ! $show_preview && empty($import_results) ? 'active' : ''; ?>">
                         <div class="step-number">1</div>
                         <span>Upload File</span>
                     </div>
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $show_preview ? 'active' : ''; ?>">
+                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $show_preview ? 'active' : ''; ?>">
                         <div class="step-number">2</div>
                         <span>Preview & Confirm</span>
                     </div>
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo ! empty($import_results) ? 'active' : ''; ?>">
+                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo ! empty($import_results) ? 'active' : ''; ?>">
                         <div class="step-number">3</div>
                         <span>Import Results</span>
                     </div>
@@ -771,7 +794,7 @@
                             </table>
                         </div>
 
-                        <p><strong>Total rows to import:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo count($preview_data); ?></p>
+                        <p><strong>Total rows to import:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?php echo count($preview_data); ?></p>
 
                         <div style="text-align: center; margin-top: 30px;">
                             <a href="bulk_import.php" class="btn btn-secondary">

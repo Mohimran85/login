@@ -25,6 +25,7 @@
     $username     = $_SESSION['username'];
     $teacher_data = null;
     $is_counselor = false;
+    $is_admin     = false;
     $counselor_id = null;
 
     // Get teacher data from teacher_register table
@@ -677,7 +678,17 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-title">Counselor Portal</div>
+                <div class="sidebar-title">
+                    <?php
+                        if ($is_admin) {
+                            echo 'Admin Portal';
+                        } elseif ($is_counselor) {
+                            echo 'Counselor Portal';
+                        } else {
+                            echo 'Teacher Portal';
+                        }
+                    ?>
+                </div>
                 <div class="close-sidebar">
                     <span class="material-symbols-outlined">close</span>
                 </div>
@@ -685,7 +696,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_data['employee_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -810,7 +821,7 @@
                                 <option value="">All Semesters</option>
                                 <?php for ($i = 1; $i <= 8; $i++): ?>
                                     <option value="<?php echo $i; ?>"<?php echo $semester_filter == $i ? 'selected' : ''; ?>>
-                                        Semester                                                                                                                                                                                                                                                                                                                                                 <?php echo $i; ?>
+                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $i; ?>
                                     </option>
                                 <?php endfor; ?>
                             </select>
@@ -872,7 +883,7 @@
                                             <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select">
                                                 <?php for ($s = 1; $s <= 8; $s++): ?>
                                                     <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
-                                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
+                                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>

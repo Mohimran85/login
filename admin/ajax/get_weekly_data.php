@@ -79,7 +79,7 @@ while ($current_date <= $end_date_obj) {
     $wins_sql = "SELECT COUNT(*) as count
                  FROM student_event_register
                  WHERE start_date BETWEEN '$week_start_str' AND '$week_end_str'
-                 AND prize IN ('First', 'Second', 'Third')
+                 AND LOWER(TRIM(prize)) IN ('first', 'secound', 'third')
                  AND verification_status = 'Approved'";
 
     $wins_result = $conn->query($wins_sql);

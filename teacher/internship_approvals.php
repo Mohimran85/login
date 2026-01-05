@@ -833,7 +833,17 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="sidebar-title">Teacher Portal</div>
+                <div class="sidebar-title">
+                    <?php
+                        if ($is_admin) {
+                            echo 'Admin Portal';
+                        } elseif ($is_counselor) {
+                            echo 'Counselor Portal';
+                        } else {
+                            echo 'Teacher Portal';
+                        }
+                    ?>
+                </div>
                 <div class="close-sidebar">
                     <span class="material-symbols-outlined">close</span>
                 </div>
@@ -841,7 +851,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <ul class="nav-menu">

@@ -161,16 +161,16 @@
     // Handle removing a single student assignment
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['remove_student'])) {
         $assignment_id = $_POST['assignment_id'];
-        
-        $delete_sql = "DELETE FROM counselor_assignments WHERE id = ?";
+
+        $delete_sql  = "DELETE FROM counselor_assignments WHERE id = ?";
         $delete_stmt = $conn->prepare($delete_sql);
         $delete_stmt->bind_param("i", $assignment_id);
-        
+
         if ($delete_stmt->execute()) {
-            $message = "Student assignment removed successfully!";
+            $message      = "Student assignment removed successfully!";
             $message_type = 'success';
         } else {
-            $message = "Error removing assignment: " . $conn->error;
+            $message      = "Error removing assignment: " . $conn->error;
             $message_type = 'error';
         }
         $delete_stmt->close();
@@ -179,17 +179,17 @@
     // Handle removing all students from a counselor
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['remove_all_students'])) {
         $counselor_id = $_POST['counselor_id'];
-        
-        $delete_all_sql = "DELETE FROM counselor_assignments WHERE counselor_id = ?";
+
+        $delete_all_sql  = "DELETE FROM counselor_assignments WHERE counselor_id = ?";
         $delete_all_stmt = $conn->prepare($delete_all_sql);
         $delete_all_stmt->bind_param("i", $counselor_id);
-        
+
         if ($delete_all_stmt->execute()) {
-            $affected = $delete_all_stmt->affected_rows;
-            $message = "Successfully removed all $affected student assignments from this counselor!";
+            $affected     = $delete_all_stmt->affected_rows;
+            $message      = "Successfully removed all $affected student assignments from this counselor!";
             $message_type = 'success';
         } else {
-            $message = "Error removing assignments: " . $conn->error;
+            $message      = "Error removing assignments: " . $conn->error;
             $message_type = 'error';
         }
         $delete_all_stmt->close();
@@ -831,12 +831,18 @@
                     </li>
                     <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">account_circle</span>
-                        <a href="<?php echo $user_type === 'teacher' ? '../teacher/profile.php' : 'profile.php'; ?>">Profile</a>
+                        <a href="profile.php">Profile</a>
                     </li>
-                    <?php if ($user_type === 'teacher'): ?>
+                    <?php if ($user_type === 'teacher' && $teacher_status === 'teacher'): ?>
                     <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">dashboard</span>
-                        <a href="../teacher/index.php">Teacher Dashboard</a>
+                        <a href="../teacher/index.php">Teacher Dashboard</a>`
+                    </li>
+                    <?php endif; ?>
+                    <?php if ($user_type === 'teacher' && $teacher_status === 'counselor'): ?>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">supervisor_account</span>
+                        <a href="../teacher/assigned_students.php">Counselor Dashboard</a>
                     </li>
                     <?php endif; ?>
                     <li class="sidebar-list-item">
@@ -851,7 +857,7 @@
         <div class="main">
             <div class="main-content">
                 <div class="container">
-               
+
 
                 <!-- Alert Messages -->
                 <?php if (! empty($message)): ?>
@@ -930,7 +936,7 @@
                                 <?php echo htmlspecialchars($teacher['name']); ?>
                             </div>
                         </div>
-                        <span class="status-badge                                                                                                                                                                                                                                                                                                                                                        <?php echo $teacher['status']; ?>">
+                        <span class="status-badge                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo $teacher['status']; ?>">
                             <?php
                                 if ($teacher['status'] == 'counselor') {
                                     echo '🎓 COUNSELOR';
@@ -946,8 +952,8 @@
                     </div>
 
                     <div class="teacher-info">
-                        <strong>Email:</strong>                                                                                                                                                                                                                                                                                           <?php echo htmlspecialchars($teacher['email']); ?><br>
-                        <strong>Username:</strong>                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($teacher['username']); ?><br>
+                        <strong>Email:</strong>                                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($teacher['email']); ?><br>
+                        <strong>Username:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher['username']); ?><br>
                         <?php if ($teacher['status'] == 'counselor'): ?>
                             <strong>Assigned Students:</strong> <span style="color: #28a745; font-weight: bold;"><?php echo $teacher['student_count']; ?> students</span>
                         <?php endif; ?>
@@ -958,13 +964,13 @@
                             <input type="hidden" name="teacher_id" value="<?php echo $teacher['id']; ?>">
                             <select name="new_status" required>
                                 <option value="">-- Change Role --</option>
-                                <option value="active"                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($teacher['status'] == 'active') ? 'selected' : ''; ?>>
+                                <option value="active"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo($teacher['status'] == 'active') ? 'selected' : ''; ?>>
                                     Regular Teacher
                                 </option>
-                                <option value="counselor"                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo($teacher['status'] == 'counselor') ? 'selected' : ''; ?>>
+                                <option value="counselor"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <?php echo($teacher['status'] == 'counselor') ? 'selected' : ''; ?>>
                                     Class Counselor
                                 </option>
-                                <option value="admin"                                                                                                                                                                                                                                                                                                                                                                                    <?php echo($teacher['status'] == 'admin') ? 'selected' : ''; ?>>
+                                <option value="admin"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <?php echo($teacher['status'] == 'admin') ? 'selected' : ''; ?>>
                                     Administrator
                                 </option>
                             </select>
@@ -1045,13 +1051,13 @@
             const modalTitle = document.getElementById('modalTitle');
             const modalBody = document.getElementById('modalBody');
             const studentCount = document.getElementById('studentCount');
-            
+
             modalTitle.textContent = 'Students Assigned to ' + counselorName;
             modal.style.display = 'block';
-            
+
             // Show loading state
             modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div>';
-            
+
             // Fetch students via AJAX
             fetch('get_counselor_students.php?counselor_id=' + counselorId)
                 .then(response => response.json())
