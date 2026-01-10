@@ -216,12 +216,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Assigned Students - Counselor Dashboard</title>
     <link rel="stylesheet" href="../student/student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Prevent horizontal scroll */
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
         /* Core Styles */
         .header {
             grid-area: header;
@@ -560,20 +572,79 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            .grid-container {
+                grid-template-areas: "main";
+                grid-template-columns: 1fr;
+                padding-top: 80px;
+            }
+
+            .header .menu-icon {
+                display: block;
+            }
+
+            .header .header-logo {
+                display: none;
+            }
+
+            .sidebar {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                transform: translateX(-100%) !important;
+                z-index: 1004 !important;
+                background: #ffffff !important;
+                box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15) !important;
+                transition: transform 0.3s ease !important;
+                padding: 20px 0 !important;
+                overflow-y: auto !important;
+            }
+
+            .close-sidebar {
+                display: flex !important;
+            }
+
+            .sidebar.active {
+                transform: translateX(0) !important;
+                z-index: 1005 !important;
+            }
+
+            .sidebar.active::before {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: -1;
+                backdrop-filter: blur(2px);
+            }
+
+            .main {
+                margin-left: 0 !important;
+                width: 100% !important;
+                max-width: 100vw;
+                padding: 15px 10px;
+                box-sizing: border-box;
+            }
+
+            .stats-container,
+            .filters-section,
+            .students-table {
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
             .stats-container {
                 grid-template-columns: 1fr;
             }
 
             .filters-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .table-container {
-                overflow-x: scroll;
-            }
-
-            table {
-                min-width: 800px;
             }
 
             .filter-buttons {
@@ -599,63 +670,200 @@
 
             .mobile-cards {
                 display: block;
-                background: white;
+                padding: 0;
             }
 
             .students-table {
-                background: white !important;
+                padding: 15px;
+                background: transparent !important;
             }
 
             .student-card {
                 background: white;
-                border: 1px solid #e9ecef;
-                border-radius: 10px;
-                padding: 15px;
-                margin-bottom: 15px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+                border-radius: 12px;
+                padding: 0;
+                margin-bottom: 16px;
+                box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+                overflow: hidden;
+                border: none;
             }
 
             .student-card-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: start;
-                margin-bottom: 15px;
-                padding-bottom: 15px;
-                border-bottom: 1px solid #e9ecef;
+                background: linear-gradient(135deg, #1e4276 0%, #2563eb 100%);
+                color: white;
+                padding: 16px;
+                margin-bottom: 0;
+                border-bottom: none;
             }
 
             .student-name {
-                font-size: 16px;
+                font-size: 18px;
                 font-weight: 600;
-                color: var(--primary-color);
-                margin-bottom: 5px;
+                color: white;
+                margin: 0 0 6px 0;
             }
 
             .student-regno {
                 font-size: 13px;
-                color: #6c757d;
+                color: rgba(255,255,255,0.95);
+                margin: 0;
             }
 
-            .student-info {
-                /* Keep the gradient background from parent styles */
+            .student-details {
+                padding: 16px;
+                background: white;
             }
 
             .info-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 13px;
+                align-items: center;
+                padding: 12px 0;
+                border-bottom: 1px solid #f1f3f5;
                 background: white;
             }
 
+            .info-row:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+
             .info-label {
-                color: #6c757d;
+                font-size: 13px;
                 font-weight: 500;
+                color: #6c757d;
+                flex: 0 0 auto;
             }
 
             .info-value {
-                color: #495057;
+                font-size: 14px;
                 font-weight: 500;
+                color: #212529;
                 text-align: right;
+                flex: 1;
+                margin-left: 12px;
+            }
+
+            .info-value .badge {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+
+            /* Department badge in header */
+            .student-card-header .badge {
+                margin-top: 8px;
+                background: rgba(255,255,255,0.2);
+                color: white;
+                border: 1px solid rgba(255,255,255,0.3);
+            }
+
+            /* Semester update in mobile */
+            .semester-update {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 6px;
+            }
+
+            .semester-select {
+                width: 100%;
+                max-width: 120px;
+                font-size: 13px;
+            }
+
+            .update-btn {
+                width: 100%;
+                max-width: 120px;
+                justify-content: center;
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            /* Stats cards */
+            .stats-container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+
+            .stat-card {
+                padding: 16px;
+            }
+
+            .stat-number {
+                font-size: 28px;
+            }
+
+            .stat-label {
+                font-size: 13px;
+            }
+
+            /* Filters section */
+            .filters-section {
+                padding: 15px;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .filter-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                padding: 12px 16px;
+            }
+
+            /* Section headers */
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .section-header h2 {
+                font-size: 18px;
+            }
+
+            .section-header .btn {
+                width: 100%;
+            }
+
+            /* Alerts */
+            .alert {
+                padding: 12px 16px;
+                font-size: 14px;
+                margin: 0 15px 20px 15px;
+            }
+
+            /* Pagination */
+            .pagination {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .pagination a, .pagination span {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+
+            /* Hide email on very small screens */
+            @media (max-width: 400px) {
+                .info-row.email-row {
+                    display: none;
+                }
+
+                .student-name {
+                    font-size: 16px;
+                }
+
+                .stat-number {
+                    font-size: 24px;
+                }
             }
         }
     </style>
@@ -696,7 +904,15 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_data['employee_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                               <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
+                    <?php
+                        if ($is_admin) {
+                            echo ' (Admin)';
+                        } elseif ($is_counselor) {
+                            echo ' (Counselor)';
+                        }
+                    ?>
+                </div>
             </div>
 
             <nav>
@@ -713,6 +929,7 @@
                             Registered Students
                         </a>
                     </li>
+                    <?php if ($is_counselor && ! $is_admin): ?>
                     <li class="nav-item">
                         <a href="assigned_students.php" class="nav-link active">
                             <span class="material-symbols-outlined">supervisor_account</span>
@@ -737,6 +954,39 @@
                             Event Certificate Validation
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if ($is_admin): ?>
+                    <li class="nav-item">
+                        <a href="../admin/index.php" class="nav-link">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                            Admin Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/user_management.php" class="nav-link">
+                            <span class="material-symbols-outlined">manage_accounts</span>
+                            User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/manage_counselors.php" class="nav-link">
+                            <span class="material-symbols-outlined">school</span>
+                            Manage Counselors
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/participants.php" class="nav-link">
+                            <span class="material-symbols-outlined">people</span>
+                            Participants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/reports.php" class="nav-link">
+                            <span class="material-symbols-outlined">bar_chart</span>
+                            Reports
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a href="profile.php" class="nav-link">
                             <span class="material-symbols-outlined">person</span>
@@ -793,7 +1043,7 @@
                         <h2>Filter Students</h2>
                     </div>
                     <form method="POST" style="display: flex; gap: 10px; align-items: center;" onsubmit="return confirmBulkUpdate()">
-                        <select id="bulkSemester" name="bulk_semester" class="filter-select" style="min-width: 150px;" required>
+                        <select id="bulkSemester" name="bulk_semester" class="filter-select" required>
                             <option value="">Select Semester</option>
                             <?php for ($i = 1; $i <= 8; $i++): ?>
                                 <option value="<?php echo $i; ?>">Semester<?php echo $i; ?></option>
@@ -821,7 +1071,7 @@
                                 <option value="">All Semesters</option>
                                 <?php for ($i = 1; $i <= 8; $i++): ?>
                                     <option value="<?php echo $i; ?>"<?php echo $semester_filter == $i ? 'selected' : ''; ?>>
-                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $i; ?>
+                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $i; ?>
                                     </option>
                                 <?php endfor; ?>
                             </select>
@@ -883,7 +1133,7 @@
                                             <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select">
                                                 <?php for ($s = 1; $s <= 8; $s++): ?>
                                                     <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
-                                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
+                                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>
@@ -928,7 +1178,7 @@
                                         <?php echo htmlspecialchars($student['department']); ?>
                                     </span>
                                 </div>
-                                <div class="student-info">
+                                <div class="student-details">
                                     <div class="info-row">
                                         <span class="info-label">Semester:</span>
                                         <span class="info-value">

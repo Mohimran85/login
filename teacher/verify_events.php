@@ -23,8 +23,9 @@
     $teacher_status = 'teacher';
     $is_admin       = false;
     $is_counselor   = false;
+    $counselor_id   = null;
 
-    $sql  = "SELECT name, faculty_id as employee_id, COALESCE(status, 'teacher') as status FROM teacher_register WHERE username=?";
+    $sql  = "SELECT id, name, faculty_id as employee_id, COALESCE(status, 'teacher') as status FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -35,8 +36,23 @@
         $teacher_status = $teacher_data['status'];
         $is_admin       = ($teacher_status === 'admin');
         $is_counselor   = ($teacher_status === 'counselor');
+        $counselor_id   = $teacher_data['id'];
     }
     $stmt->close();
+
+    // Get assigned students for this counselor
+    $assigned_students_sql = "SELECT student_regno FROM counselor_assignments
+                             WHERE counselor_id = ? AND status = 'active'";
+    $assigned_students_stmt = $conn->prepare($assigned_students_sql);
+    $assigned_students_stmt->bind_param("i", $counselor_id);
+    $assigned_students_stmt->execute();
+    $assigned_students_result = $assigned_students_stmt->get_result();
+
+    $student_regnos = [];
+    while ($row = $assigned_students_result->fetch_assoc()) {
+        $student_regnos[] = $row['student_regno'];
+    }
+    $assigned_students_stmt->close();
 
     // Get filters from request
     $event_category = isset($_GET['category']) ? $_GET['category'] : 'All';
@@ -92,43 +108,66 @@
         }
     }
 
-    // Build SQL query based on filters
-    $query = "SELECT
-                 ser.id,
-                 sr.name AS student_name,
-                 ser.regno,
-                 ser.event_name,
-                 ser.organisation as organizer,
-                 ser.start_date as event_date,
-                 ser.event_type as category,
-                 ser.prize,
-                 ser.certificates as certificate_file,
-                 ser.event_photo,
-                 COALESCE(ser.verification_status, 'Pending') as status,
-                 ser.start_date as created_at
-          FROM student_event_register ser
-          JOIN student_register sr ON ser.regno = sr.regno
-          WHERE 1=1";
+    // Build SQL query based on filters - only show events from assigned students
+    if (!empty($student_regnos)) {
+        $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
+        
+        $query = "SELECT
+                     ser.id,
+                     sr.name AS student_name,
+                     ser.regno,
+                     ser.event_name,
+                     ser.organisation as organizer,
+                     ser.start_date as event_date,
+                     ser.event_type as category,
+                     ser.prize,
+                     ser.certificates as certificate_file,
+                     ser.event_photo,
+                     COALESCE(ser.verification_status, 'Pending') as status,
+                     ser.start_date as created_at
+              FROM student_event_register ser
+              JOIN student_register sr ON ser.regno = sr.regno
+              WHERE ser.regno IN ($placeholders)";
 
-    // Apply filters
-    if ($event_category !== 'All') {
-        $query .= " AND ser.event_type = '" . $conn->real_escape_string($event_category) . "'";
-    }
-    $query .= " AND COALESCE(ser.verification_status, 'Pending') = '" . $conn->real_escape_string($status_filter) . "'";
+        $params = $student_regnos;
+        $types = str_repeat('s', count($student_regnos));
 
-    // Apply search filter
-    if (! empty($search_filter)) {
-        $search_escaped = $conn->real_escape_string($search_filter);
-        $query .= " AND (sr.name LIKE '%" . $search_escaped . "%' OR ser.regno LIKE '%" . $search_escaped . "%')";
-    }
+        // Apply filters
+        if ($event_category !== 'All') {
+            $query .= " AND ser.event_type = ?";
+            $params[] = $event_category;
+            $types .= 's';
+        }
+        
+        $query .= " AND COALESCE(ser.verification_status, 'Pending') = ?";
+        $params[] = $status_filter;
+        $types .= 's';
 
-    // Add ordering
-    $query .= " ORDER BY ser.start_date DESC";
+        // Apply search filter
+        if (!empty($search_filter)) {
+            $query .= " AND (sr.name LIKE ? OR ser.regno LIKE ?)";
+            $search_param = "%$search_filter%";
+            $params[] = $search_param;
+            $params[] = $search_param;
+            $types .= 'ss';
+        }
 
-    $result = $conn->query($query);
-    if (! $result) {
-        $error_message = "Query Error: " . $conn->error;
-        $result        = null;
+        // Add ordering
+        $query .= " ORDER BY ser.start_date DESC";
+
+        $stmt = $conn->prepare($query);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if (!$result) {
+            $error_message = "Query Error: " . $conn->error;
+            $result = null;
+        }
+        $stmt->close();
+    } else {
+        // No assigned students
+        $result = null;
     }
 
     $total_records = $result ? $result->num_rows : 0;

@@ -84,16 +84,51 @@
     }
     $assigned_students_stmt->close();
 
+    // Get filter parameters
+    $search_filter     = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $status_filter     = isset($_GET['status']) ? $_GET['status'] : '';
+    $department_filter = isset($_GET['department']) ? $_GET['department'] : '';
+
     // Get internship submissions for assigned students
     if (! empty($student_regnos)) {
-        $placeholders   = implode(',', array_fill(0, count($student_regnos), '?'));
+        $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
+
+        // Build WHERE clause with filters
+        $where_conditions = ["i.regno IN ($placeholders)"];
+        $params           = $student_regnos;
+        $types            = str_repeat('s', count($student_regnos));
+
+        if (! empty($search_filter)) {
+            $where_conditions[] = "(sr.name LIKE ? OR i.regno LIKE ? OR i.company_name LIKE ? OR i.role_title LIKE ?)";
+            $search_param       = "%$search_filter%";
+            $params[]           = $search_param;
+            $params[]           = $search_param;
+            $params[]           = $search_param;
+            $params[]           = $search_param;
+            $types .= 'ssss';
+        }
+
+        if (! empty($status_filter)) {
+            $where_conditions[] = "i.approval_status = ?";
+            $params[]           = $status_filter;
+            $types .= 's';
+        }
+
+        if (! empty($department_filter)) {
+            $where_conditions[] = "sr.department = ?";
+            $params[]           = $department_filter;
+            $types .= 's';
+        }
+
+        $where_clause = implode(' AND ', $where_conditions);
+
         $internship_sql = "SELECT i.*, sr.name as student_name, sr.department, sr.year_of_join
                           FROM internship_submissions i
                           JOIN student_register sr ON i.regno = sr.regno
-                          WHERE i.regno IN ($placeholders)
+                          WHERE $where_clause
                           ORDER BY i.submission_date DESC";
         $internship_stmt = $conn->prepare($internship_sql);
-        $internship_stmt->bind_param(str_repeat('s', count($student_regnos)), ...$student_regnos);
+        $internship_stmt->bind_param($types, ...$params);
         $internship_stmt->execute();
         $internship_result = $internship_stmt->get_result();
 
@@ -339,6 +374,101 @@
         .page-header p {
             color: #6c757d;
             margin: 0;
+        }
+
+        /* Filters Section */
+        .filters-section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .filter-input, .filter-select {
+            padding: 10px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
         }
 
         /* Mobile Responsive */
@@ -716,6 +846,25 @@
         }
 
         @media (max-width: 768px) {
+            .filters-section {
+                padding: 15px;
+            }
+
+            .filters-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .filter-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
             .table-container table {
                 display: none;
             }
@@ -772,9 +921,67 @@
                 border-top: 1px solid #e9ecef;
             }
 
+            .modal {
+                padding: 10px;
+                top: 0;
+                height: 100%;
+            }
+
             .modal-content {
-                padding: 20px;
-                margin: 10px;
+                padding: 15px;
+                margin: 0;
+                max-height: 95vh;
+                width: 95%;
+                max-width: 95%;
+            }
+
+            .modal-header {
+                padding-bottom: 10px;
+                margin-bottom: 15px;
+            }
+
+            .modal-header h2 {
+                font-size: 18px;
+            }
+
+            /* Fix submission details in modal for mobile */
+            .modal-content > div[style*="background: #f8f9fa"] {
+                padding: 12px !important;
+                margin-bottom: 15px !important;
+            }
+
+            .modal-content h3 {
+                font-size: 16px !important;
+                margin-bottom: 12px !important;
+            }
+
+            /* Fix detail rows in modal */
+            .modal-content div[style*="display: flex"] {
+                flex-direction: column !important;
+                gap: 4px !important;
+                padding-bottom: 8px !important;
+            }
+
+            .modal-content strong[style*="min-width"] {
+                min-width: auto !important;
+                font-size: 13px;
+            }
+
+            .modal-content span[style*="color: #212529"] {
+                font-size: 14px;
+                word-break: break-word;
+            }
+
+            .modal-content div[style*="display: grid"] {
+                gap: 8px !important;
+            }
+
+            /* Fix report section */
+            .modal-content div#modalBriefReport {
+                font-size: 13px !important;
+                padding: 12px !important;
+                min-height: 80px !important;
+                line-height: 1.5 !important;
             }
 
             .action-btns {
@@ -784,6 +991,19 @@
             .btn-sm {
                 width: 100%;
                 padding: 10px;
+            }
+
+            .form-group select,
+            .form-group textarea {
+                font-size: 14px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .form-actions .btn {
+                width: 100%;
             }
         }
 
@@ -851,7 +1071,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_name); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo htmlspecialchars($teacher_data['employee_id']); ?> <?php if ($is_admin) {echo ' (Admin)';} elseif ($is_counselor) {echo ' (Counselor)';}?></div>
             </div>
 
             <ul class="nav-menu">
@@ -972,6 +1192,55 @@
                     <h3>Rejected</h3>
                     <div class="number" style="color: #dc3545;"><?php echo $stats['rejected_submissions'] ?? 0; ?></div>
                 </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="filters-section">
+                <div class="section-header">
+                    <span class="material-symbols-outlined">filter_alt</span>
+                    <h2>Filter Submissions</h2>
+                </div>
+                <form method="GET" action="">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label for="search">Search</label>
+                            <input type="text" id="search" name="search" class="filter-input"
+                                   placeholder="Search by name, regno, company..."
+                                   value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                        </div>
+                        <div class="filter-group">
+                            <label for="status">Status</label>
+                            <select id="status" name="status" class="filter-select">
+                                <option value="">All Status</option>
+                                <option value="pending"                                                                                                               <?php echo(isset($_GET['status']) && $_GET['status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
+                                <option value="approved"                                                                                                                 <?php echo(isset($_GET['status']) && $_GET['status'] == 'approved') ? 'selected' : ''; ?>>Approved</option>
+                                <option value="rejected"                                                                                                                 <?php echo(isset($_GET['status']) && $_GET['status'] == 'rejected') ? 'selected' : ''; ?>>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="department">Department</label>
+                            <select id="department" name="department" class="filter-select">
+                                <option value="">All Departments</option>
+                                <option value="Computer Science and Engineering"                                                                                                                                                                 <?php echo(isset($_GET['department']) && $_GET['department'] == 'Computer Science and Engineering') ? 'selected' : ''; ?>>CSE</option>
+                                <option value="Information Technology"                                                                                                                                             <?php echo(isset($_GET['department']) && $_GET['department'] == 'Information Technology') ? 'selected' : ''; ?>>IT</option>
+                                <option value="Electronics and Communication Engineering"                                                                                                                                                                                   <?php echo(isset($_GET['department']) && $_GET['department'] == 'Electronics and Communication Engineering') ? 'selected' : ''; ?>>ECE</option>
+                                <option value="Electrical and Electronics Engineering"                                                                                                                                                                             <?php echo(isset($_GET['department']) && $_GET['department'] == 'Electrical and Electronics Engineering') ? 'selected' : ''; ?>>EEE</option>
+                                <option value="Mechanical Engineering"                                                                                                                                             <?php echo(isset($_GET['department']) && $_GET['department'] == 'Mechanical Engineering') ? 'selected' : ''; ?>>MECH</option>
+                                <option value="Civil Engineering"                                                                                                                                   <?php echo(isset($_GET['department']) && $_GET['department'] == 'Civil Engineering') ? 'selected' : ''; ?>>CIVIL</option>
+                            </select>
+                        </div>
+                        <div class="filter-buttons">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="material-symbols-outlined">search</span>
+                                Apply Filters
+                            </button>
+                            <a href="internship_approvals.php" class="btn btn-secondary">
+                                <span class="material-symbols-outlined">refresh</span>
+                                Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
             </div>
 
             <!-- Internship Submissions Table -->

@@ -17,8 +17,9 @@
     $teacher_data = null;
     $is_counselor = false;
     $is_admin     = false;
+    $counselor_id = null;
 
-    $sql  = "SELECT * FROM teacher_register WHERE username=?";
+    $sql  = "SELECT id, name, faculty_id as employee_id, COALESCE(status, 'teacher') as status FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -28,6 +29,7 @@
         $teacher_data = $result->fetch_assoc();
         $is_counselor = ($teacher_data['status'] === 'counselor' || $teacher_data['status'] === 'admin');
         $is_admin     = ($teacher_data['status'] === 'admin');
+        $counselor_id = $teacher_data['id'];
     } else {
         header("Location: ../index.php");
         exit();
@@ -38,6 +40,20 @@
         header("Location: index.php");
         exit();
     }
+
+    // Get assigned students for this counselor
+    $assigned_students_sql = "SELECT student_regno FROM counselor_assignments
+                             WHERE counselor_id = ? AND status = 'active'";
+    $assigned_students_stmt = $conn->prepare($assigned_students_sql);
+    $assigned_students_stmt->bind_param("i", $counselor_id);
+    $assigned_students_stmt->execute();
+    $assigned_students_result = $assigned_students_stmt->get_result();
+
+    $student_regnos = [];
+    while ($row = $assigned_students_result->fetch_assoc()) {
+        $student_regnos[] = $row['student_regno'];
+    }
+    $assigned_students_stmt->close();
 
     $message      = '';
     $message_type = '';
@@ -50,7 +66,7 @@
 
         $update_sql  = "UPDATE od_requests SET status = ?, counselor_remarks = ?, response_date = CURRENT_TIMESTAMP WHERE id = ? AND counselor_id = ?";
         $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("ssii", $new_status, $counselor_remarks, $od_id, $teacher_data['id']);
+        $update_stmt->bind_param("ssii", $new_status, $counselor_remarks, $od_id, $counselor_id);
 
         if ($update_stmt->execute()) {
             $message      = "OD request " . ucfirst($new_status) . " successfully!";
@@ -62,39 +78,62 @@
         $update_stmt->close();
     }
 
-    // Get OD requests for this counselor
-    $od_requests_sql = "SELECT od.*, sr.name as student_name, sr.department, sr.year_of_join, od.group_members
-                        FROM od_requests od
-                        JOIN student_register sr ON od.student_regno = sr.regno
-                        WHERE od.counselor_id = ?
-                        ORDER BY od.request_date DESC";
-    $od_requests_stmt = $conn->prepare($od_requests_sql);
-    $od_requests_stmt->bind_param("i", $teacher_data['id']);
-    $od_requests_stmt->execute();
-    $od_requests_result = $od_requests_stmt->get_result();
+    // Get OD requests only from assigned students
+    if (! empty($student_regnos)) {
+        $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
 
-    // Fetch all results into an array for reuse
-    $od_requests_array = [];
-    while ($row = $od_requests_result->fetch_assoc()) {
-        $od_requests_array[] = $row;
+        $od_requests_sql = "SELECT od.*, sr.name as student_name, sr.department, sr.year_of_join, od.group_members
+                            FROM od_requests od
+                            JOIN student_register sr ON od.student_regno = sr.regno
+                            WHERE od.student_regno IN ($placeholders) AND od.counselor_id = ?
+                            ORDER BY od.request_date DESC";
+        $od_requests_stmt = $conn->prepare($od_requests_sql);
+
+        $params = array_merge($student_regnos, [$counselor_id]);
+        $types  = str_repeat('s', count($student_regnos)) . 'i';
+        $od_requests_stmt->bind_param($types, ...$params);
+        $od_requests_stmt->execute();
+        $od_requests_result = $od_requests_stmt->get_result();
+
+        // Fetch all results into an array for reuse
+        $od_requests_array = [];
+        while ($row = $od_requests_result->fetch_assoc()) {
+            $od_requests_array[] = $row;
+        }
+        $od_requests_stmt->close();
+    } else {
+        $od_requests_array = [];
     }
 
-    // Get statistics
-    $stats_sql = "SELECT
-                    COUNT(*) as total_requests,
-                    SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_requests,
-                    SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_requests,
-                    SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_requests
-                  FROM od_requests WHERE counselor_id = ?";
-    $stats_stmt = $conn->prepare($stats_sql);
-    $stats_stmt->bind_param("i", $teacher_data['id']);
-    $stats_stmt->execute();
-    $stats_result = $stats_stmt->get_result();
-    $stats        = $stats_result->fetch_assoc();
+    // Get statistics only for assigned students
+    if (! empty($student_regnos)) {
+        $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
+
+        $stats_sql = "SELECT
+                        COUNT(*) as total_requests,
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_requests,
+                        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_requests,
+                        SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_requests
+                      FROM od_requests WHERE student_regno IN ($placeholders) AND counselor_id = ?";
+        $stats_stmt = $conn->prepare($stats_sql);
+
+        $params = array_merge($student_regnos, [$counselor_id]);
+        $types  = str_repeat('s', count($student_regnos)) . 'i';
+        $stats_stmt->bind_param($types, ...$params);
+        $stats_stmt->execute();
+        $stats_result = $stats_stmt->get_result();
+        $stats        = $stats_result->fetch_assoc();
+        $stats_stmt->close();
+    } else {
+        $stats = [
+            'total_requests'    => 0,
+            'pending_requests'  => 0,
+            'approved_requests' => 0,
+            'rejected_requests' => 0,
+        ];
+    }
 
     $stmt->close();
-    $od_requests_stmt->close();
-    $stats_stmt->close();
     // Keep connection open for group members queries
     // $conn->close();
 ?>
@@ -1681,7 +1720,7 @@
 
             <div class="student-info"  style="color: white;">
                 <div class="student-name" style="color:white;"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['faculty_id']); ?> (Counselor)</div>
             </div>
 
             <nav>
@@ -1966,7 +2005,7 @@
                                         <?php endif; ?>
                                     </td>
                                     <td data-label="Status" style="padding: 15px; text-align: center;">
-                                        <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                        <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $request['status']; ?>" style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                                             <?php echo ucfirst($request['status']); ?>
                                         </span>
                                     </td>
@@ -2007,7 +2046,7 @@
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">calendar_today</span>
-                                            <span>Year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($request['year_of_join']); ?></span>
+                                            <span>Year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($request['year_of_join']); ?></span>
                                         </div>
                                         <div class="meta-item">
                                             <span class="material-symbols-outlined">schedule</span>
@@ -2015,7 +2054,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $request['status']; ?>">
+                                <div class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <?php echo $request['status']; ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </div>
                             </div>
@@ -2163,9 +2202,9 @@
                                             Download Poster
                                         </a>
                                         <div style="text-align: center; font-size: 12px; color: #6c757d; padding: 8px; background: #f8f9fa; border-radius: 6px;">
-                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
-                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo strtoupper($file_extension); ?> •
-                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
+                                            <strong>File:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars(basename($request['event_poster'])); ?><br>
+                                            <strong>Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo strtoupper($file_extension); ?> •
+                                            <strong>Size:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo file_exists($poster_path) ? round(filesize($poster_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
                                         </div>
                                     </div>
                                 </div>
