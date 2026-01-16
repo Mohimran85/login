@@ -141,7 +141,7 @@
                         <label for="department">Department:</label>
                         <select name="department" id="department">
                             <option value="">Select Department</option>
-                            <option value="IT">IT</option>
+                            <option value="Information Technology">Information Technology</option>
                             <option value="CSE">CSE</option>
                             <option value="AIML">AIML</option>
                             <option value="AIDS">AIDS</option>

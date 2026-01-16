@@ -125,8 +125,9 @@
     $offset           = ($page - 1) * $records_per_page;
 
     // Search and filter parameters
-    $search          = isset($_GET['search']) ? trim($_GET['search']) : '';
-    $semester_filter = isset($_GET['semester']) ? $_GET['semester'] : '';
+    $search                = isset($_GET['search']) ? trim($_GET['search']) : '';
+    $semester_filter       = isset($_GET['semester']) ? $_GET['semester'] : '';
+    $event_category_filter = isset($_GET['event_category']) ? $_GET['event_category'] : '';
 
     // Build WHERE clause
     $where_conditions = ["ca.counselor_id = ?", "ca.status = 'active'"];
@@ -148,13 +149,28 @@
         $types .= 's';
     }
 
+    if (! empty($event_category_filter)) {
+        $where_conditions[] = "ser.event_type = ?";
+        $params[]           = $event_category_filter;
+        $types .= 's';
+    }
+
     $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
 
     // Get total records for pagination
-    $count_sql = "SELECT COUNT(*) as total
-                  FROM counselor_assignments ca
-                  JOIN student_register sr ON ca.student_regno = sr.regno
-                  $where_clause";
+    // Include LEFT JOIN if event category filter is applied
+    if (! empty($event_category_filter)) {
+        $count_sql = "SELECT COUNT(DISTINCT sr.regno) as total
+                      FROM counselor_assignments ca
+                      JOIN student_register sr ON ca.student_regno = sr.regno
+                      LEFT JOIN student_event_register ser ON sr.regno = ser.regno
+                      $where_clause";
+    } else {
+        $count_sql = "SELECT COUNT(*) as total
+                      FROM counselor_assignments ca
+                      JOIN student_register sr ON ca.student_regno = sr.regno
+                      $where_clause";
+    }
 
     $count_stmt = $conn->prepare($count_sql);
     $count_stmt->bind_param($types, ...$params);
@@ -192,6 +208,23 @@
     while ($row = $students_result->fetch_assoc()) {
         $students_data[] = $row;
     }
+
+    // Get available event categories for filter dropdown
+    $event_categories_sql = "SELECT DISTINCT ser.event_type
+                            FROM student_event_register ser
+                            INNER JOIN counselor_assignments ca ON ser.regno = ca.student_regno
+                            WHERE ca.counselor_id = ? AND ca.status = 'active'
+                            AND ser.event_type IS NOT NULL AND ser.event_type != ''
+                            ORDER BY ser.event_type ASC";
+    $event_cat_stmt = $conn->prepare($event_categories_sql);
+    $event_cat_stmt->bind_param("i", $counselor_id);
+    $event_cat_stmt->execute();
+    $event_categories_result = $event_cat_stmt->get_result();
+    $event_categories        = [];
+    while ($row = $event_categories_result->fetch_assoc()) {
+        $event_categories[] = $row['event_type'];
+    }
+    $event_cat_stmt->close();
 
     // Get statistics
     $stats_sql = "SELECT
@@ -904,7 +937,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                               <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
+                <div class="student-regno">ID:                                                                                             <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
                     <?php
                         if ($is_admin) {
                             echo ' (Admin)';
@@ -1071,9 +1104,21 @@
                                 <option value="">All Semesters</option>
                                 <?php for ($i = 1; $i <= 8; $i++): ?>
                                     <option value="<?php echo $i; ?>"<?php echo $semester_filter == $i ? 'selected' : ''; ?>>
-                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $i; ?>
+                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $i; ?>
                                     </option>
                                 <?php endfor; ?>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="event_category">Event Category</label>
+                            <select id="event_category" name="event_category" class="filter-select">
+                                <option value="">All Categories</option>
+                                <?php foreach ($event_categories as $category): ?>
+                                    <option value="<?php echo htmlspecialchars($category); ?>"<?php echo $event_category_filter == $category ? ' selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($category); ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
@@ -1133,7 +1178,7 @@
                                             <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select">
                                                 <?php for ($s = 1; $s <= 8; $s++): ?>
                                                     <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
-                                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
+                                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
                                                     </option>
                                                 <?php endfor; ?>
                                             </select>

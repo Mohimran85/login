@@ -118,14 +118,39 @@
     }
 
     // Event type breakdown for student events
-    $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register
-                       GROUP BY event_type ORDER BY count DESC LIMIT 8";
-    $types_stmt = $conn->prepare($event_types_sql);
-    if ($types_stmt) {
+    // For counselors, show only their assigned students' event types
+    if ($is_counselor && $counselor_id) {
+        $event_types_sql = "SELECT ser.event_type, COUNT(*) as count
+                           FROM student_event_register ser
+                           INNER JOIN counselor_assignments ca ON ser.regno = ca.student_regno
+                           WHERE ca.counselor_id = ? AND ca.status = 'active'
+                           GROUP BY ser.event_type
+                           ORDER BY count DESC LIMIT 8";
+        $types_stmt = $conn->prepare($event_types_sql);
+        $types_stmt->bind_param("i", $counselor_id);
         $types_stmt->execute();
-        $event_types = $types_stmt->get_result();
+        $event_types_result = $types_stmt->get_result();
     } else {
-        $event_types = null;
+        // For non-counselors, show all student event types
+        $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register
+                           GROUP BY event_type ORDER BY count DESC LIMIT 8";
+        $types_stmt = $conn->prepare($event_types_sql);
+        if ($types_stmt) {
+            $types_stmt->execute();
+            $event_types_result = $types_stmt->get_result();
+        } else {
+            $event_types_result = null;
+        }
+    }
+
+    // Store event types in array and calculate total for progress bar
+    $event_types_array = [];
+    $total_events      = 0;
+    if ($event_types_result) {
+        while ($row = $event_types_result->fetch_assoc()) {
+            $event_types_array[] = $row;
+            $total_events += $row['count'];
+        }
     }
 
     // Get recently registered students (last 10)
@@ -502,6 +527,18 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .category-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .category-item:last-child {
@@ -739,7 +776,7 @@
 
         <div class="student-info">
           <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-          <div class="student-regno">ID:                                                                                                                                                                                                         <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
+          <div class="student-regno">ID:                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
             <?php
                 if ($is_admin) {
                     echo ' (Admin)';
@@ -917,7 +954,7 @@
                           (<?php echo $event['no_of_days']; ?> day<?php echo $event['no_of_days'] > 1 ? 's' : ''; ?>)
                         </span>
                         <span class="prize-badge">
-                          👤                                                                                                                                                                                                                                                                                                                                                                         <?php echo htmlspecialchars($event['student_name']); ?> (<?php echo htmlspecialchars($event['regno']); ?>)
+                          👤                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($event['student_name']); ?> (<?php echo htmlspecialchars($event['regno']); ?>)
                         </span>
                         <?php if (! empty($event['prize']) && $event['prize'] !== 'No Prize'): ?>
                           <span class="prize-badge">🏆<?php echo htmlspecialchars($event['prize']); ?></span>
@@ -943,21 +980,29 @@
               <h3>Student Event Categories</h3>
             </div>
 
-            <?php if ($event_types->num_rows > 0): ?>
+            <?php if (count($event_types_array) > 0): ?>
               <div class="categories-list">
-                <?php while ($type = $event_types->fetch_assoc()): ?>
-                  <div class="category-item">
+                <?php foreach ($event_types_array as $type): ?>
+                  <?php if ($is_counselor): ?>
+                    <a href="assigned_students.php?event_category=<?php echo urlencode($type['event_type']); ?>" class="category-item">
+                  <?php else: ?>
+                    <div class="category-item" style="cursor: default;">
+                  <?php endif; ?>
                     <div class="category-info">
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
                     <span class="category-count"><?php echo $type['count']; ?></span>
-                  </div>
-                <?php endwhile; ?>
+                  <?php if ($is_counselor): ?>
+                    </a>
+                  <?php else: ?>
+                    </div>
+                  <?php endif; ?>
+                <?php endforeach; ?>
               </div>
             <?php else: ?>
               <div class="empty-state">
@@ -1047,12 +1092,12 @@
                       </span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo min(($student['prizes_won'] / 3) * 100, 100); ?>%"></div>
                         </div>
                       </div>
                     </div>
                     <div style="text-align: center;">
-                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $student['prizes_won']; ?></div>
+                      <div style="font-weight: bold; color: #f39c12;">🏆                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $student['prizes_won']; ?></div>
                       <small style="color: #666; font-size: 11px;"><?php echo $student['total_events']; ?> events</small>
                     </div>
                   </div>
@@ -1082,7 +1127,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($stat['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $total_participants > 0 ? ($stat['student_count'] / $total_participants) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>
@@ -1129,13 +1174,13 @@
                     <div class="activity-details">
                       <h4><?php echo htmlspecialchars($student['name']); ?></h4>
                       <p class="activity-meta">
-                        <span class="event-type">Reg No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($student['student_regno']); ?></span>
+                        <span class="event-type">Reg No:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($student['student_regno']); ?></span>
                         <span class="event-date"><?php echo htmlspecialchars($student['department']); ?></span>
-                        <span class="prize-badge">Year:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($student['year_of_join']); ?></span>
+                        <span class="prize-badge">Year:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($student['year_of_join']); ?></span>
                       </p>
                       <p class="activity-meta">
                         <span style="color: #666; font-size: 12px;">
-                          Assigned:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo date('M d, Y', strtotime($student['assigned_date'])); ?>
+                          Assigned:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo date('M d, Y', strtotime($student['assigned_date'])); ?>
                           | Events:<?php echo $student['total_events']; ?>
                           <?php if ($student['prizes_won'] > 0): ?>
                             | Prizes: 🏆<?php echo $student['prizes_won']; ?>

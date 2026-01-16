@@ -543,7 +543,7 @@
             }
 
             .sidebar-header {
-                padding: 60px 20px 20px 20px !important;
+                padding: 25px 20px 20px 20px !important;
             }
 
             .main {

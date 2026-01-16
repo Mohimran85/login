@@ -3,13 +3,13 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: index.php");
-        exit();
+    header("Location: index.php");
+    exit();
     }
 
     $conn = new mysqli("localhost", "root", "", "event_management_system");
     if ($conn->connect_error) {
-        die("Connection failed: " . htmlspecialchars($conn->connect_error));
+    die("Connection failed: " . htmlspecialchars($conn->connect_error));
     }
 
     // Get logged-in user's data
@@ -24,11 +24,11 @@
     $user_result = $user_stmt->get_result();
 
     if ($user_result->num_rows > 0) {
-        $student_data = $user_result->fetch_assoc();
-        $regno        = $student_data['regno'];
+    $student_data = $user_result->fetch_assoc();
+    $regno        = $student_data['regno'];
     } else {
-        header("Location: index.php");
-        exit();
+    header("Location: index.php");
+    exit();
     }
 
     // Handle search and filters
@@ -44,24 +44,24 @@
     $param_types      = "s";
 
     if (! empty($search)) {
-        $where_conditions[] = "(event_name LIKE ? OR organisation LIKE ?)";
-        $params[]           = "%$search%";
-        $params[]           = "%$search%";
-        $param_types .= "ss";
+    $where_conditions[]  = "(event_name LIKE ? OR organisation LIKE ?)";
+    $params[]            = "%$search%";
+    $params[]            = "%$search%";
+    $param_types        .= "ss";
     }
 
     if (! empty($event_type_filter)) {
-        $where_conditions[] = "event_type = ?";
-        $params[]           = $event_type_filter;
-        $param_types .= "s";
+    $where_conditions[]  = "event_type = ?";
+    $params[]            = $event_type_filter;
+    $param_types        .= "s";
     }
 
     if (! empty($prize_filter)) {
-        if ($prize_filter === 'won') {
-            $where_conditions[] = "prize IS NOT NULL AND prize != '' AND prize != 'Participation'";
-        } elseif ($prize_filter === 'participation') {
-            $where_conditions[] = "prize = 'Participation'";
-        }
+    if ($prize_filter === 'won') {
+        $where_conditions[] = "prize IS NOT NULL AND prize != '' AND prize != 'Participation'";
+    } elseif ($prize_filter === 'participation') {
+        $where_conditions[] = "prize = 'Participation'";
+    }
     }
 
     $where_clause = implode(" AND ", $where_conditions);
@@ -69,7 +69,7 @@
     // Validate sort columns
     $allowed_sorts = ['start_date', 'event_name', 'event_type', 'prize'];
     if (! in_array($sort_by, $allowed_sorts)) {
-        $sort_by = 'start_date';
+    $sort_by = 'start_date';
     }
     $sort_order = ($sort_order === 'ASC') ? 'ASC' : 'DESC';
 
@@ -1146,9 +1146,262 @@
                 </form>
             </div>
 
+            <!-- Event Participations Header -->
+            <div class="participations-header" style="margin-bottom: 20px;">
+                <div class="participations-title">My Event Participations</div>
+                <div class="participations-subtitle">Track all your event participations and achievements</div>
+            </div>
+
+            <!-- Participations List -->
+            <div class="participations-list">
+                <!-- Desktop View -->
+                <div class="desktop-table">
+                    <?php if ($participations->num_rows > 0): ?>
+                        <?php while ($participation = $participations->fetch_assoc()): ?>
+                            <div class="participation-item">
+                                <div class="event-name"><?php echo htmlspecialchars($participation['event_name']); ?></div>
+
+                                <div class="event-meta">
+                                    <div class="meta-item">
+                                        <span class="material-symbols-outlined">category</span>
+                                        <?php echo htmlspecialchars($participation['event_type']); ?>
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="material-symbols-outlined">schedule</span>
+                                        <?php
+                                            if ($participation['start_date'] === $participation['end_date']) {
+                                                echo date('M d, Y', strtotime($participation['start_date']));
+                                            } else {
+                                                echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
+                                            }
+                                        ?>
+                                        (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
+                                    </div>
+                                    <div class="meta-item">
+                                        <span class="material-symbols-outlined">business</span>
+                                        <?php echo htmlspecialchars($participation['organisation']); ?>
+                                    </div>
+                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
+                                        <div class="prize-badge<?php
+                                                                   echo match ($participation['prize']) {
+                                                                       'First'  => 'prize-first',
+                                                                       'Second' => 'prize-second',
+                                                                       'Third'  => 'prize-third',
+                                                                       default  => 'prize-participation'
+                                                               };
+                                                               ?>">
+                                            <?php echo htmlspecialchars($participation['prize']); ?>
+                                            <?php if (! empty($participation['prize_amount'])): ?>
+                                                - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="verification-badge verification-<?php echo strtolower($participation['verification_status']); ?>">
+                                        <?php
+                                            $status = $participation['verification_status'];
+                                            $icon   = match ($status) {
+                                                'Approved' => '',
+                                                'Rejected' => '',
+                                                default    => ''
+                                            };
+                                            echo $icon . ' ' . htmlspecialchars($status);
+                                        ?>
+                                    </div>
+                                </div>
+
+                                <div class="event-details">
+                                    <div class="detail-group">
+                                        <div class="detail-label">Event Type:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['event_type']); ?></div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Date:</div>
+                                        <div class="detail-value">
+                                            <?php
+                                                if ($participation['start_date'] === $participation['end_date']) {
+                                                    echo date('M d, Y', strtotime($participation['start_date']));
+                                                } else {
+                                                    echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
+                                                }
+                                            ?>
+                                            (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
+                                        </div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Organization:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['organisation']); ?></div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Department:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['department']); ?></div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Year & Semester:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['current_year'] . ' - ' . $participation['semester']); ?></div>
+                                    </div>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Location:</div>
+                                        <div class="detail-value"><?php echo htmlspecialchars($participation['district'] . ', ' . $participation['state']); ?></div>
+                                    </div>
+                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
+                                    <div class="detail-group">
+                                        <div class="detail-label">Prize:</div>
+                                        <div class="detail-value">
+                                            <span class="prize-badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     echo match ($participation['prize']) {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         'First'  => 'prize-first',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         'Second' => 'prize-second',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         'Third'  => 'prize-third',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         default  => 'prize-participation'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 };
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 ?>">
+                                                <?php echo htmlspecialchars($participation['prize']); ?>
+                                                <?php if (! empty($participation['prize_amount'])): ?>
+                                                    - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
+                                                <?php endif; ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="actions-section">
+                                    <?php if (! empty($participation['certificates'])): ?>
+                                        <a href="javascript:void(0)"
+                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['certificates']); ?>', 'Certificate')"
+                                           class="action-btn btn-download">
+                                            <span class="material-symbols-outlined">download</span>
+                                            Certificate
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if (! empty($participation['event_poster'])): ?>
+                                        <a href="javascript:void(0)"
+                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['event_poster']); ?>', 'Event Poster')"
+                                           class="action-btn btn-view">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                            Event Poster
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <span class="material-symbols-outlined">event_busy</span>
+                            <h3>No Event Participations Found</h3>
+                            <p>You haven't participated in any events yet or no events match your search criteria.</p>
+                            <a href="student_register.php" class="empty-action">Register Your First Event</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Mobile Card Layout -->
+                <div class="mobile-card-table">
+                    <?php
+                        // Re-execute query for mobile view
+                        $mobile_stmt = $conn->prepare($sql);
+                        $mobile_stmt->bind_param($param_types, ...$params);
+                        $mobile_stmt->execute();
+                        $mobile_participations = $mobile_stmt->get_result();
+                    ?>
+                    <?php if ($mobile_participations->num_rows > 0): ?>
+                        <?php while ($participation = $mobile_participations->fetch_assoc()): ?>
+                            <div class="participation-card">
+                                <h4><?php echo htmlspecialchars($participation['event_name']); ?></h4>
+
+                                <div class="participation-info">
+                                    <div class="info-row">
+                                        <div class="info-label">Event Type</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['event_type']); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Date</div>
+                                        <div class="info-value">
+                                            <?php
+                                                if ($participation['start_date'] === $participation['end_date']) {
+                                                    echo date('M d, Y', strtotime($participation['start_date']));
+                                                } else {
+                                                    echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
+                                                }
+                                            ?>
+                                            (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
+                                        </div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Organization</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['organisation']); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Department</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['department']); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Year & Semester</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['current_year'] . ' - ' . $participation['semester']); ?></div>
+                                    </div>
+                                    <div class="info-row">
+                                        <div class="info-label">Location</div>
+                                        <div class="info-value"><?php echo htmlspecialchars($participation['district'] . ', ' . $participation['state']); ?></div>
+                                    </div>
+                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
+                                    <div class="info-row">
+                                        <div class="info-label">Prize</div>
+                                        <div class="info-value">
+                                            <span class="prize-badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 echo match ($participation['prize']) {
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     'First'  => 'prize-first',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     'Second' => 'prize-second',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     'Third'  => 'prize-third',
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     default  => 'prize-participation'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             };
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ?>">
+                                                <?php echo htmlspecialchars($participation['prize']); ?>
+                                                <?php if (! empty($participation['prize_amount'])): ?>
+                                                    - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
+                                                <?php endif; ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <?php if (! empty($participation['certificates']) || ! empty($participation['event_poster'])): ?>
+                                <div class="actions-section">
+                                    <?php if (! empty($participation['certificates'])): ?>
+                                        <a href="javascript:void(0)"
+                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['certificates']); ?>', 'Certificate')"
+                                           class="action-btn btn-download">
+                                            <span class="material-symbols-outlined">download</span>
+                                            Certificate
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if (! empty($participation['event_poster'])): ?>
+                                        <a href="javascript:void(0)"
+                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['event_poster']); ?>', 'Event Poster')"
+                                           class="action-btn btn-view">
+                                            <span class="material-symbols-outlined">visibility</span>
+                                            Event Poster
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endwhile; ?>
+                        <?php $mobile_stmt->close(); ?>
+                    <?php else: ?>
+                        <div class="empty-state">
+                            <span class="material-symbols-outlined">event_busy</span>
+                            <h3>No Event Participations Found</h3>
+                            <p>You haven't participated in any events yet or no events match your search criteria.</p>
+                            <a href="student_register.php" class="empty-action">Register Your First Event</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <!-- Internships Section -->
             <?php if ($internship_count > 0): ?>
-            <div class="participations-header" style="margin-bottom: 20px;">
+            <div class="participations-header" style="margin-bottom: 20px; margin-top: 30px;">
                 <div class="participations-title">My Internships</div>
                 <div class="participations-subtitle">View your internship submissions and details</div>
             </div>
@@ -1164,8 +1417,6 @@
 
                         while ($internship = $internships_display->fetch_assoc()):
                     ?>
-                        <div class="participation-item">
-                            <div class="event-name"><?php echo htmlspecialchars($internship['company_name']); ?></div>
 
                             <div class="event-meta">
                                 <div class="meta-item">
@@ -1306,259 +1557,6 @@
                 </div>
             </div>
             <?php endif; ?>
-
-            <!-- Event Participations Header -->
-            <div class="participations-header" style="margin-bottom: 20px;">
-                <div class="participations-title">My Event Participations</div>
-                <div class="participations-subtitle">Track all your event participations and achievements</div>
-            </div>
-
-            <!-- Participations List -->
-            <div class="participations-list">
-                <!-- Desktop View -->
-                <div class="desktop-table">
-                    <?php if ($participations->num_rows > 0): ?>
-                        <?php while ($participation = $participations->fetch_assoc()): ?>
-                            <div class="participation-item">
-                                <div class="event-name"><?php echo htmlspecialchars($participation['event_name']); ?></div>
-
-                                <div class="event-meta">
-                                    <div class="meta-item">
-                                        <span class="material-symbols-outlined">category</span>
-                                        <?php echo htmlspecialchars($participation['event_type']); ?>
-                                    </div>
-                                    <div class="meta-item">
-                                        <span class="material-symbols-outlined">schedule</span>
-                                        <?php
-                                            if ($participation['start_date'] === $participation['end_date']) {
-                                                echo date('M d, Y', strtotime($participation['start_date']));
-                                            } else {
-                                                echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
-                                            }
-                                        ?>
-                                        (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
-                                    </div>
-                                    <div class="meta-item">
-                                        <span class="material-symbols-outlined">business</span>
-                                        <?php echo htmlspecialchars($participation['organisation']); ?>
-                                    </div>
-                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
-                                        <div class="prize-badge<?php
-    echo match ($participation['prize']) {
-        'First'  => 'prize-first',
-        'Second' => 'prize-second',
-        'Third'  => 'prize-third',
-        default  => 'prize-participation'
-};
-?>">
-                                            <?php echo htmlspecialchars($participation['prize']); ?>
-                                            <?php if (! empty($participation['prize_amount'])): ?>
-                                                - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
-                                            <?php endif; ?>
-                                        </div>
-                                    <?php endif; ?>
-                                    <div class="verification-badge verification-<?php echo strtolower($participation['verification_status']); ?>">
-                                        <?php
-                                            $status = $participation['verification_status'];
-                                            $icon   = match ($status) {
-                                                'Approved' => '',
-                                                'Rejected' => '',
-                                                default    => ''
-                                            };
-                                            echo $icon . ' ' . htmlspecialchars($status);
-                                        ?>
-                                    </div>
-                                </div>
-
-                                <div class="event-details">
-                                    <div class="detail-group">
-                                        <div class="detail-label">Event Type:</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($participation['event_type']); ?></div>
-                                    </div>
-                                    <div class="detail-group">
-                                        <div class="detail-label">Date:</div>
-                                        <div class="detail-value">
-                                            <?php
-                                                if ($participation['start_date'] === $participation['end_date']) {
-                                                    echo date('M d, Y', strtotime($participation['start_date']));
-                                                } else {
-                                                    echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
-                                                }
-                                            ?>
-                                            (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
-                                        </div>
-                                    </div>
-                                    <div class="detail-group">
-                                        <div class="detail-label">Organization:</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($participation['organisation']); ?></div>
-                                    </div>
-                                    <div class="detail-group">
-                                        <div class="detail-label">Department:</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($participation['department']); ?></div>
-                                    </div>
-                                    <div class="detail-group">
-                                        <div class="detail-label">Year & Semester:</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($participation['current_year'] . ' - ' . $participation['semester']); ?></div>
-                                    </div>
-                                    <div class="detail-group">
-                                        <div class="detail-label">Location:</div>
-                                        <div class="detail-value"><?php echo htmlspecialchars($participation['district'] . ', ' . $participation['state']); ?></div>
-                                    </div>
-                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
-                                    <div class="detail-group">
-                                        <div class="detail-label">Prize:</div>
-                                        <div class="detail-value">
-                                            <span class="prize-badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 echo match ($participation['prize']) {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     'First'  => 'prize-first',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     'Second' => 'prize-second',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     'Third'  => 'prize-third',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     default  => 'prize-participation'
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             };
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ?>">
-                                                <?php echo htmlspecialchars($participation['prize']); ?>
-                                                <?php if (! empty($participation['prize_amount'])): ?>
-                                                    - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
-                                                <?php endif; ?>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <div class="actions-section">
-                                    <?php if (! empty($participation['certificates'])): ?>
-                                        <a href="javascript:void(0)"
-                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['certificates']); ?>', 'Certificate')"
-                                           class="action-btn btn-download">
-                                            <span class="material-symbols-outlined">download</span>
-                                            Certificate
-                                        </a>
-                                    <?php endif; ?>
-                                    <?php if (! empty($participation['event_poster'])): ?>
-                                        <a href="javascript:void(0)"
-                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['event_poster']); ?>', 'Event Poster')"
-                                           class="action-btn btn-view">
-                                            <span class="material-symbols-outlined">visibility</span>
-                                            Event Poster
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        <?php endwhile; ?>
-                    <?php else: ?>
-                        <div class="empty-state">
-                            <span class="material-symbols-outlined">event_busy</span>
-                            <h3>No Event Participations Found</h3>
-                            <p>You haven't participated in any events yet or no events match your search criteria.</p>
-                            <a href="student_register.php" class="empty-action">Register Your First Event</a>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <!-- Mobile Card Layout -->
-                <div class="mobile-card-table">
-                    <?php
-                        // Re-execute query for mobile view
-                        $mobile_stmt = $conn->prepare($sql);
-                        $mobile_stmt->bind_param($param_types, ...$params);
-                        $mobile_stmt->execute();
-                        $mobile_participations = $mobile_stmt->get_result();
-                    ?>
-                    <?php if ($mobile_participations->num_rows > 0): ?>
-                        <?php while ($participation = $mobile_participations->fetch_assoc()): ?>
-                            <div class="participation-card">
-                                <h4><?php echo htmlspecialchars($participation['event_name']); ?></h4>
-
-                                <div class="participation-info">
-                                    <div class="info-row">
-                                        <div class="info-label">Event Type</div>
-                                        <div class="info-value"><?php echo htmlspecialchars($participation['event_type']); ?></div>
-                                    </div>
-                                    <div class="info-row">
-                                        <div class="info-label">Date</div>
-                                        <div class="info-value">
-                                            <?php
-                                                if ($participation['start_date'] === $participation['end_date']) {
-                                                    echo date('M d, Y', strtotime($participation['start_date']));
-                                                } else {
-                                                    echo date('M d', strtotime($participation['start_date'])) . ' - ' . date('M d, Y', strtotime($participation['end_date']));
-                                                }
-                                            ?>
-                                            (<?php echo $participation['no_of_days']; ?> day<?php echo $participation['no_of_days'] > 1 ? 's' : ''; ?>)
-                                        </div>
-                                    </div>
-                                    <div class="info-row">
-                                        <div class="info-label">Organization</div>
-                                        <div class="info-value"><?php echo htmlspecialchars($participation['organisation']); ?></div>
-                                    </div>
-                                    <div class="info-row">
-                                        <div class="info-label">Department</div>
-                                        <div class="info-value"><?php echo htmlspecialchars($participation['department']); ?></div>
-                                    </div>
-                                    <div class="info-row">
-                                        <div class="info-label">Year & Semester</div>
-                                        <div class="info-value"><?php echo htmlspecialchars($participation['current_year'] . ' - ' . $participation['semester']); ?></div>
-                                    </div>
-                                    <div class="info-row">
-                                        <div class="info-label">Location</div>
-                                        <div class="info-value"><?php echo htmlspecialchars($participation['district'] . ', ' . $participation['state']); ?></div>
-                                    </div>
-                                    <?php if (! empty($participation['prize']) && $participation['prize'] !== 'No Prize'): ?>
-                                    <div class="info-row">
-                                        <div class="info-label">Prize</div>
-                                        <div class="info-value">
-                                            <span class="prize-badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             echo match ($participation['prize']) {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 'First'  => 'prize-first',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 'Second' => 'prize-second',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 'Third'  => 'prize-third',
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 default  => 'prize-participation'
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         };
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ?>">
-                                                <?php echo htmlspecialchars($participation['prize']); ?>
-                                                <?php if (! empty($participation['prize_amount'])): ?>
-                                                    - ₹<?php echo htmlspecialchars($participation['prize_amount']); ?>
-                                                <?php endif; ?>
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <?php if (! empty($participation['certificates']) || ! empty($participation['event_poster'])): ?>
-                                <div class="actions-section">
-                                    <?php if (! empty($participation['certificates'])): ?>
-                                        <a href="javascript:void(0)"
-                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['certificates']); ?>', 'Certificate')"
-                                           class="action-btn btn-download">
-                                            <span class="material-symbols-outlined">download</span>
-                                            Certificate
-                                        </a>
-                                    <?php endif; ?>
-                                    <?php if (! empty($participation['event_poster'])): ?>
-                                        <a href="javascript:void(0)"
-                                           onclick="checkFileAndOpen('<?php echo htmlspecialchars($participation['event_poster']); ?>', 'Event Poster')"
-                                           class="action-btn btn-view">
-                                            <span class="material-symbols-outlined">visibility</span>
-                                            Event Poster
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                        <?php endwhile; ?>
-                        <?php $mobile_stmt->close(); ?>
-                    <?php else: ?>
-                        <div class="empty-state">
-                            <span class="material-symbols-outlined">event_busy</span>
-                            <h3>No Event Participations Found</h3>
-                            <p>You haven't participated in any events yet or no events match your search criteria.</p>
-                            <a href="student_register.php" class="empty-action">Register Your First Event</a>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
         </div>
     </div>
 

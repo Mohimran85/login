@@ -187,8 +187,12 @@
     <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
     <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="../student/student_dashboard.css">
+    <meta name="theme-color" content="#0c3878">
+    <meta name="color-scheme" content="light only">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <style>
         /* Core Styles */
         .header {
@@ -200,7 +204,8 @@
             font-weight: 100;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+                rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
             color: #1e4276;
             position: fixed;
             width: 100%;
@@ -211,10 +216,12 @@
 
         .filters-section, .students-table {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #e1e5e9;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
         }
 
         .filters-grid {
@@ -225,33 +232,60 @@
         }
 
         .filter-group label {
-            font-weight: 500;
-            margin-bottom: 5px;
-            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
         }
 
         .filter-group input, .filter-group select {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
             font-size: 14px;
             width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group input:focus, .filter-group select:focus {
+            outline: none;
+            border-color: #2d5aa0;
+            box-shadow: 0 0 0 3px rgba(45, 90, 160, 0.1);
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            transition: all 0.3s ease;
         }
 
-        .btn-primary { background: #3498db; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
+        .btn-primary {
+            background: #2d5aa0;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e3a6f;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(45, 90, 160, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
 
         table {
             width: 100%;
@@ -265,12 +299,15 @@
         }
 
         th {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #2d5aa0 0%, #1e3a6f 100%);
             font-weight: 600;
-            color: #333;
+            color: white;
         }
 
-        tr:hover { background: #f8f9fa; }
+        tr:hover {
+            background: #f8f9fa;
+            transition: background 0.2s ease;
+        }
 
         .prize-badge {
             padding: 4px 8px;
@@ -293,16 +330,23 @@
 
         .stat-card {
             background: white;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e1e5e9;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
             text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
         }
 
         .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #3498db;
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #2d5aa0;
         }
 
         .pagination {
@@ -313,17 +357,23 @@
         }
 
         .pagination a, .pagination span {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 10px 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
             text-decoration: none;
-            color: #333;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+        }
+
+        .pagination a:hover {
+            background: #f8f9fa;
+            border-color: #2d5aa0;
         }
 
         .pagination .current {
-            background: #3498db;
+            background: linear-gradient(135deg, #2d5aa0 0%, #1e3a6f 100%);
             color: white;
-            border-color: #3498db;
+            border-color: #2d5aa0;
         }
 
         /* Desktop Card Design */
@@ -336,18 +386,18 @@
         }
 
         .student-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid #e1e5e9;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: transform 0.2s, box-shadow 0.2s;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
         }
 
         .student-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
         }
 
         .student-card h4 {
@@ -382,56 +432,61 @@
 
         /* Mobile Responsive Design */
         @media (max-width: 768px) {
-            body {
-                overflow-x: hidden;
+            .grid-container {
+                grid-template-areas: "main";
+                grid-template-columns: 1fr;
+                padding-top: 80px;
+            }
+
+            .header .menu-icon {
+                display: block;
             }
 
             .header .header-logo {
                 display: none;
             }
 
-            .grid-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: 60px 1fr;
-                grid-template-areas:
-                    "header"
-                    "main";
-                min-height: 100vh;
-                width: 100%;
-                max-width: 100vw;
-            }
-
-            .header {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                z-index: 999;
-                width: 100%;
-            }
-
             .sidebar {
-                position: fixed;
-                left: -100%;
-                top: 0;
-                width: 100vw;
-                height: 100vh;
-                z-index: 1000;
-                transition: left 0.3s ease;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                transform: translateX(-100%) !important;
+                z-index: 1004 !important;
+                background: #ffffff !important;
+                box-shadow: 2px 0 20px rgba(0, 0, 0, 0.15) !important;
+                transition: transform 0.3s ease !important;
+                padding: 20px 0 !important;
+                overflow-y: auto !important;
+            }
+
+            .close-sidebar {
+                display: flex !important;
             }
 
             .sidebar.active {
+                transform: translateX(0) !important;
+                z-index: 1005 !important;
+            }
+
+            .sidebar.active::before {
+                content: "";
+                position: fixed;
+                top: 0;
                 left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: -1;
+                backdrop-filter: blur(2px);
             }
 
             .main {
+                margin-left: 0 !important;
                 width: 100% !important;
-                max-width: 100vw;
-                padding: 80px 10px 20px 10px;
-                margin: 0 !important;
-                grid-area: main;
-                box-sizing: border-box;
-                overflow-x: hidden;
+                padding: 15px;
             }
 
             .page-title {
@@ -732,7 +787,7 @@
 
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
-                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
+                <div class="student-regno">ID:                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($teacher_data['employee_id']); ?>
                     <?php
                         if ($is_admin) {
                             echo '(Admin)';
@@ -906,11 +961,11 @@
                             <label for="prize">Prize Filter</label>
                             <select id="prize" name="prize">
                                 <option value="">All</option>
-                                <option value="winner"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
-                                <option value="first"                                                      <?php echo $prize_filter === 'first' ? 'selected' : ''; ?>>First Prize</option>
-                                <option value="secound"                                                        <?php echo $prize_filter === 'secound' ? 'selected' : ''; ?>>Second Prize</option>
-                                <option value="third"                                                      <?php echo $prize_filter === 'third' ? 'selected' : ''; ?>>Third Prize</option>
-                                <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
+                                <option value="winner"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
+                                <option value="first"                                                                                                                                                                <?php echo $prize_filter === 'first' ? 'selected' : ''; ?>>First Prize</option>
+                                <option value="secound"                                                                                                                                                                      <?php echo $prize_filter === 'secound' ? 'selected' : ''; ?>>Second Prize</option>
+                                <option value="third"                                                                                                                                                                <?php echo $prize_filter === 'third' ? 'selected' : ''; ?>>Third Prize</option>
+                                <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
                             </select>
                         </div>
 
@@ -918,8 +973,8 @@
                             <label for="location">Location</label>
                             <select id="location" name="location">
                                 <option value="">All Locations</option>
-                                <option value="tamilnadu"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $location_filter === 'tamilnadu' ? 'selected' : ''; ?>>Tamil Nadu</option>
-                                <option value="outside"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $location_filter === 'outside' ? 'selected' : ''; ?>>Outside Tamil Nadu</option>
+                                <option value="tamilnadu"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $location_filter === 'tamilnadu' ? 'selected' : ''; ?>>Tamil Nadu</option>
+                                <option value="outside"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $location_filter === 'outside' ? 'selected' : ''; ?>>Outside Tamil Nadu</option>
                             </select>
                         </div>
 
@@ -1015,9 +1070,9 @@
                         <?php foreach ($students_data as $student): ?>
                             <div class="student-card">
                                 <h4><?php echo htmlspecialchars($student['event_name']); ?></h4>
-                                <p><strong>• Student Name:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <?php echo htmlspecialchars($student['name']); ?></p>
-                                <p><strong>• Register No:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($student['regno']); ?></p>
-                                <p><strong>• Event Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($student['event_type']); ?></p>
+                                <p><strong>• Student Name:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <?php echo htmlspecialchars($student['name']); ?></p>
+                                <p><strong>• Register No:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($student['regno']); ?></p>
+                                <p><strong>• Event Type:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo htmlspecialchars($student['event_type']); ?></p>
                                 <p><strong>• Date:</strong>
                                     <?php
                                         if ($student['start_date'] === $student['end_date']) {
@@ -1027,10 +1082,10 @@
                                         }
                                     ?>
                                 </p>
-                                <p><strong>• Organization:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($student['college']); ?></p>
-                                <p><strong>• Department:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo htmlspecialchars($student['department']); ?></p>
-                                <p><strong>• Year & Semester:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($student['current_year']); ?> -<?php echo htmlspecialchars($student['semester']); ?></p>
-                                <p><strong>• Location:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo htmlspecialchars($student['position']); ?></p>
+                                <p><strong>• Organization:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo htmlspecialchars($student['college']); ?></p>
+                                <p><strong>• Department:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo htmlspecialchars($student['department']); ?></p>
+                                <p><strong>• Year & Semester:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo htmlspecialchars($student['current_year']); ?> -<?php echo htmlspecialchars($student['semester']); ?></p>
+                                <p><strong>• Location:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo htmlspecialchars($student['position']); ?></p>
                                 <p><strong>• Prize:</strong>
                                     <?php
                                         $prize       = $student['prize'];
