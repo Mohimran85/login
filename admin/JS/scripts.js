@@ -57,11 +57,11 @@ var barChartOptions = {
   },
 };
 
-var chart = new ApexCharts(
-  document.querySelector("#bar-chart"),
-  barChartOptions
-);
-chart.render();
+const barChartEl = document.querySelector("#bar-chart");
+if (barChartEl) {
+  var chart = new ApexCharts(barChartEl, barChartOptions);
+  chart.render();
+}
 
 // -------------Enhanced Monthly Trends Chart---------------
 var areaChartOption = {
@@ -279,8 +279,8 @@ var areaChartOption = {
           <div style="padding: 12px; min-width: 200px;">
             <div style="font-weight: 600; margin-bottom: 8px; color: #374151;">
               ${monthNames[dataPointIndex]} ${
-          window.currentYear || new Date().getFullYear()
-        }
+                window.currentYear || new Date().getFullYear()
+              }
             </div>
             <div style="margin-bottom: 4px;">
               <span style="color: #008FFB;">●</span> Events: <strong>${events}</strong>
@@ -344,11 +344,11 @@ var areaChartOption = {
   },
 };
 
-var areaChart = new ApexCharts(
-  document.querySelector("#area-chart"),
-  areaChartOption
-);
-areaChart.render();
+const areaChartEl = document.querySelector("#area-chart");
+if (areaChartEl) {
+  var areaChart = new ApexCharts(areaChartEl, areaChartOption);
+  areaChart.render();
+}
 
 // ================== ENHANCED CATEGORY ANALYTICS ==================
 
@@ -521,7 +521,7 @@ function initEnhancedCategoryChart() {
 
   categoryChart = new ApexCharts(
     document.querySelector("#enhanced-category-chart"),
-    options
+    options,
   );
   categoryChart.render();
 }
@@ -560,7 +560,7 @@ function prepareChartData(view) {
     case "success":
       // Filter to show only competitive events in success rate chart
       const competitiveCategories = window.categoryAnalytics.filter(
-        (cat) => cat.is_competitive
+        (cat) => cat.is_competitive,
       );
       series = [
         {
@@ -568,12 +568,8 @@ function prepareChartData(view) {
           data: competitiveCategories.map((cat) => cat.success_rate),
         },
       ];
-      // Update categories for success chart to show only competitive events
-      categoryChart.updateOptions({
-        xaxis: {
-          categories: competitiveCategories.map((cat) => cat.name),
-        },
-      });
+      // Store competitive categories for use by updateCategoryChart
+      window.competitiveCategories = competitiveCategories;
       yAxisTitle = "Success Rate (%)";
       break;
 
@@ -715,7 +711,7 @@ function toggleChartType() {
 
   // Update button icon
   const toggleBtn = document.querySelector(
-    ".chart-toggle .material-symbols-outlined"
+    ".chart-toggle .material-symbols-outlined",
   );
   if (toggleBtn) {
     toggleBtn.textContent =
@@ -973,7 +969,7 @@ function createDistributionChart(chartType) {
         series: [
           {
             name: "Success Rate (%)",
-            data: window.monthlyEvents.map((events, index) => {
+            data: (window.monthlyEvents || []).map((events, index) => {
               const wins = window.monthlyWins[index] || 0;
               const participations = window.monthlyParticipations[index] || 0;
               return participations > 0
@@ -1128,25 +1124,36 @@ function showMonthDetails(monthIndex) {
   const successRate =
     participations > 0 ? ((wins / participations) * 100).toFixed(1) : 0;
 
-  // Update month details panel
-  document.getElementById("selected-month-title").textContent = `${
-    monthNames[monthIndex - 1]
-  } ${window.currentYear} Details`;
-  document.getElementById("month-events").textContent = events;
-  document.getElementById("month-participants").textContent = participations;
-  document.getElementById("month-winners").textContent = wins;
-  document.getElementById("month-success").textContent = successRate + "%";
+  // Update month details panel with null checks
+  const monthTitle = document.getElementById("selected-month-title");
+  const monthEventsEl = document.getElementById("month-events");
+  const monthParticipantsEl = document.getElementById("month-participants");
+  const monthWinnersEl = document.getElementById("month-winners");
+  const monthSuccessEl = document.getElementById("month-success");
+  const monthPanel = document.getElementById("month-details-panel");
+
+  if (monthTitle) {
+    monthTitle.textContent = `${
+      monthNames[monthIndex - 1]
+    } ${window.currentYear} Details`;
+  }
+  if (monthEventsEl) monthEventsEl.textContent = events;
+  if (monthParticipantsEl) monthParticipantsEl.textContent = participations;
+  if (monthWinnersEl) monthWinnersEl.textContent = wins;
+  if (monthSuccessEl) monthSuccessEl.textContent = successRate + "%";
 
   // Show the panel
-  document.getElementById("month-details-panel").style.display = "block";
+  if (monthPanel) monthPanel.style.display = "block";
 
   // Highlight the selected month button
-  document
-    .querySelectorAll(".month-btn")
-    .forEach((btn) => btn.classList.remove("active"));
-  document
-    .querySelector(`[data-month="${monthIndex}"]`)
-    .classList.add("active");
+  const monthButtons = document.querySelectorAll(".month-btn");
+  if (monthButtons.length > 0) {
+    monthButtons.forEach((btn) => btn.classList.remove("active"));
+  }
+  const selectedBtn = document.querySelector(`[data-month="${monthIndex}"]`);
+  if (selectedBtn) {
+    selectedBtn.classList.add("active");
+  }
 }
 
 function hideMonthDetails() {
@@ -1267,8 +1274,9 @@ function updateAreaChartForDetailedView() {
       {
         name: "Avg Participation Rate per Event",
         type: "line",
-        data: window.monthlyEvents.map((events, index) => {
-          const participations = window.monthlyParticipations[index] || 0;
+        data: (window.monthlyEvents || []).map((events, index) => {
+          const participations =
+            (window.monthlyParticipations || [])[index] || 0;
           return events > 0 ? Math.round(participations / events) : 0;
         }),
       },
@@ -1280,7 +1288,7 @@ function updateAreaChartForComparisonView() {
   // Show comparison with previous year using real database data
   console.log(
     "YoY Comparison using real database data from",
-    window.previousYear
+    window.previousYear,
   );
 
   if (typeof areaChart !== "undefined") {
@@ -1402,7 +1410,7 @@ function loadWeeklyData(startMonth, endMonth) {
 
   // Fetch weekly data via AJAX
   fetch(
-    `ajax/get_weekly_data.php?year=${year}&start_month=${startMonth}&end_month=${endMonth}`
+    `ajax/get_weekly_data.php?year=${year}&start_month=${startMonth}&end_month=${endMonth}`,
   )
     .then((response) => response.json())
     .then((data) => {

@@ -1,12 +1,12 @@
 -- Standardize prize values in student_event_register table
--- This will convert all prize variations to lowercase: first, secound, third
+-- This will convert all prize variations to lowercase: first, second, third
 
 UPDATE student_event_register 
 SET prize = 'first' 
 WHERE LOWER(TRIM(prize)) IN ('first', 'first prize', '1st', '1st prize');
 
 UPDATE student_event_register 
-SET prize = 'secound' 
+SET prize = 'second' 
 WHERE LOWER(TRIM(prize)) IN ('second', 'secound', 'second prize', '2nd', '2nd prize');
 
 UPDATE student_event_register 

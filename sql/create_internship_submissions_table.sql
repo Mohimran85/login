@@ -19,5 +19,7 @@ CREATE TABLE IF NOT EXISTS `internship_submissions` (
   `submission_date` datetime NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `student_id` (`student_id`)
+  KEY `student_id` (`student_id`),
+  CONSTRAINT `fk_internship_submissions_student_id` FOREIGN KEY (`student_id`) REFERENCES `student_register` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_internship_dates` CHECK (`end_date` >= `start_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

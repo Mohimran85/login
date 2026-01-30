@@ -1,9 +1,21 @@
 -- SQL to remove digital signature system from database
 -- Run this in your MySQL database to completely remove signature functionality
 
--- Step 1: Remove foreign key constraint from od_requests table
-ALTER TABLE od_requests 
-DROP FOREIGN KEY IF EXISTS od_requests_ibfk_2;
+-- Step 1: Remove foreign key constraint from od_requests table if it exists
+-- Check if constraint exists first
+SET @constraint_exists = (SELECT COUNT(*) 
+  FROM information_schema.TABLE_CONSTRAINTS 
+  WHERE CONSTRAINT_SCHEMA = DATABASE() 
+  AND TABLE_NAME = 'od_requests' 
+  AND CONSTRAINT_NAME = 'od_requests_ibfk_2');
+
+SET @sql = IF(@constraint_exists > 0, 
+  'ALTER TABLE od_requests DROP FOREIGN KEY od_requests_ibfk_2', 
+  'SELECT "Constraint does not exist, skipping"');
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Step 2: Remove all signature-related columns from od_requests table
 ALTER TABLE od_requests 

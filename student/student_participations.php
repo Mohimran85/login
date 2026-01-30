@@ -143,7 +143,7 @@
             margin-bottom: 30px;
         }
 
-        .participations-title {
+fd3s        .participations-title {
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 10px;

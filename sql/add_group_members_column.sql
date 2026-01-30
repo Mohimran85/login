@@ -7,5 +7,6 @@ ADD COLUMN IF NOT EXISTS group_members TEXT NULL
 COMMENT 'Comma-separated registration numbers for group OD requests';
 
 -- Add index for better search performance on group members
-ALTER TABLE od_requests 
-ADD INDEX idx_group_members (group_members(255));
+-- Drop index if exists first to make idempotent
+DROP INDEX IF EXISTS idx_group_members ON od_requests;
+CREATE INDEX idx_group_members ON od_requests (group_members(255));

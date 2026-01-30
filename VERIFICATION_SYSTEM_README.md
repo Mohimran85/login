@@ -59,21 +59,17 @@ Indexes added for performance:
 #### Badge Styling:
 
 ```css
-.verification-pending
-  -
-  Yellow
-  background
-  (#fff3cd)
-  .verification-approved
-  -
-  Green
-  background
-  (#d4edda)
-  .verification-rejected
-  -
-  Red
-  background
-  (#f8d7da);
+.verification-pending {
+  background: #fff3cd;
+}
+
+.verification-approved {
+  background: #d4edda;
+}
+
+.verification-rejected {
+  background: #f8d7da;
+}
 ```
 
 ## Workflow

@@ -80,7 +80,6 @@ This update adds support for **Group OD (On-Duty) Requests**, allowing multiple 
 ### For Students:
 
 1. **Creating a Group OD Request:**
-
    - Go to OD Request page
    - Fill in event details
    - Click "Add Group Member" button
@@ -89,7 +88,6 @@ This update adds support for **Group OD (On-Duty) Requests**, allowing multiple 
    - Submit the request
 
 2. **Viewing Group OD Requests:**
-
    - All OD requests (individual and group) appear in "My OD Requests"
    - Group ODs show a blue badge with group icon and member count
    - Group members can see the OD in their list
@@ -101,7 +99,6 @@ This update adds support for **Group OD (On-Duty) Requests**, allowing multiple 
 ### For Teachers/Counselors:
 
 1. **Reviewing Group OD Requests:**
-
    - Group OD requests show "Group Members" section
    - Displays count and list of all group members with names
    - Each member shown with avatar icon and registration number
@@ -126,7 +123,7 @@ COMMENT 'Comma-separated registration numbers for group OD requests';
 -- Allow access if student is main requester OR group member
 WHERE odr.id = ?
 AND (odr.student_regno = ?
-     OR FIND_IN_SET(?, REPLACE(odr.group_members, ',', ',')))
+     OR FIND_IN_SET(?, odr.group_members))
 AND odr.status = 'approved'
 ```
 

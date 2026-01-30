@@ -13,17 +13,27 @@ The `group_members` column doesn't exist in your `od_requests` table yet.
 
 ## ✅ Solution - Run the Migration
 
-### Option 1: Run PHP Migration Script (Easiest)
+### Option 1: Run PHP Migration Script (CLI Only - Secure)
 
-1. Open your browser
-2. Navigate to: `http://localhost/event_management_system/login/migrate_group_members.php`
-3. The script will:
+**IMPORTANT: This script should NOT be accessible via web browser**
+
+1. Run via command line:
+   ```bash
+   php migrate_group_members.php
+   ```
+2. Or move the migration behind a secured admin panel with proper authentication
+3. Delete or disable the script after migration is complete
+4. The script will:
    - Check if the column exists
    - Add it automatically if missing
    - Show you the current table structure
    - Display test results
 
-### Option 2: Run SQL Script Manually
+**Security Note:** Never expose migration scripts via public URLs. Always use CLI or authenticated admin interfaces.
+
+### Option 2: Run SQL Script Manually (Recommended)
+
+**Use this method for production deployments**
 
 1. Open phpMyAdmin
 2. Select `event_management_system` database
@@ -37,14 +47,7 @@ COMMENT 'Comma-separated registration numbers for group OD requests'
 AFTER reason;
 ```
 
-### Option 3: Automatic Migration (On Next OD Request)
-
-The system will automatically add the column when you create a new OD request. Just:
-
-1. Go to student OD request page
-2. Fill out the form (with or without group members)
-3. Submit
-4. The column will be added automatically
+**Note:** Option 3 (Automatic Migration) has been removed due to safety concerns. Always run schema changes during controlled deployment windows, not during request handling.
 
 ## 🧪 Testing After Migration
 

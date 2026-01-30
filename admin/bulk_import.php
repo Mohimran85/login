@@ -1,16 +1,32 @@
 <?php
     session_start();
 
+    // Generate CSRF token if not exists
+    if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Database connection
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
+    $db_host = getenv('DB_HOST') ?: 'localhost';
+    $db_user = getenv('DB_USER');
+    $db_pass = getenv('DB_PASS');
+    $db_name = getenv('DB_NAME') ?: 'event_management_system';
+
+    if (! $db_user || ! $db_pass) {
+    error_log('Database credentials missing in environment');
+    die('Configuration error');
+    }
+
+    $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    error_log('Database connection failed: ' . $conn->connect_error);
+    die('Database connection failed');
     }
 
     // Get user data for header profile
@@ -21,46 +37,47 @@
     $tables         = ['student_register', 'teacher_register'];
 
     foreach ($tables as $table) {
-        $sql  = "SELECT name FROM $table WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sql  = "SELECT name FROM $table WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_type = $table === 'student_register' ? 'student' : 'teacher';
-            break;
-        }
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $user_type = $table === 'student_register' ? 'student' : 'teacher';
         $stmt->close();
+        break;
+    }
+    $stmt->close();
     }
 
     // Check teacher status if user is a teacher
     if ($user_type === 'teacher') {
-        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
-        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
-        $teacher_status_stmt->bind_param("s", $username);
-        $teacher_status_stmt->execute();
-        $teacher_status_result = $teacher_status_stmt->get_result();
+    $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+    $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+    $teacher_status_stmt->bind_param("s", $username);
+    $teacher_status_stmt->execute();
+    $teacher_status_result = $teacher_status_stmt->get_result();
 
-        if ($teacher_status_result->num_rows > 0) {
-            $status_data    = $teacher_status_result->fetch_assoc();
-            $teacher_status = $status_data['status'];
-        }
-        $teacher_status_stmt->close();
+    if ($teacher_status_result->num_rows > 0) {
+        $status_data    = $teacher_status_result->fetch_assoc();
+        $teacher_status = $status_data['status'];
+    }
+    $teacher_status_stmt->close();
     }
 
     // Only allow admin-level teachers to access bulk import
     if ($user_type === 'teacher' && $teacher_status !== 'admin') {
-        $_SESSION['access_denied'] = 'Only administrators can access bulk import. Your role is: ' . ucfirst($teacher_status);
-        header("Location: user_management.php");
-        exit();
+    $_SESSION['access_denied'] = 'Only administrators can access bulk import. Your role is: ' . ucfirst($teacher_status);
+    header("Location: user_management.php");
+    exit();
     }
 
     // Redirect students who shouldn't have access
     if ($user_type === 'student') {
-        header("Location: ../student/index.php");
-        exit();
+    header("Location: ../student/index.php");
+    exit();
     }
 
     // Initialize variables
@@ -72,307 +89,315 @@
 
     // Handle file upload and processing
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (isset($_POST['action'])) {
+    // Validate CSRF token
+    if (! isset($_POST['csrf_token']) || ! hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $error_message = 'Invalid security token. Please refresh the page and try again.';
+    } elseif (isset($_POST['action'])) {
 
-            if ($_POST['action'] === 'upload' && isset($_FILES['import_file'])) {
-                $file = $_FILES['import_file'];
+        if ($_POST['action'] === 'upload' && isset($_FILES['import_file'])) {
+            $file = $_FILES['import_file'];
 
-                // Validate file upload
-                if ($file['error'] !== UPLOAD_ERR_OK) {
-                    $error_message = "File upload failed. Error code: " . $file['error'] . ". Please try again.";
-                } elseif ($file['size'] > 5 * 1024 * 1024) { // 5MB limit
-                    $error_message = "File size too large. Maximum size is 5MB.";
-                } elseif ($file['size'] == 0) {
-                    $error_message = "File is empty. Please upload a valid CSV file with data.";
-                } elseif ($file['size'] < 100) { // Minimum 100 bytes
-                    $error_message = "File is too small (minimum 100 bytes required). Please ensure your file contains headers and at least one row of data.";
+            // Validate file upload
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                $error_message = "File upload failed. Error code: " . $file['error'] . ". Please try again.";
+            } elseif ($file['size'] > 5 * 1024 * 1024) { // 5MB limit
+                $error_message = "File size too large. Maximum size is 5MB.";
+            } elseif ($file['size'] == 0) {
+                $error_message = "File is empty. Please upload a valid CSV file with data.";
+            } elseif ($file['size'] < 100) { // Minimum 100 bytes
+                $error_message = "File is too small (minimum 100 bytes required). Please ensure your file contains headers and at least one row of data.";
+            } else {
+                $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+                if (! in_array($file_extension, ['csv', 'xlsx', 'xls'])) {
+                    $error_message = "Invalid file format. Please upload CSV, XLS, or XLSX files only.";
                 } else {
-                    $file_extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-                    if (! in_array($file_extension, ['csv', 'xlsx', 'xls'])) {
-                        $error_message = "Invalid file format. Please upload CSV, XLS, or XLSX files only.";
+                    // Show Excel warning
+                    if (in_array($file_extension, ['xlsx', 'xls'])) {
+                        $error_message = "Excel file support requires PHPSpreadsheet library. Please convert to CSV format and try again.";
                     } else {
-                        // Show Excel warning
-                        if (in_array($file_extension, ['xlsx', 'xls'])) {
-                            $error_message = "Excel file support requires PHPSpreadsheet library. Please convert to CSV format and try again.";
-                        } else {
-                            // Process the file
-                            $preview_data = processImportFile($file['tmp_name'], $file_extension);
+                        // Process the file
+                        $preview_data = processImportFile($file['tmp_name'], $file_extension);
 
-                            if (empty($preview_data)) {
-                                $error_message = "No valid data found in the file. Please check:
+                        if (empty($preview_data)) {
+                            $error_message = "No valid data found in the file. Please check:
                                 <br>• File has header row with column names
                                 <br>• File contains data rows
                                 <br>• CSV format is correct (comma-separated values)";
-                            } else {
-                                $show_preview            = true;
-                                $_SESSION['import_data'] = $preview_data;
-                                $success_message         = "File uploaded successfully! Found " . count($preview_data) . " rows to preview.";
-                            }
+                        } else {
+                            $show_preview            = true;
+                            $_SESSION['import_data'] = $preview_data;
+                            $success_message         = "File uploaded successfully! Found " . count($preview_data) . " rows to preview.";
                         }
                     }
                 }
-            } elseif ($_POST['action'] === 'confirm' && isset($_SESSION['import_data'])) {
-                $import_results = processImportData($_SESSION['import_data'], $_POST['import_type'], $conn);
-                unset($_SESSION['import_data']);
             }
+        } elseif ($_POST['action'] === 'confirm' && isset($_SESSION['import_data'])) {
+            $import_results = processImportData($_SESSION['import_data'], $_POST['import_type'], $conn);
+            unset($_SESSION['import_data']);
         }
+    }
     }
 
     // Function to process CSV/Excel files
     function processImportFile($file_path, $extension)
     {
-        $data = [];
+    $data = [];
 
-        if ($extension === 'csv') {
-            if (($handle = fopen($file_path, "r")) !== false) {
-                // Read the header
-                $header = fgetcsv($handle, 1000, ",", '"', "\\");
+    if ($extension === 'csv') {
+        if (($handle = fopen($file_path, "r")) !== false) {
+            // Read the header
+            $header = fgetcsv($handle, 0, ",", '"', "\\");
 
-                if ($header === false || empty($header)) {
-                    fclose($handle);
-                    return [];
-                }
-
-                // Clean header
-                $header = array_map(function ($h) {
-                    return trim($h, " \t\n\r\0\x0B\"'");
-                }, $header);
-
-                // Remove empty headers
-                $header = array_filter($header, function ($h) {
-                    return ! empty($h);
-                });
-
-                if (empty($header)) {
-                    fclose($handle);
-                    return [];
-                }
-
-                while (($row = fgetcsv($handle, 1000, ",", '"', "\\")) !== false) {
-                    // Skip completely empty rows
-                    if (empty(array_filter($row, function ($cell) {
-                        return ! empty(trim($cell));
-                    }))) {
-                        continue;
-                    }
-
-                    // Clean row data
-                    $row = array_map(function ($cell) {
-                        return trim($cell, " \t\n\r\0\x0B\"'");
-                    }, $row);
-
-                    // Pad or trim row to match header count
-                    if (count($row) < count($header)) {
-                        $row = array_pad($row, count($header), '');
-                    } elseif (count($row) > count($header)) {
-                        $row = array_slice($row, 0, count($header));
-                    }
-
-                    // Create associative array
-                    $data_row = array_combine($header, $row);
-                    if ($data_row !== false) {
-                        $data[] = $data_row;
-                    }
-                }
+            if ($header === false || empty($header)) {
                 fclose($handle);
+                return [];
             }
-        } else {
-            // For Excel files, we'll use a simple approach
-            // In a real implementation, you'd use PHPSpreadsheet library
-            // For now, return empty array and show error message
-            return [];
-        }
 
-        return $data;
+            // Clean header
+            $header = array_map(function ($h) {
+                return trim($h, " \t\n\r\0\x0B\"'");
+            }, $header);
+
+            // Remove empty headers
+            $header = array_filter($header, function ($h) {
+                return ! empty($h);
+            });
+
+            if (empty($header)) {
+                fclose($handle);
+                return [];
+            }
+
+            while (($row = fgetcsv($handle, 1000, ",", '"', "\\")) !== false) {
+                // Skip completely empty rows
+                if (empty(array_filter($row, function ($cell) {
+                    return ! empty(trim($cell));
+                }))) {
+                    continue;
+                }
+
+                // Clean row data
+                $row = array_map(function ($cell) {
+                    return trim($cell, " \t\n\r\0\x0B\"'");
+                }, $row);
+
+                // Pad or trim row to match header count
+                if (count($row) < count($header)) {
+                    $row = array_pad($row, count($header), '');
+                } elseif (count($row) > count($header)) {
+                    $row = array_slice($row, 0, count($header));
+                }
+
+                // Create associative array
+                $data_row = array_combine($header, $row);
+                if ($data_row !== false) {
+                    $data[] = $data_row;
+                }
+            }
+            fclose($handle);
+        }
+    } else {
+        // For Excel files, we'll use a simple approach
+        // In a real implementation, you'd use PHPSpreadsheet library
+        // For now, return empty array and show error message
+        return [];
+    }
+
+    return $data;
     }
 
     // Function to process and import data
     function processImportData($data, $import_type, $conn)
     {
-        $results = [
-            'success' => 0,
-            'errors'  => 0,
-            'details' => [],
-        ];
+    $results = [
+        'success' => 0,
+        'errors'  => 0,
+        'details' => [],
+    ];
 
-        foreach ($data as $index => $row) {
-            $row_number = $index + 2; // +2 because index starts at 0 and we skip header
+    foreach ($data as $index => $row) {
+        $row_number = $index + 2; // +2 because index starts at 0 and we skip header
 
-            try {
-                if ($import_type === 'students') {
-                    $result = importStudent($row, $conn);
-                } else {
-                    $result = importTeacher($row, $conn);
-                }
-
-                if ($result['success']) {
-                    $results['success']++;
-                    $results['details'][] = "Row $row_number: Successfully imported " . $row['name'];
-                } else {
-                    $results['errors']++;
-                    $results['details'][] = "Row $row_number: Error - " . $result['error'];
-                }
-            } catch (Exception $e) {
-                $results['errors']++;
-                $results['details'][] = "Row $row_number: Exception - " . $e->getMessage();
+        try {
+            if ($import_type === 'students') {
+                $result = importStudent($row, $conn);
+            } else {
+                $result = importTeacher($row, $conn);
             }
-        }
 
-        return $results;
+            if ($result['success']) {
+                $results['success']++;
+                $results['details'][] = "Row $row_number: Successfully imported " . $row['name'];
+            } else {
+                $results['errors']++;
+                $results['details'][] = "Row $row_number: Error - " . $result['error'];
+            }
+        } catch (Exception $e) {
+            $results['errors']++;
+            $results['details'][] = "Row $row_number: Exception - " . $e->getMessage();
+        }
+    }
+
+    return $results;
     }
 
     // Function to import a student
     function importStudent($row, $conn)
     {
-        // Required fields validation
-        $required_fields = ['name', 'username', 'personal_email', 'regno', 'department'];
-        foreach ($required_fields as $field) {
-            if (empty($row[$field])) {
-                return ['success' => false, 'error' => "Missing required field: $field"];
-            }
+    // Required fields validation
+    $required_fields = ['name', 'username', 'personal_email', 'regno', 'department'];
+    foreach ($required_fields as $field) {
+        if (empty($row[$field])) {
+            return ['success' => false, 'error' => "Missing required field: $field"];
         }
+    }
 
-        // Validate email format
-        if (! filter_var($row['personal_email'], FILTER_VALIDATE_EMAIL)) {
-            return ['success' => false, 'error' => "Invalid email format"];
-        }
+    // Validate email format
+    if (! filter_var($row['personal_email'], FILTER_VALIDATE_EMAIL)) {
+        return ['success' => false, 'error' => "Invalid email format"];
+    }
 
-        // Check for duplicate username, regno, or email
-        $check_sql  = "SELECT id FROM student_register WHERE username = ? OR regno = ? OR personal_email = ?";
-        $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("sss", $row['username'], $row['regno'], $row['personal_email']);
-        $check_stmt->execute();
+    // Check for duplicate username, regno, or email
+    $check_sql  = "SELECT id FROM student_register WHERE username = ? OR regno = ? OR personal_email = ?";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("sss", $row['username'], $row['regno'], $row['personal_email']);
+    $check_stmt->execute();
 
-        if ($check_stmt->get_result()->num_rows > 0) {
-            $check_stmt->close();
-            return ['success' => false, 'error' => "Username, Registration Number, or Email already exists"];
-        }
+    if ($check_stmt->get_result()->num_rows > 0) {
         $check_stmt->close();
+        return ['success' => false, 'error' => "Username, Registration Number, or Email already exists"];
+    }
+    $check_stmt->close();
 
-        // Prepare data with defaults
-        $name           = $row['name'];
-        $username       = $row['username'];
-        $personal_email = $row['personal_email'];
-        $regno          = $row['regno'];
-        $department     = $row['department'];
-        $year_of_join   = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
-        $degree         = ! empty($row['degree']) ? $row['degree'] : '';
+    // Prepare data with defaults
+    $name           = $row['name'];
+    $username       = $row['username'];
+    $personal_email = $row['personal_email'];
+    $regno          = $row['regno'];
+    $department     = $row['department'];
+    $year_of_join   = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
+    $degree         = ! empty($row['degree']) ? $row['degree'] : '';
 
-        // Parse DOB - handle various date formats
-        $dob = null;
-        if (! empty($row['dob'])) {
-            // Try to parse different date formats
-            $dob_input = trim($row['dob']);
+    // Parse DOB - handle various date formats
+    $dob = null;
+    if (! empty($row['dob'])) {
+        // Try to parse different date formats
+        $dob_input = trim($row['dob']);
 
-            // Check if it's an Excel serial date number (numeric value > 1000)
-            if (is_numeric($dob_input) && $dob_input > 1000) {
-                // Excel date serial number (days since 1900-01-01)
-                $unix_date = ($dob_input - 25569) * 86400;
-                $dob       = date('Y-m-d', $unix_date);
+        // Check if it's an Excel serial date number (numeric value > 1000)
+        if (is_numeric($dob_input) && $dob_input > 1000) {
+            // Excel date serial number (days since 1900-01-01)
+            $unix_date = ($dob_input - 25569) * 86400;
+            $dob       = date('Y-m-d', $unix_date);
+        } else {
+            // Try to parse as a date string
+            $timestamp = strtotime($dob_input);
+            if ($timestamp !== false) {
+                $dob = date('Y-m-d', $timestamp);
             } else {
-                // Try to parse as a date string
-                $timestamp = strtotime($dob_input);
-                if ($timestamp !== false) {
-                    $dob = date('Y-m-d', $timestamp);
-                } else {
-                    // If parsing fails, leave as null
-                    $dob = null;
-                }
+                // If parsing fails, leave as null
+                $dob = null;
             }
         }
+    }
 
-        $password = password_hash('sona123', PASSWORD_DEFAULT); // Hash the default password
-        $status   = 'student';
+                                                    // Generate secure random password for each user
+    $generated_password = bin2hex(random_bytes(8)); // 16 character random password
+    $password           = password_hash($generated_password, PASSWORD_DEFAULT);
+    $status             = 'student';
 
-        // Insert student with all available fields
-        $insert_sql  = "INSERT INTO student_register (name, dob, username, regno, year_of_join, degree, department, personal_email, password, status, reg_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
-        $insert_stmt = $conn->prepare($insert_sql);
+    // TODO: Send $generated_password to user via email or secure token flow
+    // TODO: Set password_reset_required flag when that column is added
 
-        $insert_stmt->bind_param("ssssssssss",
-            $name,
-            $dob,
-            $username,
-            $regno,
-            $year_of_join,
-            $degree,
-            $department,
-            $personal_email,
-            $password,
-            $status
-        );
+    // Insert student with all available fields
+    $insert_sql  = "INSERT INTO student_register (name, dob, username, regno, year_of_join, degree, department, personal_email, password, status, reg_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+    $insert_stmt = $conn->prepare($insert_sql);
 
-        if ($insert_stmt->execute()) {
-            $insert_stmt->close();
-            return ['success' => true];
-        } else {
-            $error = $insert_stmt->error;
-            $insert_stmt->close();
-            return ['success' => false, 'error' => $error];
-        }
+    $insert_stmt->bind_param("ssssssssss",
+        $name,
+        $dob,
+        $username,
+        $regno,
+        $year_of_join,
+        $degree,
+        $department,
+        $personal_email,
+        $password,
+        $status
+    );
+
+    if ($insert_stmt->execute()) {
+        $insert_stmt->close();
+        return ['success' => true];
+    } else {
+        $error = $insert_stmt->error;
+        $insert_stmt->close();
+        return ['success' => false, 'error' => $error];
+    }
     }
 
     // Function to import a teacher
     function importTeacher($row, $conn)
     {
-        // Required fields validation
-        $required_fields = ['name', 'username', 'email', 'faculty_id', 'department'];
-        foreach ($required_fields as $field) {
-            if (empty($row[$field])) {
-                return ['success' => false, 'error' => "Missing required field: $field"];
-            }
+    // Required fields validation
+    $required_fields = ['name', 'username', 'email', 'faculty_id', 'department'];
+    foreach ($required_fields as $field) {
+        if (empty($row[$field])) {
+            return ['success' => false, 'error' => "Missing required field: $field"];
         }
+    }
 
-        // Validate email format
-        if (! filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
-            return ['success' => false, 'error' => "Invalid email format"];
-        }
+    // Validate email format
+    if (! filter_var($row['email'], FILTER_VALIDATE_EMAIL)) {
+        return ['success' => false, 'error' => "Invalid email format"];
+    }
 
-        // Check for duplicate username, faculty_id, or email
-        $check_sql  = "SELECT id FROM teacher_register WHERE username = ? OR faculty_id = ? OR email = ?";
-        $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("sss", $row['username'], $row['faculty_id'], $row['email']);
-        $check_stmt->execute();
+    // Check for duplicate username, faculty_id, or email
+    $check_sql  = "SELECT id FROM teacher_register WHERE username = ? OR faculty_id = ? OR email = ?";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("sss", $row['username'], $row['faculty_id'], $row['email']);
+    $check_stmt->execute();
 
-        if ($check_stmt->get_result()->num_rows > 0) {
-            $check_stmt->close();
-            return ['success' => false, 'error' => "Username, Faculty ID, or Email already exists"];
-        }
+    if ($check_stmt->get_result()->num_rows > 0) {
         $check_stmt->close();
+        return ['success' => false, 'error' => "Username, Faculty ID, or Email already exists"];
+    }
+    $check_stmt->close();
 
-        // Prepare data with defaults
-        $name         = $row['name'];
-        $username     = $row['username'];
-        $email        = $row['email'];
-        $faculty_id   = $row['faculty_id'];
-        $department   = $row['department'];
-        $year_of_join = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
-        $password     = password_hash('sona123', PASSWORD_DEFAULT); // Hash the default password
-        $status       = 'teacher';                                  // Default status
+    // Prepare data with defaults
+    $name         = $row['name'];
+    $username     = $row['username'];
+    $email        = $row['email'];
+    $faculty_id   = $row['faculty_id'];
+    $department   = $row['department'];
+    $year_of_join = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
+    $password     = password_hash('sona123', PASSWORD_DEFAULT); // Hash the default password
+    $status       = 'teacher';                                  // Default status
 
-        // Insert teacher with all available fields including password and created_at
-        $insert_sql  = "INSERT INTO teacher_register (name, username, faculty_id, year_of_join, department, email, password, created_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
-        $insert_stmt = $conn->prepare($insert_sql);
+    // Insert teacher with all available fields including password and created_at
+    $insert_sql  = "INSERT INTO teacher_register (name, username, faculty_id, year_of_join, department, email, password, created_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
+    $insert_stmt = $conn->prepare($insert_sql);
 
-        $insert_stmt->bind_param("ssssssss",
-            $name,
-            $username,
-            $faculty_id,
-            $year_of_join,
-            $department,
-            $email,
-            $password,
-            $status
-        );
+    $insert_stmt->bind_param("ssssssss",
+        $name,
+        $username,
+        $faculty_id,
+        $year_of_join,
+        $department,
+        $email,
+        $password,
+        $status
+    );
 
-        if ($insert_stmt->execute()) {
-            $insert_stmt->close();
-            return ['success' => true];
-        } else {
-            $error = $insert_stmt->error;
-            $insert_stmt->close();
-            return ['success' => false, 'error' => $error];
-        }
+    if ($insert_stmt->execute()) {
+        $insert_stmt->close();
+        return ['success' => true];
+    } else {
+        $error = $insert_stmt->error;
+        $insert_stmt->close();
+        return ['success' => false, 'error' => $error];
+    }
     }
 ?>
 
@@ -719,6 +744,7 @@
                     </div>
 
                     <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                         <input type="hidden" name="action" value="upload">
 
                         <div class="upload-area" id="uploadArea">
@@ -754,6 +780,7 @@
                     <p>Review the data below and select the import type:</p>
 
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                         <input type="hidden" name="action" value="confirm">
 
                         <div style="margin: 20px 0;">

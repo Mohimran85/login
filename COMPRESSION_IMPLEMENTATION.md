@@ -15,8 +15,12 @@ Implemented automatic image and PDF compression across all file upload points in
 - Converts JPG/PNG images to WebP format (60-80% smaller)
 - Compresses PDFs using Ghostscript (if available)
 - Falls back gracefully if compression tools unavailable
-- Automatic cleanup of original files after compression
-- Detailed logging of compression savings
+- Safe compression workflow with validation:
+  1. Write compressed output to temporary location
+  2. Validate compressed file (can be opened/read, compare hashes)
+  3. Only swap temp to final location after successful validation
+  4. Configurable deletion behavior with grace period (24-48h default)
+- Detailed logging of compression savings, file hashes, and validation results
 
 **Methods:**
 
@@ -190,7 +194,10 @@ Simply comment out `require_once('../includes/FileCompressor.php');` in any file
 1. **Monitor disk usage** weekly for first month
 2. **Check error logs** for compression failures
 3. **Install Ghostscript** for better PDF compression (optional)
-4. **Backup strategy:** Keep backups of original uploads (optional)
+4. **Backup strategy:** Always keep backups of original uploads (required)
+   - Backups must be created before automatic deletion of originals
+   - Implement retention policy (minimum 30 days recommended)
+   - Store backups in separate location to prevent data loss
 5. **Consider cloud storage** when approaching storage limits
 
 ## Future Enhancements

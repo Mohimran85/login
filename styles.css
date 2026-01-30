@@ -37,7 +37,7 @@ h6 {
   object-fit: contain;
 }
 header {
-  display: none !important; /* Hide header completely */
+  display: none;
 }
 .container {
   display: flex;
@@ -382,14 +382,14 @@ html {
     flex-direction: column;
     height: auto;
   }
-  header{
+  header {
     display: block;
   }
 }
 
 @media (max-width: 768px) {
   header {
-    display:flex;
+    display: flex;
   }
   main {
     margin-top: 20px;
@@ -516,11 +516,7 @@ html {
 #file-chosen {
   margin-left: 10px;
   font-size: 15px;
-    color: #f7f7f7;
-}
-
-/* Error and success message styling */
-.message {
+  color: #333333;
   padding: 12px;
   border-radius: 10px;
   margin: 15px 0;
@@ -543,20 +539,7 @@ html {
 
 /* Floating animation removed */
 
-/* Add subtle animations */
-.form-group input {
-  position: relative;
-}
-
-.form-group input:focus::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  z-index: -1;
-  opacity: 0.1;
+/* Add subtle animations - use box-shadow instead of ::before on input */
+.form-group input:focus {
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }

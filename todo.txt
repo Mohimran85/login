@@ -13,11 +13,10 @@
 •	Workshop no winner  ✅
 •	Make the admin responsive ✅
 •	Add it to a domain   **no money**
-•   split the od letter details in colunmns  ✅
+•   split the od letter details in columns  ✅
 •	remove link for the excel sheet  ✅
 •   add semester in the profile         ✅
-    add Internships to admin Dashboard   ✅
-
-    change student profile to disable semester and departement 
-    remove double scroll in admin user management
-    move the events up in the my participation page(student)
+•   add Internships to admin Dashboard   ✅
+•   change student profile to disable semester and department 
+•   remove double scroll in admin user management
+•   move the events up in the my participation page(student)

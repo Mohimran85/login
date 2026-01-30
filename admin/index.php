@@ -8,15 +8,15 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        // User is not logged in, redirect to login page
-        header("Location: ../index.php");
-        exit();
+    // User is not logged in, redirect to login page
+    header("Location: ../index.php");
+    exit();
     }
 
     // Get user data for header profile
     $conn = new mysqli("localhost", "root", "", "event_management_system");
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
     }
 
     $username  = $_SESSION['username'];
@@ -25,50 +25,50 @@
     $tables    = ['student_register', 'teacher_register'];
 
     foreach ($tables as $table) {
-        $sql  = "SELECT name FROM $table WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sql  = "SELECT name FROM $table WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_type = $table === 'student_register' ? 'student' : 'teacher';
-            break;
-        }
-        $stmt->close();
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        break;
+    }
+    $stmt->close();
     }
 
     // Check teacher role/status if user is a teacher
     if ($user_type === 'teacher') {
-        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
-        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
-        $teacher_status_stmt->bind_param("s", $username);
-        $teacher_status_stmt->execute();
-        $teacher_status_result = $teacher_status_stmt->get_result();
+    $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+    $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+    $teacher_status_stmt->bind_param("s", $username);
+    $teacher_status_stmt->execute();
+    $teacher_status_result = $teacher_status_stmt->get_result();
 
-        $teacher_status = 'teacher'; // Default status
-        if ($teacher_status_result->num_rows > 0) {
-            $status_data    = $teacher_status_result->fetch_assoc();
-            $teacher_status = $status_data['status'];
-        }
-        $teacher_status_stmt->close();
+    $teacher_status = 'teacher'; // Default status
+    if ($teacher_status_result->num_rows > 0) {
+        $status_data    = $teacher_status_result->fetch_assoc();
+        $teacher_status = $status_data['status'];
+    }
+    $teacher_status_stmt->close();
 
-        // Only allow admin role to access admin dashboard
-        if ($teacher_status !== 'admin') {
-            $message = ($teacher_status === 'inactive')
-                ? 'Your account is inactive. Please contact an administrator to restore access.'
-                : 'Admin dashboard access requires administrator role. Your current role is: ' . ucfirst($teacher_status);
-            $_SESSION['access_denied'] = $message;
-            header("Location: ../teacher/index.php");
-            exit();
-        }
+    // Only allow admin role to access admin dashboard
+    if ($teacher_status !== 'admin') {
+        $message = ($teacher_status === 'inactive')
+            ? 'Your account is inactive. Please contact an administrator to restore access.'
+            : 'Admin dashboard access requires administrator role. Your current role is: ' . ucfirst($teacher_status);
+        $_SESSION['access_denied'] = $message;
+        header("Location: ../teacher/index.php");
+        exit();
+    }
     }
 
     // Redirect students who shouldn't have access to admin dashboard
     if ($user_type === 'student') {
-        header("Location: ../student.php");
-        exit();
+    header("Location: ../student.php");
+    exit();
     }
 
     // Get selected year from URL parameter or default to current year
@@ -89,20 +89,20 @@
     $student_sql    = "SELECT COUNT(*) as count FROM student_register";
     $student_result = $conn->query($student_sql);
     if ($student_result) {
-        $total_students = $student_result->fetch_assoc()['count'];
+    $total_students = $student_result->fetch_assoc()['count'];
     } else {
-        // Fallback value if query fails
-        $total_students = 0;
+    // Fallback value if query fails
+    $total_students = 0;
     }
 
     // Count total teachers (not year-specific)
     $teacher_sql    = "SELECT COUNT(*) as count FROM teacher_register";
     $teacher_result = $conn->query($teacher_sql);
     if ($teacher_result) {
-        $total_teachers = $teacher_result->fetch_assoc()['count'];
+    $total_teachers = $teacher_result->fetch_assoc()['count'];
     } else {
-        // Fallback value if query fails
-        $total_teachers = 0;
+    // Fallback value if query fails
+    $total_teachers = 0;
     }
 
     // Count total unique event types from student registrations for selected year (only approved)
@@ -125,23 +125,23 @@
     $compare_category_analytics   = [];
 
     if ($is_comparison_mode) {
-        // Count events for comparison year (only approved)
-        $compare_events_sql    = "SELECT COUNT(DISTINCT event_type) as count FROM student_event_register WHERE event_type IS NOT NULL AND event_type != '' AND YEAR(start_date) = $compare_year AND verification_status = 'Approved'";
-        $compare_events_result = $conn->query($compare_events_sql);
-        $compare_total_events  = $compare_events_result ? $compare_events_result->fetch_assoc()['count'] : 0;
+    // Count events for comparison year (only approved)
+    $compare_events_sql    = "SELECT COUNT(DISTINCT event_type) as count FROM student_event_register WHERE event_type IS NOT NULL AND event_type != '' AND YEAR(start_date) = $compare_year AND verification_status = 'Approved'";
+    $compare_events_result = $conn->query($compare_events_sql);
+    $compare_total_events  = $compare_events_result ? $compare_events_result->fetch_assoc()['count'] : 0;
 
-        // Count participations for comparison year (only approved)
-        $compare_parts_sql            = "SELECT COUNT(*) as count FROM student_event_register WHERE YEAR(start_date) = $compare_year AND verification_status = 'Approved'";
-        $compare_parts_result         = $conn->query($compare_parts_sql);
-        $compare_total_participations = $compare_parts_result ? $compare_parts_result->fetch_assoc()['count'] : 0;
+    // Count participations for comparison year (only approved)
+    $compare_parts_sql            = "SELECT COUNT(*) as count FROM student_event_register WHERE YEAR(start_date) = $compare_year AND verification_status = 'Approved'";
+    $compare_parts_result         = $conn->query($compare_parts_sql);
+    $compare_total_participations = $compare_parts_result ? $compare_parts_result->fetch_assoc()['count'] : 0;
 
-        // Get category analytics for comparison year (only approved)
-        $compare_category_sql = "SELECT
+    // Get category analytics for comparison year (only approved)
+    $compare_category_sql = "SELECT
             event_type,
             COUNT(*) as participations,
             COUNT(DISTINCT event_type) as unique_events,
             COUNT(DISTINCT regno) as unique_participants,
-            SUM(CASE WHEN LOWER(TRIM(prize)) IN ('first', 'secound', 'third') THEN 1 ELSE 0 END) as prize_winners
+            SUM(CASE WHEN LOWER(TRIM(prize)) IN ('first', 'second', 'third') THEN 1 ELSE 0 END) as prize_winners
             FROM student_event_register
             WHERE event_type IS NOT NULL AND event_type != ''
             AND YEAR(start_date) = $compare_year
@@ -149,25 +149,25 @@
             GROUP BY event_type
             ORDER BY participations DESC";
 
-        $compare_category_result = $conn->query($compare_category_sql);
+    $compare_category_result = $conn->query($compare_category_sql);
 
-        if ($compare_category_result) {
-            while ($row = $compare_category_result->fetch_assoc()) {
-                $category = $row['event_type'];
-                // Non-competitive events don't have success rates
-                $nonCompetitiveEvents                  = ['Workshop', 'Seminar', 'Webinar', 'Training', 'Symposium'];
-                $isCompetitive                         = ! in_array($category, $nonCompetitiveEvents);
-                $compare_category_analytics[$category] = [
-                    'name'                 => $category,
-                    'total_participations' => (int) $row['participations'],
-                    'total_events'         => (int) $row['unique_events'],
-                    'total_participants'   => (int) $row['unique_participants'],
-                    'prize_winners'        => (int) $row['prize_winners'],
-                    'success_rate'         => $isCompetitive && $row['participations'] > 0 ? round(($row['prize_winners'] / $row['participations']) * 100, 1) : 0,
-                    'is_competitive'       => $isCompetitive,
-                ];
-            }
+    if ($compare_category_result) {
+        while ($row = $compare_category_result->fetch_assoc()) {
+            $category = $row['event_type'];
+            // Non-competitive events don't have success rates
+            $nonCompetitiveEvents                  = ['Workshop', 'Seminar', 'Webinar', 'Training', 'Symposium'];
+            $isCompetitive                         = ! in_array($category, $nonCompetitiveEvents);
+            $compare_category_analytics[$category] = [
+                'name'                 => $category,
+                'total_participations' => (int) $row['participations'],
+                'total_events'         => (int) $row['unique_events'],
+                'total_participants'   => (int) $row['unique_participants'],
+                'prize_winners'        => (int) $row['prize_winners'],
+                'success_rate'         => $isCompetitive && $row['participations'] > 0 ? round(($row['prize_winners'] / $row['participations']) * 100, 1) : 0,
+                'is_competitive'       => $isCompetitive,
+            ];
         }
+    }
     }
 
     // Enhanced Events by Category Analytics System (Students Only) - Year Specific
@@ -196,44 +196,44 @@
 
     // Process student events only
     if ($student_category_result) {
-        while ($row = $student_category_result->fetch_assoc()) {
-            $category = $row['event_type'];
-            // Non-competitive events don't have success rates
-            $nonCompetitiveEvents          = ['Workshop', 'Seminar', 'Webinar', 'Training', 'Symposium'];
-            $isCompetitive                 = ! in_array($category, $nonCompetitiveEvents);
-            $category_analytics[$category] = [
-                'name'                 => $category,
-                'total_participations' => (int) $row['participations'],
-                'total_events'         => (int) $row['unique_events'],
-                'total_participants'   => (int) $row['unique_participants'],
-                'prize_winners'        => (int) $row['prize_winners'],
-                'avg_prize_amount'     => round((float) $row['avg_prize_amount'], 2),
-                'success_rate'         => $isCompetitive && $row['participations'] > 0 ? round(($row['prize_winners'] / $row['participations']) * 100, 1) : 0,
-                'first_event'          => $row['first_event_date'],
-                'latest_event'         => $row['latest_event_date'],
-                'category_type'        => 'student_only',
-                'activity_months'      => 0,
-                'has_success_metrics'  => true,
-                'is_competitive'       => $isCompetitive,
-            ];
-        }
+    while ($row = $student_category_result->fetch_assoc()) {
+        $category = $row['event_type'];
+        // Non-competitive events don't have success rates
+        $nonCompetitiveEvents          = ['Workshop', 'Seminar', 'Webinar', 'Training', 'Symposium'];
+        $isCompetitive                 = ! in_array($category, $nonCompetitiveEvents);
+        $category_analytics[$category] = [
+            'name'                 => $category,
+            'total_participations' => (int) $row['participations'],
+            'total_events'         => (int) $row['unique_events'],
+            'total_participants'   => (int) $row['unique_participants'],
+            'prize_winners'        => (int) $row['prize_winners'],
+            'avg_prize_amount'     => round((float) $row['avg_prize_amount'], 2),
+            'success_rate'         => $isCompetitive && $row['participations'] > 0 ? round(($row['prize_winners'] / $row['participations']) * 100, 1) : 0,
+            'first_event'          => $row['first_event_date'],
+            'latest_event'         => $row['latest_event_date'],
+            'category_type'        => 'student_only',
+            'activity_months'      => 0,
+            'has_success_metrics'  => true,
+            'is_competitive'       => $isCompetitive,
+        ];
+    }
     }
 
     // Calculate activity months for each category
     foreach ($category_analytics as $key => $category) {
-        if ($category['first_event'] && $category['latest_event']) {
-            $first_date                                  = new DateTime($category['first_event']);
-            $latest_date                                 = new DateTime($category['latest_event']);
-            $interval                                    = $first_date->diff($latest_date);
-            $category_analytics[$key]['activity_months'] = $interval->m + ($interval->y * 12) + 1;
-        } else {
-            $category_analytics[$key]['activity_months'] = 1;
-        }
+    if ($category['first_event'] && $category['latest_event']) {
+        $first_date                                  = new DateTime($category['first_event']);
+        $latest_date                                 = new DateTime($category['latest_event']);
+        $interval                                    = $first_date->diff($latest_date);
+        $category_analytics[$key]['activity_months'] = $interval->m + ($interval->y * 12) + 1;
+    } else {
+        $category_analytics[$key]['activity_months'] = 1;
+    }
     }
 
     // Sort categories by total participations and limit to top 12
     uasort($category_analytics, function ($a, $b) {
-        return $b['total_participations'] - $a['total_participations'];
+    return $b['total_participations'] - $a['total_participations'];
     });
     $category_analytics = array_slice($category_analytics, 0, 12, true);
 
@@ -243,25 +243,25 @@
 
     // Add percentage calculations
     foreach ($category_analytics as $key => $category) {
-        $category_analytics[$key]['event_percentage'] = $total_category_events > 0 ?
-        round(($category['total_events'] / $total_category_events) * 100, 1) : 0;
+    $category_analytics[$key]['event_percentage'] = $total_category_events > 0 ?
+    round(($category['total_events'] / $total_category_events) * 100, 1) : 0;
     }
 
     // Prepare data for charts (Students Only)
     if (! empty($category_analytics)) {
-        $category_data          = array_keys($category_analytics);
-        $category_counts        = array_column($category_analytics, 'total_participations');
-        $category_events_count  = array_column($category_analytics, 'total_events');
-        $category_success_rates = array_column($category_analytics, 'success_rate');
+    $category_data          = array_keys($category_analytics);
+    $category_counts        = array_column($category_analytics, 'total_participations');
+    $category_events_count  = array_column($category_analytics, 'total_events');
+    $category_success_rates = array_column($category_analytics, 'success_rate');
     } else {
-        // No sample data - show empty state
-        $category_data                 = [];
-        $category_counts               = [];
-        $category_events_count         = [];
-        $category_success_rates        = [];
-        $category_analytics            = [];
-        $total_category_participations = 0;
-        $total_category_events         = 0;
+    // No sample data - show empty state
+    $category_data                 = [];
+    $category_counts               = [];
+    $category_events_count         = [];
+    $category_success_rates        = [];
+    $category_analytics            = [];
+    $total_category_participations = 0;
+    $total_category_events         = 0;
     }
 
     // Enhanced Monthly Event Trends Data Collection (Students Only)
@@ -280,84 +280,84 @@
     $previous_year_wins           = [];
 
     for ($i = 1; $i <= 12; $i++) {
-        $month_num = str_pad($i, 2, '0', STR_PAD_LEFT);
+    $month_num = str_pad($i, 2, '0', STR_PAD_LEFT);
 
-        // Enhanced date matching for better accuracy
-        $date_condition          = "YEAR(start_date) = $current_year AND MONTH(start_date) = $i";
-        $previous_year_condition = "YEAR(start_date) = $previous_year AND MONTH(start_date) = $i";
+    // Enhanced date matching for better accuracy
+    $date_condition          = "YEAR(start_date) = $current_year AND MONTH(start_date) = $i";
+    $previous_year_condition = "YEAR(start_date) = $previous_year AND MONTH(start_date) = $i";
 
-        // EVENT COUNTING LOGIC:
-        // - Events: Count unique combinations of event_name + date (1 workshop = 1 event, regardless of attendees)
-        // - Participations: Count total individual student registrations
-        // - Wins: Count individual prize winners
+    // EVENT COUNTING LOGIC:
+    // - Events: Count unique combinations of event_name + date (1 workshop = 1 event, regardless of attendees)
+    // - Participations: Count total individual student registrations
+    // - Wins: Count individual prize winners
 
-        // Count DISTINCT events by event_type for this month
-        // One event type = one unique type of event, regardless of how many instances or students attend
-        $student_events_sql = "SELECT COUNT(DISTINCT event_type) as count
+    // Count DISTINCT events by event_type for this month
+    // One event type = one unique type of event, regardless of how many instances or students attend
+    $student_events_sql = "SELECT COUNT(DISTINCT event_type) as count
                                   FROM student_event_register
                                   WHERE $date_condition AND event_type IS NOT NULL AND event_type != '' AND verification_status = 'Approved'";
-        $student_events_result = $conn->query($student_events_sql);
-        $student_events_count  = $student_events_result ? (int) $student_events_result->fetch_assoc()['count'] : 0;
+    $student_events_result = $conn->query($student_events_sql);
+    $student_events_count  = $student_events_result ? (int) $student_events_result->fetch_assoc()['count'] : 0;
 
-        // Count ALL student participations for this month (each record = 1 participation)
-        $student_parts_sql = "SELECT COUNT(*) as count
+    // Count ALL student participations for this month (each record = 1 participation)
+    $student_parts_sql = "SELECT COUNT(*) as count
                                  FROM student_event_register
                                  WHERE $date_condition AND verification_status = 'Approved'";
-        $student_parts_result = $conn->query($student_parts_sql);
-        $student_parts_count  = $student_parts_result ? (int) $student_parts_result->fetch_assoc()['count'] : 0;
+    $student_parts_result = $conn->query($student_parts_sql);
+    $student_parts_count  = $student_parts_result ? (int) $student_parts_result->fetch_assoc()['count'] : 0;
 
-        // Count ALL prize winners for this month (each prize record = 1 winner)
-        $wins_sql = "SELECT COUNT(*) as count
+    // Count ALL prize winners for this month (each prize record = 1 winner)
+    $wins_sql = "SELECT COUNT(*) as count
                      FROM student_event_register
                      WHERE $date_condition AND LOWER(TRIM(prize)) IN ('first', 'secound', 'third')
                      AND verification_status = 'Approved'";
-        $wins_result = $conn->query($wins_sql);
-        $wins_count  = $wins_result ? (int) $wins_result->fetch_assoc()['count'] : 0;
+    $wins_result = $conn->query($wins_sql);
+    $wins_count  = $wins_result ? (int) $wins_result->fetch_assoc()['count'] : 0;
 
-        // Collect previous year data for YoY comparison - count unique event types only
-        $prev_events_sql = "SELECT COUNT(DISTINCT event_type) as count
+    // Collect previous year data for YoY comparison - count unique event types only
+    $prev_events_sql = "SELECT COUNT(DISTINCT event_type) as count
                                FROM student_event_register
                                WHERE $previous_year_condition AND event_type IS NOT NULL AND event_type != '' AND verification_status = 'Approved'";
-        $prev_events_result = $conn->query($prev_events_sql);
-        $prev_events_count  = $prev_events_result ? (int) $prev_events_result->fetch_assoc()['count'] : 0;
+    $prev_events_result = $conn->query($prev_events_sql);
+    $prev_events_count  = $prev_events_result ? (int) $prev_events_result->fetch_assoc()['count'] : 0;
 
-        $prev_parts_sql = "SELECT COUNT(*) as count
+    $prev_parts_sql = "SELECT COUNT(*) as count
                               FROM student_event_register
                               WHERE $previous_year_condition AND verification_status = 'Approved'";
-        $prev_parts_result = $conn->query($prev_parts_sql);
-        $prev_parts_count  = $prev_parts_result ? (int) $prev_parts_result->fetch_assoc()['count'] : 0;
+    $prev_parts_result = $conn->query($prev_parts_sql);
+    $prev_parts_count  = $prev_parts_result ? (int) $prev_parts_result->fetch_assoc()['count'] : 0;
 
-        $prev_wins_sql = "SELECT COUNT(*) as count
+    $prev_wins_sql = "SELECT COUNT(*) as count
                           FROM student_event_register
                           WHERE $previous_year_condition AND LOWER(TRIM(prize)) IN ('first', 'secound', 'third')
                           AND verification_status = 'Approved'";
-        $prev_wins_result = $conn->query($prev_wins_sql);
-        $prev_wins_count  = $prev_wins_result ? (int) $prev_wins_result->fetch_assoc()['count'] : 0;
+    $prev_wins_result = $conn->query($prev_wins_sql);
+    $prev_wins_count  = $prev_wins_result ? (int) $prev_wins_result->fetch_assoc()['count'] : 0;
 
-        // Store data for charts
-        $monthly_events[]         = $student_events_count;
-        $monthly_participations[] = $student_parts_count;
-        $monthly_wins[]           = $wins_count;
+    // Store data for charts
+    $monthly_events[]         = $student_events_count;
+    $monthly_participations[] = $student_parts_count;
+    $monthly_wins[]           = $wins_count;
 
-        // Store previous year data for YoY comparison
-        $previous_year_events[]         = $prev_events_count;
-        $previous_year_participations[] = $prev_parts_count;
-        $previous_year_wins[]           = $prev_wins_count;
+    // Store previous year data for YoY comparison
+    $previous_year_events[]         = $prev_events_count;
+    $previous_year_participations[] = $prev_parts_count;
+    $previous_year_wins[]           = $prev_wins_count;
 
-        // Debug logging for event counting logic (remove in production)
-        if ($student_events_count > 0 || $student_parts_count > 0 || $wins_count > 0) {
-            error_log("Month $i ($current_year): Unique Events=$student_events_count, Total Participations=$student_parts_count, Wins=$wins_count");
-        }
+    // Debug logging for event counting logic (remove in production)
+    if ($student_events_count > 0 || $student_parts_count > 0 || $wins_count > 0) {
+        error_log("Month $i ($current_year): Unique Events=$student_events_count, Total Participations=$student_parts_count, Wins=$wins_count");
+    }
 
-        // Store detailed data for analysis
-        $monthly_data[] = [
-            'month'             => $months[$i - 1],
-            'month_full'        => $month_names[$i - 1],
-            'events'            => $student_events_count,
-            'participations'    => $student_parts_count,
-            'wins'              => $wins_count,
-            'avg_participation' => $student_events_count > 0 ? round($student_parts_count / $student_events_count, 1) : 0,
-        ];
+    // Store detailed data for analysis
+    $monthly_data[] = [
+        'month'             => $months[$i - 1],
+        'month_full'        => $month_names[$i - 1],
+        'events'            => $student_events_count,
+        'participations'    => $student_parts_count,
+        'wins'              => $wins_count,
+        'avg_participation' => $student_events_count > 0 ? round($student_parts_count / $student_events_count, 1) : 0,
+    ];
     }
 
     // Calculate trend analytics (Students Only)
@@ -382,18 +382,18 @@
 
     // Data Quality Check: Ensure no duplicate months and validate data integrity
     if (count($monthly_data) !== 12) {
-        // Fix array if somehow we don't have 12 months
-        $monthly_data = array_slice($monthly_data, 0, 12);
-        while (count($monthly_data) < 12) {
-            $monthly_data[] = [
-                'month'             => $months[count($monthly_data)],
-                'month_full'        => $month_names[count($monthly_data)],
-                'events'            => 0,
-                'participations'    => 0,
-                'wins'              => 0,
-                'avg_participation' => 0,
-            ];
-        }
+    // Fix array if somehow we don't have 12 months
+    $monthly_data = array_slice($monthly_data, 0, 12);
+    while (count($monthly_data) < 12) {
+        $monthly_data[] = [
+            'month'             => $months[count($monthly_data)],
+            'month_full'        => $month_names[count($monthly_data)],
+            'events'            => 0,
+            'participations'    => 0,
+            'wins'              => 0,
+            'avg_participation' => 0,
+        ];
+    }
     }
 
     // Final validation: ensure arrays are exactly 12 elements for 2025
@@ -406,27 +406,27 @@
     $previous_year_wins           = array_slice($previous_year_wins, 0, 12);
 
     while (count($monthly_events) < 12) {
-        $monthly_events[] = 0;
+    $monthly_events[] = 0;
     }
 
     while (count($monthly_participations) < 12) {
-        $monthly_participations[] = 0;
+    $monthly_participations[] = 0;
     }
 
     while (count($monthly_wins) < 12) {
-        $monthly_wins[] = 0;
+    $monthly_wins[] = 0;
     }
 
     while (count($previous_year_events) < 12) {
-        $previous_year_events[] = 0;
+    $previous_year_events[] = 0;
     }
 
     while (count($previous_year_participations) < 12) {
-        $previous_year_participations[] = 0;
+    $previous_year_participations[] = 0;
     }
 
     while (count($previous_year_wins) < 12) {
-        $previous_year_wins[] = 0;
+    $previous_year_wins[] = 0;
     }
 
     $conn->close();
@@ -604,12 +604,12 @@
         <div class="main-card" id="dashboard-cards">
           <div class="year-indicator">
             <?php if ($is_comparison_mode): ?>
-              <h3>📊 Year-over-Year Comparison:<?php echo $current_year; ?> vs<?php echo $compare_year; ?></h3>
+              <h3>Year-over-Year Comparison:<?php echo $current_year; ?> vs<?php echo $compare_year; ?></h3>
               <p>Comparing analytics between                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $current_year; ?> and<?php echo $compare_year; ?>
                 <span class="custom-year-note">(Comparison Mode)</span>
               </p>
             <?php else: ?>
-              <h3>📊 Dashboard Analytics for<?php echo $current_year; ?></h3>
+              <h3> Dashboard Analytics for <?php echo $current_year; ?></h3>
               <p>Showing data for academic year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $current_year; ?>
                 <?php if (isset($_GET['year'])): ?>
                   <span class="custom-year-note">(Custom Year Selected)</span>
@@ -681,7 +681,7 @@
             <div class="comparison-card">
               <div class="comparison-header">
                 <h4>Categories</h4>
-                <span class="comparison-icon">📊</span>
+                <span class="comparison-icon"></span>
               </div>
               <div class="comparison-data">
                 <div class="year-data current-year">
@@ -773,7 +773,7 @@
             <!-- Category Statistics Summary -->
             <div class="category-summary">
               <div class="summary-stats">
-                <div class="summary-item">
+                <div class="summary-item clickable-summary" onclick="showWinnersModal()" style="cursor: pointer;" title="Click to view winner details">
                   <span class="summary-value"><?php
                                                   $total_winners = array_sum(array_column($category_analytics, 'prize_winners'));
                                               echo number_format($total_winners);
@@ -869,7 +869,6 @@
                           </div>
                         </div>
                       </td>
-                    </tr>
                     </tr>
                     <?php else: ?>
                     <?php foreach ($category_analytics as $category): ?>
@@ -1394,7 +1393,7 @@
         const uniqueParticipations = new Set(window.monthlyParticipations.filter(v => v > 0));
         const uniqueWins = new Set(window.monthlyWins.filter(v => v > 0));
 
-        console.log('📊 Uniqueness Statistics:');
+        console.log(' Uniqueness Statistics:');
         console.log(`Events: ${uniqueEvents.size} unique values out of ${window.monthlyEvents.filter(v => v > 0).length} non-zero months`);
         console.log(`Participations: ${uniqueParticipations.size} unique values out of ${window.monthlyParticipations.filter(v => v > 0).length} non-zero months`);
         console.log(`Wins: ${uniqueWins.size} unique values out of ${window.monthlyWins.filter(v => v > 0).length} non-zero months`);
@@ -1662,6 +1661,401 @@
       analyticsCards.forEach((card, index) => {
         card.style.scrollMarginTop = '100px'; // Account for fixed header
       });
+    });
+    </script>
+
+    <!-- Winners Modal -->
+    <div id="winnersModal" class="winners-modal" style="display: none;">
+      <div class="winners-modal-content">
+        <div class="winners-modal-header">
+          <h2>Winners Details - <span id="winnersYear"></span></h2>
+          <span class="winners-modal-close" onclick="closeWinnersModal()">&times;</span>
+        </div>
+        <div class="winners-modal-filters">
+          <select id="categoryFilter" onchange="filterWinnersByCategory()">
+            <option value="">All Categories</option>
+          </select>
+          <div class="winners-count">
+            Total Winners: <span id="winnersCount">0</span>
+          </div>
+        </div>
+        <div id="winnersModalBody" class="winners-modal-body">
+          <div class="loading-spinner">Loading winners...</div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+    /* Winners Modal Styles */
+    .winners-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .winners-modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 1200px;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .winners-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 30px;
+      border-bottom: 2px solid #e0e0e0;
+      background: linear-gradient(135deg, #1e4276 0%, #2a5ba8 100%);
+      color: white;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .winners-modal-header h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .winners-modal-close {
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      line-height: 1;
+      transition: transform 0.2s;
+    }
+
+    .winners-modal-close:hover {
+      transform: scale(1.2);
+    }
+
+    .winners-modal-filters {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 30px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    #categoryFilter {
+      padding: 8px 15px;
+      border: 2px solid #1e4276;
+      border-radius: 6px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    #categoryFilter:hover {
+      border-color: #2a5ba8;
+    }
+
+    .winners-count {
+      font-weight: 600;
+      color: #1e4276;
+      font-size: 16px;
+    }
+
+    .winners-modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 30px;
+    }
+
+    .loading-spinner {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-size: 18px;
+    }
+
+    .winners-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    .winners-table thead {
+      background: linear-gradient(135deg, #1e4276 0%, #2a5ba8 100%);
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .winners-table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 14px;
+      border-bottom: 2px solid #0c3878;
+    }
+
+    .winners-table tbody tr {
+      transition: background-color 0.2s;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .winners-table tbody tr:hover {
+      background-color: #f0f4ff;
+    }
+
+    .winners-table td {
+      padding: 12px;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .prize-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .prize-first {
+      background: linear-gradient(135deg, #ffd700, #ffed4e);
+      color: #8b6914;
+    }
+
+    .prize-second {
+      background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+      color: #555;
+    }
+
+    .prize-third {
+      background: linear-gradient(135deg, #cd7f32, #e5a86d);
+      color: #5c3a1a;
+    }
+
+    .no-winners {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-size: 16px;
+    }
+
+    .clickable-summary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+    }
+
+    .clickable-summary:active {
+      transform: translateY(0);
+    }
+
+    /* Scrollbar styling for modal */
+    .winners-modal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .winners-modal-body::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .winners-modal-body::-webkit-scrollbar-thumb {
+      background: #1e4276;
+      border-radius: 4px;
+    }
+
+    .winners-modal-body::-webkit-scrollbar-thumb:hover {
+      background: #0c3878;
+    }
+    </style>
+
+    <script>
+    // Winners Modal Functions
+    let allWinners = [];
+    let currentCategory = '';
+
+    function showWinnersModal() {
+      const modal = document.getElementById('winnersModal');
+      const year = document.getElementById('yearSelector').value;
+      document.getElementById('winnersYear').textContent = year;
+      modal.style.display = 'flex';
+      loadWinnersData(year);
+    }
+
+    function closeWinnersModal() {
+      const modal = document.getElementById('winnersModal');
+      modal.style.display = 'none';
+      allWinners = [];
+      currentCategory = '';
+    }
+
+    function loadWinnersData(year) {
+      const modalBody = document.getElementById('winnersModalBody');
+      modalBody.innerHTML = '<div class="loading-spinner">Loading winners...</div>';
+
+      fetch(`ajax/get_winners.php?year=${year}`)
+        .then(response => {
+          // Try to parse JSON regardless of status code
+          return response.json().then(data => ({
+            status: response.status,
+            ok: response.ok,
+            data: data
+          }));
+        })
+        .then(result => {
+          console.log('Full response:', result); // Debug log
+
+          if (result.ok && result.data.success) {
+            allWinners = result.data.winners;
+            populateCategoryFilter();
+            displayWinners(allWinners);
+          } else {
+            // Show detailed error from server
+            const errorMsg = result.data.error || 'Unknown error occurred';
+            const errorDetails = result.data.line ? ` (Line: ${result.data.line}, File: ${result.data.file})` : '';
+            modalBody.innerHTML = `<div class="no-winners">
+              <strong>Error loading winners:</strong><br>
+              ${errorMsg}${errorDetails}
+            </div>`;
+            console.error('API Error:', result.data);
+          }
+        })
+        .catch(error => {
+          console.error('Fetch Error:', error);
+          modalBody.innerHTML = `<div class="no-winners">
+            <strong>Error loading winners data:</strong><br>
+            ${error.message}
+          </div>`;
+        });
+    }
+
+    function populateCategoryFilter() {
+      const categoryFilter = document.getElementById('categoryFilter');
+      const categories = [...new Set(allWinners.map(w => w.event_type))].sort();
+
+      let options = '<option value="">All Categories</option>';
+      categories.forEach(cat => {
+        options += `<option value="${cat}">${cat}</option>`;
+      });
+      categoryFilter.innerHTML = options;
+    }
+
+    function filterWinnersByCategory() {
+      const categoryFilter = document.getElementById('categoryFilter');
+      currentCategory = categoryFilter.value;
+
+      const filteredWinners = currentCategory
+        ? allWinners.filter(w => w.event_type === currentCategory)
+        : allWinners;
+
+      displayWinners(filteredWinners);
+    }
+
+    function displayWinners(winners) {
+      const modalBody = document.getElementById('winnersModalBody');
+      const winnersCount = document.getElementById('winnersCount');
+      winnersCount.textContent = winners.length;
+
+      if (winners.length === 0) {
+        modalBody.innerHTML = '<div class="no-winners">No winners found for the selected criteria</div>';
+        return;
+      }
+
+      let tableHtml = `
+        <table class="winners-table">
+          <thead>
+            <tr>
+              <th>Reg No</th>
+              <th>Name</th>
+              <th>Semester</th>
+              <th>Event Name</th>
+              <th>Category</th>
+              <th>Prize</th>
+              <th>Prize Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      winners.forEach(winner => {
+        const prizeClass = winner.prize.toLowerCase();
+        const prizeAmount = winner.prize_amount ? winner.prize_amount : 'N/A';
+        const eventDate = new Date(winner.start_date).toLocaleDateString('en-IN', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+
+        tableHtml += `
+          <tr>
+            <td>${winner.regno}</td>
+            <td>${winner.name}</td>
+            <td>${winner.semester}</td>
+            <td>${winner.event_name}</td>
+            <td>${winner.event_type}</td>
+            <td><span class="prize-badge prize-${prizeClass}">${winner.prize}</span></td>
+            <td>${prizeAmount}</td>
+            <td>${eventDate}</td>
+          </tr>
+        `;
+      });
+
+      tableHtml += `
+          </tbody>
+        </table>
+      `;
+
+      modalBody.innerHTML = tableHtml;
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('winnersModal');
+      if (event.target === modal) {
+        closeWinnersModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        const modal = document.getElementById('winnersModal');
+        if (modal.style.display === 'flex') {
+          closeWinnersModal();
+        }
+      }
     });
     </script>
 

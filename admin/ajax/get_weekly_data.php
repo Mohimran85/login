@@ -9,8 +9,20 @@ if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 // Database connection
-$conn = new mysqli("localhost", "root", "", "event_management_system");
+$db_host = getenv('DB_HOST') ?: 'localhost';
+$db_user = getenv('DB_USER');
+$db_pass = getenv('DB_PASS');
+$db_name = getenv('DB_NAME') ?: 'event_management_system';
+
+if (! $db_user || ! $db_pass) {
+    error_log('Database credentials missing in environment');
+    echo json_encode(['success' => false, 'error' => 'Configuration error']);
+    exit();
+}
+
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
+    error_log('Database connection failed: ' . $conn->connect_error);
     echo json_encode(['success' => false, 'error' => 'Database connection failed']);
     exit();
 }
@@ -20,9 +32,9 @@ $year        = isset($_GET['year']) && is_numeric($_GET['year']) ? (int) $_GET['
 $start_month = isset($_GET['start_month']) && is_numeric($_GET['start_month']) ? (int) $_GET['start_month'] : 1;
 $end_month   = isset($_GET['end_month']) && is_numeric($_GET['end_month']) ? (int) $_GET['end_month'] : 12;
 
-// Ensure valid month range
-$start_month = max(0, min(11, $start_month));
-$end_month   = max(0, min(11, $end_month));
+// Ensure valid month range (1-12)
+$start_month = max(1, min(12, $start_month));
+$end_month   = max(1, min(12, $end_month));
 
 // If end month is before start month, swap them
 if ($end_month < $start_month) {
@@ -31,9 +43,9 @@ if ($end_month < $start_month) {
     $end_month   = $temp;
 }
 
-// Convert to 1-based months for SQL
-$start_month_sql = $start_month + 1;
-$end_month_sql   = $end_month + 1;
+// Use months directly (already 1-based)
+$start_month_sql = $start_month;
+$end_month_sql   = $end_month;
 
 // Get week data
 $weekly_events = [];
@@ -79,7 +91,7 @@ while ($current_date <= $end_date_obj) {
     $wins_sql = "SELECT COUNT(*) as count
                  FROM student_event_register
                  WHERE start_date BETWEEN '$week_start_str' AND '$week_end_str'
-                 AND LOWER(TRIM(prize)) IN ('first', 'secound', 'third')
+                 AND LOWER(TRIM(prize)) IN ('first', 'second', 'third')
                  AND verification_status = 'Approved'";
 
     $wins_result = $conn->query($wins_sql);
@@ -96,8 +108,8 @@ while ($current_date <= $end_date_obj) {
     $current_date->modify('+7 days');
     $week_num++;
 
-    // Safety limit: max 20 weeks
-    if ($week_num > 20) {
+    // Safety limit: max 52 weeks (full year)
+    if ($week_num > 52) {
         break;
     }
 
