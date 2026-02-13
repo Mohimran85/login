@@ -2,6 +2,11 @@
 session_start();
 require_once 'config.php';
 
+// Define prize constants
+define('PRIZE_FIRST', 'First');
+define('PRIZE_SECOND', 'Second');
+define('PRIZE_THIRD', 'Third');
+
 // Set secure cache headers
 header("Cache-Control: private, no-store, must-revalidate");
 header("Pragma: no-cache");
@@ -583,13 +588,13 @@ $students_stmt->close();
                     <a href="registered_students.php?prize=all" class="filter-btn <?php echo $prize_filter === 'all' ? 'active' : ''; ?>">
                         All Students
                     </a>
-                    <a href="registered_students.php?prize=First" class="filter-btn <?php echo $prize_filter === 'First' ? 'active' : ''; ?>">
+                    <a href="registered_students.php?prize=<?php echo PRIZE_FIRST; ?>" class="filter-btn <?php echo $prize_filter === PRIZE_FIRST ? 'active' : ''; ?>">
                         First Prize
                     </a>
-                    <a href="registered_students.php?prize=Second" class="filter-btn <?php echo $prize_filter === 'Second' ? 'active' : ''; ?>">
+                    <a href="registered_students.php?prize=<?php echo PRIZE_SECOND; ?>" class="filter-btn <?php echo $prize_filter === PRIZE_SECOND ? 'active' : ''; ?>">
                         Second Prize
                     </a>
-                    <a href="registered_students.php?prize=Third" class="filter-btn <?php echo $prize_filter === 'Third' ? 'active' : ''; ?>">
+                    <a href="registered_students.php?prize=<?php echo PRIZE_THIRD; ?>" class="filter-btn <?php echo $prize_filter === PRIZE_THIRD ? 'active' : ''; ?>">
                         Third Prize
                     </a>
                 </div>
@@ -625,11 +630,11 @@ $students_stmt->close();
                                             foreach (array_unique($prizes) as $prize) {
                                                 $prize = trim($prize);
                                                 $badge_class = '';
-                                                if ($prize === 'First') {
+                                                if ($prize === PRIZE_FIRST) {
                                                     $badge_class = 'badge-first';
-                                                } elseif ($prize === 'Second') {
+                                                } elseif ($prize === PRIZE_SECOND) {
                                                     $badge_class = 'badge-second';
-                                                } elseif ($prize === 'Third') {
+                                                } elseif ($prize === PRIZE_THIRD) {
                                                     $badge_class = 'badge-third';
                                                 }
                                                 if ($badge_class) {

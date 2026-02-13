@@ -439,7 +439,7 @@ try {
 </head>
 <body>
     <div class="container">
-        <a href="teacher.php" class="back-link">← Back to Dashboard</a>
+        <a href="index.php" class="back-link">← Back to Dashboard</a>
         
         <h1>Internship Approvals</h1>
         
