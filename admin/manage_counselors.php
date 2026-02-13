@@ -99,8 +99,48 @@
     }
     }
 
+    // Handle class counselor toggle
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['toggle_class_counselor'])) {
+    $teacher_id = $_POST['teacher_id'];
+    $is_class_counselor = $_POST['is_class_counselor'];
+
+    // First, ensure the is_class_counselor column exists
+    $check_column = "SHOW COLUMNS FROM teacher_register LIKE 'is_class_counselor'";
+    $column_result = $conn->query($check_column);
+    
+    if ($column_result->num_rows == 0) {
+        // Add the column if it doesn't exist
+        $add_column = "ALTER TABLE teacher_register ADD COLUMN is_class_counselor TINYINT(1) DEFAULT 0";
+        $conn->query($add_column);
+    }
+
+    $update_sql  = "UPDATE teacher_register SET is_class_counselor = ? WHERE id = ?";
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->bind_param("ii", $is_class_counselor, $teacher_id);
+
+    if ($update_stmt->execute()) {
+        $status_text = $is_class_counselor ? "marked as Class Counselor" : "unmarked as Class Counselor";
+        $message      = "Teacher successfully " . $status_text . "!";
+        $message_type = 'success';
+    } else {
+        $message      = "Error updating class counselor status: " . $conn->error;
+        $message_type = 'error';
+    }
+    }
+
     // Get all teachers with their student assignment counts
-    $teachers_sql = "SELECT t.id, t.name, t.email, t.username, t.status,
+    // Ensure is_class_counselor column exists
+    $check_column = "SHOW COLUMNS FROM teacher_register LIKE 'is_class_counselor'";
+    $column_result = $conn->query($check_column);
+    
+    if ($column_result->num_rows == 0) {
+        // Add the column if it doesn't exist
+        $add_column = "ALTER TABLE teacher_register ADD COLUMN is_class_counselor TINYINT(1) DEFAULT 0";
+        $conn->query($add_column);
+    }
+
+    $teachers_sql = "SELECT t.id, t.name, t.email, t.username, t.status, 
+                     COALESCE(t.is_class_counselor, 0) as is_class_counselor,
                      (SELECT COUNT(*) FROM counselor_assignments ca WHERE ca.counselor_id = t.id AND ca.status = 'active') as student_count
                  FROM teacher_register t
                  ORDER BY FIELD(t.status, 'admin', 'counselor', 'active', 'inactive'), t.name";
@@ -731,6 +771,26 @@
             background: #c82333;
         }
 
+        .btn-success {
+            background: #28a745;
+            color: white;
+            margin-top: 10px;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #000;
+            margin-top: 10px;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
         .empty-state {
             text-align: center;
             padding: 40px;
@@ -1021,11 +1081,13 @@
                     <select name="counselor_id" id="counselor_id" class="form-select" required>
                         <option value="">-- Choose Counselor --</option>
                         <?php
-                            // Reset result pointer and get counselors
-                            $counselors_sql    = "SELECT id, name FROM teacher_register WHERE status = 'counselor' ORDER BY name";
+                            // Reset result pointer and get counselors with class counselor status
+                            $counselors_sql    = "SELECT id, name, COALESCE(is_class_counselor, 0) as is_class_counselor FROM teacher_register WHERE status = 'counselor' ORDER BY is_class_counselor DESC, name";
                             $counselors_result = $conn->query($counselors_sql);
-                        while ($counselor = $counselors_result->fetch_assoc()): ?>
-                            <option value="<?php echo $counselor['id']; ?>"><?php echo htmlspecialchars($counselor['name']); ?></option>
+                        while ($counselor = $counselors_result->fetch_assoc()): 
+                            $class_counselor_badge = $counselor['is_class_counselor'] ? ' 🏆 (Class Counselor)' : '';
+                        ?>
+                            <option value="<?php echo $counselor['id']; ?>"><?php echo htmlspecialchars($counselor['name']) . $class_counselor_badge; ?></option>
                         <?php endwhile; ?>
                     </select>
                 </div>
@@ -1064,6 +1126,11 @@
                         <div>
                             <div class="teacher-name">
                                 <?php echo htmlspecialchars($teacher['name']); ?>
+                                <?php if ($teacher['is_class_counselor'] == 1): ?>
+                                    <span style="background: #ffd700; color: #0c3878; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-left: 8px; display: inline-block;">
+                                        🏆 CLASS COUNSELOR
+                                    </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <span class="status-badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $teacher['status']; ?>">
@@ -1111,6 +1178,19 @@
                                 </span>
                             </button>
                         </form>
+
+                        <?php if ($teacher['status'] == 'counselor'): ?>
+                            <form method="POST" style="margin-top: 10px;">
+                                <input type="hidden" name="teacher_id" value="<?php echo $teacher['id']; ?>">
+                                <input type="hidden" name="is_class_counselor" value="<?php echo $teacher['is_class_counselor'] == 1 ? 0 : 1; ?>">
+                                <button type="submit" name="toggle_class_counselor" class="btn <?php echo $teacher['is_class_counselor'] == 1 ? 'btn-warning' : 'btn-success'; ?>">
+                                    <span class="icon-text">
+                                        <span class="material-symbols-outlined"><?php echo $teacher['is_class_counselor'] == 1 ? 'star_off' : 'star'; ?></span>
+                                        <?php echo $teacher['is_class_counselor'] == 1 ? 'Unmark as Class Counselor' : 'Mark as Class Counselor'; ?>
+                                    </span>
+                                </button>
+                            </form>
+                        <?php endif; ?>
 
                         <?php if ($teacher['status'] == 'counselor' && $teacher['student_count'] > 0): ?>
                             <button type="button" class="btn btn-view-students" onclick="viewStudents(<?php echo $teacher['id']; ?>, '<?php echo htmlspecialchars($teacher['name'], ENT_QUOTES); ?>')">
