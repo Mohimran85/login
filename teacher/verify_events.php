@@ -894,7 +894,7 @@ $registrations_stmt->close();
 
                                 <div class="attachments">
                                     <?php if (!empty($reg['event_poster'])): ?>
-                                        <a href="view_poster.php?id=<?php echo $reg['id']; ?>&type=poster" 
+                                        <a href="view_poster.php?file=<?php echo urlencode(basename($reg['event_poster'])); ?>" 
                                            target="_blank" 
                                            class="attachment-btn">
                                             <span class="material-symbols-outlined">image</span>
@@ -902,7 +902,7 @@ $registrations_stmt->close();
                                         </a>
                                     <?php endif; ?>
                                     <?php if (!empty($reg['certificates'])): ?>
-                                        <a href="view_poster.php?id=<?php echo $reg['id']; ?>&type=certificate" 
+                                        <a href="view_poster.php?file=<?php echo urlencode(basename($reg['certificates'])); ?>" 
                                            target="_blank" 
                                            class="attachment-btn">
                                             <span class="material-symbols-outlined">workspace_premium</span>
