@@ -1,76 +1,71 @@
 <?php
     session_start();
+    require_once 'config.php';
 
-    // Check if user is logged in as a student
-    if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
-    }
+    // Require teacher role
+    require_teacher_role();
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    // Get database connection
+    $conn = get_db_connection();
 
-    // Get student data
-    $username     = $_SESSION['username'];
-    $student_data = null;
+    // Get teacher data
+    $username = $_SESSION['username'];
+    $teacher_data = null;
 
-    $sql  = "SELECT name, regno FROM student_register WHERE username=?";
+    $sql = "SELECT id, name, employee_id, email FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $student_data = $result->fetch_assoc();
+        $teacher_data = $result->fetch_assoc();
+        $_SESSION['teacher_id'] = $teacher_data['id'];
     } else {
         header("Location: ../index.php");
         exit();
     }
-    // Get comprehensive statistics
-    $regno = $student_data['regno'];
+    // Get teacher statistics
+    $teacher_id = $teacher_data['id'];
 
-    // Total events participated
-    $total_events_sql = "SELECT COUNT(*) as total FROM student_event_register WHERE regno=?";
-    $total_stmt       = $conn->prepare($total_events_sql);
-    $total_stmt->bind_param("s", $regno);
-    $total_stmt->execute();
-    $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
+    // Get count of assigned students
+    $students_sql = "SELECT COUNT(DISTINCT id) as total FROM student_register WHERE counselor_id=?";
+    $students_stmt = $conn->prepare($students_sql);
+    $students_stmt->bind_param("i", $teacher_id);
+    $students_stmt->execute();
+    $total_students = $students_stmt->get_result()->fetch_assoc()['total'];
 
-    // Events won (with prizes)
-    $events_won_sql = "SELECT COUNT(*) as won FROM student_event_register WHERE regno=? AND prize IS NOT NULL AND prize != '' AND prize != 'No Prize'";
-    $won_stmt       = $conn->prepare($events_won_sql);
-    $won_stmt->bind_param("s", $regno);
-    $won_stmt->execute();
-    $events_won = $won_stmt->get_result()->fetch_assoc()['won'];
+    // Get count of events created/managed
+    $events_sql = "SELECT COUNT(*) as total FROM events WHERE created_by=?";
+    $events_stmt = $conn->prepare($events_sql);
+    $events_stmt->bind_param("i", $teacher_id);
+    $events_stmt->execute();
+    $total_events = $events_stmt->get_result()->fetch_assoc()['total'];
 
-    // Recent events (last 5)
-    $recent_events_sql = "SELECT event_name, event_type, attended_date, prize FROM student_event_register WHERE regno=? ORDER BY attended_date DESC, id DESC LIMIT 5";
-    $recent_stmt       = $conn->prepare($recent_events_sql);
-    $recent_stmt->bind_param("s", $regno);
+    // Recent activities
+    $recent_sql = "SELECT e.event_name, e.event_date, COUNT(ser.id) as participants 
+                   FROM events e 
+                   LEFT JOIN student_event_register ser ON e.id = ser.event_id 
+                   WHERE e.created_by=? 
+                   GROUP BY e.id 
+                   ORDER BY e.event_date DESC 
+                   LIMIT 5";
+    $recent_stmt = $conn->prepare($recent_sql);
+    $recent_stmt->bind_param("i", $teacher_id);
     $recent_stmt->execute();
-    $recent_events = $recent_stmt->get_result();
-
-    // Event type breakdown
-    $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register WHERE regno=? GROUP BY event_type ORDER BY count DESC LIMIT 8";
-    $types_stmt      = $conn->prepare($event_types_sql);
-    $types_stmt->bind_param("s", $regno);
-    $types_stmt->execute();
-    $event_types = $types_stmt->get_result();
+    $recent_activities = $recent_stmt->get_result();
 
     $stmt->close();
-    $total_stmt->close();
-    $won_stmt->close();
+    $students_stmt->close();
+    $events_stmt->close();
     $recent_stmt->close();
-    $types_stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Dashboard - Event Management System</title>
+    <title>Teacher Dashboard - Event Management System</title>
     <!-- css link -->
     <link rel="stylesheet" href="student_dashboard.css" />
     <!-- google icons -->
@@ -110,15 +105,15 @@
       <!-- sidebar -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-          <div class="sidebar-title">Student Portal</div>
+          <div class="sidebar-title">Teacher Portal</div>
           <div class="close-sidebar">
             <span class="material-symbols-outlined">close</span>
           </div>
         </div>
 
         <div class="student-info">
-          <div class="student-name"><?php echo htmlspecialchars($student_data['name']); ?></div>
-          <div class="student-regno"><?php echo htmlspecialchars($student_data['regno']); ?></div>
+          <div class="student-name"><?php echo htmlspecialchars($teacher_data['name']); ?></div>
+          <div class="student-regno">ID: <?php echo htmlspecialchars($teacher_data['employee_id']); ?></div>
         </div>
 
         <nav>
@@ -130,15 +125,15 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="student_register.php" class="nav-link">
-                <span class="material-symbols-outlined">add_circle</span>
-                Register Event
+              <a href="digital_signature.php" class="nav-link">
+                <span class="material-symbols-outlined">draw</span>
+                Digital Signature
               </a>
             </li>
             <li class="nav-item">
-              <a href="student_participations.php" class="nav-link">
-                <span class="material-symbols-outlined">event_note</span>
-                My Participations
+              <a href="registered_students.php" class="nav-link">
+                <span class="material-symbols-outlined">group</span>
+                Registered Students
               </a>
             </li>
             <li class="nav-item">
@@ -160,26 +155,26 @@
       <div class="main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back,<?php echo explode(' ', $student_data['name'])[0]; ?>!</h1>
-          <p>Track your event participations and achievements</p>
+          <h1>Welcome back, <?php echo htmlspecialchars(explode(' ', $teacher_data['name'])[0]); ?>!</h1>
+          <p>Manage students and events</p>
         </div>
 
         <!-- cards  -->
         <div class="main-card">
           <div class="card">
             <div class="card-inner">
-              <h3>Total Events Participated</h3>
+              <h3>Assigned Students</h3>
               <span class="material-symbols-outlined">school</span>
             </div>
-            <h1><?php echo $total_events; ?></h1>
+            <h1><?php echo $total_students; ?></h1>
           </div>
 
           <div class="card">
             <div class="card-inner">
-              <h3>Total Events Won</h3>
+              <h3>Events Managed</h3>
               <span class="material-symbols-outlined">emoji_events</span>
             </div>
-            <h1><?php echo $events_won; ?></h1>
+            <h1><?php echo $total_events; ?></h1>
           </div>
 
           <div class="card">
@@ -188,13 +183,13 @@
               <span class="material-symbols-outlined">bolt</span>
             </div>
             <div class="quick-actions">
-              <a href="student_register.php" class="action-btn-card">
-                <span class="material-symbols-outlined">add</span>
-                Register Event
+              <a href="digital_signature.php" class="action-btn-card">
+                <span class="material-symbols-outlined">draw</span>
+                Digital Signature
               </a>
-              <a href="student_participations.php" class="action-btn-card secondary">
-                <span class="material-symbols-outlined">visibility</span>
-                View All Events
+              <a href="registered_students.php" class="action-btn-card secondary">
+                <span class="material-symbols-outlined">group</span>
+                View Students
               </a>
             </div>
           </div>
@@ -210,21 +205,18 @@
               <a href="student_participations.php" class="view-all-link">View All</a>
             </div>
 
-            <?php if ($recent_events->num_rows > 0): ?>
+            <?php if ($recent_activities->num_rows > 0): ?>
               <div class="activities-list">
-                <?php while ($event = $recent_events->fetch_assoc()): ?>
+                <?php while ($activity = $recent_activities->fetch_assoc()): ?>
                   <div class="activity-item">
                     <div class="activity-icon">
                       <span class="material-symbols-outlined">event</span>
                     </div>
                     <div class="activity-details">
-                      <h4><?php echo htmlspecialchars($event['event_name']); ?></h4>
+                      <h4><?php echo htmlspecialchars($activity['event_name']); ?></h4>
                       <p class="activity-meta">
-                        <span class="event-type"><?php echo htmlspecialchars($event['event_type']); ?></span>
-                        <span class="event-date"><?php echo date('M d, Y', strtotime($event['attended_date'])); ?></span>
-                        <?php if (! empty($event['prize']) && $event['prize'] !== 'No Prize'): ?>
-                          <span class="prize-badge">🏆<?php echo htmlspecialchars($event['prize']); ?></span>
-                        <?php endif; ?>
+                        <span class="event-date"><?php echo date('M d, Y', strtotime($activity['event_date'])); ?></span>
+                        <span class="participants"><?php echo $activity['participants']; ?> participants</span>
                       </p>
                     </div>
                   </div>
@@ -234,7 +226,6 @@
               <div class="empty-state">
                 <span class="material-symbols-outlined">event_busy</span>
                 <p>No recent activities</p>
-                <a href="student_register.php" class="empty-action">Register your first event</a>
               </div>
             <?php endif; ?>
           </div>
@@ -243,32 +234,28 @@
           <div class="content-card">
             <div class="card-header">
               <span class="material-symbols-outlined">pie_chart</span>
-              <h3>Event Categories</h3>
+              <h3>Quick Links</h3>
             </div>
-
-            <?php if ($event_types->num_rows > 0): ?>
-              <div class="categories-list">
-                <?php while ($type = $event_types->fetch_assoc()): ?>
-                  <div class="category-item">
-                    <div class="category-info">
-                      <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
-                      <div class="category-progress">
-                        <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($type['count'] / $total_events) * 100; ?>%"></div>
-                        </div>
-                      </div>
-                    </div>
-                    <span class="category-count"><?php echo $type['count']; ?></span>
-                  </div>
-                <?php endwhile; ?>
+            <div class="categories-list">
+              <div class="category-item">
+                <a href="digital_signature.php" class="category-link">
+                  <span class="material-symbols-outlined">draw</span>
+                  <span>Digital Signature</span>
+                </a>
               </div>
-            <?php else: ?>
-              <div class="empty-state">
-                <span class="material-symbols-outlined">category</span>
-                <p>No event categories yet</p>
-                <a href="student_register.php" class="empty-action">Start participating</a>
+              <div class="category-item">
+                <a href="registered_students.php" class="category-link">
+                  <span class="material-symbols-outlined">group</span>
+                  <span>View Students</span>
+                </a>
               </div>
-            <?php endif; ?>
+              <div class="category-item">
+                <a href="profile.php" class="category-link">
+                  <span class="material-symbols-outlined">person</span>
+                  <span>My Profile</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
