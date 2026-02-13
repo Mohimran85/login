@@ -101,29 +101,35 @@
 
     // Handle class counselor toggle
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['toggle_class_counselor'])) {
-    $teacher_id = $_POST['teacher_id'];
-    $is_class_counselor = $_POST['is_class_counselor'];
+    $teacher_id = isset($_POST['teacher_id']) ? intval($_POST['teacher_id']) : 0;
+    $is_class_counselor = isset($_POST['is_class_counselor']) ? intval($_POST['is_class_counselor']) : 0;
 
-    // First, ensure the is_class_counselor column exists
-    $check_column = "SHOW COLUMNS FROM teacher_register LIKE 'is_class_counselor'";
-    $column_result = $conn->query($check_column);
-    
-    if ($column_result->num_rows == 0) {
-        // Add the column if it doesn't exist
-        $add_column = "ALTER TABLE teacher_register ADD COLUMN is_class_counselor TINYINT(1) DEFAULT 0";
-        $conn->query($add_column);
-    }
+    // Validate inputs
+    if ($teacher_id > 0 && ($is_class_counselor === 0 || $is_class_counselor === 1)) {
+        // First, ensure the is_class_counselor column exists
+        $check_column = "SHOW COLUMNS FROM teacher_register LIKE 'is_class_counselor'";
+        $column_result = $conn->query($check_column);
+        
+        if ($column_result->num_rows == 0) {
+            // Add the column if it doesn't exist
+            $add_column = "ALTER TABLE teacher_register ADD COLUMN is_class_counselor TINYINT(1) DEFAULT 0";
+            $conn->query($add_column);
+        }
 
-    $update_sql  = "UPDATE teacher_register SET is_class_counselor = ? WHERE id = ?";
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("ii", $is_class_counselor, $teacher_id);
+        $update_sql  = "UPDATE teacher_register SET is_class_counselor = ? WHERE id = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("ii", $is_class_counselor, $teacher_id);
 
-    if ($update_stmt->execute()) {
-        $status_text = $is_class_counselor ? "marked as Class Counselor" : "unmarked as Class Counselor";
-        $message      = "Teacher successfully " . $status_text . "!";
-        $message_type = 'success';
+        if ($update_stmt->execute()) {
+            $status_text = $is_class_counselor ? "marked as Class Counselor" : "unmarked as Class Counselor";
+            $message      = "Teacher successfully " . $status_text . "!";
+            $message_type = 'success';
+        } else {
+            $message      = "Error updating class counselor status: " . $conn->error;
+            $message_type = 'error';
+        }
     } else {
-        $message      = "Error updating class counselor status: " . $conn->error;
+        $message      = "Invalid input parameters.";
         $message_type = 'error';
     }
     }
