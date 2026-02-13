@@ -19,14 +19,19 @@ $conn = new mysqli("localhost", "root", "", "event_management_system");
 
 **Recommended Fix**:
 1. Create a `config.php` file (outside web root if possible)
-2. Use environment variables:
+2. Use environment variables (fail if not set):
 ```php
-$conn = new mysqli(
-    getenv('DB_HOST') ?: 'localhost',
-    getenv('DB_USER') ?: 'root',
-    getenv('DB_PASS') ?: '',
-    getenv('DB_NAME') ?: 'event_management_system'
-);
+$db_host = getenv('DB_HOST');
+$db_user = getenv('DB_USER');
+$db_pass = getenv('DB_PASS');
+$db_name = getenv('DB_NAME');
+
+if (!$db_host || !$db_user || !$db_name) {
+    error_log('Database configuration environment variables not set');
+    die('Configuration error. Please contact support.');
+}
+
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 ```
 
 ### 2. Insufficient Session Validation
@@ -132,9 +137,14 @@ session_regenerate_id(true);
 **Action**: Verify passwords are stored using `password_hash()` with PASSWORD_DEFAULT
 
 ### 10. HTTPS Enforcement
-**Recommendation**: Force HTTPS for all connections:
+**Recommendation**: Force HTTPS for all connections (accounting for reverse proxies):
 ```php
-if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
+// Check if request is over HTTPS, accounting for proxies
+$is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+            (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on');
+
+if (!$is_https) {
     header('Location: https://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']);
     exit();
 }
