@@ -1,15 +1,18 @@
 <?php
     session_start();
 
+    // Include QR Code library
+    require_once 'includes/phpqrcode/qrlib.php';
+
     // Check if user is logged in as a student
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     $conn = new mysqli("localhost", "root", "", "event_management_system");
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
     }
 
     // Get student data
@@ -23,16 +26,16 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $student_data = $result->fetch_assoc();
+    $student_data = $result->fetch_assoc();
     } else {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Get OD request ID from URL
     if (! isset($_GET['od_id']) || empty($_GET['od_id'])) {
-        header("Location: od_request.php");
-        exit();
+    header("Location: od_request.php");
+    exit();
     }
 
     $od_id = (int) $_GET['od_id'];
@@ -49,14 +52,26 @@
     $od_result = $od_stmt->get_result();
 
     if ($od_result->num_rows === 0) {
-        header("Location: od_request.php");
-        exit();
+    header("Location: od_request.php");
+    exit();
     }
 
     $od_data = $od_result->fetch_assoc();
     $od_stmt->close();
     $stmt->close();
     $conn->close();
+
+    // Generate QR Code for verification (root level - public access)
+    $verification_url = 'http://' . $_SERVER['HTTP_HOST'] . '/event_management_system/login/verify_od.php?od_id=' . $od_id;
+    $qr_code_path     = 'uploads/qr_codes/od_' . $od_id . '.png';
+
+    // Create QR codes directory if it doesn't exist
+    if (! is_dir('uploads/qr_codes')) {
+    mkdir('uploads/qr_codes', 0777, true);
+    }
+
+    // Generate QR code image
+    QRcode::png($verification_url, $qr_code_path, 'L', 4, 2);
 
     // Generate PDF content
     $current_date = date('F d, Y');
@@ -99,7 +114,7 @@
             background: white;
             color: #000;
         }
-        
+
         .letterhead {
             text-align: center;
             border-bottom: 3px solid #0c3878;
@@ -212,6 +227,7 @@
             margin-top: 50px;
             display: flex;
             justify-content: space-between;
+            align-items: flex-end;
         }
 
         .signature-box {
@@ -223,6 +239,34 @@
             border-top: 1px solid #000;
             margin-bottom: 5px;
             height: 50px;
+        }
+
+        .qr-code-container {
+            text-align: center;
+            width: 200px;
+        }
+
+        .qr-code-container img {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #0c3878;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .qr-code-label {
+            font-size: 11px;
+            color: #0c3878;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .qr-code-sublabel {
+            font-size: 9px;
+            color: #666;
+            margin-top: 3px;
         }
 
         .footer-note {
@@ -354,7 +398,7 @@
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Venue:</div>
-                    <div class="detail-value"><?php echo htmlspecialchars($od_data['event_location']); ?></div>
+                    <div class="detail-value"><?php echo htmlspecialchars($od_data['event_state']) . ', ' . htmlspecialchars($od_data['event_district']); ?></div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Description:</div>
@@ -396,11 +440,11 @@
         </div>
 
         <div class="signature-section">
-            <div class="signature-box">
-                <div class="signature-line"></div>
-                <div><strong>Class Counselor</strong></div>
-                <div><?php echo htmlspecialchars($od_data['counselor_name']); ?></div>
-                <div><?php echo htmlspecialchars($od_data['faculty_id']); ?></div>
+            <!-- QR Code for verification -->
+            <div class="qr-code-container">
+                <img src="<?php echo $qr_code_path; ?>" alt="Verification QR Code">
+                <div class="qr-code-label">Scan to Verify</div>
+                <div class="qr-code-sublabel">Approved by <?php echo htmlspecialchars($od_data['counselor_name']); ?></div>
             </div>
 
             <div class="signature-box">

@@ -1,6 +1,9 @@
 <?php
 session_start();
 
+// Include QR Code library
+require_once 'includes/phpqrcode/qrlib.php';
+
 // Check if user is logged in as a student
 if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../index.php");
@@ -86,6 +89,18 @@ if (! empty($od_data['group_members'])) {
 $od_stmt->close();
 $stmt->close();
 $conn->close();
+
+// Generate QR Code for verification (root level - public access)
+$verification_url = 'http://' . $_SERVER['HTTP_HOST'] . '/event_management_system/login/verify_od.php?od_id=' . $od_id;
+$qr_code_path     = 'uploads/qr_codes/od_' . $od_id . '.png';
+
+// Create QR codes directory if it doesn't exist
+if (! is_dir('uploads/qr_codes')) {
+    mkdir('uploads/qr_codes', 0777, true);
+}
+
+// Generate QR code image
+QRcode::png($verification_url, $qr_code_path, 'L', 4, 2);
 
 // Generate PDF content using basic PDF generation
 // For production, consider using libraries like TCPDF, FPDF, or mPDF
@@ -331,6 +346,34 @@ $html_content = '
             color: #666;
         }
 
+        .qr-code-container {
+            text-align: center;
+            width: 200px;
+        }
+
+        .qr-code-container img {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #0c3878;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .qr-code-label {
+            font-size: 11px;
+            color: #0c3878;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .qr-code-sublabel {
+            font-size: 9px;
+            color: #666;
+            margin-top: 3px;
+        }
+
         .footer-note {
             margin-top: 20px;
             font-size: 9px;
@@ -523,7 +566,7 @@ $html_content .= '
                 ' . (empty($group_members_details) ? 'The student is' : 'The students are') . ' permitted to attend <strong>' . htmlspecialchars($od_data['event_name']) . '</strong>,
                 scheduled on <strong>' . date('l, F d, Y', strtotime($od_data['event_date'])) . '</strong>
                 at <strong>' . date('h:i A', strtotime($od_data['event_time'])) . '</strong>,
-                to be held at <strong>' . htmlspecialchars($od_data['event_location']) . '</strong>
+                to be held at <strong>' . htmlspecialchars($od_data['event_state']) . ', ' . htmlspecialchars($od_data['event_district']) . '</strong>
                 for a duration of <strong>' . (isset($od_data['event_days']) ? htmlspecialchars($od_data['event_days']) . ' day(s)' : 'one day') . '</strong>.
                 ' . htmlspecialchars($od_data['event_description']) . '
                 The purpose of this OD request is: ' . htmlspecialchars($od_data['reason']) . '.
@@ -541,10 +584,11 @@ $html_content .= '. The above-mentioned student has our permission to participat
         </div>
 
         <div class="signature-section">
-            <div class="signature-box">
-                <div class="signature-line"></div>
-                <div class="signature-title">Class Counselor</div>
-                <div class="signature-name">' . htmlspecialchars($od_data['counselor_name']) . '</div>
+            <!-- QR Code for verification -->
+            <div class="qr-code-container">
+                <img src="' . $qr_code_path . '" alt="Verification QR Code">
+                <div class="qr-code-label">Scan to Verify</div>
+                <div class="qr-code-sublabel">Approved by ' . htmlspecialchars($od_data['counselor_name']) . '</div>
             </div>
 
             <div class="signature-box">

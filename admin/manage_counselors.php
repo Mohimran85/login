@@ -3,8 +3,8 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Database connection
@@ -16,7 +16,7 @@
     $conn = new mysqli($servername, $db_username, $db_password, $dbname);
 
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
     }
 
     // Get user data and check admin access (same logic as user_management.php)
@@ -26,47 +26,47 @@
     $tables    = ['student_register', 'teacher_register'];
 
     foreach ($tables as $table) {
-        $sql  = "SELECT name FROM $table WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sql  = "SELECT name FROM $table WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_type = $table === 'student_register' ? 'student' : 'teacher';
-            break;
-        }
-        $stmt->close();
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        break;
+    }
+    $stmt->close();
     }
 
-                                 // Check teacher status if user is a teacher
+                             // Check teacher status if user is a teacher
     $teacher_status = 'teacher'; // Default status
     if ($user_type === 'teacher') {
-        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
-        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
-        $teacher_status_stmt->bind_param("s", $username);
-        $teacher_status_stmt->execute();
-        $teacher_status_result = $teacher_status_stmt->get_result();
+    $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+    $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+    $teacher_status_stmt->bind_param("s", $username);
+    $teacher_status_stmt->execute();
+    $teacher_status_result = $teacher_status_stmt->get_result();
 
-        if ($teacher_status_result->num_rows > 0) {
-            $status_data    = $teacher_status_result->fetch_assoc();
-            $teacher_status = $status_data['status'];
-        }
-        $teacher_status_stmt->close();
+    if ($teacher_status_result->num_rows > 0) {
+        $status_data    = $teacher_status_result->fetch_assoc();
+        $teacher_status = $status_data['status'];
+    }
+    $teacher_status_stmt->close();
     }
 
     // Only allow admin-level teachers to access counselor management
     if ($user_type === 'teacher' && $teacher_status !== 'admin') {
-        $_SESSION['access_denied'] = 'Only administrators can access counselor management. Your role is: ' . ucfirst($teacher_status);
-        header("Location: index.php");
-        exit();
+    $_SESSION['access_denied'] = 'Only administrators can access counselor management. Your role is: ' . ucfirst($teacher_status);
+    header("Location: index.php");
+    exit();
     }
 
     // Redirect students who shouldn't have access
     if ($user_type === 'student') {
-        header("Location: ../student/index.php");
-        exit();
+    header("Location: ../student/index.php");
+    exit();
     }
 
     $message      = '';
@@ -75,7 +75,7 @@
     $conn = new mysqli($servername, $db_username, $db_password, $dbname);
 
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
     }
 
     $message      = '';
@@ -83,20 +83,20 @@
 
     // Handle role change
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_role'])) {
-        $teacher_id = $_POST['teacher_id'];
-        $new_status = $_POST['new_status'];
+    $teacher_id = $_POST['teacher_id'];
+    $new_status = $_POST['new_status'];
 
-        $update_sql  = "UPDATE teacher_register SET status = ? WHERE id = ?";
-        $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("si", $new_status, $teacher_id);
+    $update_sql  = "UPDATE teacher_register SET status = ? WHERE id = ?";
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->bind_param("si", $new_status, $teacher_id);
 
-        if ($update_stmt->execute()) {
-            $message      = "Teacher role updated successfully to " . ucfirst($new_status) . "!";
-            $message_type = 'success';
-        } else {
-            $message      = "Error updating role: " . $conn->error;
-            $message_type = 'error';
-        }
+    if ($update_stmt->execute()) {
+        $message      = "Teacher role updated successfully to " . ucfirst($new_status) . "!";
+        $message_type = 'success';
+    } else {
+        $message      = "Error updating role: " . $conn->error;
+        $message_type = 'error';
+    }
     }
 
     // Get all teachers with their student assignment counts
@@ -106,15 +106,14 @@
                  ORDER BY FIELD(t.status, 'admin', 'counselor', 'active', 'inactive'), t.name";
     $teachers_result = $conn->query($teachers_sql);
 
-    // Handle student assignment by registration number range
+    // Handle student assignment by selected students array
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['assign_students'])) {
-        $counselor_id = $_POST['counselor_id'];
-        $from_regno   = trim($_POST['from_regno']);
-        $to_regno     = trim($_POST['to_regno']);
+    $counselor_id      = isset($_POST['counselor_id']) ? intval($_POST['counselor_id']) : 0;
+    $selected_students = isset($_POST['selected_students']) ? $_POST['selected_students'] : [];
 
-        if (! empty($counselor_id) && ! empty($from_regno) && ! empty($to_regno)) {
-            // Create counselor_assignments table if not exists
-            $create_table = "CREATE TABLE IF NOT EXISTS counselor_assignments (
+    if ($counselor_id > 0 && ! empty($selected_students) && is_array($selected_students)) {
+        // Create counselor_assignments table if not exists
+        $create_table = "CREATE TABLE IF NOT EXISTS counselor_assignments (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 counselor_id INT NOT NULL,
                 student_regno VARCHAR(50) NOT NULL,
@@ -123,76 +122,72 @@
                 UNIQUE KEY uq_assignment (counselor_id, student_regno),
                 FOREIGN KEY (counselor_id) REFERENCES teacher_register(id) ON DELETE CASCADE
             )";
-            $conn->query($create_table);
+        $conn->query($create_table);
 
-            // Get students in the registration number range
-            $students_sql  = "SELECT regno FROM student_register WHERE regno BETWEEN ? AND ? ORDER BY regno";
-            $students_stmt = $conn->prepare($students_sql);
-            $students_stmt->bind_param("ss", $from_regno, $to_regno);
-            $students_stmt->execute();
-            $students_result = $students_stmt->get_result();
-
-            $assigned_count = 0;
-            while ($student = $students_result->fetch_assoc()) {
+        $assigned_count = 0;
+        // Loop through selected students and assign them
+        foreach ($selected_students as $student_regno) {
+            $student_regno = trim($student_regno);
+            if (! empty($student_regno)) {
                 // Insert or update assignment
                 $assign_sql = "INSERT INTO counselor_assignments (counselor_id, student_regno)
-                              VALUES (?, ?)
-                              ON DUPLICATE KEY UPDATE
-                              counselor_id = VALUES(counselor_id),
-                              assigned_date = CURRENT_TIMESTAMP,
-                              status = 'active'";
+                                  VALUES (?, ?)
+                                  ON DUPLICATE KEY UPDATE
+                                  counselor_id = VALUES(counselor_id),
+                                  assigned_date = CURRENT_TIMESTAMP,
+                                  status = 'active'";
                 $assign_stmt = $conn->prepare($assign_sql);
-                $assign_stmt->bind_param("is", $counselor_id, $student['regno']);
+                $assign_stmt->bind_param("is", $counselor_id, $student_regno);
                 if ($assign_stmt->execute()) {
                     $assigned_count++;
                 }
                 $assign_stmt->close();
             }
-
-            $message      = "Successfully assigned $assigned_count students (regno: $from_regno to $to_regno) to the selected counselor!";
-            $message_type = 'success';
-            $students_stmt->close();
-        } else {
-            $message      = "Please fill all fields for student assignment.";
-            $message_type = 'error';
         }
+
+        $message      = "Successfully assigned $assigned_count student" . ($assigned_count !== 1 ? 's' : '') . " to the selected counselor!";
+        $message_type = 'success';
+    } else {
+        $message      = "Please select at least one student to assign.";
+        $message_type = 'error';
+    }
     }
 
     // Handle removing a single student assignment
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['remove_student'])) {
-        $assignment_id = $_POST['assignment_id'];
+    $assignment_id = $_POST['assignment_id'];
 
-        $delete_sql  = "DELETE FROM counselor_assignments WHERE id = ?";
-        $delete_stmt = $conn->prepare($delete_sql);
-        $delete_stmt->bind_param("i", $assignment_id);
+    $delete_sql  = "DELETE FROM counselor_assignments WHERE id = ?";
+    $delete_stmt = $conn->prepare($delete_sql);
+    $delete_stmt->bind_param("i", $assignment_id);
 
-        if ($delete_stmt->execute()) {
-            $message      = "Student assignment removed successfully!";
-            $message_type = 'success';
-        } else {
-            $message      = "Error removing assignment: " . $conn->error;
-            $message_type = 'error';
-        }
-        $delete_stmt->close();
+    if ($delete_stmt->execute()) {
+        $message      = "Student assignment removed successfully!";
+        $message_type = 'success';
+    } else {
+        $message      = "Error removing assignment: " . $conn->error;
+        $message_type = 'error';
+    }
+    $delete_stmt->close();
     }
 
     // Handle removing all students from a counselor
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['remove_all_students'])) {
-        $counselor_id = $_POST['counselor_id'];
+    $counselor_id = $_POST['counselor_id'];
 
-        $delete_all_sql  = "DELETE FROM counselor_assignments WHERE counselor_id = ?";
-        $delete_all_stmt = $conn->prepare($delete_all_sql);
-        $delete_all_stmt->bind_param("i", $counselor_id);
+    $delete_all_sql  = "DELETE FROM counselor_assignments WHERE counselor_id = ?";
+    $delete_all_stmt = $conn->prepare($delete_all_sql);
+    $delete_all_stmt->bind_param("i", $counselor_id);
 
-        if ($delete_all_stmt->execute()) {
-            $affected     = $delete_all_stmt->affected_rows;
-            $message      = "Successfully removed all $affected student assignments from this counselor!";
-            $message_type = 'success';
-        } else {
-            $message      = "Error removing assignments: " . $conn->error;
-            $message_type = 'error';
-        }
-        $delete_all_stmt->close();
+    if ($delete_all_stmt->execute()) {
+        $affected     = $delete_all_stmt->affected_rows;
+        $message      = "Successfully removed all $affected student assignments from this counselor!";
+        $message_type = 'success';
+    } else {
+        $message      = "Error removing assignments: " . $conn->error;
+        $message_type = 'error';
+    }
+    $delete_all_stmt->close();
     }
 
     // Get statistics including student assignment counts
@@ -775,6 +770,141 @@
             font-size: 12px;
             font-weight: 600;
         }
+
+        /* Student Selection Modal Styles */
+        .checkbox-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .checkbox-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 3px solid #0c3878;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .checkbox-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .checkbox-item.disabled-item {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .checkbox-item.disabled-item:hover {
+            background: #f8d7da;
+            transform: none;
+        }
+
+        .checkbox-item.disabled-item label {
+            cursor: not-allowed;
+        }
+
+        .checkbox-item label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            cursor: pointer;
+            margin: 0;
+            color: #333;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .student-checkbox-info {
+            flex: 1;
+        }
+
+        .student-checkbox-regno {
+            font-weight: 600;
+            color: #0c3878;
+            font-size: 15px;
+        }
+
+        .student-checkbox-details {
+            color: #666;
+            font-size: 13px;
+            margin-top: 3px;
+        }
+
+        .select-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .btn-select-action {
+            padding: 8px 16px;
+            border: 1px solid #0c3878;
+            background: white;
+            color: #0c3878;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-select-action:hover {
+            background: #0c3878;
+            color: white;
+        }
+
+        .no-students-message {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .no-students-message .material-symbols-outlined {
+            font-size: 64px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .btn-assign-selected {
+            background: #198754;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-assign-selected:hover {
+            background: #157347;
+            transform: translateY(-1px);
+        }
+
+        .btn-assign-selected:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 <body>
@@ -885,7 +1015,7 @@
         <!-- Student Assignment Section -->
         <div class="info-box">
             <h3>👥 Assign Students to Class Counselors</h3>
-            <form method="POST" class="assignment-form">
+            <form id="assignmentForm" class="assignment-form">
                 <div class="form-group">
                     <label for="counselor_id" class="form-label">Select Counselor:</label>
                     <select name="counselor_id" id="counselor_id" class="form-select" required>
@@ -911,14 +1041,14 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" style="visibility: hidden;">Action</label>
-                    <button type="submit" name="assign_students" class="assignment-btn">
+                    <button type="button" onclick="showStudentSelection()" class="assignment-btn">
                         <span class="material-symbols-outlined">group_add</span>
-                        Assign Students
+                        Select Students
                     </button>
                 </div>
             </form>
             <p style="margin-top: 15px; color: #666; font-size: 14px;">
-                <strong>Note:</strong> This will assign all students with registration numbers between the specified range to the selected counselor.
+                <strong>Note:</strong> Enter the registration number range, then select which students to assign to the counselor.
             </p>
         </div>
 
@@ -1035,6 +1165,29 @@
         </div>
     </div>
 
+    <!-- Modal for student selection -->
+    <div id="studentSelectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="selectionModalTitle">Select Students to Assign</h2>
+                <span class="close" onclick="closeSelectionModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="selectionModalBody">
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">hourglass_empty</span>
+                    <p>Loading students...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="student-count-badge" id="selectionStudentCount">0 students</span>
+                <button class="btn-assign-selected" id="assignSelectedBtn" onclick="assignSelectedStudents()" disabled>
+                    <span class="material-symbols-outlined">check_circle</span>
+                    Assign Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Sidebar functionality
         function navigateToProfile() {
@@ -1045,7 +1198,7 @@
             // Add your sidebar close functionality here
         }
 
-        // Modal functions
+        // Modal functions for viewing assigned students
         function viewStudents(counselorId, counselorName) {
             const modal = document.getElementById('studentsModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -1103,11 +1256,179 @@
             document.getElementById('studentsModal').style.display = 'none';
         }
 
+        // Student Selection Modal Functions
+        function showStudentSelection() {
+            const counselorId = document.getElementById('counselor_id').value;
+            const fromRegno = document.getElementById('from_regno').value.trim();
+            const toRegno = document.getElementById('to_regno').value.trim();
+
+            // Validate form
+            if (!counselorId) {
+                alert('Please select a counselor');
+                return;
+            }
+            if (!fromRegno || !toRegno) {
+                alert('Please enter both registration numbers');
+                return;
+            }
+            if (fromRegno > toRegno) {
+                alert('From registration number must be less than or equal to To registration number');
+                return;
+            }
+
+            // Get counselor name
+            const counselorSelect = document.getElementById('counselor_id');
+            const counselorName = counselorSelect.options[counselorSelect.selectedIndex].text;
+
+            const modal = document.getElementById('studentSelectionModal');
+            const modalTitle = document.getElementById('selectionModalTitle');
+            const modalBody = document.getElementById('selectionModalBody');
+
+            modalTitle.textContent = `Select Students for ${counselorName} (${fromRegno} - ${toRegno})`;
+            modal.style.display = 'block';
+
+            // Show loading state
+            modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading students...</p></div>';
+
+            // Fetch students via AJAX
+            fetch(`ajax/get_students_by_range.php?from_regno=${encodeURIComponent(fromRegno)}&to_regno=${encodeURIComponent(toRegno)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (data.students.length === 0) {
+                            modalBody.innerHTML = '<div class="no-students-message"><span class="material-symbols-outlined">person_off</span><p>No students found in this registration number range</p></div>';
+                            document.getElementById('selectionStudentCount').textContent = '0 students';
+                            document.getElementById('assignSelectedBtn').disabled = true;
+                        } else {
+                            populateStudentCheckboxes(data.students, counselorId);
+                        }
+                    } else {
+                        modalBody.innerHTML = `<div class="no-students-message"><span class="material-symbols-outlined">error</span><p>Error: ${data.error || 'Failed to load students'}</p></div>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    modalBody.innerHTML = '<div class="no-students-message"><span class="material-symbols-outlined">error</span><p>Error loading students</p></div>';
+                });
+        }
+
+        function populateStudentCheckboxes(students, counselorId) {
+            const modalBody = document.getElementById('selectionModalBody');
+
+            let html = '<div class="select-actions">';
+            html += '<button type="button" class="btn-select-action" onclick="selectAllStudents()">Select All</button>';
+            html += '<button type="button" class="btn-select-action" onclick="deselectAllStudents()">Deselect All</button>';
+            html += '</div>';
+
+            html += '<ul class="checkbox-list">';
+            students.forEach(student => {
+                const isAssigned = student.is_assigned;
+                const isDisabled = isAssigned ? 'disabled' : '';
+                const itemClass = isAssigned ? 'checkbox-item disabled-item' : 'checkbox-item';
+                const counselorInfo = isAssigned ? ` • <strong style="color: #dc3545;">Already assigned to: ${student.counselor_name}</strong>` : '';
+
+                html += `
+                    <li class="${itemClass}">
+                        <label>
+                            <input type="checkbox" class="student-checkbox" value="${student.regno}" onchange="updateSelectedCount()" ${isDisabled}>
+                            <div class="student-checkbox-info">
+                                <div class="student-checkbox-regno">${student.regno}</div>
+                                <div class="student-checkbox-details">${student.name} • ${student.department} • Semester ${student.semester}${counselorInfo}</div>
+                            </div>
+                        </label>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+
+            modalBody.innerHTML = html;
+
+            // Store counselor ID for later use
+            modalBody.dataset.counselorId = counselorId;
+
+            // Update initial count
+            updateSelectedCount();
+        }
+
+        function selectAllStudents() {
+            const checkboxes = document.querySelectorAll('.student-checkbox:not([disabled])');
+            checkboxes.forEach(cb => cb.checked = true);
+            updateSelectedCount();
+        }
+
+        function deselectAllStudents() {
+            const checkboxes = document.querySelectorAll('.student-checkbox:not([disabled])');
+            checkboxes.forEach(cb => cb.checked = false);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            const count = checkboxes.length;
+            const totalCheckboxes = document.querySelectorAll('.student-checkbox').length;
+
+            document.getElementById('selectionStudentCount').textContent = `${count} of ${totalCheckboxes} selected`;
+            document.getElementById('assignSelectedBtn').disabled = count === 0;
+        }
+
+        function assignSelectedStudents() {
+            const checkboxes = document.querySelectorAll('.student-checkbox:checked');
+            const selectedStudents = Array.from(checkboxes).map(cb => cb.value);
+
+            if (selectedStudents.length === 0) {
+                alert('Please select at least one student');
+                return;
+            }
+
+            const modalBody = document.getElementById('selectionModalBody');
+            const counselorId = modalBody.dataset.counselorId;
+
+            // Create and submit form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '';
+
+            // Add counselor ID
+            const counselorInput = document.createElement('input');
+            counselorInput.type = 'hidden';
+            counselorInput.name = 'counselor_id';
+            counselorInput.value = counselorId;
+            form.appendChild(counselorInput);
+
+            // Add selected students
+            selectedStudents.forEach(regno => {
+                const studentInput = document.createElement('input');
+                studentInput.type = 'hidden';
+                studentInput.name = 'selected_students[]';
+                studentInput.value = regno;
+                form.appendChild(studentInput);
+            });
+
+            // Add submit button
+            const submitInput = document.createElement('input');
+            submitInput.type = 'hidden';
+            submitInput.name = 'assign_students';
+            submitInput.value = '1';
+            form.appendChild(submitInput);
+
+            // Append to body and submit
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function closeSelectionModal() {
+            document.getElementById('studentSelectionModal').style.display = 'none';
+        }
+
         // Close modal when clicking outside
         window.onclick = function(event) {
             const modal = document.getElementById('studentsModal');
+            const selectionModal = document.getElementById('studentSelectionModal');
             if (event.target == modal) {
                 closeModal();
+            }
+            if (event.target == selectionModal) {
+                closeSelectionModal();
             }
         }
     </script>
