@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 // Generate unique filename
                 $extension = ($detected_type === 'image/png') ? 'png' : 'jpg';
-                $filename = 'signature_' . $teacher_id . '_' . time() . '.' . $extension';
+                $filename = 'signature_' . $teacher_id . '_' . time() . '.' . $extension;
                 $upload_dir = '../uploads/signatures/';
                 
                 // Create directory if it doesn't exist

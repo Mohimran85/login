@@ -2,12 +2,28 @@
 session_start();
 require_once 'config.php';
 
-if (!isset($_SESSION['teacher_id']) || $_SESSION['role'] !== 'teacher') {
-    header("Location: ../index.php");
-    exit();
-}
+// Require teacher role
+require_teacher_role();
 
-$teacher_id = $_SESSION['teacher_id'];
+$teacher_id = $_SESSION['teacher_id'] ?? null;
+
+if (!$teacher_id) {
+    // Get teacher ID from database if not in session
+    $username = $_SESSION['username'];
+    $conn = get_db_connection();
+    $stmt = $conn->prepare("SELECT id FROM teacher_register WHERE username=?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $teacher_id = $result->fetch_assoc()['id'];
+        $_SESSION['teacher_id'] = $teacher_id;
+    } else {
+        header("Location: ../index.php");
+        exit();
+    }
+    $stmt->close();
+}
 
 // Generate CSRF token
 $csrf_token = generate_csrf_token();

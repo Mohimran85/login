@@ -1,18 +1,33 @@
 <?php
 session_start();
-require_once '../admin/config.php';
+require_once 'config.php';
 
-if (!isset($_SESSION['teacher_id']) || $_SESSION['role'] !== 'teacher') {
-    header("Location: ../index.php");
-    exit();
+// Require teacher role
+require_teacher_role();
+
+
+$teacher_id = $_SESSION['teacher_id'] ?? null;
+
+if (!$teacher_id) {
+    // Get teacher ID from database if not in session
+    $username = $_SESSION['username'];
+    $conn = get_db_connection();
+    $stmt = $conn->prepare("SELECT id FROM teacher_register WHERE username=?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $teacher_id = $result->fetch_assoc()['id'];
+        $_SESSION['teacher_id'] = $teacher_id;
+    } else {
+        header("Location: ../index.php");
+        exit();
+    }
+    $stmt->close();
 }
 
-$teacher_id = $_SESSION['teacher_id'];
-
-// Generate CSRF token
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
+// Generate CSRF token using config function
+$csrf_token = generate_csrf_token();
 
 $message = '';
 $message_type = '';
@@ -20,7 +35,7 @@ $message_type = '';
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_internship_status') {
     // CSRF validation
-    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
         $message = 'Invalid request. Please try again.';
         $message_type = 'error';
     } else {

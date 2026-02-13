@@ -155,7 +155,10 @@
       <div class="main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back, <?php echo htmlspecialchars(explode(' ', $teacher_data['name'])[0]); ?>!</h1>
+          <h1>Welcome back, <?php 
+            $name_parts = explode(' ', $teacher_data['name']);
+            echo htmlspecialchars($name_parts[0] ?? 'Teacher'); 
+          ?>!</h1>
           <p>Manage students and events</p>
         </div>
 
@@ -202,7 +205,7 @@
             <div class="card-header">
               <span class="material-symbols-outlined">schedule</span>
               <h3>Recent Activities</h3>
-              <a href="student_participations.php" class="view-all-link">View All</a>
+              <a href="registered_students.php" class="view-all-link">View All Students</a>
             </div>
 
             <?php if ($recent_activities->num_rows > 0): ?>
