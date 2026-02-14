@@ -6,30 +6,30 @@
 
     // Check if user is logged in as a student
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     $conn = new mysqli("localhost", "root", "", "event_management_system");
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
     }
 
     // Migration: Ensure new columns exist for backward compatibility
     try {
-        // Check if event_state column exists, if not add it
-        $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_state'");
-        if ($check_column && $check_column->num_rows == 0) {
-            $conn->query("ALTER TABLE od_requests ADD COLUMN event_state VARCHAR(100) DEFAULT ''");
-        }
+    // Check if event_state column exists, if not add it
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_state'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN event_state VARCHAR(100) DEFAULT ''");
+    }
 
-        // Check if event_district column exists, if not add it
-        $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_district'");
-        if ($check_column && $check_column->num_rows == 0) {
-            $conn->query("ALTER TABLE od_requests ADD COLUMN event_district VARCHAR(100) DEFAULT ''");
-        }
+    // Check if event_district column exists, if not add it
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_district'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN event_district VARCHAR(100) DEFAULT ''");
+    }
     } catch (Exception $e) {
-        // Silently continue if migration fails
+    // Silently continue if migration fails
     }
 
     // Get student data
@@ -43,10 +43,10 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $student_data = $result->fetch_assoc();
+    $student_data = $result->fetch_assoc();
     } else {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Check if student has an assigned counselor
@@ -64,7 +64,7 @@
     $counselor_result = $counselor_stmt->get_result();
 
     if ($counselor_result->num_rows > 0) {
-        $counselor_info = $counselor_result->fetch_assoc();
+    $counselor_info = $counselor_result->fetch_assoc();
     }
     $counselor_stmt->close();
 
@@ -77,19 +77,21 @@
 
     // Check for success message from session
     if (isset($_SESSION['od_success']) && $_SESSION['od_success'] === true) {
-        $message      = "OD request submitted successfully! Your request is now pending approval from your class counselor.";
-        $message_type = 'success';
-        unset($_SESSION['od_success']); // Remove the session variable so it doesn't show again
+    $message      = "OD request submitted successfully! Your request is now pending approval from your class counselor.";
+    $message_type = 'success';
+    unset($_SESSION['od_success']); // Remove the session variable so it doesn't show again
     }
 
     // Handle OD request submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_od_request'])) {
-        if (! $counselor_info) {
-            $message      = "You don't have an assigned class counselor. Please contact the administration.";
-            $message_type = 'error';
-        } else {
-            // Create OD requests table if not exists
-            $create_table = "CREATE TABLE IF NOT EXISTS od_requests (
+    $validation_errors = [];
+
+    if (! $counselor_info) {
+        $message      = "You don't have an assigned class counselor. Please contact the administration.";
+        $message_type = 'error';
+    } else {
+        // Create OD requests table if not exists
+        $create_table = "CREATE TABLE IF NOT EXISTS od_requests (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 student_regno VARCHAR(50) NOT NULL,
                 counselor_id INT NOT NULL,
@@ -109,108 +111,203 @@
                 response_date TIMESTAMP NULL,
                 FOREIGN KEY (counselor_id) REFERENCES teacher_register(id) ON DELETE CASCADE
             )";
-            $conn->query($create_table);
+        $conn->query($create_table);
 
-            // Ensure group_members column exists (migration for existing tables)
-            $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'group_members'");
-            if ($check_column && $check_column->num_rows == 0) {
-                $conn->query("ALTER TABLE od_requests ADD COLUMN group_members TEXT NULL AFTER reason");
+        // Ensure group_members column exists (migration for existing tables)
+        $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'group_members'");
+        if ($check_column && $check_column->num_rows == 0) {
+            $conn->query("ALTER TABLE od_requests ADD COLUMN group_members TEXT NULL AFTER reason");
+        }
+
+        // Get and trim input data
+        $event_name        = isset($_POST['event_name']) ? trim($_POST['event_name']) : '';
+        $event_description = isset($_POST['event_description']) ? trim($_POST['event_description']) : '';
+        $event_state       = isset($_POST['event_state']) ? trim($_POST['event_state']) : '';
+        $event_district    = isset($_POST['event_district']) ? trim($_POST['event_district']) : '';
+        $event_date        = isset($_POST['event_date']) ? $_POST['event_date'] : '';
+        $event_time        = isset($_POST['event_time']) ? $_POST['event_time'] : '';
+        $event_days        = isset($_POST['event_days']) ? trim($_POST['event_days']) : '';
+        $reason            = isset($_POST['reason']) ? trim($_POST['reason']) : '';
+
+        // FIELD VALIDATION
+
+        // Validate Event Name
+        if (empty($event_name)) {
+            $validation_errors[] = "Event Name is required.";
+        } elseif (strlen($event_name) < 3) {
+            $validation_errors[] = "Event Name must be at least 3 characters long.";
+        } elseif (strlen($event_name) > 255) {
+            $validation_errors[] = "Event Name cannot exceed 255 characters.";
+        } elseif (! preg_match('/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i', $event_name)) {
+            $validation_errors[] = "Event Name contains invalid characters. Only letters, numbers, spaces, hyphens, dots, commas, ampersands, and parentheses are allowed.";
+        }
+
+        // Validate Event Date
+        if (empty($event_date)) {
+            $validation_errors[] = "Event Date is required.";
+        } else {
+            $event_date_time = strtotime($event_date);
+            $today           = strtotime(date('Y-m-d'));
+
+            if ($event_date_time === false) {
+                $validation_errors[] = "Invalid Event Date format.";
+            } elseif ($event_date_time < $today) {
+                $validation_errors[] = "Event Date cannot be in the past. Please select a future date.";
+            } elseif ($event_date_time > strtotime('+1 year')) {
+                $validation_errors[] = "Event Date cannot be more than 1 year in the future.";
             }
+        }
 
-            // Insert OD request
-            $event_name        = trim($_POST['event_name']);
-            $event_description = trim($_POST['event_description']);
-            $event_state       = trim($_POST['event_state']);
-            $event_district    = trim($_POST['event_district']);
-            $event_date        = $_POST['event_date'];
-            $event_time        = $_POST['event_time'];
-            $event_days        = $_POST['event_days'];
-            $reason            = trim($_POST['reason']);
-
-            // Validate event description word count (50 words max)
-            $word_count = str_word_count($event_description);
-            if ($word_count > 50) {
-                $error_message = "Event description must not exceed 50 words. Current: $word_count words.";
+        // Validate Event Time
+        if (empty($event_time)) {
+            $validation_errors[] = "Event Time is required.";
+        } else {
+            if (! preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/', $event_time)) {
+                $validation_errors[] = "Invalid Event Time format. Please use HH:MM format.";
             }
+        }
 
-            // Validate reason word count (50 words max)
+        // Validate Event State
+        if (empty($event_state)) {
+            $validation_errors[] = "Event State is required.";
+        } elseif (strlen($event_state) < 3 || strlen($event_state) > 100) {
+            $validation_errors[] = "Please select a valid Event State.";
+        }
+
+        // Validate Event District
+        if (empty($event_district)) {
+            $validation_errors[] = "Event District is required.";
+        } elseif (strlen($event_district) < 2 || strlen($event_district) > 100) {
+            $validation_errors[] = "Please select a valid Event District.";
+        }
+
+        // Validate Number of Days
+        if (empty($event_days)) {
+            $validation_errors[] = "Number of Days/Hours is required.";
+        } else {
+            $valid_days = ['1 hour', '2 hours', '3 hours', '4 hours', '5 hours', '6 hours', '7 hours', '1', '2', '3', '4', '5', '6', '7', 'other'];
+            if (! in_array($event_days, $valid_days)) {
+                $validation_errors[] = "Invalid selection for Number of Days/Hours.";
+            }
+        }
+
+        // Validate Event Description
+        if (empty($event_description)) {
+            $validation_errors[] = "Event Description is required.";
+        } else {
+            $desc_word_count = str_word_count($event_description);
+
+            if ($desc_word_count < 5) {
+                $validation_errors[] = "Event Description must have at least 5 words. Current: $desc_word_count words.";
+            } elseif ($desc_word_count > 50) {
+                $validation_errors[] = "Event Description must not exceed 50 words. Current: $desc_word_count words.";
+            } elseif (strlen($event_description) > 500) {
+                $validation_errors[] = "Event Description is too long (max 500 characters).";
+            }
+        }
+
+        // Validate Reason for OD
+        if (empty($reason)) {
+            $validation_errors[] = "Reason for OD is required.";
+        } else {
             $reason_word_count = str_word_count($reason);
-            if ($reason_word_count > 50) {
-                $error_message = "Reason for OD must not exceed 50 words. Current: $reason_word_count words.";
+
+            if ($reason_word_count < 5) {
+                $validation_errors[] = "Reason for OD must have at least 5 words. Current: $reason_word_count words.";
+            } elseif ($reason_word_count > 50) {
+                $validation_errors[] = "Reason for OD must not exceed 50 words. Current: $reason_word_count words.";
+            } elseif (strlen($reason) > 500) {
+                $validation_errors[] = "Reason for OD is too long (max 500 characters).";
             }
+        }
 
-            // Validate event location fields
-            if (empty($event_state) || empty($event_district)) {
-                $message      = "Please provide both Event State and Event District.";
-                $message_type = 'error';
-            }
+        // Validate Group Members if any exist
+        if (isset($_POST['group_members']) && is_array($_POST['group_members'])) {
+            $valid_group_members = [];
 
-            // Handle file upload with compression
-            $poster_filename = null;
-            if (isset($_FILES['event_poster']) && $_FILES['event_poster']['error'] === UPLOAD_ERR_OK) {
-                $upload_dir = 'uploads/posters/';
+            foreach ($_POST['group_members'] as $member) {
+                $member = trim($member);
 
-                // Create directory if it doesn't exist
-                if (! is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0777, true);
-                }
-
-                $file_info      = pathinfo($_FILES['event_poster']['name']);
-                $file_extension = strtolower($file_info['extension']);
-
-                // Validate file type
-                $allowed_types = ['jpg', 'jpeg', 'png', 'pdf'];
-                if (in_array($file_extension, $allowed_types)) {
-                    // Validate file size (5MB max)
-                    if ($_FILES['event_poster']['size'] <= 5 * 1024 * 1024) {
-                        $base_filename = $upload_dir . 'poster_' . $student_data['regno'] . '_' . time();
-
-                        // Compress and save the file
-                        $compression_result = FileCompressor::compressUploadedFile(
-                            $_FILES['event_poster']['tmp_name'],
-                            $base_filename,
-                            $file_extension,
-                            85// 85% quality
-                        );
-
-                        if ($compression_result['success']) {
-                            $poster_filename = basename($compression_result['path']);
-                            // Log compression savings
-                            error_log(sprintf(
-                                "OD Poster compressed: %s -> %s (%.2f%% saved)",
-                                FileCompressor::formatSize($compression_result['original_size']),
-                                FileCompressor::formatSize($compression_result['compressed_size']),
-                                $compression_result['savings_percent']
-                            ));
-                        } else {
-                            $message         = "Error uploading poster file.";
-                            $message_type    = 'error';
-                            $poster_filename = null;
-                        }
+                if (! empty($member)) {
+                    // Validate registration number format
+                    if (! preg_match('/^[A-Za-z0-9]+$/', $member)) {
+                        $validation_errors[] = "Group member registration number '$member' contains invalid characters. Only alphanumeric characters are allowed.";
+                    } elseif (strlen($member) < 3 || strlen($member) > 50) {
+                        $validation_errors[] = "Registration number '$member' has invalid length. Must be between 3 and 50 characters.";
                     } else {
-                        $message      = "Poster file size must be less than 5MB.";
-                        $message_type = 'error';
+                        $valid_group_members[] = $member;
                     }
-                } else {
-                    $message      = "Please upload a valid image file (JPG, PNG) or PDF.";
-                    $message_type = 'error';
                 }
             }
+        }
 
-            // Only proceed with database insert if no file upload errors
-            if (empty($message)) {
-                // Handle group members
-                $group_members = '';
-                if (isset($_POST['group_members']) && is_array($_POST['group_members'])) {
-                    // Filter out empty values and trim whitespace
-                    $members = array_filter(array_map('trim', $_POST['group_members']));
-                    if (! empty($members)) {
-                        $group_members = implode(',', $members);
-                    }
+        // Handle file upload with compression
+        $poster_filename = null;
+        if (isset($_FILES['event_poster']) && $_FILES['event_poster']['error'] === UPLOAD_ERR_OK) {
+            $upload_dir = 'uploads/posters/';
+
+            // Create directory if it doesn't exist
+            if (! is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+
+            $file_info      = pathinfo($_FILES['event_poster']['name']);
+            $file_extension = strtolower($file_info['extension']);
+
+            // Validate file type
+            $allowed_types = ['jpg', 'jpeg', 'png', 'pdf'];
+            if (! in_array($file_extension, $allowed_types)) {
+                $validation_errors[] = "Invalid file type. Please upload JPG, PNG, or PDF only.";
+            } elseif ($_FILES['event_poster']['size'] > 5 * 1024 * 1024) {
+                // Validate file size (5MB max)
+                $validation_errors[] = "Poster file size must be less than 5MB. Current size: " . round($_FILES['event_poster']['size'] / (1024 * 1024), 2) . " MB";
+            } elseif ($_FILES['event_poster']['size'] === 0) {
+                $validation_errors[] = "Uploaded file is empty. Please select a valid file.";
+            } else {
+                // File validations passed, proceed with compression
+                $base_filename = $upload_dir . 'poster_' . $student_data['regno'] . '_' . time();
+
+                // Compress and save the file
+                $compression_result = FileCompressor::compressUploadedFile(
+                    $_FILES['event_poster']['tmp_name'],
+                    $base_filename,
+                    $file_extension,
+                    85// 85% quality
+                );
+
+                if ($compression_result['success']) {
+                    $poster_filename = basename($compression_result['path']);
+                    // Log compression savings
+                    error_log(sprintf(
+                        "OD Poster compressed: %s -> %s (%.2f%% saved)",
+                        FileCompressor::formatSize($compression_result['original_size']),
+                        FileCompressor::formatSize($compression_result['compressed_size']),
+                        $compression_result['savings_percent']
+                    ));
+                } else {
+                    $validation_errors[] = "Error processing poster file. Please try again.";
+                    $poster_filename     = null;
                 }
+            }
+        } elseif (isset($_FILES['event_poster']) && $_FILES['event_poster']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // File upload error occurred
+            $validation_errors[] = "Error uploading poster file. Please try again.";
+        }
 
-                $insert_sql  = "INSERT INTO od_requests (student_regno, counselor_id, event_name, event_description, event_state, event_district, event_date, event_time, event_days, event_poster, reason, group_members) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                $insert_stmt = $conn->prepare($insert_sql);
+        // If no validation errors, proceed with database insertion
+        if (empty($validation_errors)) {
+            // Handle group members
+            $group_members = '';
+            if (isset($valid_group_members) && ! empty($valid_group_members)) {
+                $group_members = implode(',', $valid_group_members);
+            }
+
+            $insert_sql  = "INSERT INTO od_requests (student_regno, counselor_id, event_name, event_description, event_state, event_district, event_date, event_time, event_days, event_poster, reason, group_members) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $insert_stmt = $conn->prepare($insert_sql);
+
+            if (! $insert_stmt) {
+                $validation_errors[] = "Database error: " . $conn->error;
+            } else {
                 $insert_stmt->bind_param("sissssssssss", $student_data['regno'], $counselor_info['teacher_id'], $event_name, $event_description, $event_state, $event_district, $event_date, $event_time, $event_days, $poster_filename, $reason, $group_members);
 
                 if ($insert_stmt->execute()) {
@@ -220,27 +317,43 @@
                     header("Location: od_request.php");
                     exit();
                 } else {
-                    $message      = "Error submitting OD request: " . $conn->error;
-                    $message_type = 'error';
+                    $validation_errors[] = "Error submitting OD request: " . $conn->error;
                 }
                 $insert_stmt->close();
             }
         }
+
+        // If there are validation errors, display them
+        if (! empty($validation_errors)) {
+            $message      = implode("<br>", array_map('htmlspecialchars', $validation_errors));
+            $message_type = 'error';
+        }
+    }
     }
 
     // Get student's OD requests (including those where they are a group member)
+    $od_requests_result = null;
+    if (isset($student_data)) {
     $od_requests_sql = "SELECT * FROM od_requests
                          WHERE student_regno = ?
                          OR FIND_IN_SET(?, REPLACE(group_members, ',', ','))
                          ORDER BY request_date DESC";
     $od_requests_stmt = $conn->prepare($od_requests_sql);
-    $od_requests_stmt->bind_param("ss", $student_data['regno'], $student_data['regno']);
-    $od_requests_stmt->execute();
-    $od_requests_result = $od_requests_stmt->get_result();
-    $od_requests_stmt->close();
+    if ($od_requests_stmt) {
+        $od_requests_stmt->bind_param("ss", $student_data['regno'], $student_data['regno']);
+        $od_requests_stmt->execute();
+        $od_requests_result = $od_requests_stmt->get_result();
+        $od_requests_stmt->close();
+    }
+    }
 
+    // Safely close database connections if they exist
+    if (isset($stmt)) {
     $stmt->close();
+    }
+    if (isset($conn)) {
     $conn->close();
+    }
 ?>
 
 <!DOCTYPE html>
@@ -375,7 +488,7 @@
             border-radius: 8px;
             margin-bottom: 20px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 10px;
         }
 
@@ -402,6 +515,22 @@
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+            flex-direction: column;
+        }
+
+        .message.error > span {
+            align-self: flex-start;
+            flex-shrink: 0;
+        }
+
+        .message.error > div {
+            line-height: 1.6;
+        }
+
+        .message.error br {
+            display: block;
+            content: '';
+            margin: 8px 0;
         }
 
         .counselor-info {
@@ -789,11 +918,20 @@
         <!-- Main Content -->
         <div class="main">
             <?php if ($message): ?>
-                <div class="message<?php echo $message_type; ?>">
+                <div class="message <?php echo htmlspecialchars($message_type); ?>">
                     <span class="material-symbols-outlined">
                         <?php echo $message_type === 'success' ? 'check_circle' : 'error'; ?>
                     </span>
-                    <?php echo htmlspecialchars($message); ?>
+                    <div style="flex: 1;">
+                        <?php
+                            // If we have validation errors (multiple), display each on new line
+                            if ($message_type === 'error' && strpos($message, '<br>') !== false) {
+                                echo $message; // Already escaped in the validation section
+                            } else {
+                                echo htmlspecialchars($message); // Escape single messages
+                            }
+                        ?>
+                    </div>
                 </div>
             <?php endif; ?>
 
@@ -829,12 +967,18 @@
                     <?php endif; ?>
 
                     <?php if ($counselor_info): ?>
-                    <form method="POST" action="" enctype="multipart/form-data">
+                    <form method="POST" action="" enctype="multipart/form-data" onsubmit="return validateAndSubmitForm(event)">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Event Name *</label>
-                                <input type="text" name="event_name" class="form-input" required
-                                       placeholder="Enter event name">
+                                <input type="text"
+                                       name="event_name"
+                                       class="form-input"
+                                       required
+                                       minlength="3"
+                                       maxlength="255"
+                                       placeholder="Enter event name (3-255 characters)"
+                                       title="Event name must be 3-255 characters long">
                             </div>
 
                             <div class="form-group">
@@ -882,12 +1026,23 @@
 
                             <div class="form-group">
                                 <label class="form-label">Event Date *</label>
-                                <input type="date" name="event_date" class="form-input" value="<?php echo date('Y-m-d'); ?>" required>
+                                <input type="date"
+                                       name="event_date"
+                                       class="form-input"
+                                       value="<?php echo date('Y-m-d'); ?>"
+                                       min="<?php echo date('Y-m-d'); ?>"
+                                       max="<?php echo date('Y-m-d', strtotime('+1 year')); ?>"
+                                       required>
+                                <small style="display: block; margin-top: 5px; color: #666; font-size: 0.85rem;">Select a future date (max 1 year from today)</small>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Event Time *</label>
-                                <input type="time" name="event_time" class="form-input" required>
+                                <input type="time"
+                                       name="event_time"
+                                       class="form-input"
+                                       required
+                                       title="Enter time in HH:MM format (00:00 - 23:59)">
                             </div>
 
                             <div class="form-group">
@@ -915,10 +1070,15 @@
                             <div class="form-group full-width">
                                 <label class="form-label">
                                     Event Description *
-                                    <span style="font-size: 13px; color: #6b7280;">(Max 50 words)</span>
+                                    <span style="font-size: 13px; color: #6b7280;">(5-50 words)</span>
                                 </label>
-                                <textarea name="event_description" id="eventDescription" class="form-textarea" required
-                                          placeholder="Describe what the event is about, activities involved, etc."
+                                <textarea name="event_description"
+                                          id="eventDescription"
+                                          class="form-textarea"
+                                          required
+                                          minlength="10"
+                                          maxlength="500"
+                                          placeholder="Describe what the event is about, activities involved, etc. (minimum 5 words, maximum 50 words)"
                                           oninput="countWords(this, 50, 'wordCount')"></textarea>
                                 <div style="text-align: right; margin-top: 5px;">
                                     <span id="wordCount" style="font-size: 13px; color: #6b7280;">0 / 50 words</span>
@@ -944,7 +1104,11 @@
 
                             <div class="form-group full-width">
                                 <label class="form-label">Event Poster</label>
-                                <input type="file" name="event_poster" class="form-input" accept="image/*,.pdf">
+                                <input type="file"
+                                       name="event_poster"
+                                       class="form-input"
+                                       accept="image/jpeg,image/png,application/pdf"
+                                       title="Select JPG, PNG, or PDF file (Max 5MB)">
                                 <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">
                                     Upload event poster/flyer (JPG, PNG, PDF - Max 5MB). This helps your counselor understand the event better.
                                 </small>
@@ -953,10 +1117,15 @@
                             <div class="form-group full-width">
                                 <label class="form-label">
                                     Reason for OD *
-                                    <span style="font-size: 13px; color: #6b7280;">(Max 50 words)</span>
+                                    <span style="font-size: 13px; color: #6b7280;">(5-50 words)</span>
                                 </label>
-                                <textarea name="reason" id="reasonForOD" class="form-textarea" required
-                                          placeholder="Explain why you need OD for this event participation"
+                                <textarea name="reason"
+                                          id="reasonForOD"
+                                          class="form-textarea"
+                                          required
+                                          minlength="10"
+                                          maxlength="500"
+                                          placeholder="Explain why you need OD for this event participation (minimum 5 words, maximum 50 words)"
                                           oninput="countWords(this, 50, 'reasonWordCount')"></textarea>
                                 <div style="text-align: right; margin-top: 5px;">
                                     <span id="reasonWordCount" style="font-size: 13px; color: #6b7280;">0 / 50 words</span>
@@ -985,7 +1154,7 @@
                         My OD Requests
                     </div>
 
-                    <?php if ($od_requests_result->num_rows > 0): ?>
+                    <?php if ($od_requests_result && $od_requests_result->num_rows > 0): ?>
                         <?php while ($request = $od_requests_result->fetch_assoc()): ?>
                         <div class="od-request-item<?php echo $request['status']; ?>">
                             <div class="od-request-header">
@@ -1152,6 +1321,122 @@
             }
         }
 
+        // Form validation function
+        function validateODRequestForm(form) {
+            const errors = [];
+
+            // Get form values
+            const eventName = document.querySelector('input[name="event_name"]').value.trim();
+            const eventDescription = document.querySelector('textarea[name="event_description"]').value.trim();
+            const eventState = document.querySelector('select[name="event_state"]').value;
+            const eventDistrict = document.querySelector('select[name="event_district"]').value;
+            const eventDate = document.querySelector('input[name="event_date"]').value;
+            const eventTime = document.querySelector('input[name="event_time"]').value;
+            const eventDays = document.querySelector('select[name="event_days"]').value;
+            const reason = document.querySelector('textarea[name="reason"]').value.trim();
+
+            // Validate Event Name
+            if (!eventName) {
+                errors.push("✗ Event Name is required");
+            } else if (eventName.length < 3) {
+                errors.push("✗ Event Name must be at least 3 characters long");
+            } else if (eventName.length > 255) {
+                errors.push("✗ Event Name cannot exceed 255 characters");
+            } else if (!/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i.test(eventName)) {
+                errors.push("✗ Event Name contains invalid characters");
+            }
+
+            // Validate Event Date
+            if (!eventDate) {
+                errors.push("✗ Event Date is required");
+            } else {
+                const selectedDate = new Date(eventDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (selectedDate < today) {
+                    errors.push("✗ Event Date cannot be in the past");
+                } else if (selectedDate > new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)) {
+                    errors.push("✗ Event Date cannot be more than 1 year in the future");
+                }
+            }
+
+            // Validate Event Time
+            if (!eventTime) {
+                errors.push("✗ Event Time is required");
+            } else if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(eventTime)) {
+                errors.push("✗ Invalid Event Time format");
+            }
+
+            // Validate State and District
+            if (!eventState) {
+                errors.push("✗ Event State is required");
+            }
+            if (!eventDistrict) {
+                errors.push("✗ Event District is required");
+            }
+
+            // Validate Event Days
+            if (!eventDays) {
+                errors.push("✗ Number of Days/Hours is required");
+            }
+
+            // Validate Event Description
+            if (!eventDescription) {
+                errors.push("✗ Event Description is required");
+            } else {
+                const descWordCount = eventDescription.trim().split(/\s+/).filter(w => w.length > 0).length;
+                if (descWordCount < 5) {
+                    errors.push(`✗ Event Description must have at least 5 words (Current: ${descWordCount})`);
+                } else if (descWordCount > 50) {
+                    errors.push(`✗ Event Description exceeds 50 words (Current: ${descWordCount})`);
+                }
+            }
+
+            // Validate Reason for OD
+            if (!reason) {
+                errors.push("✗ Reason for OD is required");
+            } else {
+                const reasonWordCount = reason.trim().split(/\s+/).filter(w => w.length > 0).length;
+                if (reasonWordCount < 5) {
+                    errors.push(`✗ Reason for OD must have at least 5 words (Current: ${reasonWordCount})`);
+                } else if (reasonWordCount > 50) {
+                    errors.push(`✗ Reason for OD exceeds 50 words (Current: ${reasonWordCount})`);
+                }
+            }
+
+            // Validate Group Members
+            const groupMemberInputs = document.querySelectorAll('input[name="group_members[]"]');
+            groupMemberInputs.forEach((input, index) => {
+                const value = input.value.trim();
+                if (value) {
+                    if (!/^[A-Za-z0-9]+$/.test(value)) {
+                        errors.push(`✗ Group member ${index + 1}: Invalid registration number format`);
+                    } else if (value.length < 3 || value.length > 50) {
+                        errors.push(`✗ Group member ${index + 1}: Registration number length must be between 3 and 50 characters`);
+                    }
+                }
+            });
+
+            // Validate Event Poster
+            const posterInput = document.querySelector('input[name="event_poster"]');
+            if (posterInput && posterInput.files.length > 0) {
+                const file = posterInput.files[0];
+                const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                if (!allowedExtensions.includes(fileExtension)) {
+                    errors.push("✗ Poster file type not allowed. Use JPG, PNG, or PDF only");
+                } else if (file.size > 5 * 1024 * 1024) {
+                    errors.push(`✗ Poster file size exceeds 5MB (Current: ${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
+                } else if (file.size === 0) {
+                    errors.push("✗ Poster file is empty or corrupted");
+                }
+            }
+
+            return errors;
+        }
+
         // State-District mapping
         const stateDistricts = {
             'Andhra Pradesh': ['Anantapur', 'Chittoor', 'East Godavari', 'Guntur', 'Kadapa', 'Krishna', 'Kurnool', 'Nellore', 'Prakasam', 'Srikakulam', 'Visakhapatnam', 'Vizianagaram', 'West Godavari'],
@@ -1269,11 +1554,14 @@
                 <span class="material-symbols-outlined" style="color: #17a2b8; font-size: 20px;">person</span>
                 <input type="text"
                        name="group_members[]"
-                       class="form-input"
+                       class="form-input group-member-input-field"
                        placeholder="Enter registration number"
                        style="flex: 1; margin: 0; padding: 8px 12px;"
                        pattern="[A-Za-z0-9]+"
-                       title="Registration number should contain only letters and numbers">
+                       minlength="3"
+                       maxlength="50"
+                       title="Registration number: 3-50 alphanumeric characters"
+                       oninput="validateGroupMemberInput(this)">
                 <button type="button"
                         onclick="removeGroupMember(${groupMemberCount})"
                         style="background: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.3s ease;"
@@ -1285,6 +1573,41 @@
             `;
 
             container.appendChild(memberDiv);
+        }
+
+        // Validate group member input on change
+        function validateGroupMemberInput(input) {
+            const value = input.value.trim();
+            const removeErrorMsg = (el) => {
+                const error = el.parentElement.querySelector('.member-error');
+                if (error) error.remove();
+            };
+
+            if (value) {
+                if (!/^[A-Za-z0-9]+$/.test(value)) {
+                    removeErrorMsg(input);
+                    const error = document.createElement('small');
+                    error.className = 'member-error';
+                    error.style.cssText = 'color: #dc3545; font-size: 11px; display: block; position: absolute; bottom: -20px;';
+                    error.textContent = 'Only alphanumeric characters allowed';
+                    input.parentElement.style.position = 'relative';
+                    input.parentElement.appendChild(error);
+                } else if (value.length < 3 || value.length > 50) {
+                    removeErrorMsg(input);
+                    const error = document.createElement('small');
+                    error.className = 'member-error';
+                    error.style.cssText = 'color: #dc3545; font-size: 11px; display: block; position: absolute; bottom: -20px;';
+                    error.textContent = 'Must be 3-50 characters';
+                    input.parentElement.style.position = 'relative';
+                    input.parentElement.appendChild(error);
+                } else {
+                    removeErrorMsg(input);
+                    input.style.borderColor = '#28a745';
+                }
+            } else {
+                removeErrorMsg(input);
+                input.style.borderColor = '#e9ecef';
+            }
         }
 
         function removeGroupMember(id) {
@@ -1353,6 +1676,28 @@
                 countWords(reasonTextarea, 50, 'reasonWordCount');
             }
         });
+
+        // Form submission validation handler
+        function validateAndSubmitForm(event) {
+            const errors = validateODRequestForm(event.target);
+
+            if (errors.length > 0) {
+                event.preventDefault();
+
+                // Display all validation errors
+                const errorMessage = "⚠️ Please fix the following errors:\n\n" + errors.join("\n");
+                alert(errorMessage);
+
+                // Scroll to top of form
+                const form = event.target;
+                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                return false;
+            }
+
+            // All validations passed, allow form submission
+            return true;
+        }
     </script>
 </body>
 </html>

@@ -100,7 +100,7 @@
             body {
                 margin: 0;
                 -webkit-print-color-adjust: exact;
-                color-adjust: exact;
+                print-color-adjust: exact;
             }
             .no-print { display: none !important; }
             .page-break { page-break-before: always; }

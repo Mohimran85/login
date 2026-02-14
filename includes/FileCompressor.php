@@ -55,22 +55,23 @@ class FileCompressor
         if (function_exists('imagewebp')) {
             // Convert to WebP for maximum compression
             $webp_path = $destination_path . '.webp';
-            $success   = imagewebp($image, $webp_path, $quality);
-            imagedestroy($image);
+            $success   = @imagewebp($image, $webp_path, $quality);
 
-            if ($success) {
+            if ($success && file_exists($webp_path)) {
+                imagedestroy($image);
                 // Delete original file to save space
                 @unlink($source_path);
                 return $webp_path;
             }
+            // WebP failed, try JPEG fallback
         }
 
-        // Fallback: compress as JPEG if WebP not supported
+        // Fallback: compress as JPEG if WebP not supported or failed
         $jpg_path = $destination_path . '.jpg';
-        $success  = imagejpeg($image, $jpg_path, $quality);
+        $success  = @imagejpeg($image, $jpg_path, $quality);
         imagedestroy($image);
 
-        if ($success) {
+        if ($success && file_exists($jpg_path)) {
             @unlink($source_path);
             return $jpg_path;
         }
@@ -98,12 +99,12 @@ class FileCompressor
             return false;
         }
 
-        // Compress PDF using Ghostscript
+        // Compress PDF using Ghostscript with proper escaping
         $command = sprintf(
-            '"%s" -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH -sOutputFile="%s" "%s"',
-            $gs_path,
-            $destination_path,
-            $source_path
+            '%s -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH -sOutputFile=%s %s',
+            escapeshellarg($gs_path),
+            escapeshellarg($destination_path),
+            escapeshellarg($source_path)
         );
 
         exec($command, $output, $return_var);
@@ -159,7 +160,25 @@ class FileCompressor
      */
     public static function compressUploadedFile($uploaded_tmp_path, $final_path, $file_extension, $quality = 80)
     {
-        $original_size  = filesize($uploaded_tmp_path);
+        // Validate file exists and is readable
+        if (! is_file($uploaded_tmp_path) || ! is_readable($uploaded_tmp_path)) {
+            error_log("FileCompressor: Unable to read file: $uploaded_tmp_path");
+            return [
+                'success'         => false,
+                'error'           => 'Unable to read uploaded file',
+                'path'            => null,
+                'original_size'   => 0,
+                'compressed_size' => 0,
+                'savings_percent' => 0,
+            ];
+        }
+
+        $original_size = filesize($uploaded_tmp_path);
+        if ($original_size === false) {
+            error_log("FileCompressor: Unable to get file size: $uploaded_tmp_path");
+            $original_size = 0;
+        }
+
         $file_extension = strtolower($file_extension);
 
         $result = [
@@ -178,7 +197,10 @@ class FileCompressor
                 $result['success']         = true;
                 $result['path']            = $compressed_path;
                 $result['compressed_size'] = filesize($compressed_path);
-                $result['savings_percent'] = round((1 - $result['compressed_size'] / $original_size) * 100, 2);
+                // Prevent division by zero
+                if ($original_size > 0) {
+                    $result['savings_percent'] = round((1 - $result['compressed_size'] / $original_size) * 100, 2);
+                }
                 return $result;
             }
         }
@@ -192,14 +214,30 @@ class FileCompressor
                 $result['success']         = true;
                 $result['path']            = $compressed_path;
                 $result['compressed_size'] = filesize($compressed_path);
-                $result['savings_percent'] = round((1 - $result['compressed_size'] / $original_size) * 100, 2);
+                // Prevent division by zero
+                if ($original_size > 0) {
+                    $result['savings_percent'] = round((1 - $result['compressed_size'] / $original_size) * 100, 2);
+                }
                 return $result;
             }
         }
 
-        // Fallback: just move the file
+        // Fallback: copy or rename the file
         $final_file_path = $final_path . '.' . $file_extension;
-        if (move_uploaded_file($uploaded_tmp_path, $final_file_path)) {
+        // Try rename first (for non-uploaded files), then copy
+        if (is_uploaded_file($uploaded_tmp_path)) {
+            $success = move_uploaded_file($uploaded_tmp_path, $final_file_path);
+        } else {
+            $success = rename($uploaded_tmp_path, $final_file_path);
+            if (! $success) {
+                $success = copy($uploaded_tmp_path, $final_file_path);
+                if ($success) {
+                    @unlink($uploaded_tmp_path);
+                }
+            }
+        }
+
+        if ($success) {
             $result['success']         = true;
             $result['path']            = $final_file_path;
             $result['compressed_size'] = $original_size;

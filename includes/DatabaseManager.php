@@ -14,13 +14,20 @@ class DatabaseManager
     // Database configuration
     private function __construct()
     {
+        // Load configuration from environment or config file
         $this->config = [
-            'host'     => 'localhost',
-            'username' => 'root',
-            'password' => '',
-            'database' => 'event_management_system',
-            'charset'  => 'utf8mb4',
+            'host'     => getenv('DB_HOST') ?: 'localhost',
+            'username' => getenv('DB_USER') ?: 'root',
+            'password' => getenv('DB_PASS') ?: '',
+            'database' => getenv('DB_NAME') ?: 'event_management_system',
+            'charset'  => getenv('DB_CHARSET') ?: 'utf8mb4',
         ];
+
+        // Validate required configuration
+        if (empty($this->config['host']) || empty($this->config['database'])) {
+            error_log("CRITICAL: Database configuration is incomplete");
+            throw new Exception("Database configuration error. Please contact the administrator.");
+        }
 
         $this->connect();
     }
@@ -103,13 +110,30 @@ class DatabaseManager
             if (! empty($params)) {
                 if (empty($types)) {
                     // Auto-detect parameter types
-                    $types = str_repeat('s', count($params));
+                    $types = '';
+                    foreach ($params as $param) {
+                        if (is_int($param)) {
+                            $types .= 'i';
+                        } elseif (is_float($param)) {
+                            $types .= 'd';
+                        } else {
+                            $types .= 's';
+                        }
+                    }
                 }
-                $stmt->bind_param($types, ...$params);
+                if (! $stmt->bind_param($types, ...$params)) {
+                    $stmt->close();
+                    throw new Exception("Bind failed: " . $stmt->error);
+                }
             }
 
-            $stmt->execute();
-            $result = $stmt->get_result();
+            if (! $stmt->execute()) {
+                $error = $stmt->error;
+                $stmt->close();
+                throw new Exception("Execute failed: " . $error);
+            }
+
+            $result  = $stmt->get_result();
 
             // Handle different result types
             $data = null;
@@ -211,7 +235,7 @@ class DatabaseManager
      */
     public function getRecentActivities($regno, $limit = 5)
     {
-        $cacheKey = "recent_activities_" . $regno;
+        $cacheKey = "recent_activities_{$regno}_{$limit}";
 
         $sql = "SELECT event_name, event_type, start_date, end_date, no_of_days, prize
                 FROM student_event_register
@@ -227,7 +251,7 @@ class DatabaseManager
      */
     public function getEventTypeBreakdown($regno, $limit = 8)
     {
-        $cacheKey = "event_types_" . $regno;
+        $cacheKey = "event_types_{$regno}_{$limit}";
 
         $sql = "SELECT event_type, COUNT(*) as count
                 FROM student_event_register
@@ -244,7 +268,7 @@ class DatabaseManager
      */
     public function getRecentODRequests($regno, $limit = 3)
     {
-        $cacheKey = "recent_od_" . $regno;
+        $cacheKey = "recent_od_{$regno}_{$limit}";
 
         $sql = "SELECT event_name, status, request_date, event_date
                 FROM od_requests

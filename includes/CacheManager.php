@@ -80,7 +80,7 @@ class CacheManager
             'key'     => $key,
         ];
 
-        file_put_contents($filename, serialize($cacheData), LOCK_EX);
+        file_put_contents($filename, json_encode($cacheData), LOCK_EX);
         $this->fileCache[$key] = $filename;
     }
 
@@ -95,15 +95,26 @@ class CacheManager
             return null;
         }
 
-        $cached = unserialize(file_get_contents($filename));
+        $contents = file_get_contents($filename);
+        if ($contents === false) {
+            return null;
+        }
 
-        if (! $cached || time() > $cached['expires']) {
-            unlink($filename);
+        $cached = json_decode($contents, true);
+
+        if ($cached === null || json_last_error() !== JSON_ERROR_NONE) {
+            @unlink($filename);
             unset($this->fileCache[$key]);
             return null;
         }
 
-        return $cached['data'];
+        if (! isset($cached['expires']) || ! is_numeric($cached['expires']) || time() > $cached['expires']) {
+            @unlink($filename);
+            unset($this->fileCache[$key]);
+            return null;
+        }
+
+        return $cached['data'] ?? null;
     }
 
     /**
@@ -111,7 +122,7 @@ class CacheManager
      */
     public function set($key, $data, $duration = 300)
     {
-        $dataSize = strlen(serialize($data));
+        $dataSize = strlen(json_encode($data));
 
         // Use session cache for small data (< 10KB)
         if ($dataSize < 10240) {
@@ -138,19 +149,12 @@ class CacheManager
     }
 
     /**
-     * Cache student dashboard data with intelligent invalidation
+     * Cache student dashboard data
      */
     public function cacheStudentDashboard($regno, $data, $duration = 300)
     {
-        $keys = [
-            "student_dashboard_{$regno}",
-            "student_stats_{$regno}",
-            "student_recent_{$regno}",
-        ];
-
-        foreach ($keys as $key) {
-            $this->set($key, $data, $duration);
-        }
+        // Use a single canonical key for dashboard data
+        $this->set("student_dashboard_{$regno}", $data, $duration);
     }
 
     /**
@@ -244,10 +248,45 @@ class CacheManager
 
         // Clean file cache
         $files = glob($this->cacheDir . '*.cache');
+        if ($files === false) {
+            return; // Glob failed
+        }
+
         foreach ($files as $file) {
-            $cached = @unserialize(file_get_contents($file));
-            if (! $cached || time() > $cached['expires']) {
-                unlink($file);
+            $contents = @file_get_contents($file);
+            if ($contents === false) {
+                continue;
+            }
+
+            $cached = json_decode($contents, true);
+            if (! is_array($cached) || ! isset($cached['expires']) || ! is_numeric($cached['expires'])) {
+                @unlink($file);
+                continue;
+            }
+
+            if (time() > $cached['expires']) {
+                @unlink($file);
+            }
+        }
+    }
+
+    /**
+     * Clear all cache entries (both session and file cache)
+     */
+    public function clearAll()
+    {
+        // Clear all session cache
+        foreach ($_SESSION as $key => $value) {
+            if (strpos($key, $this->sessionPrefix) === 0) {
+                unset($_SESSION[$key]);
+            }
+        }
+
+        // Clear all file cache
+        $files = glob($this->cacheDir . '*.cache');
+        if ($files !== false) {
+            foreach ($files as $file) {
+                @unlink($file);
             }
         }
     }
@@ -307,22 +346,15 @@ class CacheManager
     }
 
     /**
-     * Invalidate cache based on dependencies
+     * Invalidate all cache entries (simple approach)
+     * Note: Full dependency-based invalidation not yet implemented.
+     * Use this to clear all cache when data changes.
      */
     public function invalidateByDependency($dependency)
     {
-        // This would require a more complex implementation
-        // For now, we'll use pattern matching
-        $patterns = [
-            "student_dashboard_*",
-            "participations_*",
-            "od_requests_*",
-        ];
-
-        foreach ($patterns as $pattern) {
-            // In a full implementation, you'd scan all cache entries
-            // and check their dependencies
-        }
+        // For now, clear all cache to ensure consistency
+        $this->clearAll();
+        error_log("Cache invalidated for dependency: $dependency");
     }
 
     /**
