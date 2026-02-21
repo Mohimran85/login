@@ -6,33 +6,33 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Get logged-in user's registration number and student data
     $logged_in_regno = '';
     $student_data    = null;
     if (isset($_SESSION['username'])) {
-        $conn_user = new mysqli("localhost", "root", "", "event_management_system");
-        if ($conn_user->connect_error) {
-            die("Connection failed: " . htmlspecialchars($conn_user->connect_error));
-        }
+    $conn_user = new mysqli("localhost", "root", "", "event_management_system");
+    if ($conn_user->connect_error) {
+        die("Connection failed: " . htmlspecialchars($conn_user->connect_error));
+    }
 
-        $username  = $_SESSION['username'];
-        $user_sql  = "SELECT name, regno, semester, department FROM student_register WHERE username=?";
-        $user_stmt = $conn_user->prepare($user_sql);
-        $user_stmt->bind_param("s", $username);
-        $user_stmt->execute();
-        $user_result = $user_stmt->get_result();
+    $username  = $_SESSION['username'];
+    $user_sql  = "SELECT name, regno, semester, department FROM student_register WHERE username=?";
+    $user_stmt = $conn_user->prepare($user_sql);
+    $user_stmt->bind_param("s", $username);
+    $user_stmt->execute();
+    $user_result = $user_stmt->get_result();
 
-        if ($user_result->num_rows > 0) {
-            $student_data    = $user_result->fetch_assoc();
-            $logged_in_regno = $student_data['regno'];
-        }
+    if ($user_result->num_rows > 0) {
+        $student_data    = $user_result->fetch_assoc();
+        $logged_in_regno = $student_data['regno'];
+    }
 
-        $user_stmt->close();
-        $conn_user->close();
+    $user_stmt->close();
+    $conn_user->close();
     }
 
     // Auto-fill functionality: Get event details from URL parameters
@@ -47,160 +47,160 @@
     $auto_days           = isset($_GET['days']) ? trim($_GET['days']) : '';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $servername = "localhost";
-        $username   = "root";
-        $password   = "";
-        $dbname     = "event_management_system";
-        $conn       = new mysqli($servername, $username, $password, $dbname);
+    $servername = "localhost";
+    $username   = "root";
+    $password   = "";
+    $dbname     = "event_management_system";
+    $conn       = new mysqli($servername, $username, $password, $dbname);
 
-        if ($conn->connect_error) {
-            die("Connection failed: " . htmlspecialchars($conn->connect_error));
-        }
+    if ($conn->connect_error) {
+        die("Connection failed: " . htmlspecialchars($conn->connect_error));
+    }
 
-        // Sanitize inputs
-        $regno        = isset($_POST['regno']) ? trim($_POST['regno']) : '';
-        $current_year = isset($_POST['year']) ? trim($_POST['year']) : '';
-        $semester     = isset($_POST['semester']) ? trim($_POST['semester']) : '';
-        // Use department code for database storage, fallback to department field if code not available
-        $department = isset($_POST['department_code']) && ! empty($_POST['department_code'])
-            ? trim($_POST['department_code'])
-            : (isset($_POST['department']) ? trim($_POST['department']) : '');
-        $state      = isset($_POST['state']) ? trim($_POST['state']) : '';
-        $district   = isset($_POST['district']) ? trim($_POST['district']) : '';
-        $event_type = isset($_POST['eventType']) ? trim($_POST['eventType']) : '';
-        $event_name = isset($_POST['eventName']) ? trim($_POST['eventName']) : '';
-        $start_date = isset($_POST['startDate']) ? $_POST['startDate'] : '';
-        $end_date   = isset($_POST['endDate']) ? $_POST['endDate'] : '';
+    // Sanitize inputs
+    $regno        = isset($_POST['regno']) ? trim($_POST['regno']) : '';
+    $current_year = isset($_POST['year']) ? trim($_POST['year']) : '';
+    $semester     = isset($_POST['semester']) ? trim($_POST['semester']) : '';
+    // Use department code for database storage, fallback to department field if code not available
+    $department = isset($_POST['department_code']) && ! empty($_POST['department_code'])
+        ? trim($_POST['department_code'])
+        : (isset($_POST['department']) ? trim($_POST['department']) : '');
+    $state      = isset($_POST['state']) ? trim($_POST['state']) : '';
+    $district   = isset($_POST['district']) ? trim($_POST['district']) : '';
+    $event_type = isset($_POST['eventType']) ? trim($_POST['eventType']) : '';
+    $event_name = isset($_POST['eventName']) ? trim($_POST['eventName']) : '';
+    $start_date = isset($_POST['startDate']) ? $_POST['startDate'] : '';
+    $end_date   = isset($_POST['endDate']) ? $_POST['endDate'] : '';
 
-        // Calculate number of days
-        $no_of_days = 0;
-        if (! empty($start_date) && ! empty($end_date)) {
-            $start      = new DateTime($start_date);
-            $end        = new DateTime($end_date);
-            $interval   = $start->diff($end);
-            $no_of_days = $interval->days + 1; // +1 to include both start and end dates
-        }
+    // Calculate number of days
+    $no_of_days = 0;
+    if (! empty($start_date) && ! empty($end_date)) {
+        $start      = new DateTime($start_date);
+        $end        = new DateTime($end_date);
+        $interval   = $start->diff($end);
+        $no_of_days = $interval->days + 1; // +1 to include both start and end dates
+    }
 
-        $organisation = isset($_POST['organisation']) ? trim($_POST['organisation']) : '';
-        $prize        = isset($_POST['prize']) ? trim($_POST['prize']) : '';
-        $prize_amount = isset($_POST['amount']) ? trim($_POST['amount']) : '';
+    $organisation = isset($_POST['organisation']) ? trim($_POST['organisation']) : '';
+    $prize        = isset($_POST['prize']) ? trim($_POST['prize']) : '';
+    $prize_amount = isset($_POST['amount']) ? trim($_POST['amount']) : '';
 
-        // Note: OD letter is optional for data collection purposes only
+    // Note: OD letter is optional for data collection purposes only
 
-        $target_dir = "uploads/";
-        if (! is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
+    $target_dir = "uploads/";
+    if (! is_dir($target_dir)) {
+        mkdir($target_dir, 0777, true);
+    }
 
-        // Validate PDF file
-        function valid_pdf($file)
-        {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime  = finfo_file($finfo, $file);
-            finfo_close($finfo);
-            return ($mime === 'application/pdf');
-        }
+    // Validate PDF file
+    function valid_pdf($file)
+    {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $file);
+        finfo_close($finfo);
+        return ($mime === 'application/pdf');
+    }
 
-        $event_poster_path = null;
-        $certificate_path  = null;
-        $event_photo_path  = null;
+    $event_poster_path = null;
+    $certificate_path  = null;
+    $event_photo_path  = null;
 
-        // Handle uploaded event poster with compression
-        if (isset($_FILES['poster']) && $_FILES['poster']['error'] === UPLOAD_ERR_OK) {
-            if (valid_pdf($_FILES["poster"]["tmp_name"])) {
-                $file_ext      = pathinfo($_FILES['poster']['name'], PATHINFO_EXTENSION);
-                $base_filename = $target_dir . uniqid('poster_') . '_' . time();
+    // Handle uploaded event poster with compression
+    if (isset($_FILES['poster']) && $_FILES['poster']['error'] === UPLOAD_ERR_OK) {
+        if (valid_pdf($_FILES["poster"]["tmp_name"])) {
+            $file_ext      = pathinfo($_FILES['poster']['name'], PATHINFO_EXTENSION);
+            $base_filename = $target_dir . uniqid('poster_') . '_' . time();
 
-                // Compress and save
-                $compression_result = FileCompressor::compressUploadedFile(
-                    $_FILES['poster']['tmp_name'],
-                    $base_filename,
-                    $file_ext,
-                    85
-                );
+            // Compress and save
+            $compression_result = FileCompressor::compressUploadedFile(
+                $_FILES['poster']['tmp_name'],
+                $base_filename,
+                $file_ext,
+                85
+            );
 
-                if ($compression_result['success']) {
-                    $event_poster_path = $compression_result['path'];
-                } else {
-                    echo "<p style='color:red;'> Failed to upload event poster.</p>";
-                    $conn->close();exit;
-                }
+            if ($compression_result['success']) {
+                $event_poster_path = $compression_result['path'];
             } else {
-                echo "<p style='color:red;'> Event poster must be a PDF file.</p>";
+                echo "<p style='color:red;'> Failed to upload event poster.</p>";
                 $conn->close();exit;
             }
+        } else {
+            echo "<p style='color:red;'> Event poster must be a PDF file.</p>";
+            $conn->close();exit;
         }
-        // Handle uploaded certificate with compression
-        if (isset($_FILES['certificates']) && $_FILES['certificates']['error'] === UPLOAD_ERR_OK) {
-            if (valid_pdf($_FILES["certificates"]["tmp_name"])) {
-                $file_ext      = pathinfo($_FILES['certificates']['name'], PATHINFO_EXTENSION);
-                $base_filename = $target_dir . uniqid('cert_') . '_' . time();
+    }
+    // Handle uploaded certificate with compression
+    if (isset($_FILES['certificates']) && $_FILES['certificates']['error'] === UPLOAD_ERR_OK) {
+        if (valid_pdf($_FILES["certificates"]["tmp_name"])) {
+            $file_ext      = pathinfo($_FILES['certificates']['name'], PATHINFO_EXTENSION);
+            $base_filename = $target_dir . uniqid('cert_') . '_' . time();
 
-                // Compress and save
-                $compression_result = FileCompressor::compressUploadedFile(
-                    $_FILES['certificates']['tmp_name'],
-                    $base_filename,
-                    $file_ext,
-                    85
-                );
+            // Compress and save
+            $compression_result = FileCompressor::compressUploadedFile(
+                $_FILES['certificates']['tmp_name'],
+                $base_filename,
+                $file_ext,
+                85
+            );
 
-                if ($compression_result['success']) {
-                    $certificate_path = $compression_result['path'];
-                } else {
-                    echo "<p style='color:red;'> Failed to upload certificate.</p>";
-                    $conn->close();exit;
-                }
+            if ($compression_result['success']) {
+                $certificate_path = $compression_result['path'];
             } else {
-                echo "<p style='color:red;'> Certificate must be a PDF file.</p>";
+                echo "<p style='color:red;'> Failed to upload certificate.</p>";
                 $conn->close();exit;
             }
+        } else {
+            echo "<p style='color:red;'> Certificate must be a PDF file.</p>";
+            $conn->close();exit;
         }
+    }
 
-        // Handle uploaded event photo with compression (optional)
-        if (isset($_FILES['event_photo']) && $_FILES['event_photo']['error'] === UPLOAD_ERR_OK) {
-            // Validate image file
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime  = finfo_file($finfo, $_FILES["event_photo"]["tmp_name"]);
-            finfo_close($finfo);
+    // Handle uploaded event photo with compression (optional)
+    if (isset($_FILES['event_photo']) && $_FILES['event_photo']['error'] === UPLOAD_ERR_OK) {
+        // Validate image file
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime  = finfo_file($finfo, $_FILES["event_photo"]["tmp_name"]);
+        finfo_close($finfo);
 
-            $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-            if (in_array($mime, $allowed_types)) {
-                $file_ext      = pathinfo($_FILES['event_photo']['name'], PATHINFO_EXTENSION);
-                $base_filename = $target_dir . uniqid('photo_') . '_' . time();
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (in_array($mime, $allowed_types)) {
+            $file_ext      = pathinfo($_FILES['event_photo']['name'], PATHINFO_EXTENSION);
+            $base_filename = $target_dir . uniqid('photo_') . '_' . time();
 
-                // Compress and save (higher quality for photos: 90%)
-                $compression_result = FileCompressor::compressUploadedFile(
-                    $_FILES['event_photo']['tmp_name'],
-                    $base_filename,
-                    $file_ext,
-                    90
-                );
+            // Compress and save (higher quality for photos: 90%)
+            $compression_result = FileCompressor::compressUploadedFile(
+                $_FILES['event_photo']['tmp_name'],
+                $base_filename,
+                $file_ext,
+                90
+            );
 
-                if ($compression_result['success']) {
-                    $event_photo_path = $compression_result['path'];
-                } else {
-                    echo "<p style='color:red;'> Failed to upload event photo.</p>";
-                    $conn->close();exit;
-                }
+            if ($compression_result['success']) {
+                $event_photo_path = $compression_result['path'];
             } else {
-                echo "<p style='color:red;'> Event photo must be an image file (JPG, PNG, or GIF).</p>";
+                echo "<p style='color:red;'> Failed to upload event photo.</p>";
                 $conn->close();exit;
             }
+        } else {
+            echo "<p style='color:red;'> Event photo must be an image file (JPG, PNG, or GIF).</p>";
+            $conn->close();exit;
         }
+    }
 
-        // Duplicate registration check
-        $check_sql  = "SELECT id, event_type, start_date FROM student_event_register WHERE regno = ? AND event_name = ?";
-        $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("ss", $regno, $event_name);
-        $check_stmt->execute();
-        $check_stmt->store_result();
+    // Duplicate registration check
+    $check_sql  = "SELECT id, event_type, start_date FROM student_event_register WHERE regno = ? AND event_name = ?";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("ss", $regno, $event_name);
+    $check_stmt->execute();
+    $check_stmt->store_result();
 
-        if ($check_stmt->num_rows > 0) {
-            $check_stmt->close();
-            $conn->close();
+    if ($check_stmt->num_rows > 0) {
+        $check_stmt->close();
+        $conn->close();
 
-            // Show JavaScript alert popup
-            echo "<!DOCTYPE html>
+        // Show JavaScript alert popup
+        echo "<!DOCTYPE html>
             <html>
             <head>
                 <meta charset='UTF-8'>
@@ -280,51 +280,51 @@
                 </script>
             </body>
             </html>";
-            exit;
-        }
-        $check_stmt->close();
+        exit;
+    }
+    $check_stmt->close();
 
-        // Insert registration
-        $sql = "INSERT INTO student_event_register
+    // Insert registration
+    $sql = "INSERT INTO student_event_register
         (regno, current_year, semester, state, district, department, event_type, event_name, start_date, end_date, no_of_days, organisation, prize, prize_amount, event_poster, certificates, event_photo)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare($sql);
 
-        if ($stmt === false) {
-            die("Prepare failed: " . htmlspecialchars($conn->error));
-        }
+    if ($stmt === false) {
+        die("Prepare failed: " . htmlspecialchars($conn->error));
+    }
 
-        $stmt->bind_param(
-            "ssssssssssissssss",
-            $regno,
-            $current_year,
-            $semester,
-            $state,
-            $district,
-            $department,
-            $event_type,
-            $event_name,
-            $start_date,
-            $end_date,
-            $no_of_days,
-            $organisation,
-            $prize,
-            $prize_amount,
-            $event_poster_path,
-            $certificate_path,
-            $event_photo_path
-        );
+    $stmt->bind_param(
+        "ssssssssssissssss",
+        $regno,
+        $current_year,
+        $semester,
+        $state,
+        $district,
+        $department,
+        $event_type,
+        $event_name,
+        $start_date,
+        $end_date,
+        $no_of_days,
+        $organisation,
+        $prize,
+        $prize_amount,
+        $event_poster_path,
+        $certificate_path,
+        $event_photo_path
+    );
 
-        if ($stmt->execute()) {
-            header("Location: index.php");
-            $stmt->close();
-            $conn->close();
-            exit;
-        } else {
-            echo "<p style='color:red;'>Error: " . htmlspecialchars($stmt->error) . "</p>";
-            $stmt->close();
-            $conn->close();
-        }
+    if ($stmt->execute()) {
+        header("Location: index.php");
+        $stmt->close();
+        $conn->close();
+        exit;
+    } else {
+        echo "<p style='color:red;'>Error: " . htmlspecialchars($stmt->error) . "</p>";
+        $stmt->close();
+        $conn->close();
+    }
     }
 ?>
 
@@ -958,6 +958,226 @@
         display: none;
       }
     }
+
+    /* Notification Bell Styles */
+    .notification-bell-container {
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      z-index: 1001;
+    }
+
+    .notification-bell {
+      position: relative;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border: 2px solid #1a408c;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      transition: all 0.3s ease;
+      margin: 0;
+    }
+
+    .notification-bell:hover {
+      background: #f0f4f8;
+      transform: scale(1.05);
+    }
+
+    .notification-bell .material-symbols-outlined {
+      font-size: 24px;
+      color: #1a408c;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 24px;
+    }
+
+    .notification-badge.hidden {
+      display: none;
+    }
+
+    /* Notification Dropdown/Modal */
+    .notification-dropdown {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border: 1px solid #eee;
+      width: 350px;
+      max-height: 500px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+
+    .notification-dropdown.show {
+      display: block;
+    }
+
+    .notification-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notification-header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #1a408c;
+    }
+
+    .notification-header .mark-all {
+      background: none;
+      border: none;
+      color: #1a408c;
+      cursor: pointer;
+      font-size: 12px;
+      text-decoration: underline;
+      padding: 0;
+      transition: all 0.3s ease;
+    }
+
+    .notification-header .mark-all:hover {
+      color: #15306b;
+    }
+
+    .notification-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .notification-item {
+      padding: 15px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      gap: 12px;
+    }
+
+    .notification-item:hover {
+      background: #f9f9f9;
+    }
+
+    .notification-item.unread {
+      background: #f0f4f8;
+    }
+
+    .notification-item-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      background: #1a408c;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+
+    .notification-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notification-item-content h4 {
+      margin: 0 0 5px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .notification-item-content p {
+      margin: 0 0 5px 0;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .notification-item-time {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .notification-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+    }
+
+    .notification-empty-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* Overlay */
+    .notification-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+      z-index: 999;
+    }
+
+    .notification-overlay.show {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .notification-bell-container {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+      }
+
+      .notification-dropdown {
+        position: fixed;
+        top: auto;
+        right: 10px;
+        left: 10px;
+        bottom: 80px;
+        width: auto;
+        max-height: 300px;
+      }
+
+      .notification-bell {
+        width: 40px;
+        height: 40px;
+        margin: 0;
+      }
+
+      .notification-bell .material-symbols-outlined {
+        font-size: 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -976,6 +1196,24 @@
         height="60px"
         width="200"
       />
+    </div>
+    <div class="notification-bell-container">
+      <div class="notification-bell" id="notificationBell">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="notification-badge hidden" id="notificationBadge">0</span>
+      </div>
+      <div class="notification-dropdown" id="notificationDropdown">
+        <div class="notification-header">
+          <h3>Notifications</h3>
+          <button class="mark-all" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+        </div>
+        <ul class="notification-list" id="notificationList">
+          <li class="notification-empty">
+            <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+            <p>No notifications</p>
+          </li>
+        </ul>
+      </div>
     </div>
     <div class="header-title">
       <p>Event Management System</p>
@@ -1867,6 +2105,151 @@
             // Check on page load
             togglePrizeSection();
         }
+
+        // ============================================================================
+        // NOTIFICATION SYSTEM
+        // ============================================================================
+
+        const notificationBell = document.getElementById('notificationBell');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        const notificationOverlay = document.createElement('div');
+        notificationOverlay.className = 'notification-overlay';
+        document.body.appendChild(notificationOverlay);
+
+        // Fetch notifications when page loads
+        function loadNotifications() {
+            fetch('ajax/get_notifications.php?action=get_notifications')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        displayNotifications(data.notifications, data.unread_count);
+                    }
+                })
+                .catch(error => console.log('Error loading notifications:', error));
+        }
+
+        function displayNotifications(notifications, unreadCount) {
+            const notificationList = document.getElementById('notificationList');
+            const notificationBadge = document.getElementById('notificationBadge');
+
+            // Update badge
+            if (unreadCount > 0) {
+                notificationBadge.textContent = unreadCount;
+                notificationBadge.classList.remove('hidden');
+            } else {
+                notificationBadge.classList.add('hidden');
+            }
+
+            // Clear list
+            notificationList.innerHTML = '';
+
+            if (notifications.length === 0) {
+                notificationList.innerHTML = `
+                    <li class="notification-empty">
+                        <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+                        <p>No notifications</p>
+                    </li>
+                `;
+                return;
+            }
+
+            // Add notifications
+            notifications.forEach(notification => {
+                const date = new Date(notification.created_at);
+                const timeString = getTimeString(date);
+
+                const li = document.createElement('li');
+                li.className = `notification-item ${notification.is_read ? '' : 'unread'}`;
+                li.innerHTML = `
+                    <div class="notification-item-icon">
+                        <span class="material-symbols-outlined">emoji_events</span>
+                    </div>
+                    <div class="notification-item-content">
+                        <h4>${escapeHtml(notification.hackathon_title)}</h4>
+                        <p>${escapeHtml(notification.message)}</p>
+                        <span class="notification-item-time">${timeString}</span>
+                    </div>
+                `;
+                li.onclick = () => handleNotificationClick(notification.id, notification.hackathon_id);
+                notificationList.appendChild(li);
+            });
+        }
+
+        function handleNotificationClick(notificationId, hackathonId) {
+            // Mark as read and redirect
+            fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload notifications
+                        loadNotifications();
+                        // Redirect to hackathons page
+                        window.location.href = 'hackathons.php';
+                    }
+                })
+                .catch(error => console.log('Error marking notification as read:', error));
+        }
+
+        function markAllNotificationsAsRead() {
+            fetch('ajax/get_notifications.php?action=mark_all_read')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadNotifications();
+                    }
+                })
+                .catch(error => console.log('Error marking all notifications as read:', error));
+        }
+
+        function getTimeString(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+
+            return date.toLocaleDateString();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Toggle notification dropdown
+        notificationBell.addEventListener('click', function(e) {
+            e.stopPropagation();
+            notificationDropdown.classList.toggle('show');
+            notificationOverlay.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking overlay
+        notificationOverlay.addEventListener('click', function() {
+            notificationDropdown.classList.remove('show');
+            notificationOverlay.classList.remove('show');
+        });
+
+        // Close dropdown when clicking outside (except on bell)
+        document.addEventListener('click', function(e) {
+            if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.remove('show');
+                notificationOverlay.classList.remove('show');
+            }
+        });
+
+        // Load notifications on page load
+        loadNotifications();
+        // Refresh notifications every 30 seconds
+        setInterval(loadNotifications, 30000);
     });
 </script>
 </body>

@@ -532,9 +532,10 @@ html {
 }
 
 .success-message {
-  background: rgba(40, 167, 69, 0.1);
-  border: 1px solid rgba(40, 167, 69, 0.3);
+  /* background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3); */
   color: #28a745;
+  margin-bottom: 5px;
 }
 
 /* Floating animation removed */

@@ -3,13 +3,13 @@
 
     // Check if user is logged in as a student
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     $conn = new mysqli("localhost", "root", "", "event_management_system");
     if ($conn->connect_error) {
-        die("Connection failed: " . htmlspecialchars($conn->connect_error));
+    die("Connection failed: " . htmlspecialchars($conn->connect_error));
     }
 
     // Get student data
@@ -26,64 +26,64 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $student_data = $result->fetch_assoc();
+    $student_data = $result->fetch_assoc();
     } else {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Handle profile update
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (isset($_POST['update_password'])) {
-            // Handle password update
-            $current_password = $_POST['current_password'];
-            $new_password     = $_POST['new_password'];
-            $confirm_password = $_POST['confirm_password'];
+    if (isset($_POST['update_password'])) {
+        // Handle password update
+        $current_password = $_POST['current_password'];
+        $new_password     = $_POST['new_password'];
+        $confirm_password = $_POST['confirm_password'];
 
-            // Validate password inputs
-            if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
-                $message      = "All password fields are required.";
-                $message_type = "error";
-            } elseif ($new_password !== $confirm_password) {
-                $message      = "New password and confirm password do not match.";
-                $message_type = "error";
-            } elseif (strlen($new_password) < 6) {
-                $message      = "New password must be at least 6 characters long.";
-                $message_type = "error";
-            } else {
-                // Verify current password
-                $current_password_sql = "SELECT password FROM student_register WHERE username=?";
-                $current_stmt         = $conn->prepare($current_password_sql);
-                $current_stmt->bind_param("s", $username);
-                $current_stmt->execute();
-                $current_result = $current_stmt->get_result();
+        // Validate password inputs
+        if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+            $message      = "All password fields are required.";
+            $message_type = "error";
+        } elseif ($new_password !== $confirm_password) {
+            $message      = "New password and confirm password do not match.";
+            $message_type = "error";
+        } elseif (strlen($new_password) < 6) {
+            $message      = "New password must be at least 6 characters long.";
+            $message_type = "error";
+        } else {
+            // Verify current password
+            $current_password_sql = "SELECT password FROM student_register WHERE username=?";
+            $current_stmt         = $conn->prepare($current_password_sql);
+            $current_stmt->bind_param("s", $username);
+            $current_stmt->execute();
+            $current_result = $current_stmt->get_result();
 
-                if ($current_result->num_rows > 0) {
-                    $current_data = $current_result->fetch_assoc();
+            if ($current_result->num_rows > 0) {
+                $current_data = $current_result->fetch_assoc();
 
-                    if (password_verify($current_password, $current_data['password'])) {
-                        // Update password
-                        $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
-                        $password_update_sql = "UPDATE student_register SET password=? WHERE username=?";
-                        $password_stmt       = $conn->prepare($password_update_sql);
-                        $password_stmt->bind_param("ss", $hashed_new_password, $username);
+                if (password_verify($current_password, $current_data['password'])) {
+                    // Update password
+                    $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
+                    $password_update_sql = "UPDATE student_register SET password=? WHERE username=?";
+                    $password_stmt       = $conn->prepare($password_update_sql);
+                    $password_stmt->bind_param("ss", $hashed_new_password, $username);
 
-                        if ($password_stmt->execute()) {
-                            $message      = "Password updated successfully!";
-                            $message_type = "success";
-                        } else {
-                            $message      = "Error updating password: " . htmlspecialchars($password_stmt->error);
-                            $message_type = "error";
-                        }
-                        $password_stmt->close();
+                    if ($password_stmt->execute()) {
+                        $message      = "Password updated successfully!";
+                        $message_type = "success";
                     } else {
-                        $message      = "Current password is incorrect.";
+                        $message      = "Error updating password: " . htmlspecialchars($password_stmt->error);
                         $message_type = "error";
                     }
+                    $password_stmt->close();
+                } else {
+                    $message      = "Current password is incorrect.";
+                    $message_type = "error";
                 }
-                $current_stmt->close();
             }
+            $current_stmt->close();
         }
+    }
     }
 
     // Get statistics for the profile
@@ -104,7 +104,7 @@
     $counselor_result = $counselor_stmt->get_result();
 
     if ($counselor_result->num_rows > 0) {
-        $counselor_info = $counselor_result->fetch_assoc();
+    $counselor_info = $counselor_result->fetch_assoc();
     }
     $counselor_stmt->close();
 

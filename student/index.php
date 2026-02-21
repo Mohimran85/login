@@ -7,8 +7,8 @@
 
     // Check if user is logged in as a student
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Initialize optimized managers
@@ -24,17 +24,17 @@
     $student_data      = $cache->get($student_cache_key);
 
     if (! $student_data) {
-        $sql    = "SELECT name, regno FROM student_register WHERE username=?";
-        $result = $db->executeQuery($sql, [$username], 's');
+    $sql    = "SELECT name, regno FROM student_register WHERE username=?";
+    $result = $db->executeQuery($sql, [$username], 's');
 
-        if (! empty($result)) {
-            $student_data = $result[0];
-            // Cache student data for 1 hour
-            $cache->set($student_cache_key, $student_data, 3600);
-        } else {
-            header("Location: ../index.php");
-            exit();
-        }
+    if (! empty($result)) {
+        $student_data = $result[0];
+        // Cache student data for 1 hour
+        $cache->set($student_cache_key, $student_data, 3600);
+    } else {
+        header("Location: ../index.php");
+        exit();
+    }
     }
 
     $regno = $student_data['regno'];
@@ -44,30 +44,30 @@
     $dashboard_data      = $cache->get($dashboard_cache_key);
 
     if (! $dashboard_data) {
-        // Get all dashboard data in optimized single query
-        $dashboard_stats = $db->getStudentDashboardData($regno);
+    // Get all dashboard data in optimized single query
+    $dashboard_stats = $db->getStudentDashboardData($regno);
 
-        // Get additional data with caching
-        $recent_activities = $db->getRecentActivities($regno, 5);
-        $event_types_data  = $db->getEventTypeBreakdown($regno, 8);
-        $recent_od_data    = $db->getRecentODRequests($regno, 3);
+    // Get additional data with caching
+    $recent_activities = $db->getRecentActivities($regno, 5);
+    $event_types_data  = $db->getEventTypeBreakdown($regno, 8);
+    $recent_od_data    = $db->getRecentODRequests($regno, 3);
 
-        // Get internship count
-        $internship_sql    = "SELECT COUNT(*) as internship_count FROM internship_submissions WHERE regno = ?";
-        $internship_result = $db->executeQuery($internship_sql, [$regno], 's');
-        $internship_count  = $internship_result[0]['internship_count'] ?? 0;
+    // Get internship count
+    $internship_sql    = "SELECT COUNT(*) as internship_count FROM internship_submissions WHERE regno = ?";
+    $internship_result = $db->executeQuery($internship_sql, [$regno], 's');
+    $internship_count  = $internship_result[0]['internship_count'] ?? 0;
 
-        // Combine all data
-        $dashboard_data = [
-            'stats'              => $dashboard_stats,
-            'recent_events'      => $recent_activities,
-            'event_types'        => $event_types_data,
-            'recent_od_requests' => $recent_od_data,
-            'internship_count'   => $internship_count,
-        ];
+    // Combine all data
+    $dashboard_data = [
+        'stats'              => $dashboard_stats,
+        'recent_events'      => $recent_activities,
+        'event_types'        => $event_types_data,
+        'recent_od_requests' => $recent_od_data,
+        'internship_count'   => $internship_count,
+    ];
 
-        // Cache dashboard data for 5 minutes
-        $cache->set($dashboard_cache_key, $dashboard_data, 300);
+    // Cache dashboard data for 5 minutes
+    $cache->set($dashboard_cache_key, $dashboard_data, 300);
     }
 
     // Extract data for backward compatibility
@@ -75,10 +75,10 @@
     $events_won       = $dashboard_data['stats']['events_won'] ?? 0;
     $internship_count = $dashboard_data['internship_count'] ?? 0;
     $od_stats         = [
-        'total_od_requests' => $dashboard_data['stats']['total_od_requests'] ?? 0,
-        'pending_od'        => $dashboard_data['stats']['pending_od'] ?? 0,
-        'approved_od'       => $dashboard_data['stats']['approved_od'] ?? 0,
-        'rejected_od'       => $dashboard_data['stats']['rejected_od'] ?? 0,
+    'total_od_requests' => $dashboard_data['stats']['total_od_requests'] ?? 0,
+    'pending_od'        => $dashboard_data['stats']['pending_od'] ?? 0,
+    'approved_od'       => $dashboard_data['stats']['approved_od'] ?? 0,
+    'rejected_od'       => $dashboard_data['stats']['rejected_od'] ?? 0,
     ];
 
     // Convert arrays to objects for compatibility with existing code
@@ -445,6 +445,226 @@
         max-width: 100%;
         box-sizing: border-box;
       }
+
+      /* Notification Bell Styles */
+      .notification-bell-container {
+        position: absolute;
+        top: 12px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        z-index: 1001;
+      }
+
+      .notification-bell {
+        position: relative;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        border: 2px solid #1a408c;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        transition: all 0.3s ease;
+        margin: 0;
+      }
+
+      .notification-bell:hover {
+        background: #f0f4f8;
+        transform: scale(1.05);
+      }
+
+      .notification-bell .material-symbols-outlined {
+        font-size: 24px;
+        color: #1a408c;
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        min-width: 24px;
+      }
+
+      .notification-badge.hidden {
+        display: none;
+      }
+
+      /* Notification Dropdown/Modal */
+      .notification-dropdown {
+        position: fixed;
+        top: 70px;
+        right: 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border: 1px solid #eee;
+        width: 350px;
+        max-height: 500px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+      }
+
+      .notification-dropdown.show {
+        display: block;
+      }
+
+      .notification-header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .notification-header h3 {
+        margin: 0;
+        font-size: 18px;
+        color: #1a408c;
+      }
+
+      .notification-header .mark-all {
+        background: none;
+        border: none;
+        color: #1a408c;
+        cursor: pointer;
+        font-size: 12px;
+        text-decoration: underline;
+        padding: 0;
+        transition: all 0.3s ease;
+      }
+
+      .notification-header .mark-all:hover {
+        color: #15306b;
+      }
+
+      .notification-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .notification-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        gap: 12px;
+      }
+
+      .notification-item:hover {
+        background: #f9f9f9;
+      }
+
+      .notification-item.unread {
+        background: #f0f4f8;
+      }
+
+      .notification-item-icon {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        background: #1a408c;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+      }
+
+      .notification-item-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .notification-item-content h4 {
+        margin: 0 0 5px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #2c3e50;
+      }
+
+      .notification-item-content p {
+        margin: 0 0 5px 0;
+        font-size: 13px;
+        color: #666;
+        line-height: 1.4;
+      }
+
+      .notification-item-time {
+        font-size: 12px;
+        color: #999;
+      }
+
+      .notification-empty {
+        padding: 40px 20px;
+        text-align: center;
+        color: #999;
+      }
+
+      .notification-empty-icon {
+        font-size: 48px;
+        margin-bottom: 10px;
+        display: block;
+      }
+
+      /* Overlay */
+      .notification-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: none;
+        z-index: 999;
+      }
+
+      .notification-overlay.show {
+        display: block;
+      }
+
+      @media (max-width: 768px) {
+        .notification-bell-container {
+          position: absolute;
+          top: 8px;
+          right: 10px;
+        }
+
+        .notification-dropdown {
+          position: fixed;
+          top: auto;
+          right: 10px;
+          left: 10px;
+          bottom: 80px;
+          width: auto;
+          max-height: 300px;
+        }
+
+        .notification-bell {
+          width: 40px;
+          height: 40px;
+          margin: 0;
+        }
+
+        .notification-bell .material-symbols-outlined {
+          font-size: 20px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -465,6 +685,24 @@
             height="60px"
             width="200"
           />
+        </div>
+        <div class="notification-bell-container">
+          <div class="notification-bell" id="notificationBell">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="notification-badge hidden" id="notificationBadge">0</span>
+          </div>
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-header">
+              <h3>Notifications</h3>
+              <button class="mark-all" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+            </div>
+            <ul class="notification-list" id="notificationList">
+              <li class="notification-empty">
+                <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+                <p>No notifications</p>
+              </li>
+            </ul>
+          </div>
         </div>
         <div class="header-title">
           <p>Event Management System</p>
@@ -508,6 +746,12 @@
               <a href="internship_submission.php" class="nav-link">
                 <span class="material-symbols-outlined">work</span>
                 Internship Submission
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="hackathons.php" class="nav-link">
+                <span class="material-symbols-outlined">emoji_events</span>
+                Hackathons
               </a>
             </li>
             <li class="nav-item">
@@ -798,6 +1042,151 @@
                     document.body.classList.remove('sidebar-open');
                 }
             });
+
+            // ============================================================================
+            // NOTIFICATION SYSTEM
+            // ============================================================================
+
+            const notificationBell = document.getElementById('notificationBell');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const notificationOverlay = document.createElement('div');
+            notificationOverlay.className = 'notification-overlay';
+            document.body.appendChild(notificationOverlay);
+
+            // Fetch notifications when page loads
+            function loadNotifications() {
+                fetch('ajax/get_notifications.php?action=get_notifications')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            displayNotifications(data.notifications, data.unread_count);
+                        }
+                    })
+                    .catch(error => console.log('Error loading notifications:', error));
+            }
+
+            function displayNotifications(notifications, unreadCount) {
+                const notificationList = document.getElementById('notificationList');
+                const notificationBadge = document.getElementById('notificationBadge');
+
+                // Update badge
+                if (unreadCount > 0) {
+                    notificationBadge.textContent = unreadCount;
+                    notificationBadge.classList.remove('hidden');
+                } else {
+                    notificationBadge.classList.add('hidden');
+                }
+
+                // Clear list
+                notificationList.innerHTML = '';
+
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = `
+                        <li class="notification-empty">
+                            <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+                            <p>No notifications</p>
+                        </li>
+                    `;
+                    return;
+                }
+
+                // Add notifications
+                notifications.forEach(notification => {
+                    const date = new Date(notification.created_at);
+                    const timeString = getTimeString(date);
+
+                    const li = document.createElement('li');
+                    li.className = `notification-item ${notification.is_read ? '' : 'unread'}`;
+                    li.innerHTML = `
+                        <div class="notification-item-icon">
+                            <span class="material-symbols-outlined">emoji_events</span>
+                        </div>
+                        <div class="notification-item-content">
+                            <h4>${escapeHtml(notification.hackathon_title)}</h4>
+                            <p>${escapeHtml(notification.message)}</p>
+                            <span class="notification-item-time">${timeString}</span>
+                        </div>
+                    `;
+                    li.onclick = () => handleNotificationClick(notification.id, notification.hackathon_id);
+                    notificationList.appendChild(li);
+                });
+            }
+
+            function handleNotificationClick(notificationId, hackathonId) {
+                // Mark as read and redirect
+                fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload notifications
+                            loadNotifications();
+                            // Redirect to hackathons page
+                            window.location.href = 'hackathons.php';
+                        }
+                    })
+                    .catch(error => console.log('Error marking notification as read:', error));
+            }
+
+            function markAllNotificationsAsRead() {
+                fetch('ajax/get_notifications.php?action=mark_all_read')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadNotifications();
+                        }
+                    })
+                    .catch(error => console.log('Error marking all notifications as read:', error));
+            }
+
+            function getTimeString(date) {
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+
+                if (minutes < 1) return 'just now';
+                if (minutes < 60) return `${minutes}m ago`;
+                if (hours < 24) return `${hours}h ago`;
+                if (days < 7) return `${days}d ago`;
+
+                return date.toLocaleDateString();
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Toggle notification dropdown
+            notificationBell.addEventListener('click', function(e) {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('show');
+                notificationOverlay.classList.toggle('show');
+            });
+
+            // Close dropdown when clicking overlay
+            notificationOverlay.addEventListener('click', function() {
+                notificationDropdown.classList.remove('show');
+                notificationOverlay.classList.remove('show');
+            });
+
+            // Close dropdown when clicking outside (except on bell)
+            document.addEventListener('click', function(e) {
+                if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.classList.remove('show');
+                    notificationOverlay.classList.remove('show');
+                }
+            });
+
+            // Load notifications on page load
+            loadNotifications();
+            // Refresh notifications every 30 seconds
+            setInterval(loadNotifications, 30000);
         });
     </script>
   </body>
@@ -806,6 +1195,6 @@
 <?php
     // Clean up cache periodically (1% chance)
     if (rand(1, 100) === 1) {
-        $cache->cleanup();
+    $cache->cleanup();
     }
 ?>

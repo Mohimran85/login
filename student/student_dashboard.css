@@ -93,9 +93,10 @@ body.sidebar-open {
   background-color: var(--light-color);
 }
 
-
 .header-title {
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   text-align: center;
 }
 
@@ -1032,7 +1033,7 @@ body.sidebar-open {
   }
 
   /* Ensure student info card has proper spacing */
-  .student-info {
+  .stud en t- info {
     margin: 0 20px 25px 20px;
   }
 
@@ -1196,3 +1197,4 @@ body.sidebar-open {
     max-width: 100%;
   }
 }
+

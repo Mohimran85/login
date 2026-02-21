@@ -516,6 +516,10 @@
               <a href="manage_counselors.php">Manage Counselors</a>
             </li>
             <li class="sidebar-list-item">
+              <span class="material-symbols-outlined">emoji_events</span>
+              <a href="hackathons.php">Hackathons</a>
+            </li>
+            <li class="sidebar-list-item">
               <span class="material-symbols-outlined">bar_chart</span>
               <a href="reports.php">Reports</a>
             </li>

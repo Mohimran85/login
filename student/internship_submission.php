@@ -40,6 +40,25 @@
     $error_message   = '';
     $form_data       = [];
 
+    // Validation function for names (no numbers allowed)
+    function validateNameField($name) {
+        if (preg_match('/\d/', $name)) {
+            return false; // Contains numbers
+        }
+        return true;
+    }
+
+    // Validation function for email domain (.com or .in)
+    function validateEmailDomain($email) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+        if (!preg_match('/\.(com|in)$/i', $email)) {
+            return false; // Email must end with .com or .in
+        }
+        return true;
+    }
+
     // Handle form submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Validate CSRF token (optional, add if you have one)
@@ -61,26 +80,50 @@
         // Validate required fields
         if (empty($company_name)) {
             $error_message = "❌ Company Name is required.";
+        } elseif (strlen($company_name) < 2 || strlen($company_name) > 100) {
+            $error_message = "❌ Company Name must be between 2 and 100 characters.";
+        } elseif (!validateNameField($company_name)) {
+            $error_message = "❌ Company Name cannot contain numbers.";
         } elseif (empty($company_website)) {
             $error_message = "❌ Company Website is required.";
+        } elseif (!filter_var($company_website, FILTER_VALIDATE_URL)) {
+            $error_message = "❌ Company Website must be a valid URL.";
         } elseif (empty($company_address)) {
             $error_message = "❌ Company Address is required.";
+        } elseif (strlen($company_address) < 5 || strlen($company_address) > 250) {
+            $error_message = "❌ Company Address must be between 5 and 250 characters.";
         } elseif (empty($supervisor_name)) {
             $error_message = "❌ Supervisor Name is required.";
-        } elseif (empty($supervisor_email) || ! filter_var($supervisor_email, FILTER_VALIDATE_EMAIL)) {
-            $error_message = "❌ Valid Supervisor Email is required.";
+        } elseif (strlen($supervisor_name) < 2 || strlen($supervisor_name) > 100) {
+            $error_message = "❌ Supervisor Name must be between 2 and 100 characters.";
+        } elseif (!validateNameField($supervisor_name)) {
+            $error_message = "❌ Supervisor Name cannot contain numbers.";
+        } elseif (empty($supervisor_email)) {
+            $error_message = "❌ Supervisor Email is required.";
+        } elseif (!validateEmailDomain($supervisor_email)) {
+            $error_message = "❌ Supervisor Email must be valid and end with .com or .in";
         } elseif (empty($role_title)) {
             $error_message = "❌ Role/Title is required.";
+        } elseif (strlen($role_title) < 2 || strlen($role_title) > 100) {
+            $error_message = "❌ Role/Title must be between 2 and 100 characters.";
+        } elseif (!validateNameField($role_title)) {
+            $error_message = "❌ Role/Title cannot contain numbers.";
         } elseif (empty($domain)) {
             $error_message = "❌ Domain is required.";
         } elseif (empty($mode)) {
             $error_message = "❌ Mode is required.";
         } elseif (empty($start_date) || empty($end_date)) {
             $error_message = "❌ Start Date and End Date are required.";
+        } elseif (!strtotime($start_date) || !strtotime($end_date)) {
+            $error_message = "❌ Invalid date format.";
         } elseif (strtotime($start_date) > strtotime($end_date)) {
             $error_message = "❌ Start Date cannot be after End Date.";
+        } elseif ($stipend_amount < 0) {
+            $error_message = "❌ Stipend Amount cannot be negative.";
         } elseif (empty($brief_report)) {
             $error_message = "❌ Brief Report/Key Learnings is required.";
+        } elseif (strlen($brief_report) < 20 || strlen($brief_report) > 2000) {
+            $error_message = "❌ Brief Report must be between 20 and 2000 characters.";
         } else {
             // Check for duplicate internship submission
             $check_conn = new mysqli("localhost", "root", "", "event_management_system");
@@ -741,6 +784,26 @@
       font-style: italic;
     }
 
+    .error-message {
+      color: #dc3545;
+      display: none;
+      font-style: normal;
+      margin-top: 4px;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    input:invalid {
+      border-color: #ff6b6b;
+    }
+
+    input.is-invalid {
+      border-color: #dc3545 !important;
+      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       body {
@@ -1033,9 +1096,12 @@
                 name="company_name"
                 placeholder="Enter company name"
                 value="<?php echo htmlspecialchars($form_data['company_name'] ?? ''); ?>"
+                pattern="[A-Za-z\s&.,-]*"
                 required
                 maxlength="100"
+                oninput="validateNameField(this, 'company_name_error')"
               />
+              <p class="form-field-helper error-message" id="company_name_error"></p>
             </div>
 
             <div class="item">
@@ -1071,9 +1137,12 @@
                 name="supervisor_name"
                 placeholder="Internship supervisor's name"
                 value="<?php echo htmlspecialchars($form_data['supervisor_name'] ?? ''); ?>"
+                pattern="[A-Za-z\s&.,-]*"
                 required
                 maxlength="100"
+                oninput="validateNameField(this, 'supervisor_name_error')"
               />
+              <p class="form-field-helper error-message" id="supervisor_name_error"></p>
             </div>
 
             <div class="item">
@@ -1084,8 +1153,11 @@
                 name="supervisor_email"
                 placeholder="supervisor@example.com"
                 value="<?php echo htmlspecialchars($form_data['supervisor_email'] ?? ''); ?>"
+                pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in)$"
                 required
+                oninput="validateEmail(this, 'supervisor_email_error')"
               />
+              <p class="form-field-helper error-message" id="supervisor_email_error">Email must end with .com or .in</p>
             </div>
           </div>
         </div>
@@ -1106,9 +1178,12 @@
                 name="role_title"
                 placeholder="e.g., Full Stack Developer"
                 value="<?php echo htmlspecialchars($form_data['role_title'] ?? ''); ?>"
+                pattern="[A-Za-z\s&.,-]*"
                 required
                 maxlength="100"
+                oninput="validateNameField(this, 'role_title_error')"
               />
+              <p class="form-field-helper error-message" id="role_title_error"></p>
             </div>
 
             <div class="item">
@@ -1354,20 +1429,105 @@
       }
     }
 
-    // Form Validation
+    // Validate name fields (no numbers allowed)
+    function validateNameField(input, errorElementId) {
+      const errorElement = document.getElementById(errorElementId);
+      const value = input.value.trim();
+      const hasNumbers = /\d/.test(value);
+
+      if (hasNumbers) {
+        input.classList.add('is-invalid');
+        if (errorElement) {
+          errorElement.textContent = '❌ Numbers are not allowed in this field';
+          errorElement.classList.add('show');
+        }
+      } else {
+        input.classList.remove('is-invalid');
+        if (errorElement) {
+          errorElement.classList.remove('show');
+        }
+      }
+    }
+
+    // Validate email domain (.com or .in)
+    function validateEmail(input, errorElementId) {
+      const errorElement = document.getElementById(errorElementId);
+      const value = input.value.trim();
+      const validEmailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in)$/i;
+
+      if (value && !validEmailPattern.test(value)) {
+        input.classList.add('is-invalid');
+        if (errorElement) {
+          errorElement.textContent = '❌ Email must be valid and end with .com or .in';
+          errorElement.classList.add('show');
+        }
+      } else {
+        input.classList.remove('is-invalid');
+        if (errorElement) {
+          errorElement.classList.remove('show');
+        }
+      }
+    }
+
+    // Form Validation on submit
     document.querySelector('form').addEventListener('submit', function (e) {
+      let isValid = true;
+      const errorMessages = [];
+
+      // Validate company name
+      const companyName = document.getElementById('company_name').value.trim();
+      if (/\d/.test(companyName)) {
+        isValid = false;
+        errorMessages.push('Company Name cannot contain numbers');
+      }
+
+      // Validate supervisor name
+      const supervisorName = document.getElementById('supervisor_name').value.trim();
+      if (/\d/.test(supervisorName)) {
+        isValid = false;
+        errorMessages.push('Supervisor Name cannot contain numbers');
+      }
+
+      // Validate role title
+      const roleTitle = document.getElementById('role_title').value.trim();
+      if (/\d/.test(roleTitle)) {
+        isValid = false;
+        errorMessages.push('Role/Title cannot contain numbers');
+      }
+
+      // Validate email domain
+      const supervisorEmail = document.getElementById('supervisor_email').value.trim();
+      const validEmailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in)$/i;
+      if (supervisorEmail && !validEmailPattern.test(supervisorEmail)) {
+        isValid = false;
+        errorMessages.push('Supervisor Email must end with .com or .in');
+      }
+
+      // Validate date range
       const startDate = new Date(document.getElementById('start_date').value);
       const endDate = new Date(document.getElementById('end_date').value);
 
       if (startDate > endDate) {
-        e.preventDefault();
-        alert('Start Date cannot be after End Date');
-        return false;
+        isValid = false;
+        errorMessages.push('Start Date cannot be after End Date');
       }
 
+      // Validate certificate upload
       if (document.getElementById('internship_certificate').files.length === 0) {
+        isValid = false;
+        errorMessages.push('Please upload the Internship Certificate');
+      }
+
+      // Validate brief report length
+      const briefReport = document.getElementById('brief_report').value.trim();
+      if (briefReport.length < 20 || briefReport.length > 2000) {
+        isValid = false;
+        errorMessages.push('Brief Report must be between 20 and 2000 characters');
+      }
+
+      if (!isValid) {
         e.preventDefault();
-        alert('Please upload the Internship Certificate');
+        alert('Please fix the following errors:\n\n' + errorMessages.join('\n'));
         return false;
       }
     });
