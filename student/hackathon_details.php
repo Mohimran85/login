@@ -94,8 +94,8 @@
     $days_left         = ceil(($deadline - $now) / 86400);
     $is_deadline_close = $days_left <= 3 && $days_left >= 0;
     $is_expired        = $deadline < $now;
-    $is_full           = $hackathon['max_participants'] && $hackathon['confirmed_applications'] >= $hackathon['max_participants'];
-    $can_apply         = ! $is_expired && ! $is_full && ! $hackathon['has_applied'];
+    $is_full           = false; // No limit on participant registrations
+    $can_apply         = ! $is_expired && ! $hackathon['has_applied'];
 
     // Get user's application if exists
     $user_application = null;
@@ -500,14 +500,6 @@
                         <div>
                             <strong>Registration Closed</strong>
                             <p style="margin: 5px 0 0 0; opacity: 0.8;">The registration deadline has passed.</p>
-                        </div>
-                    </div>
-                <?php elseif ($is_full): ?>
-                    <div class="deadline-alert error">
-                        <span class="material-symbols-outlined">group_off</span>
-                        <div>
-                            <strong>Registrations Full</strong>
-                            <p style="margin: 5px 0 0 0; opacity: 0.8;">Maximum participant limit reached.</p>
                         </div>
                     </div>
                 <?php elseif ($is_deadline_close): ?>

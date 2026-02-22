@@ -877,9 +877,6 @@
                                     <td><?php echo date('M d, Y H:i', strtotime($hackathon['registration_deadline'])); ?></td>
                                     <td>
                                         <?php echo $hackathon['confirmed_applications']; ?>
-                                        <?php if ($hackathon['max_participants']): ?>
-                                            / <?php echo $hackathon['max_participants']; ?>
-                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="view-count" onclick="showViewDetails(<?php echo $hackathon['id']; ?>, '<?php echo addslashes(htmlspecialchars($hackathon['title'])); ?>')" style="cursor: pointer;" title="Click to see view details">
@@ -902,9 +899,6 @@
                                             <?php endif; ?>
                                             <a href="edit_hackathon.php?id=<?php echo $hackathon['id']; ?>" class="icon-btn" title="Edit">
                                                 <span class="material-symbols-outlined">edit</span>
-                                            </a>
-                                            <a href="view_hackathon.php?id=<?php echo $hackathon['id']; ?>" class="icon-btn" title="View" target="_blank">
-                                                <span class="material-symbols-outlined">visibility</span>
                                             </a>
                                             <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this hackathon?')">
                                                 <input type="hidden" name="delete_id" value="<?php echo $hackathon['id']; ?>">

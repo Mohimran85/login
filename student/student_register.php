@@ -1268,6 +1268,12 @@
           </a>
         </li>
         <li class="nav-item">
+          <a href="hackathons.php" class="nav-link">
+            <span class="material-symbols-outlined">emoji_events</span>
+            Hackathons
+          </a>
+        </li>
+        <li class="nav-item">
           <a href="profile.php" class="nav-link">
             <span class="material-symbols-outlined">person</span>
             Profile

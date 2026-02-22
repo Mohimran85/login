@@ -7,8 +7,8 @@
 
     // Check if user is logged in as a student
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Get username from session
@@ -17,7 +17,7 @@
     // Fetch student data from database
     $conn = new mysqli("localhost", "root", "", "event_management_system");
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
     }
 
     $stmt = $conn->prepare("SELECT regno, name FROM student_register WHERE username = ?");
@@ -26,8 +26,8 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     $student_info    = $result->fetch_assoc();
@@ -41,273 +41,275 @@
     $form_data       = [];
 
     // Validation function for names (no numbers allowed)
-    function validateNameField($name) {
-        if (preg_match('/\d/', $name)) {
-            return false; // Contains numbers
-        }
-        return true;
+    function validateNameField($name)
+    {
+    if (preg_match('/\d/', $name)) {
+        return false; // Contains numbers
+    }
+    return true;
     }
 
     // Validation function for email domain (.com or .in)
-    function validateEmailDomain($email) {
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return false;
-        }
-        if (!preg_match('/\.(com|in)$/i', $email)) {
-            return false; // Email must end with .com or .in
-        }
-        return true;
+    function validateEmailDomain($email)
+    {
+    if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return false;
+    }
+    if (! preg_match('/\.(com|in)$/i', $email)) {
+        return false; // Email must end with .com or .in
+    }
+    return true;
     }
 
     // Handle form submission
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Validate CSRF token (optional, add if you have one)
+    // Validate CSRF token (optional, add if you have one)
 
-        // Sanitize and validate inputs
-        $company_name     = trim($_POST['company_name'] ?? '');
-        $company_website  = trim($_POST['company_website'] ?? '');
-        $company_address  = trim($_POST['company_address'] ?? '');
-        $supervisor_name  = trim($_POST['supervisor_name'] ?? '');
-        $supervisor_email = trim($_POST['supervisor_email'] ?? '');
-        $role_title       = trim($_POST['role_title'] ?? '');
-        $domain           = trim($_POST['domain'] ?? '');
-        $mode             = trim($_POST['mode'] ?? '');
-        $start_date       = trim($_POST['start_date'] ?? '');
-        $end_date         = trim($_POST['end_date'] ?? '');
-        $stipend_amount   = isset($_POST['stipend_amount']) ? floatval($_POST['stipend_amount']) : 0;
-        $brief_report     = trim($_POST['brief_report'] ?? '');
+    // Sanitize and validate inputs
+    $company_name     = trim($_POST['company_name'] ?? '');
+    $company_website  = trim($_POST['company_website'] ?? '');
+    $company_address  = trim($_POST['company_address'] ?? '');
+    $supervisor_name  = trim($_POST['supervisor_name'] ?? '');
+    $supervisor_email = trim($_POST['supervisor_email'] ?? '');
+    $role_title       = trim($_POST['role_title'] ?? '');
+    $domain           = trim($_POST['domain'] ?? '');
+    $mode             = trim($_POST['mode'] ?? '');
+    $start_date       = trim($_POST['start_date'] ?? '');
+    $end_date         = trim($_POST['end_date'] ?? '');
+    $stipend_amount   = isset($_POST['stipend_amount']) ? floatval($_POST['stipend_amount']) : 0;
+    $brief_report     = trim($_POST['brief_report'] ?? '');
 
-        // Validate required fields
-        if (empty($company_name)) {
-            $error_message = "❌ Company Name is required.";
-        } elseif (strlen($company_name) < 2 || strlen($company_name) > 100) {
-            $error_message = "❌ Company Name must be between 2 and 100 characters.";
-        } elseif (!validateNameField($company_name)) {
-            $error_message = "❌ Company Name cannot contain numbers.";
-        } elseif (empty($company_website)) {
-            $error_message = "❌ Company Website is required.";
-        } elseif (!filter_var($company_website, FILTER_VALIDATE_URL)) {
-            $error_message = "❌ Company Website must be a valid URL.";
-        } elseif (empty($company_address)) {
-            $error_message = "❌ Company Address is required.";
-        } elseif (strlen($company_address) < 5 || strlen($company_address) > 250) {
-            $error_message = "❌ Company Address must be between 5 and 250 characters.";
-        } elseif (empty($supervisor_name)) {
-            $error_message = "❌ Supervisor Name is required.";
-        } elseif (strlen($supervisor_name) < 2 || strlen($supervisor_name) > 100) {
-            $error_message = "❌ Supervisor Name must be between 2 and 100 characters.";
-        } elseif (!validateNameField($supervisor_name)) {
-            $error_message = "❌ Supervisor Name cannot contain numbers.";
-        } elseif (empty($supervisor_email)) {
-            $error_message = "❌ Supervisor Email is required.";
-        } elseif (!validateEmailDomain($supervisor_email)) {
-            $error_message = "❌ Supervisor Email must be valid and end with .com or .in";
-        } elseif (empty($role_title)) {
-            $error_message = "❌ Role/Title is required.";
-        } elseif (strlen($role_title) < 2 || strlen($role_title) > 100) {
-            $error_message = "❌ Role/Title must be between 2 and 100 characters.";
-        } elseif (!validateNameField($role_title)) {
-            $error_message = "❌ Role/Title cannot contain numbers.";
-        } elseif (empty($domain)) {
-            $error_message = "❌ Domain is required.";
-        } elseif (empty($mode)) {
-            $error_message = "❌ Mode is required.";
-        } elseif (empty($start_date) || empty($end_date)) {
-            $error_message = "❌ Start Date and End Date are required.";
-        } elseif (!strtotime($start_date) || !strtotime($end_date)) {
-            $error_message = "❌ Invalid date format.";
-        } elseif (strtotime($start_date) > strtotime($end_date)) {
-            $error_message = "❌ Start Date cannot be after End Date.";
-        } elseif ($stipend_amount < 0) {
-            $error_message = "❌ Stipend Amount cannot be negative.";
-        } elseif (empty($brief_report)) {
-            $error_message = "❌ Brief Report/Key Learnings is required.";
-        } elseif (strlen($brief_report) < 20 || strlen($brief_report) > 2000) {
-            $error_message = "❌ Brief Report must be between 20 and 2000 characters.";
+    // Validate required fields
+    if (empty($company_name)) {
+        $error_message = "❌ Company Name is required.";
+    } elseif (strlen($company_name) < 2 || strlen($company_name) > 100) {
+        $error_message = "❌ Company Name must be between 2 and 100 characters.";
+    } elseif (! validateNameField($company_name)) {
+        $error_message = "❌ Company Name cannot contain numbers.";
+    } elseif (empty($company_website)) {
+        $error_message = "❌ Company Website is required.";
+    } elseif (! filter_var($company_website, FILTER_VALIDATE_URL)) {
+        $error_message = "❌ Company Website must be a valid URL.";
+    } elseif (empty($company_address)) {
+        $error_message = "❌ Company Address is required.";
+    } elseif (strlen($company_address) < 5 || strlen($company_address) > 250) {
+        $error_message = "❌ Company Address must be between 5 and 250 characters.";
+    } elseif (empty($supervisor_name)) {
+        $error_message = "❌ Supervisor Name is required.";
+    } elseif (strlen($supervisor_name) < 2 || strlen($supervisor_name) > 100) {
+        $error_message = "❌ Supervisor Name must be between 2 and 100 characters.";
+    } elseif (! validateNameField($supervisor_name)) {
+        $error_message = "❌ Supervisor Name cannot contain numbers.";
+    } elseif (empty($supervisor_email)) {
+        $error_message = "❌ Supervisor Email is required.";
+    } elseif (! validateEmailDomain($supervisor_email)) {
+        $error_message = "❌ Supervisor Email must be valid and end with .com or .in";
+    } elseif (empty($role_title)) {
+        $error_message = "❌ Role/Title is required.";
+    } elseif (strlen($role_title) < 2 || strlen($role_title) > 100) {
+        $error_message = "❌ Role/Title must be between 2 and 100 characters.";
+    } elseif (! validateNameField($role_title)) {
+        $error_message = "❌ Role/Title cannot contain numbers.";
+    } elseif (empty($domain)) {
+        $error_message = "❌ Domain is required.";
+    } elseif (empty($mode)) {
+        $error_message = "❌ Mode is required.";
+    } elseif (empty($start_date) || empty($end_date)) {
+        $error_message = "❌ Start Date and End Date are required.";
+    } elseif (! strtotime($start_date) || ! strtotime($end_date)) {
+        $error_message = "❌ Invalid date format.";
+    } elseif (strtotime($start_date) > strtotime($end_date)) {
+        $error_message = "❌ Start Date cannot be after End Date.";
+    } elseif ($stipend_amount < 0) {
+        $error_message = "❌ Stipend Amount cannot be negative.";
+    } elseif (empty($brief_report)) {
+        $error_message = "❌ Brief Report/Key Learnings is required.";
+    } elseif (strlen($brief_report) < 20 || strlen($brief_report) > 2000) {
+        $error_message = "❌ Brief Report must be between 20 and 2000 characters.";
+    } else {
+        // Check for duplicate internship submission
+        $check_conn = new mysqli("localhost", "root", "", "event_management_system");
+        if ($check_conn->connect_error) {
+            $error_message = "❌ Database connection failed.";
         } else {
-            // Check for duplicate internship submission
-            $check_conn = new mysqli("localhost", "root", "", "event_management_system");
-            if ($check_conn->connect_error) {
+            $check_stmt = $check_conn->prepare(
+                "SELECT id, company_name FROM internship_submissions
+                     WHERE regno = ? AND company_name = ? AND start_date = ?"
+            );
+            $check_stmt->bind_param("sss", $logged_in_regno, $company_name, $start_date);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+
+            if ($check_result->num_rows > 0) {
+                // Duplicate found - set error message
+                $error_message = "⚠️ You have already submitted an internship for this company with the same start date: " . htmlspecialchars($company_name);
+                $check_stmt->close();
+                $check_conn->close();
+            } else {
+                $check_stmt->close();
+                $check_conn->close();
+            }
+        }
+
+        // Handle file uploads
+        $internship_cert_path = null;
+        $offer_letter_path    = null;
+
+        // Create upload directory if it doesn't exist
+        $upload_dir = '../uploads/internship_submissions/';
+        if (! is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        // Handle Internship Certificate upload with compression (required)
+        if (isset($_FILES['internship_certificate']) && $_FILES['internship_certificate']['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($_FILES['internship_certificate']['error'] === UPLOAD_ERR_OK) {
+                $cert_file     = $_FILES['internship_certificate'];
+                $allowed_types = ['application/pdf', 'image/jpeg', 'image/png'];
+                $max_file_size = 5 * 1024 * 1024; // 5MB
+
+                if (! in_array($cert_file['type'], $allowed_types)) {
+                    $error_message = "❌ Internship Certificate must be PDF, JPG, or PNG.";
+                } elseif ($cert_file['size'] > $max_file_size) {
+                    $error_message = "❌ Internship Certificate file size must be less than 5MB.";
+                } else {
+                    $file_ext      = pathinfo($cert_file['name'], PATHINFO_EXTENSION);
+                    $base_filename = $upload_dir . 'cert_' . $logged_in_regno . '_' . time();
+
+                    // Compress and save the file
+                    $compression_result = FileCompressor::compressUploadedFile(
+                        $cert_file['tmp_name'],
+                        $base_filename,
+                        $file_ext,
+                        85
+                    );
+
+                    if ($compression_result['success']) {
+                        $internship_cert_path = 'internship_submissions/' . basename($compression_result['path']);
+                        error_log(sprintf(
+                            "Internship Cert compressed: %s -> %s (%.2f%% saved)",
+                            FileCompressor::formatSize($compression_result['original_size']),
+                            FileCompressor::formatSize($compression_result['compressed_size']),
+                            $compression_result['savings_percent']
+                        ));
+                    } else {
+                        $error_message = "❌ Failed to upload Internship Certificate.";
+                    }
+                }
+            } else {
+                $error_message = "❌ Error uploading Internship Certificate. Please try again.";
+            }
+        } else {
+            $error_message = "❌ Internship Certificate is required.";
+        }
+
+        // Handle Offer Letter upload with compression (optional)
+        if (empty($error_message) && isset($_FILES['offer_letter']) && $_FILES['offer_letter']['error'] !== UPLOAD_ERR_NO_FILE) {
+            if ($_FILES['offer_letter']['error'] === UPLOAD_ERR_OK) {
+                $offer_file    = $_FILES['offer_letter'];
+                $allowed_types = ['application/pdf', 'image/jpeg', 'image/png'];
+                $max_file_size = 5 * 1024 * 1024;
+
+                if (! in_array($offer_file['type'], $allowed_types)) {
+                    $error_message = "❌ Offer Letter must be PDF, JPG, or PNG.";
+                } elseif ($offer_file['size'] > $max_file_size) {
+                    $error_message = "❌ Offer Letter file size must be less than 5MB.";
+                } else {
+                    $file_ext      = pathinfo($offer_file['name'], PATHINFO_EXTENSION);
+                    $base_filename = $upload_dir . 'offer_' . $logged_in_regno . '_' . time();
+
+                    // Compress and save the file
+                    $compression_result = FileCompressor::compressUploadedFile(
+                        $offer_file['tmp_name'],
+                        $base_filename,
+                        $file_ext,
+                        85
+                    );
+
+                    if ($compression_result['success']) {
+                        $offer_letter_path = 'internship_submissions/' . basename($compression_result['path']);
+                    }
+                }
+            }
+        }
+
+        // If no errors, insert into database
+        if (empty($error_message)) {
+            $conn = new mysqli("localhost", "root", "", "event_management_system");
+
+            if ($conn->connect_error) {
                 $error_message = "❌ Database connection failed.";
             } else {
-                $check_stmt = $check_conn->prepare(
-                    "SELECT id, company_name FROM internship_submissions
-                     WHERE regno = ? AND company_name = ? AND start_date = ?"
-                );
-                $check_stmt->bind_param("sss", $logged_in_regno, $company_name, $start_date);
-                $check_stmt->execute();
-                $check_result = $check_stmt->get_result();
-
-                if ($check_result->num_rows > 0) {
-                    // Duplicate found - set error message
-                    $error_message = "⚠️ You have already submitted an internship for this company with the same start date: " . htmlspecialchars($company_name);
-                    $check_stmt->close();
-                    $check_conn->close();
-                } else {
-                    $check_stmt->close();
-                    $check_conn->close();
-                }
-            }
-
-            // Handle file uploads
-            $internship_cert_path = null;
-            $offer_letter_path    = null;
-
-            // Create upload directory if it doesn't exist
-            $upload_dir = '../uploads/internship_submissions/';
-            if (! is_dir($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
-            }
-
-            // Handle Internship Certificate upload with compression (required)
-            if (isset($_FILES['internship_certificate']) && $_FILES['internship_certificate']['error'] !== UPLOAD_ERR_NO_FILE) {
-                if ($_FILES['internship_certificate']['error'] === UPLOAD_ERR_OK) {
-                    $cert_file     = $_FILES['internship_certificate'];
-                    $allowed_types = ['application/pdf', 'image/jpeg', 'image/png'];
-                    $max_file_size = 5 * 1024 * 1024; // 5MB
-
-                    if (! in_array($cert_file['type'], $allowed_types)) {
-                        $error_message = "❌ Internship Certificate must be PDF, JPG, or PNG.";
-                    } elseif ($cert_file['size'] > $max_file_size) {
-                        $error_message = "❌ Internship Certificate file size must be less than 5MB.";
-                    } else {
-                        $file_ext      = pathinfo($cert_file['name'], PATHINFO_EXTENSION);
-                        $base_filename = $upload_dir . 'cert_' . $logged_in_regno . '_' . time();
-
-                        // Compress and save the file
-                        $compression_result = FileCompressor::compressUploadedFile(
-                            $cert_file['tmp_name'],
-                            $base_filename,
-                            $file_ext,
-                            85
-                        );
-
-                        if ($compression_result['success']) {
-                            $internship_cert_path = 'internship_submissions/' . basename($compression_result['path']);
-                            error_log(sprintf(
-                                "Internship Cert compressed: %s -> %s (%.2f%% saved)",
-                                FileCompressor::formatSize($compression_result['original_size']),
-                                FileCompressor::formatSize($compression_result['compressed_size']),
-                                $compression_result['savings_percent']
-                            ));
-                        } else {
-                            $error_message = "❌ Failed to upload Internship Certificate.";
-                        }
-                    }
-                } else {
-                    $error_message = "❌ Error uploading Internship Certificate. Please try again.";
-                }
-            } else {
-                $error_message = "❌ Internship Certificate is required.";
-            }
-
-            // Handle Offer Letter upload with compression (optional)
-            if (empty($error_message) && isset($_FILES['offer_letter']) && $_FILES['offer_letter']['error'] !== UPLOAD_ERR_NO_FILE) {
-                if ($_FILES['offer_letter']['error'] === UPLOAD_ERR_OK) {
-                    $offer_file    = $_FILES['offer_letter'];
-                    $allowed_types = ['application/pdf', 'image/jpeg', 'image/png'];
-                    $max_file_size = 5 * 1024 * 1024;
-
-                    if (! in_array($offer_file['type'], $allowed_types)) {
-                        $error_message = "❌ Offer Letter must be PDF, JPG, or PNG.";
-                    } elseif ($offer_file['size'] > $max_file_size) {
-                        $error_message = "❌ Offer Letter file size must be less than 5MB.";
-                    } else {
-                        $file_ext      = pathinfo($offer_file['name'], PATHINFO_EXTENSION);
-                        $base_filename = $upload_dir . 'offer_' . $logged_in_regno . '_' . time();
-
-                        // Compress and save the file
-                        $compression_result = FileCompressor::compressUploadedFile(
-                            $offer_file['tmp_name'],
-                            $base_filename,
-                            $file_ext,
-                            85
-                        );
-
-                        if ($compression_result['success']) {
-                            $offer_letter_path = 'internship_submissions/' . basename($compression_result['path']);
-                        }
-                    }
-                }
-            }
-
-            // If no errors, insert into database
-            if (empty($error_message)) {
-                $conn = new mysqli("localhost", "root", "", "event_management_system");
-
-                if ($conn->connect_error) {
-                    $error_message = "❌ Database connection failed.";
-                } else {
-                    $stmt = $conn->prepare(
-                        "INSERT INTO internship_submissions
+                $stmt = $conn->prepare(
+                    "INSERT INTO internship_submissions
                     (regno, company_name, company_website, company_address, supervisor_name, supervisor_email,
                      role_title, domain, mode, start_date, end_date, stipend_amount,
                      internship_certificate, offer_letter, brief_report, submission_date)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
+                );
+
+                if (! $stmt) {
+                    $error_message = "❌ Prepare failed: " . $conn->error;
+                } else {
+                    $stmt->bind_param(
+                        "sssssssssssdsss",
+                        $logged_in_regno,
+                        $company_name,
+                        $company_website,
+                        $company_address,
+                        $supervisor_name,
+                        $supervisor_email,
+                        $role_title,
+                        $domain,
+                        $mode,
+                        $start_date,
+                        $end_date,
+                        $stipend_amount,
+                        $internship_cert_path,
+                        $offer_letter_path,
+                        $brief_report
                     );
 
-                    if (! $stmt) {
-                        $error_message = "❌ Prepare failed: " . $conn->error;
+                    if ($stmt->execute()) {
+                        $success_message = "✅ Internship submission successful! Your data has been recorded.";
+                        // Reset form
+                        $form_data = [];
                     } else {
-                        $stmt->bind_param(
-                            "sssssssssssdsss",
-                            $logged_in_regno,
-                            $company_name,
-                            $company_website,
-                            $company_address,
-                            $supervisor_name,
-                            $supervisor_email,
-                            $role_title,
-                            $domain,
-                            $mode,
-                            $start_date,
-                            $end_date,
-                            $stipend_amount,
-                            $internship_cert_path,
-                            $offer_letter_path,
-                            $brief_report
-                        );
-
-                        if ($stmt->execute()) {
-                            $success_message = "✅ Internship submission successful! Your data has been recorded.";
-                            // Reset form
-                            $form_data = [];
-                        } else {
-                            $error_message = "❌ Error: " . htmlspecialchars($stmt->error);
-                        }
-
-                        $stmt->close();
+                        $error_message = "❌ Error: " . htmlspecialchars($stmt->error);
                     }
 
-                    $conn->close();
+                    $stmt->close();
                 }
+
+                $conn->close();
             }
         }
+    }
 
-        // Store form data for re-population in case of error
-        if (! empty($error_message)) {
-            $form_data = [
-                'company_name'     => $company_name,
-                'company_website'  => $company_website,
-                'company_address'  => $company_address,
-                'supervisor_name'  => $supervisor_name,
-                'supervisor_email' => $supervisor_email,
-                'role_title'       => $role_title,
-                'domain'           => $domain,
-                'mode'             => $mode,
-                'start_date'       => $start_date,
-                'end_date'         => $end_date,
-                'stipend_amount'   => $stipend_amount,
-                'brief_report'     => $brief_report,
-            ];
-        }
+    // Store form data for re-population in case of error
+    if (! empty($error_message)) {
+        $form_data = [
+            'company_name'     => $company_name,
+            'company_website'  => $company_website,
+            'company_address'  => $company_address,
+            'supervisor_name'  => $supervisor_name,
+            'supervisor_email' => $supervisor_email,
+            'role_title'       => $role_title,
+            'domain'           => $domain,
+            'mode'             => $mode,
+            'start_date'       => $start_date,
+            'end_date'         => $end_date,
+            'stipend_amount'   => $stipend_amount,
+            'brief_report'     => $brief_report,
+        ];
+    }
     }
 
     // Student data already available from login session fetch above
     $student_data = [
-        'name'       => $student_name,
-        'regno'      => $logged_in_regno,
-        'department' => '', // Can be fetched if needed
+    'name'       => $student_name,
+    'regno'      => $logged_in_regno,
+    'department' => '', // Can be fetched if needed
     ];
 ?>
 
@@ -973,6 +975,225 @@
         gap: 10px;
       }
     }
+
+    /* Notification Bell Styles */
+    .notification-bell-container {
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      z-index: 1001;
+    }
+
+    .notification-bell {
+      position: relative;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border: 2px solid #1a408c;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      transition: all 0.3s ease;
+      margin: 0;
+    }
+
+    .notification-bell:hover {
+      background: #f0f4f8;
+      transform: scale(1.05);
+    }
+
+    .notification-bell .material-symbols-outlined {
+      font-size: 24px;
+      color: #1a408c;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #dc3545;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 24px;
+    }
+
+    .notification-badge.hidden {
+      display: none;
+    }
+
+    /* Notification Dropdown */
+    .notification-dropdown {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border: 1px solid #eee;
+      width: 350px;
+      max-height: 500px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+
+    .notification-dropdown.show {
+      display: block;
+    }
+
+    .notification-header {
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notification-header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #1a408c;
+    }
+
+    .notification-header .mark-all {
+      background: none;
+      border: none;
+      color: #1a408c;
+      cursor: pointer;
+      font-size: 12px;
+      text-decoration: underline;
+      padding: 0;
+      transition: all 0.3s ease;
+    }
+
+    .notification-header .mark-all:hover {
+      color: #15306b;
+    }
+
+    .notification-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .notification-item {
+      padding: 15px 20px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      gap: 12px;
+    }
+
+    .notification-item:hover {
+      background: #f9f9f9;
+    }
+
+    .notification-item.unread {
+      background: #f0f4f8;
+    }
+
+    .notification-item-icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      background: #1a408c;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 20px;
+    }
+
+    .notification-item-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notification-item-content h4 {
+      margin: 0 0 5px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .notification-item-content p {
+      margin: 0 0 5px 0;
+      font-size: 13px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .notification-item-time {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .notification-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #999;
+    }
+
+    .notification-empty-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .notification-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+      z-index: 999;
+    }
+
+    .notification-overlay.show {
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .notification-bell-container {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+      }
+
+      .notification-dropdown {
+        position: fixed;
+        top: auto;
+        right: 10px;
+        left: 10px;
+        bottom: 80px;
+        width: auto;
+        max-height: 300px;
+      }
+
+      .notification-bell {
+        width: 40px;
+        height: 40px;
+        margin: 0;
+      }
+
+      .notification-bell .material-symbols-outlined {
+        font-size: 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -989,6 +1210,24 @@
           height="60px"
           width="200"
         />
+      </div>
+      <div class="notification-bell-container">
+        <div class="notification-bell" id="notificationBell">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="notification-badge hidden" id="notificationBadge">0</span>
+        </div>
+        <div class="notification-dropdown" id="notificationDropdown">
+          <div class="notification-header">
+            <h3>Notifications</h3>
+            <button class="mark-all" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+          </div>
+          <ul class="notification-list" id="notificationList">
+            <li class="notification-empty">
+              <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+              <p>No notifications</p>
+            </li>
+          </ul>
+        </div>
       </div>
       <div class="header-title">
         <p>Event Management System</p>
@@ -1039,6 +1278,12 @@
           <a href="od_request.php" class="nav-link">
             <span class="material-symbols-outlined">person_raised_hand</span>
             OD Request
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="hackathons.php" class="nav-link">
+            <span class="material-symbols-outlined">emoji_events</span>
+            Hackathons
           </a>
         </li>
         <li class="nav-item">
@@ -1374,6 +1619,151 @@
           document.body.classList.remove('sidebar-open');
         }
       });
+
+      // ============================================================================
+      // NOTIFICATION SYSTEM
+      // ============================================================================
+
+      const notificationBell = document.getElementById('notificationBell');
+      const notificationDropdown = document.getElementById('notificationDropdown');
+      const notificationOverlay = document.createElement('div');
+      notificationOverlay.className = 'notification-overlay';
+      document.body.appendChild(notificationOverlay);
+
+      // Fetch notifications when page loads
+      function loadNotifications() {
+        fetch('ajax/get_notifications.php?action=get_notifications')
+          .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+          })
+          .then(data => {
+            if (data.success) {
+              displayNotifications(data.notifications, data.unread_count);
+            }
+          })
+          .catch(error => console.log('Error loading notifications:', error));
+      }
+
+      function displayNotifications(notifications, unreadCount) {
+        const notificationList = document.getElementById('notificationList');
+        const notificationBadge = document.getElementById('notificationBadge');
+
+        // Update badge
+        if (unreadCount > 0) {
+          notificationBadge.textContent = unreadCount;
+          notificationBadge.classList.remove('hidden');
+        } else {
+          notificationBadge.classList.add('hidden');
+        }
+
+        // Clear list
+        notificationList.innerHTML = '';
+
+        if (notifications.length === 0) {
+          notificationList.innerHTML = `
+            <li class="notification-empty">
+              <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+              <p>No notifications</p>
+            </li>
+          `;
+          return;
+        }
+
+        // Add notifications
+        notifications.forEach(notification => {
+          const date = new Date(notification.created_at);
+          const timeString = getTimeString(date);
+
+          const li = document.createElement('li');
+          li.className = `notification-item ${notification.is_read ? '' : 'unread'}`;
+          li.innerHTML = `
+            <div class="notification-item-icon">
+              <span class="material-symbols-outlined">emoji_events</span>
+            </div>
+            <div class="notification-item-content">
+              <h4>${escapeHtml(notification.hackathon_title)}</h4>
+              <p>${escapeHtml(notification.message)}</p>
+              <span class="notification-item-time">${timeString}</span>
+            </div>
+          `;
+          li.onclick = () => handleNotificationClick(notification.id, notification.hackathon_id);
+          notificationList.appendChild(li);
+        });
+      }
+
+      function handleNotificationClick(notificationId, hackathonId) {
+        // Mark as read and redirect
+        fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              // Reload notifications
+              loadNotifications();
+              // Redirect to hackathons page
+              window.location.href = 'hackathons.php';
+            }
+          })
+          .catch(error => console.log('Error marking notification as read:', error));
+      }
+
+      function markAllNotificationsAsRead() {
+        fetch('ajax/get_notifications.php?action=mark_all_read')
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              loadNotifications();
+            }
+          })
+          .catch(error => console.log('Error marking all notifications as read:', error));
+      }
+
+      function getTimeString(date) {
+        const now = new Date();
+        const diff = now - date;
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+
+        if (minutes < 1) return 'just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days < 7) return `${days}d ago`;
+
+        return date.toLocaleDateString();
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Toggle notification dropdown
+      notificationBell.addEventListener('click', function(e) {
+        e.stopPropagation();
+        notificationDropdown.classList.toggle('show');
+        notificationOverlay.classList.toggle('show');
+      });
+
+      // Close dropdown when clicking overlay
+      notificationOverlay.addEventListener('click', function() {
+        notificationDropdown.classList.remove('show');
+        notificationOverlay.classList.remove('show');
+      });
+
+      // Close dropdown when clicking outside (except on bell)
+      document.addEventListener('click', function(e) {
+        if (!notificationBell.contains(e.target) && !notificationDropdown.contains(e.target)) {
+          notificationDropdown.classList.remove('show');
+          notificationOverlay.classList.remove('show');
+        }
+      });
+
+      // Load notifications on page load
+      loadNotifications();
+      // Refresh notifications every 30 seconds
+      setInterval(loadNotifications, 30000);
     });
 
     // File Upload Handler

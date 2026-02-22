@@ -85,6 +85,7 @@
         $registration_deadline = $_POST['registration_deadline'] ?? '';
         $max_participants      = (int) ($_POST['max_participants'] ?? 0);
         $status                = $_POST['status'] ?? 'draft';
+        $send_notification     = isset($_POST['send_notification']);
 
         // Validation
         if (empty($title)) {
@@ -232,41 +233,75 @@
                     $hackathon_id,
                 ]);
 
-                // Send notifications if status changed from draft to upcoming
-                if ($old_status === 'draft' && $status === 'upcoming') {
+                // Send notifications if status changed from draft to upcoming OR if checkbox is checked
+                if (($old_status === 'draft' && $status === 'upcoming') || $send_notification) {
                     $push = WebPushManager::getInstance();
 
+                    // Determine message based on whether it's a new hackathon or an update
+                    $is_new_hackathon = ($old_status === 'draft' && $status === 'upcoming');
+
                     $notification_payload = [
-                        'title' => '🚀 New Hackathon Posted!',
-                        'body'  => $title . ' - Register now!',
+                        'title' => $is_new_hackathon ? '🚀 New Hackathon Posted!' : '📢 Hackathon Updated!',
+                        'body'  => $title . ($is_new_hackathon ? ' - Register now!' : ' - Check the updates!'),
                         'icon'  => '/asserts/images/logo.png',
                         'badge' => '/asserts/images/badge.png',
                         'url'   => '/student/hackathon_details.php?id=' . $hackathon_id,
                         'tag'   => 'hackathon-' . $hackathon_id,
                         'data'  => [
                             'hackathon_id' => $hackathon_id,
-                            'type'         => 'new_hackathon',
+                            'type'         => $is_new_hackathon ? 'new_hackathon' : 'hackathon_updated',
                         ],
                     ];
 
-                    // Send to all students
-                    $push_stats = $push->sendToAllStudents($notification_payload);
-
-                    // Save notification records
-                    $students = $db->executeQuery("SELECT regno FROM student_register");
-                    foreach ($students as $student) {
-                        // Insert into notifications table (existing system)
-                        $db->executeQuery(
-                            "INSERT INTO notifications (user_regno, hackathon_id, notification_type, title, message, link, sent_at)
-                             VALUES (?, ?, 'hackathon', ?, ?, ?, NOW())",
-                            [
-                                $student['regno'],
-                                $hackathon_id,
-                                '🚀 Updated Hackathon!',
-                                $title . ' - Check updates!',
-                                '/student/hackathon_details.php?id=' . $hackathon_id,
-                            ]
+                    // Get students to notify
+                    if ($send_notification && ! $is_new_hackathon) {
+                        // If manually sending notification for an update, notify students who have applied
+                        $applied_students = $db->executeQuery(
+                            "SELECT DISTINCT student_regno FROM hackathon_applications WHERE hackathon_id = ?",
+                            [$hackathon_id]
                         );
+
+                        if (! empty($applied_students)) {
+                            // Collect all student registration numbers
+                            $student_regnos = array_column($applied_students, 'student_regno');
+
+                            // Send push notifications to applied students in bulk
+                            $push->sendBulkNotifications($student_regnos, $notification_payload);
+
+                            // Insert into notifications table
+                            foreach ($applied_students as $student) {
+                                $db->executeQuery(
+                                    "INSERT INTO notifications (user_regno, hackathon_id, notification_type, title, message, link, sent_at)
+                                     VALUES (?, ?, 'hackathon', ?, ?, ?, NOW())",
+                                    [
+                                        $student['student_regno'],
+                                        $hackathon_id,
+                                        '📢 Hackathon Updated!',
+                                        $title . ' - Check the updates!',
+                                        '/student/hackathon_details.php?id=' . $hackathon_id,
+                                    ]
+                                );
+                            }
+                        }
+                    } else {
+                        // For new hackathons, send to all students
+                        $push_stats = $push->sendToAllStudents($notification_payload);
+
+                        // Save notification records for all students
+                        $students = $db->executeQuery("SELECT regno FROM student_register");
+                        foreach ($students as $student) {
+                            $db->executeQuery(
+                                "INSERT INTO notifications (user_regno, hackathon_id, notification_type, title, message, link, sent_at)
+                                 VALUES (?, ?, 'hackathon', ?, ?, ?, NOW())",
+                                [
+                                    $student['regno'],
+                                    $hackathon_id,
+                                    '🚀 New Hackathon Posted!',
+                                    $title . ' - Register now!',
+                                    '/student/hackathon_details.php?id=' . $hackathon_id,
+                                ]
+                            );
+                        }
                     }
                 }
 
@@ -308,6 +343,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <style>
+        /* Universal box-sizing */
+        * {
+            box-sizing: border-box;
+        }
+
         /* Edit Hackathon Specific Styles */
         .page-header-section {
             background: white;
@@ -337,7 +377,7 @@
 
         .form-container {
             background: white;
-            padding: 30px;
+            padding: 40px;
             border-radius: 10px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
@@ -345,12 +385,15 @@
         .form-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 40px 30px;
+            margin-bottom: 40px;
         }
 
         .form-group {
             margin-bottom: 0;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
         }
 
         .form-group.full-width {
@@ -362,7 +405,7 @@
             font-size: 14px;
             font-weight: 600;
             color: #0c3878;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .form-group label .required {
@@ -373,7 +416,7 @@
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 12px 15px;
+            padding: 14px 15px;
             border: 2px solid #e0e0e0;
             border-radius: 6px;
             font-size: 14px;
@@ -395,7 +438,7 @@
 
         .form-group small {
             display: block;
-            margin-top: 5px;
+            margin-top: 8px;
             font-size: 12px;
             color: #666;
         }
@@ -403,11 +446,17 @@
         .file-upload-box {
             border: 2px dashed #e0e0e0;
             border-radius: 10px;
-            padding: 20px;
+            padding: 35px 20px;
             text-align: center;
             transition: all 0.3s ease;
             cursor: pointer;
             background: #f8f9fa;
+            margin-top: 12px;
+            min-height: 130px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
         }
 
         .file-upload-box:hover {
@@ -437,6 +486,33 @@
             max-height: 200px;
             border-radius: 8px;
             margin-top: 10px;
+        }
+
+        .checkbox-group {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .checkbox-group:hover {
+            border-color: #0c3878;
+            background: #f0f4f8;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-weight: normal;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #0c3878;
         }
 
         .btn-group {
@@ -510,15 +586,48 @@
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
+                gap: 25px;
+                margin-bottom: 30px;
+            }
+
+            .form-group {
+                margin-bottom: 0;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 12px 12px;
             }
 
             .btn-group {
                 flex-direction: column;
+                gap: 12px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 13px;
             }
 
             .page-header-title {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+
+            .checkbox-group {
+                margin-top: 20px;
+                margin-bottom: 20px;
+                padding: 15px;
+            }
+
+            .file-upload-box {
+                padding: 25px 15px;
+                min-height: 100px;
+            }
+
+            .form-container {
+                padding: 20px;
             }
         }
     </style>
@@ -742,6 +851,18 @@
                                 </div>
                             <?php endif; ?>
                         </div>
+                    </div>
+
+                    <!-- Notification Option -->
+                    <div class="checkbox-group">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" name="send_notification" id="send_notification" value="1">
+                            <span style="font-size: 14px; color: #333;">
+                                <strong>Send notification to students who have applied</strong>
+                                <br>
+                                <small style="color: #666;">Check this to notify all students who have applied to this hackathon about the updates</small>
+                            </span>
+                        </label>
                     </div>
 
                     <div class="btn-group">

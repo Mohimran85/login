@@ -109,6 +109,7 @@
     <title>My Hackathon Applications</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="student_dashboard.css">
     <style>
         * {
             margin: 0;
@@ -118,9 +119,8 @@
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: #f4f7f6;
+            background: #ffffff;
             min-height: 100vh;
-            padding: 20px;
         }
 
         .container {
@@ -128,7 +128,7 @@
             margin: 0 auto;
         }
 
-        .header {
+        .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -142,7 +142,7 @@
             border: 1px solid #eee;
         }
 
-        .header h1 {
+        .page-header h1 {
             color: #1a408c;
             font-size: 32px;
             display: flex;
@@ -285,6 +285,197 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(26, 64, 140, 0.4);
             background: #15306b;
+        }
+
+        /* Notification Bell Styles */
+        .notification-bell-container {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            z-index: 1001;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid #1a408c;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            transition: all 0.3s ease;
+            margin: 0;
+        }
+
+        .notification-bell:hover {
+            background: #f0f4f8;
+            transform: scale(1.05);
+        }
+
+        .notification-bell .material-symbols-outlined {
+            font-size: 24px;
+            color: #1a408c;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 24px;
+        }
+
+        .notification-badge.hidden {
+            display: none;
+        }
+
+        /* Notification Dropdown/Modal */
+        .notification-dropdown {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border: 1px solid #eee;
+            width: 350px;
+            max-height: 500px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .notification-dropdown.show {
+            display: block;
+        }
+
+        .notification-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #1a408c;
+        }
+
+        .notification-header .mark-all {
+            background: none;
+            border: none;
+            color: #1a408c;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: underline;
+            padding: 0;
+            transition: all 0.3s ease;
+        }
+
+        .notification-header .mark-all:hover {
+            color: #15306b;
+        }
+
+        .notification-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notification-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            gap: 12px;
+        }
+
+        .notification-item:hover {
+            background: #f9f9f9;
+        }
+
+        .notification-item.unread {
+            background: #f0f4f8;
+        }
+
+        .notification-item-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            background: #1a408c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .notification-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notification-item-content h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .notification-item-content p {
+            margin: 0 0 5px 0;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .notification-item-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .notification-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: #999;
+        }
+
+        .notification-empty-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .notification-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none;
+            z-index: 999;
+        }
+
+        .notification-overlay.show {
+            display: block;
         }
 
         .applications-list {
@@ -526,7 +717,7 @@
         }
 
         @media (max-width: 768px) {
-            .header {
+            .page-header {
                 flex-direction: column;
                 align-items: flex-start;
             }
@@ -547,17 +738,119 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="grid-container">
+        <!-- header -->
         <div class="header">
-            <h1>
-                <span class="material-symbols-outlined">folder_open</span>
-                My Applications
-            </h1>
-            <a href="hackathons.php" class="back-button">
-                <span class="material-symbols-outlined">arrow_back</span>
-                Browse Hackathons
-            </a>
+            <div class="menu-icon">
+                <span class="material-symbols-outlined">menu</span>
+            </div>
+            <div class="icon">
+                <img src="sona_logo.jpg" alt="Sona College Logo" height="60px" width="200" />
+            </div>
+            <div class="notification-bell-container">
+                <div class="notification-bell" id="notificationBell">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="notification-badge hidden" id="notificationBadge">0</span>
+                </div>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-header">
+                        <h3>Notifications</h3>
+                        <button class="mark-all" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+                    </div>
+                    <ul class="notification-list" id="notificationList">
+                        <li class="notification-empty">
+                            <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+                            <p>No notifications</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="header-title">
+                <p>Event Management System</p>
+            </div>
         </div>
+
+        <!-- sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Student Portal</div>
+                <div class="close-sidebar">
+                    <span class="material-symbols-outlined">close</span>
+                </div>
+            </div>
+
+            <div class="student-info">
+                <div class="student-name"><?php echo htmlspecialchars($student_name); ?></div>
+                <div class="student-regno"><?php echo htmlspecialchars($student_regno); ?></div>
+            </div>
+
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="index.php" class="nav-link">
+                            <span class="material-symbols-outlined">dashboard</span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="student_register.php" class="nav-link">
+                            <span class="material-symbols-outlined">add_circle</span>
+                            Register Event
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="student_participations.php" class="nav-link">
+                            <span class="material-symbols-outlined">event_note</span>
+                            My Participations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="internship_submission.php" class="nav-link">
+                            <span class="material-symbols-outlined">work</span>
+                            Internship Submission
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="hackathons.php" class="nav-link active">
+                            <span class="material-symbols-outlined">emoji_events</span>
+                            Hackathons
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="od_request.php" class="nav-link">
+                            <span class="material-symbols-outlined">person_raised_hand</span>
+                            OD Request
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="profile.php" class="nav-link">
+                            <span class="material-symbols-outlined">person</span>
+                            Profile
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/logout.php" class="nav-link">
+                            <span class="material-symbols-outlined">logout</span>
+                            Logout
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- main container -->
+        <div class="main">
+            <div class="container">
+                <div class="page-header">
+                    <h1>
+                        <span class="material-symbols-outlined">folder_open</span>
+                        My Applications
+                    </h1>
+                    <a href="hackathons.php" class="back-button">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                        Browse Hackathons
+                    </a>
+                </div>
 
         <!-- Statistics -->
         <div class="stats-container">
@@ -638,7 +931,7 @@
                     <div class="application-card">
                         <div class="card-header">
                             <?php if ($app['poster_url']): ?>
-                                <img src="<?php echo htmlspecialchars($app['poster_url']); ?>"
+                                <img src="<?php echo htmlspecialchars('../' . $app['poster_url']); ?>"
                                      alt="Poster" class="card-poster">
                             <?php endif; ?>
 
@@ -756,6 +1049,195 @@
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const headerMenuIcon = document.querySelector('.header .menu-icon');
+            const closeSidebarBtn = document.querySelector('.close-sidebar');
+
+            function toggleSidebar() {
+                if (!sidebar) {
+                    return;
+                }
+
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                } else {
+                    sidebar.classList.add('active');
+                    document.body.classList.add('sidebar-open');
+                }
+            }
+
+            if (headerMenuIcon) {
+                headerMenuIcon.addEventListener('click', toggleSidebar);
+            }
+
+            if (closeSidebarBtn) {
+                closeSidebarBtn.addEventListener('click', toggleSidebar);
+            }
+
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth <= 768 &&
+                    sidebar &&
+                    sidebar.classList.contains('active') &&
+                    !sidebar.contains(event.target) &&
+                    (!headerMenuIcon || !headerMenuIcon.contains(event.target))) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768 && sidebar) {
+                    sidebar.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+
+            // ========================================================================
+            // NOTIFICATION SYSTEM
+            // ========================================================================
+            const notificationBell = document.getElementById('notificationBell');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            const notificationOverlay = document.createElement('div');
+            notificationOverlay.className = 'notification-overlay';
+            document.body.appendChild(notificationOverlay);
+
+            function loadNotifications() {
+                fetch('ajax/get_notifications.php?action=get_notifications')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            displayNotifications(data.notifications, data.unread_count);
+                        }
+                    })
+                    .catch(error => console.log('Error loading notifications:', error));
+            }
+
+            function displayNotifications(notifications, unreadCount) {
+                const notificationList = document.getElementById('notificationList');
+                const notificationBadge = document.getElementById('notificationBadge');
+
+                if (unreadCount > 0) {
+                    notificationBadge.textContent = unreadCount;
+                    notificationBadge.classList.remove('hidden');
+                } else {
+                    notificationBadge.classList.add('hidden');
+                }
+
+                notificationList.innerHTML = '';
+
+                if (notifications.length === 0) {
+                    notificationList.innerHTML = `
+                        <li class="notification-empty">
+                            <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+                            <p>No notifications</p>
+                        </li>
+                    `;
+                    return;
+                }
+
+                notifications.forEach(notification => {
+                    const date = new Date(notification.created_at);
+                    const timeString = getTimeString(date);
+
+                    const li = document.createElement('li');
+                    li.className = `notification-item ${notification.is_read ? '' : 'unread'}`;
+                    li.innerHTML = `
+                        <div class="notification-item-icon">
+                            <span class="material-symbols-outlined">emoji_events</span>
+                        </div>
+                        <div class="notification-item-content">
+                            <h4>${escapeHtml(notification.hackathon_title)}</h4>
+                            <p>${escapeHtml(notification.message)}</p>
+                            <span class="notification-item-time">${timeString}</span>
+                        </div>
+                    `;
+                    li.onclick = () => handleNotificationClick(notification.id, notification.hackathon_id);
+                    notificationList.appendChild(li);
+                });
+            }
+
+            function handleNotificationClick(notificationId) {
+                fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadNotifications();
+                            window.location.href = 'hackathons.php';
+                        }
+                    })
+                    .catch(error => console.log('Error marking notification as read:', error));
+            }
+
+            function markAllNotificationsAsRead() {
+                fetch('ajax/get_notifications.php?action=mark_all_read')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadNotifications();
+                        }
+                    })
+                    .catch(error => console.log('Error marking all notifications as read:', error));
+            }
+
+            function getTimeString(date) {
+                const now = new Date();
+                const diff = now - date;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+
+                if (minutes < 1) return 'just now';
+                if (minutes < 60) return `${minutes}m ago`;
+                if (hours < 24) return `${hours}h ago`;
+                if (days < 7) return `${days}d ago`;
+
+                return date.toLocaleDateString();
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            if (notificationBell && notificationDropdown) {
+                notificationBell.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    notificationDropdown.classList.toggle('show');
+                    notificationOverlay.classList.toggle('show');
+                });
+            }
+
+            notificationOverlay.addEventListener('click', function() {
+                if (notificationDropdown) {
+                    notificationDropdown.classList.remove('show');
+                }
+                notificationOverlay.classList.remove('show');
+            });
+
+            document.addEventListener('click', function(e) {
+                if (notificationBell && notificationDropdown &&
+                    !notificationBell.contains(e.target) &&
+                    !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.classList.remove('show');
+                    notificationOverlay.classList.remove('show');
+                }
+            });
+
+            window.markAllNotificationsAsRead = markAllNotificationsAsRead;
+            loadNotifications();
+            setInterval(loadNotifications, 30000);
+        });
+    </script>
 </body>
 </html>

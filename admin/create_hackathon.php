@@ -103,7 +103,7 @@
         }
 
         if ($max_participants !== '' && (! is_numeric($max_participants) || $max_participants < 1)) {
-            $errors[] = "Max participants must be a positive number";
+            $errors[] = "Max team members must be a positive number";
         }
 
         // Handle file uploads
@@ -693,11 +693,11 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="max_participants">Max Participants</label>
+                            <label for="max_participants">Max Team Members</label>
                             <input type="number" id="max_participants" name="max_participants" min="1"
-                                   placeholder="Leave empty for unlimited"
+                                   placeholder="e.g., 5 members per team"
                                    value="<?php echo htmlspecialchars($_POST['max_participants'] ?? ''); ?>">
-                            <small>Leave empty for unlimited registrations</small>
+                            <small>Maximum number of team members per team. Leave empty for no team size limit. There is no limit on the number of teams that can participate.</small>
                         </div>
                     </div>
 

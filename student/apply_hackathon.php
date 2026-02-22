@@ -59,20 +59,13 @@
     exit();
     }
 
-    // Check deadline and limits
+    // Check deadline
     $deadline   = strtotime($hackathon['registration_deadline']);
     $now        = time();
     $is_expired = $deadline < $now;
-    $is_full    = $hackathon['max_participants'] && $hackathon['confirmed_applications'] >= $hackathon['max_participants'];
 
     if ($is_expired) {
     $_SESSION['error_message'] = "Registration deadline has passed.";
-    header("Location: hackathon_details.php?id=" . $hackathon_id);
-    exit();
-    }
-
-    if ($is_full) {
-    $_SESSION['error_message'] = "This hackathon has reached maximum participants.";
     header("Location: hackathon_details.php?id=" . $hackathon_id);
     exit();
     }
@@ -151,21 +144,12 @@
             $conn->begin_transaction();
 
             try {
-                // Re-check limit with lock
-                $check_sql = "SELECT current_registrations, max_participants
-                              FROM hackathon_posts
-                              WHERE id = ? FOR UPDATE";
-                $stmt = $conn->prepare($check_sql);
+                // Lock hackathon record
+                $check_sql = "SELECT id FROM hackathon_posts WHERE id = ? FOR UPDATE";
+                $stmt      = $conn->prepare($check_sql);
                 $stmt->bind_param("i", $hackathon_id);
                 $stmt->execute();
-                $result  = $stmt->get_result();
-                $current = $result->fetch_assoc();
                 $stmt->close();
-
-                if ($current['max_participants'] &&
-                    $current['current_registrations'] >= $current['max_participants']) {
-                    throw new Exception("Registration limit reached");
-                }
 
                 // Check double application
                 $check_app_sql = "SELECT id FROM hackathon_applications
