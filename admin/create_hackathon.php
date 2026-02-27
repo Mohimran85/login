@@ -3,8 +3,8 @@
     require_once __DIR__ . '/../includes/security.php';
     require_once __DIR__ . '/../includes/DatabaseManager.php';
     require_once __DIR__ . '/../includes/FileCompressor.php';
-    require_once __DIR__ . '/../includes/WebPushManager.php';
     require_once __DIR__ . '/../includes/csrf.php';
+    require_once __DIR__ . '/../includes/OneSignalManager.php';
 
     // Prevent caching
     header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -37,8 +37,7 @@
     $stmt->close();
     $conn->close();
 
-    $db   = DatabaseManager::getInstance();
-    $push = WebPushManager::getInstance();
+    $db = DatabaseManager::getInstance();
 
     // Get admin user ID
     $user_query = "SELECT id, name FROM teacher_register WHERE username = ? LIMIT 1";
@@ -67,7 +66,6 @@
         $registration_deadline = $_POST['registration_deadline'] ?? '';
         $max_participants      = $_POST['max_participants'] ?? null;
         $status                = $_POST['status'] ?? 'upcoming';
-        $send_notification     = isset($_POST['send_notification']);
 
         // Validation
         if (empty($title)) {
@@ -189,42 +187,35 @@
 
                 $success_message = "Hackathon created successfully!";
 
-                // Send push notifications if requested and status is upcoming
-                if ($send_notification && $status === 'upcoming') {
-                    $notification_payload = [
-                        'title' => '🚀 New Hackathon Posted!',
-                        'body'  => $title . ' - Register now!',
-                        'icon'  => '/asserts/images/logo.png',
-                        'badge' => '/asserts/images/badge.png',
-                        'url'   => '/student/hackathon_details.php?id=' . $hackathon_id,
-                        'tag'   => 'hackathon-' . $hackathon_id,
-                        'data'  => [
-                            'hackathon_id' => $hackathon_id,
-                            'type'         => 'new_hackathon',
-                        ],
-                    ];
+                // Automatically send notifications to students
+                if ($status === 'upcoming') {
+                    $oneSignal = new OneSignalManager();
 
-                    // Send to all students
-                    $push_stats = $push->sendToAllStudents($notification_payload);
+                    // Send push notification to ALL students via OneSignal
+                    $pushResult = $oneSignal->notifyNewHackathon(
+                        $hackathon_id,
+                        $title,
+                        $registration_deadline,
+                        $description
+                    );
 
-                    // Save notification records
+                    // Log notification in database
                     $students = $db->executeQuery("SELECT regno FROM student_register");
                     foreach ($students as $student) {
-                        // Insert into notifications table
                         $db->executeQuery(
-                            "INSERT INTO notifications (user_regno, hackathon_id, notification_type, title, message, link, sent_at)
-                             VALUES (?, ?, 'hackathon', ?, ?, ?, NOW())",
+                            "INSERT INTO notifications (user_regno, notification_type, title, message, link, sent_at)
+                             VALUES (?, 'hackathon', ?, ?, ?, NOW())",
                             [
                                 $student['regno'],
-                                $hackathon_id,
-                                '🚀 New Hackathon Posted!',
-                                $title . ' - Register now!',
-                                '/student/hackathon_details.php?id=' . $hackathon_id,
-                            ]
+                                '🚀 ' . $title,
+                                'Register before ' . date('M d, Y', strtotime($registration_deadline)),
+                                '/event_management_system/login/student/hackathons.php?id=' . $hackathon_id,
+                            ],
+                            'ssss'
                         );
                     }
 
-                    $success_message .= " Push notifications sent: {$push_stats['sent']} successful, {$push_stats['failed']} failed.";
+                    $success_message = "✅ Hackathon created! Notifications sent to all students automatically.";
                 }
 
                 // Redirect after 2 seconds
@@ -739,14 +730,7 @@
                         <small>Upload detailed rules, judging criteria, and guidelines as PDF</small>
                     </div>
 
-                    <!-- Send Notification -->
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="send_notification" name="send_notification" checked>
-                        <label for="send_notification">
-                            <span class="material-symbols-outlined" style="vertical-align: middle; font-size: 20px;">notifications_active</span>
-                            Send push notification to all students
-                        </label>
-                    </div>
+
                 </div>
 
                 <!-- Form Actions -->

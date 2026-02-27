@@ -136,10 +136,11 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>My Profile - Event Management System</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
+    <!-- Web App Manifest for Push Notifications -->
+    <link rel="manifest" href="../manifest.json">
     <link rel="stylesheet" href="student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1235,24 +1236,46 @@
                             <span class="notification-item-time">${timeString}</span>
                         </div>
                     `;
-                    li.onclick = () => handleNotificationClick(notification.id, notification.hackathon_id);
+                    li.style.cursor = 'pointer';
+                    li.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Notification clicked:', notification.id, notification.link);
+                        handleNotificationClick(notification.id, notification.link);
+                    };
                     notificationList.appendChild(li);
                 });
             }
 
-            function handleNotificationClick(notificationId, hackathonId) {
+            function handleNotificationClick(notificationId, link) {
+                // Close dropdown immediately
+                notificationDropdown.classList.remove('show');
+                notificationOverlay.classList.remove('show');
+
                 // Mark as read and redirect
                 fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.success) {
-                            // Reload notifications
-                            loadNotifications();
-                            // Redirect to hackathons page
-                            window.location.href = 'hackathons.php';
+                        if (data.success && link) {
+                            // Fix relative links by prepending base path
+                            let fullLink = link;
+                            if (link.startsWith('/student/')) {
+                                fullLink = '/event_management_system/login' + link;
+                            }
+                            window.location.href = fullLink;
                         }
                     })
-                    .catch(error => console.log('Error marking notification as read:', error));
+                    .catch(error => {
+                        console.log('Error marking notification as read:', error);
+                        // Still redirect even if marking as read fails
+                        if (link) {
+                            let fullLink = link;
+                            if (link.startsWith('/student/')) {
+                                fullLink = '/event_management_system/login' + link;
+                            }
+                            window.location.href = fullLink;
+                        }
+                    });
             }
 
             function markAllNotificationsAsRead() {
@@ -1327,5 +1350,6 @@
 
 
     </script>
+    <!-- Push Notifications Manager for Median.co -->
 </body>
 </html>

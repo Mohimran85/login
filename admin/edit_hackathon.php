@@ -4,7 +4,7 @@
     require_once __DIR__ . '/../includes/DatabaseManager.php';
     require_once __DIR__ . '/../includes/FileCompressor.php';
     require_once __DIR__ . '/../includes/csrf.php';
-    require_once __DIR__ . '/../includes/WebPushManager.php';
+    require_once __DIR__ . '/../includes/OneSignalManager.php';
 
     // Prevent caching
     header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -233,79 +233,61 @@
                     $hackathon_id,
                 ]);
 
-                // Send notifications if status changed from draft to upcoming OR if checkbox is checked
-                if (($old_status === 'draft' && $status === 'upcoming') || $send_notification) {
-                    $push = WebPushManager::getInstance();
+                // Auto-send notifications when hackathon status/details change
+                if ($old_status === 'draft' && $status === 'upcoming') {
+                    // Going LIVE - notify ALL students
+                    $oneSignal = new OneSignalManager();
+                    $oneSignal->notifyNewHackathon($hackathon_id, $title, $registration_deadline, $description);
 
-                    // Determine message based on whether it's a new hackathon or an update
-                    $is_new_hackathon = ($old_status === 'draft' && $status === 'upcoming');
-
-                    $notification_payload = [
-                        'title' => $is_new_hackathon ? '🚀 New Hackathon Posted!' : '📢 Hackathon Updated!',
-                        'body'  => $title . ($is_new_hackathon ? ' - Register now!' : ' - Check the updates!'),
-                        'icon'  => '/asserts/images/logo.png',
-                        'badge' => '/asserts/images/badge.png',
-                        'url'   => '/student/hackathon_details.php?id=' . $hackathon_id,
-                        'tag'   => 'hackathon-' . $hackathon_id,
-                        'data'  => [
-                            'hackathon_id' => $hackathon_id,
-                            'type'         => $is_new_hackathon ? 'new_hackathon' : 'hackathon_updated',
-                        ],
-                    ];
-
-                    // Get students to notify
-                    if ($send_notification && ! $is_new_hackathon) {
-                        // If manually sending notification for an update, notify students who have applied
-                        $applied_students = $db->executeQuery(
-                            "SELECT DISTINCT student_regno FROM hackathon_applications WHERE hackathon_id = ?",
-                            [$hackathon_id]
+                    // Log for all students
+                    $students = $db->executeQuery("SELECT regno FROM student_register");
+                    foreach ($students as $student) {
+                        $db->executeQuery(
+                            "INSERT INTO notifications (user_regno, notification_type, title, message, link, sent_at)
+                             VALUES (?, 'hackathon', ?, ?, ?, NOW())",
+                            [
+                                $student['regno'],
+                                '🚀 ' . $title,
+                                'Register before ' . date('M d, Y', strtotime($registration_deadline)),
+                                '/event_management_system/login/student/hackathons.php?id=' . $hackathon_id,
+                            ],
+                            'ssss'
                         );
+                    }
+                    $_SESSION['success_message'] = "✅ Hackathon is now LIVE! All students notified automatically.";
 
-                        if (! empty($applied_students)) {
-                            // Collect all student registration numbers
-                            $student_regnos = array_column($applied_students, 'student_regno');
+                } elseif ($status === 'upcoming' && ($title !== $old_title || $description !== $old_description)) {
+                    // Details/description changed - notify ONLY applied students
+                    $applied_students = $db->executeQuery(
+                        "SELECT DISTINCT student_regno FROM hackathon_applications WHERE hackathon_id = ?",
+                        [$hackathon_id],
+                        'i'
+                    );
 
-                            // Send push notifications to applied students in bulk
-                            $push->sendBulkNotifications($student_regnos, $notification_payload);
+                    if (! empty($applied_students)) {
+                        $regnos = array_column($applied_students, 'student_regno');
 
-                            // Insert into notifications table
-                            foreach ($applied_students as $student) {
-                                $db->executeQuery(
-                                    "INSERT INTO notifications (user_regno, hackathon_id, notification_type, title, message, link, sent_at)
-                                     VALUES (?, ?, 'hackathon', ?, ?, ?, NOW())",
-                                    [
-                                        $student['student_regno'],
-                                        $hackathon_id,
-                                        '📢 Hackathon Updated!',
-                                        $title . ' - Check the updates!',
-                                        '/student/hackathon_details.php?id=' . $hackathon_id,
-                                    ]
-                                );
-                            }
-                        }
-                    } else {
-                        // For new hackathons, send to all students
-                        $push_stats = $push->sendToAllStudents($notification_payload);
+                        $oneSignal = new OneSignalManager();
+                        $oneSignal->notifyAppliedStudents($hackathon_id, $regnos, $title);
 
-                        // Save notification records for all students
-                        $students = $db->executeQuery("SELECT regno FROM student_register");
-                        foreach ($students as $student) {
+                        foreach ($applied_students as $student) {
                             $db->executeQuery(
-                                "INSERT INTO notifications (user_regno, hackathon_id, notification_type, title, message, link, sent_at)
-                                 VALUES (?, ?, 'hackathon', ?, ?, ?, NOW())",
+                                "INSERT INTO notifications (user_regno, notification_type, title, message, link, sent_at)
+                                 VALUES (?, 'hackathon', ?, ?, ?, NOW())",
                                 [
-                                    $student['regno'],
-                                    $hackathon_id,
-                                    '🚀 New Hackathon Posted!',
-                                    $title . ' - Register now!',
-                                    '/student/hackathon_details.php?id=' . $hackathon_id,
-                                ]
+                                    $student['student_regno'],
+                                    '📢 ' . $title . ' Updated',
+                                    'Check the latest details',
+                                    '/event_management_system/login/student/hackathons.php?id=' . $hackathon_id,
+                                ],
+                                'ssss'
                             );
                         }
                     }
+                    $_SESSION['success_message'] = "✅ Hackathon updated! Applied students notified automatically.";
+                } else {
+                    $_SESSION['success_message'] = "Hackathon updated successfully!";
                 }
-
-                $_SESSION['success_message'] = "Hackathon updated successfully!";
                 header("Location: hackathons.php");
                 exit();
             } catch (Exception $e) {
@@ -853,17 +835,7 @@
                         </div>
                     </div>
 
-                    <!-- Notification Option -->
-                    <div class="checkbox-group">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" name="send_notification" id="send_notification" value="1">
-                            <span style="font-size: 14px; color: #333;">
-                                <strong>Send notification to students who have applied</strong>
-                                <br>
-                                <small style="color: #666;">Check this to notify all students who have applied to this hackathon about the updates</small>
-                            </span>
-                        </label>
-                    </div>
+
 
                     <div class="btn-group">
                         <a href="hackathons.php" class="btn btn-secondary">

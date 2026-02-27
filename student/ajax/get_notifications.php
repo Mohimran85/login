@@ -41,18 +41,18 @@ if ($action === 'get_notifications') {
         n.notification_type,
         n.link,
         n.is_read,
-        n.sent_at as created_at,
-        hp.title as hackathon_title
+        n.created_at,
+        COALESCE(NULLIF(n.hackathon_title, ''), hp.title) as hackathon_title
     FROM notifications n
     LEFT JOIN hackathon_posts hp ON n.hackathon_id = hp.id
-    WHERE n.user_regno = ?
-    ORDER BY n.sent_at DESC
+    WHERE n.student_regno = ?
+    ORDER BY n.created_at DESC
     LIMIT 20";
 
     $notifications = $db->executeQuery($notifications_sql, [$student_regno]);
 
     // Count unread notifications
-    $unread_count_sql = "SELECT COUNT(*) as count FROM notifications WHERE user_regno = ? AND (is_read = 0 OR is_read IS NULL)";
+    $unread_count_sql = "SELECT COUNT(*) as count FROM notifications WHERE student_regno = ? AND (is_read = 0 OR is_read IS NULL)";
     $unread_result    = $db->executeQuery($unread_count_sql, [$student_regno]);
     $unread_count     = $unread_result[0]['count'] ?? 0;
 
@@ -73,7 +73,7 @@ if ($action === 'get_notifications') {
     // Mark notification as read
     $update_sql = "UPDATE notifications
                    SET is_read = 1
-                   WHERE id = ? AND user_regno = ?";
+                   WHERE id = ? AND student_regno = ?";
 
     $db->executeQuery($update_sql, [$notification_id, $student_regno]);
 
@@ -86,7 +86,7 @@ if ($action === 'get_notifications') {
     // Mark all notifications as read for the student
     $update_sql = "UPDATE notifications
                    SET is_read = 1
-                   WHERE user_regno = ? AND (is_read = 0 OR is_read IS NULL)";
+                   WHERE student_regno = ? AND (is_read = 0 OR is_read IS NULL)";
 
     $db->executeQuery($update_sql, [$student_regno]);
 

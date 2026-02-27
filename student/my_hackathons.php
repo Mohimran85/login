@@ -121,11 +121,15 @@
             font-family: 'Poppins', sans-serif;
             background: #ffffff;
             min-height: 100vh;
+            overflow-x: hidden;
+            width: 100%;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            width: 100%;
+            padding: 0 15px;
         }
 
         .page-header {
@@ -717,9 +721,51 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+            }
+
+            .container {
+                padding: 0 10px;
+            }
+
             .page-header {
                 flex-direction: column;
                 align-items: flex-start;
+                margin-bottom: 20px;
+                padding: 20px 15px;
+            }
+
+            .page-header h1 {
+                font-size: 24px;
+            }
+
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .stat-card {
+                padding: 12px;
+                gap: 10px;
+            }
+
+            .stat-icon {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+
+            .stat-info h3 {
+                font-size: 18px;
+                margin: 0;
+            }
+
+            .stat-info p {
+                font-size: 11px;
+                margin: 2px 0 0 0;
             }
 
             .card-header {
@@ -733,6 +779,81 @@
 
             .application-details {
                 grid-template-columns: 1fr;
+            }
+
+            .main {
+                padding: 15px 10px 30px 10px;
+                overflow-x: hidden;
+            }
+
+            .card-title {
+                font-size: 18px;
+            }
+
+            .card-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .filters {
+                padding: 15px;
+            }
+
+            .filter-group {
+                flex-direction: column;
+            }
+
+            .filter-group input,
+            .filter-group select {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .card-actions {
+                flex-direction: column;
+            }
+
+            .card-actions .btn,
+            .card-actions form {
+                width: 100%;
+            }
+
+            .card-actions form button {
+                width: 100%;
+            }
+
+            /* Mobile Notification Dropdown */
+            .notification-dropdown {
+                position: fixed;
+                top: 70px;
+                right: 0;
+                left: 0;
+                bottom: 0;
+                width: calc(100% - 40px);
+                max-height: 80vh;
+                margin: 0 20px;
+                border-radius: 15px 15px 0 0;
+                box-shadow: 0 -8px 25px rgba(0,0,0,0.15);
+            }
+
+            .notification-bell-container {
+                position: absolute;
+                top: 12px;
+                right: 20px;
+                z-index: 1001;
+            }
+
+            .notification-bell {
+                width: 40px;
+                height: 40px;
+            }
+
+            .notification-bell .material-symbols-outlined {
+                font-size: 20px;
             }
         }
     </style>
@@ -1107,6 +1228,7 @@
             const notificationOverlay = document.createElement('div');
             notificationOverlay.className = 'notification-overlay';
             document.body.appendChild(notificationOverlay);
+            let lastNotificationId = null;
 
             function loadNotifications() {
                 fetch('ajax/get_notifications.php?action=get_notifications')
@@ -1145,6 +1267,20 @@
                     return;
                 }
 
+                const newestNotification = notifications[0];
+                if (newestNotification && newestNotification.id) {
+                    if (lastNotificationId && newestNotification.id !== lastNotificationId) {
+                        if (window.pushManager && window.pushManager.handleIncomingNotification) {
+                            window.pushManager.handleIncomingNotification({
+                                title: newestNotification.hackathon_title || 'New Notification',
+                                body: newestNotification.message || 'You have a new update.',
+                                url: newestNotification.link || 'hackathons.php'
+                            });
+                        }
+                    }
+                    lastNotificationId = newestNotification.id;
+                }
+
                 notifications.forEach(notification => {
                     const date = new Date(notification.created_at);
                     const timeString = getTimeString(date);
@@ -1161,21 +1297,45 @@
                             <span class="notification-item-time">${timeString}</span>
                         </div>
                     `;
-                    li.onclick = () => handleNotificationClick(notification.id, notification.hackathon_id);
+                    li.style.cursor = 'pointer';
+                    li.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Notification clicked:', notification.id, notification.link);
+                        handleNotificationClick(notification.id, notification.link);
+                    };
                     notificationList.appendChild(li);
                 });
             }
 
-            function handleNotificationClick(notificationId) {
+            function handleNotificationClick(notificationId, link) {
+                // Close dropdown immediately
+                notificationDropdown.classList.remove('show');
+                notificationOverlay.classList.remove('show');
+
                 fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.success) {
-                            loadNotifications();
-                            window.location.href = 'hackathons.php';
+                        if (data.success && link) {
+                            // Fix relative links by prepending base path
+                            let fullLink = link;
+                            if (link.startsWith('/student/')) {
+                                fullLink = '/event_management_system/login' + link;
+                            }
+                            window.location.href = fullLink;
                         }
                     })
-                    .catch(error => console.log('Error marking notification as read:', error));
+                    .catch(error => {
+                        console.log('Error marking notification as read:', error);
+                        // Still redirect even if marking as read fails
+                        if (link) {
+                            let fullLink = link;
+                            if (link.startsWith('/student/')) {
+                                fullLink = '/event_management_system/login' + link;
+                            }
+                            window.location.href = fullLink;
+                        }
+                    });
             }
 
             function markAllNotificationsAsRead() {
@@ -1239,5 +1399,6 @@
             setInterval(loadNotifications, 30000);
         });
     </script>
+    <!-- Push Notifications Manager for Median.co -->
 </body>
 </html>

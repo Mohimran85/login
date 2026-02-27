@@ -96,14 +96,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0c3878">
+    <meta name="theme-color" content="#1a408c">
     <meta name="color-scheme" content="light only">
     <title>Student Dashboard - Event Management System</title>
     <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
+    <!-- Web App Manifest for Push Notifications -->
+    <link rel="manifest" href="../manifest.json">
     <!-- css link -->
     <link rel="stylesheet" href="student_dashboard.css" />
     <!-- google icons -->
@@ -564,10 +565,17 @@
         transition: all 0.3s ease;
         display: flex;
         gap: 12px;
+        pointer-events: auto;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       .notification-item:hover {
         background: #f9f9f9;
+      }
+
+      .notification-item:active {
+        background: #e8eef5;
       }
 
       .notification-item.unread {
@@ -585,11 +593,13 @@
         justify-content: center;
         color: white;
         font-size: 20px;
+        pointer-events: none;
       }
 
       .notification-item-content {
         flex: 1;
         min-width: 0;
+        pointer-events: none;
       }
 
       .notification-item-content h4 {
@@ -641,18 +651,22 @@
       @media (max-width: 768px) {
         .notification-bell-container {
           position: absolute;
-          top: 8px;
-          right: 10px;
+          top: 12px;
+          right: 20px;
+          z-index: 1001;
         }
 
         .notification-dropdown {
           position: fixed;
-          top: auto;
-          right: 10px;
-          left: 10px;
-          bottom: 80px;
-          width: auto;
-          max-height: 300px;
+          top: 70px;
+          right: 0;
+          left: 0;
+          bottom: 0;
+          width: calc(100% - 40px);
+          max-height: 80vh;
+          margin: 0 20px;
+          border-radius: 15px 15px 0 0;
+          box-shadow: 0 -8px 25px rgba(0,0,0,0.15);
         }
 
         .notification-bell {
@@ -1052,6 +1066,7 @@
             const notificationOverlay = document.createElement('div');
             notificationOverlay.className = 'notification-overlay';
             document.body.appendChild(notificationOverlay);
+            let lastNotificationId = null;
 
             // Fetch notifications when page loads
             function loadNotifications() {
@@ -1093,6 +1108,20 @@
                     return;
                 }
 
+                const newestNotification = notifications[0];
+                if (newestNotification && newestNotification.id) {
+                  if (lastNotificationId && newestNotification.id !== lastNotificationId) {
+                    if (window.pushManager && window.pushManager.handleIncomingNotification) {
+                      window.pushManager.handleIncomingNotification({
+                        title: newestNotification.hackathon_title || 'New Notification',
+                        body: newestNotification.message || 'You have a new update.',
+                        url: newestNotification.link || 'hackathons.php'
+                      });
+                    }
+                  }
+                  lastNotificationId = newestNotification.id;
+                }
+
                 // Add notifications
                 notifications.forEach(notification => {
                     const date = new Date(notification.created_at);
@@ -1110,24 +1139,49 @@
                             <span class="notification-item-time">${timeString}</span>
                         </div>
                     `;
-                    li.onclick = () => handleNotificationClick(notification.id, notification.hackathon_id);
+
+                    // Add click handler directly with proper delegation
+                    li.style.cursor = 'pointer';
+                    li.onclick = function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Notification clicked:', notification.id, notification.link);
+                        handleNotificationClick(notification.id, notification.link);
+                    };
+
                     notificationList.appendChild(li);
                 });
             }
 
-            function handleNotificationClick(notificationId, hackathonId) {
+            function handleNotificationClick(notificationId, link) {
+                // Close dropdown immediately
+                notificationDropdown.classList.remove('show');
+                notificationOverlay.classList.remove('show');
+
                 // Mark as read and redirect
                 fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
                     .then(response => response.json())
                     .then(data => {
-                        if (data.success) {
-                            // Reload notifications
-                            loadNotifications();
-                            // Redirect to hackathons page
-                            window.location.href = 'hackathons.php';
+                        if (data.success && link) {
+                            // Fix relative links by prepending base path
+                            let fullLink = link;
+                            if (link.startsWith('/student/')) {
+                                fullLink = '/event_management_system/login' + link;
+                            }
+                            window.location.href = fullLink;
                         }
                     })
-                    .catch(error => console.log('Error marking notification as read:', error));
+                    .catch(error => {
+                        console.log('Error marking notification as read:', error);
+                        // Still redirect even if marking as read fails
+                        if (link) {
+                            let fullLink = link;
+                            if (link.startsWith('/student/')) {
+                                fullLink = '/event_management_system/login' + link;
+                            }
+                            window.location.href = fullLink;
+                        }
+                    });
             }
 
             function markAllNotificationsAsRead() {
@@ -1189,7 +1243,8 @@
             setInterval(loadNotifications, 30000);
         });
     </script>
-  </body>
+      <!-- Push Notifications Manager for Median.co -->
+</body>
 </html>
 
 <?php

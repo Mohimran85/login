@@ -98,35 +98,7 @@ CREATE TABLE IF NOT EXISTS hackathon_views (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ============================================================================
--- 4. PUSH SUBSCRIPTIONS TABLE
--- Stores Web Push API subscriptions for push notifications
--- ============================================================================
-CREATE TABLE IF NOT EXISTS push_subscriptions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_regno VARCHAR(50) NOT NULL,
-    user_type ENUM('student', 'teacher', 'admin') NOT NULL DEFAULT 'student',
-    
-    -- Web Push subscription details
-    subscription_endpoint TEXT NOT NULL,
-    p256dh_key VARCHAR(255) NOT NULL COMMENT 'Public key for encryption',
-    auth_key VARCHAR(255) NOT NULL COMMENT 'Authentication secret',
-    
-    -- Metadata
-    user_agent TEXT DEFAULT NULL,
-    is_active TINYINT(1) DEFAULT 1,
-    
-    -- Timestamps
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
-    -- Each user can have multiple subscriptions (different devices)
-    UNIQUE KEY unique_subscription (user_regno, subscription_endpoint(255)),
-    INDEX idx_user_regno (user_regno),
-    INDEX idx_is_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- ============================================================================
--- 5. NOTIFICATIONS TABLE
+-- 4. NOTIFICATIONS TABLE
 -- Stores notification history for in-app notification center
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS notifications (
@@ -156,32 +128,6 @@ CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_is_read (is_read),
     INDEX idx_notification_type (notification_type),
     INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- ============================================================================
--- 6. PUSH NOTIFICATION LOG TABLE
--- Tracks push notification delivery status and failures
--- ============================================================================
-CREATE TABLE IF NOT EXISTS push_notification_log (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    notification_id INT DEFAULT NULL COMMENT 'Reference to notifications table',
-    user_regno VARCHAR(50) NOT NULL,
-    subscription_id INT NOT NULL,
-    
-    -- Delivery status
-    status ENUM('sent', 'failed', 'expired') NOT NULL,
-    error_message TEXT DEFAULT NULL,
-    http_status_code INT DEFAULT NULL,
-    
-    -- Timestamps
-    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE SET NULL,
-    FOREIGN KEY (subscription_id) REFERENCES push_subscriptions(id) ON DELETE CASCADE,
-    
-    INDEX idx_notification_id (notification_id),
-    INDEX idx_status (status),
-    INDEX idx_attempted_at (attempted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ============================================================================
@@ -273,14 +219,14 @@ DELIMITER ;
 SELECT TABLE_NAME, TABLE_ROWS, CREATE_TIME 
 FROM information_schema.TABLES 
 WHERE TABLE_SCHEMA = 'event_management_system' 
-AND TABLE_NAME IN ('hackathon_posts', 'hackathon_applications', 'hackathon_views', 'push_subscriptions', 'notifications', 'push_notification_log')
+AND TABLE_NAME IN ('hackathon_posts', 'hackathon_applications', 'hackathon_views', 'notifications')
 ORDER BY TABLE_NAME;
 
 -- Check all indexes
 SELECT TABLE_NAME, INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX
 FROM information_schema.STATISTICS
 WHERE TABLE_SCHEMA = 'event_management_system'
-AND TABLE_NAME IN ('hackathon_posts', 'hackathon_applications', 'hackathon_views', 'push_subscriptions', 'notifications')
+AND TABLE_NAME IN ('hackathon_posts', 'hackathon_applications', 'hackathon_views', 'notifications')
 ORDER BY TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX;
 
 -- Check all triggers

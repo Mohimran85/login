@@ -84,7 +84,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hackathons - Event Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
@@ -485,6 +485,7 @@
 
             .page-header {
                 padding: 20px;
+                margin-bottom: 20px;
             }
 
             .page-header .header-content {
@@ -518,9 +519,9 @@
             }
 
             .page-header .header-actions {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
                 width: 100%;
                 flex-wrap: wrap;
             }
@@ -528,28 +529,37 @@
             .page-header .header-actions .btn {
                 width: 100%;
                 justify-content: center;
-                padding: 10px 12px;
-                font-size: 13px;
+                padding: 12px 16px;
+                font-size: 14px;
             }
 
             .notification-bell {
                 position: absolute;
                 top: 20px;
                 right: 20px;
+                width: 40px;
+                height: 40px;
+            }
+
+            .notification-bell .material-symbols-outlined {
+                font-size: 20px;
             }
 
             .notification-dropdown {
                 position: fixed;
-                top: auto;
-                right: 10px;
-                left: 10px;
-                bottom: 80px;
-                width: auto;
-                max-height: 300px;
+                top: 70px;
+                right: 0;
+                left: 0;
+                bottom: 0;
+                width: calc(100% - 40px);
+                max-height: 80vh;
+                margin: 0 20px;
+                border-radius: 15px 15px 0 0;
+                box-shadow: 0 -8px 25px rgba(0,0,0,0.15);
             }
 
             .main {
-                padding: 90px 20px 30px 20px;
+                padding: 20px 20px 30px 20px;
             }
         }
     </style>
@@ -862,5 +872,6 @@
                 .catch(error => console.log('Service Worker registration failed:', error));
         }
     </script>
+    <!-- Push Notifications Manager for Median.co -->
 </body>
 </html>

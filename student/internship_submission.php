@@ -318,8 +318,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1a408c">
   <title>Internship Submission</title>
   <link rel="stylesheet" href="student_dashboard.css" />
+  <!-- Web App Manifest for Push Notifications -->
+  <link rel="manifest" href="../manifest.json">
 
   <!-- Material Icons -->
   <link
@@ -1275,15 +1278,15 @@
           </a>
         </li>
         <li class="nav-item">
-          <a href="od_request.php" class="nav-link">
-            <span class="material-symbols-outlined">person_raised_hand</span>
-            OD Request
-          </a>
-        </li>
-        <li class="nav-item">
           <a href="hackathons.php" class="nav-link">
             <span class="material-symbols-outlined">emoji_events</span>
             Hackathons
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="od_request.php" class="nav-link">
+            <span class="material-symbols-outlined">person_raised_hand</span>
+            OD Request
           </a>
         </li>
         <li class="nav-item">
@@ -1687,24 +1690,46 @@
               <span class="notification-item-time">${timeString}</span>
             </div>
           `;
-          li.onclick = () => handleNotificationClick(notification.id, notification.hackathon_id);
+          li.style.cursor = 'pointer';
+          li.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Notification clicked:', notification.id, notification.link);
+            handleNotificationClick(notification.id, notification.link);
+          };
           notificationList.appendChild(li);
         });
       }
 
-      function handleNotificationClick(notificationId, hackathonId) {
+      function handleNotificationClick(notificationId, link) {
+        // Close dropdown immediately
+        notificationDropdown.classList.remove('show');
+        notificationOverlay.classList.remove('show');
+
         // Mark as read and redirect
         fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
           .then(response => response.json())
           .then(data => {
-            if (data.success) {
-              // Reload notifications
-              loadNotifications();
-              // Redirect to hackathons page
-              window.location.href = 'hackathons.php';
+            if (data.success && link) {
+              // Fix relative links by prepending base path
+              let fullLink = link;
+              if (link.startsWith('/student/')) {
+                fullLink = '/event_management_system/login' + link;
+              }
+              window.location.href = fullLink;
             }
           })
-          .catch(error => console.log('Error marking notification as read:', error));
+          .catch(error => {
+            console.log('Error marking notification as read:', error);
+            // Still redirect even if marking as read fails
+            if (link) {
+              let fullLink = link;
+              if (link.startsWith('/student/')) {
+                fullLink = '/event_management_system/login' + link;
+              }
+              window.location.href = fullLink;
+            }
+          });
       }
 
       function markAllNotificationsAsRead() {
@@ -1922,5 +1947,6 @@
       }
     });
   </script>
+  <!-- Push Notifications Manager for Median.co -->
 </body>
 </html>
