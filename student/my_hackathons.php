@@ -110,6 +110,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="student_dashboard.css">
+    <!-- OneSignal Web Push Notifications -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "29fbebb0-954f-41f3-8f31-c3f57f61740b",
+          allowLocalhostAsSecureOrigin: true,
+        });
+
+        // Set external user ID (student registration number)
+        const studentRegno = '<?php echo addslashes($student_regno); ?>';
+        if (studentRegno) {
+          OneSignal.login(studentRegno);
+          console.log('OneSignal: Logged in as ' + studentRegno);
+        }
+
+        // Prompt for permission if not already granted
+        OneSignal.Notifications.requestPermission();
+      });
+    </script>
     <style>
         * {
             margin: 0;
@@ -381,10 +402,16 @@
             color: #1a408c;
         }
 
-        .notification-header .mark-all {
+        .notification-header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .notification-header .mark-all,
+        .notification-header .clear-all {
             background: none;
             border: none;
-            color: #1a408c;
             cursor: pointer;
             font-size: 12px;
             text-decoration: underline;
@@ -392,8 +419,20 @@
             transition: all 0.3s ease;
         }
 
+        .notification-header .mark-all {
+            color: #1a408c;
+        }
+
         .notification-header .mark-all:hover {
             color: #15306b;
+        }
+
+        .notification-header .clear-all {
+            color: #dc3545;
+        }
+
+        .notification-header .clear-all:hover {
+            color: #a71d2a;
         }
 
         .notification-list {
@@ -876,7 +915,10 @@
                 <div class="notification-dropdown" id="notificationDropdown">
                     <div class="notification-header">
                         <h3>Notifications</h3>
-                        <button class="mark-all" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+                        <div class="notification-header-actions">
+                            <button class="mark-all" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+                            <button class="clear-all" onclick="clearAllNotifications()">Clear all</button>
+                        </div>
                     </div>
                     <ul class="notification-list" id="notificationList">
                         <li class="notification-empty">
@@ -1286,13 +1328,13 @@
                     const timeString = getTimeString(date);
 
                     const li = document.createElement('li');
-                    li.className = `notification-item ${notification.is_read ? '' : 'unread'}`;
+                    li.className = `notification-item ${(notification.is_read == 0 || notification.is_read === null) ? 'unread' : ''}`;
                     li.innerHTML = `
                         <div class="notification-item-icon">
                             <span class="material-symbols-outlined">emoji_events</span>
                         </div>
                         <div class="notification-item-content">
-                            <h4>${escapeHtml(notification.hackathon_title)}</h4>
+                            <h4>${escapeHtml(notification.title || notification.hackathon_title)}</h4>
                             <p>${escapeHtml(notification.message)}</p>
                             <span class="notification-item-time">${timeString}</span>
                         </div>
@@ -1308,45 +1350,74 @@
                 });
             }
 
+            function resolveNotificationLink(link) {
+                if (!link) return '/event_management_system/login/student/hackathons.php';
+                if (link.startsWith('/event_management_system/')) return link;
+                if (link.startsWith('/student/')) return '/event_management_system/login' + link;
+                if (link.startsWith('student/')) return '/event_management_system/login/' + link;
+                if (!link.startsWith('/') && !link.startsWith('http')) return '/event_management_system/login/student/' + link;
+                return link;
+            }
+
             function handleNotificationClick(notificationId, link) {
                 // Close dropdown immediately
                 notificationDropdown.classList.remove('show');
                 notificationOverlay.classList.remove('show');
 
+                const fullLink = resolveNotificationLink(link);
+
+                // Mark as read then redirect (always redirect regardless of mark_as_read result)
                 fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && link) {
-                            // Fix relative links by prepending base path
-                            let fullLink = link;
-                            if (link.startsWith('/student/')) {
-                                fullLink = '/event_management_system/login' + link;
-                            }
-                            window.location.href = fullLink;
-                        }
-                    })
-                    .catch(error => {
-                        console.log('Error marking notification as read:', error);
-                        // Still redirect even if marking as read fails
-                        if (link) {
-                            let fullLink = link;
-                            if (link.startsWith('/student/')) {
-                                fullLink = '/event_management_system/login' + link;
-                            }
-                            window.location.href = fullLink;
-                        }
+                    .finally(() => {
+                        window.location.href = fullLink;
                     });
             }
 
             function markAllNotificationsAsRead() {
+                const notificationItems = document.querySelectorAll('#notificationList .notification-item.unread');
+                notificationItems.forEach(item => item.classList.remove('unread'));
+                const notificationBadge = document.getElementById('notificationBadge');
+                notificationBadge.classList.add('hidden');
+                notificationBadge.textContent = '0';
+
                 fetch('ajax/get_notifications.php?action=mark_all_read')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             loadNotifications();
                         }
                     })
                     .catch(error => console.log('Error marking all notifications as read:', error));
+            }
+
+            function clearAllNotifications() {
+                if (!confirm('Are you sure you want to clear all notifications?')) return;
+
+                const notificationList = document.getElementById('notificationList');
+                notificationList.innerHTML = `
+                    <li class="notification-empty">
+                        <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+                        <p>No notifications</p>
+                    </li>
+                `;
+                const notificationBadge = document.getElementById('notificationBadge');
+                notificationBadge.classList.add('hidden');
+                notificationBadge.textContent = '0';
+
+                fetch('ajax/get_notifications.php?action=clear_all')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            loadNotifications();
+                        }
+                    })
+                    .catch(error => console.log('Error clearing notifications:', error));
             }
 
             function getTimeString(date) {
@@ -1395,6 +1466,7 @@
             });
 
             window.markAllNotificationsAsRead = markAllNotificationsAsRead;
+            window.clearAllNotifications = clearAllNotifications;
             loadNotifications();
             setInterval(loadNotifications, 30000);
         });

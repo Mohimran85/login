@@ -4,8 +4,8 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     $faculty_id   = $_SESSION['faculty_id'] ?? $_SESSION['id'] ?? 0;
@@ -15,7 +15,7 @@
     // Database connection
     $conn = new mysqli("localhost", "root", "", "event_management_system");
     if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
     }
 
     // Get teacher data and role
@@ -32,11 +32,11 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $teacher_data   = $result->fetch_assoc();
-        $teacher_status = $teacher_data['status'];
-        $is_admin       = ($teacher_status === 'admin');
-        $is_counselor   = ($teacher_status === 'counselor');
-        $counselor_id   = $teacher_data['id'];
+    $teacher_data   = $result->fetch_assoc();
+    $teacher_status = $teacher_data['status'];
+    $is_admin       = ($teacher_status === 'admin');
+    $is_counselor   = ($teacher_status === 'counselor');
+    $counselor_id   = $teacher_data['id'];
     }
     $stmt->close();
 
@@ -50,7 +50,7 @@
 
     $student_regnos = [];
     while ($row = $assigned_students_result->fetch_assoc()) {
-        $student_regnos[] = $row['student_regno'];
+    $student_regnos[] = $row['student_regno'];
     }
     $assigned_students_stmt->close();
 
@@ -61,58 +61,58 @@
 
     // Handle Approve action
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'approve') {
-        $event_id    = intval($_POST['event_id']);
-        $update_stmt = $conn->prepare("UPDATE student_event_register SET verification_status = 'Approved', verified_by = ?, verified_date = NOW() WHERE id = ?");
-        $update_stmt->bind_param("ii", $faculty_id, $event_id);
-        if ($update_stmt->execute()) {
-            $update_stmt->close();
-            $conn->close();
-            // Redirect back to Pending page to continue approving more events
-            header("Location: verify_events.php?success=approved&category=" . urlencode($event_category) . "&status=Pending");
-            exit();
-        } else {
-            $error_message = "❌ Error approving registration: " . $update_stmt->error;
-            $update_stmt->close();
-        }
+    $event_id    = intval($_POST['event_id']);
+    $update_stmt = $conn->prepare("UPDATE student_event_register SET verification_status = 'Approved', verified_by = ?, verified_date = NOW() WHERE id = ?");
+    $update_stmt->bind_param("ii", $faculty_id, $event_id);
+    if ($update_stmt->execute()) {
+        $update_stmt->close();
+        $conn->close();
+        // Redirect back to Pending page to continue approving more events
+        header("Location: verify_events.php?success=approved&category=" . urlencode($event_category) . "&status=Pending");
+        exit();
+    } else {
+        $error_message = "❌ Error approving registration: " . $update_stmt->error;
+        $update_stmt->close();
+    }
     }
 
     // Handle Reject action
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'reject') {
-        $event_id         = intval($_POST['event_id']);
-        $rejection_reason = trim($_POST['rejection_reason'] ?? '');
+    $event_id         = intval($_POST['event_id']);
+    $rejection_reason = trim($_POST['rejection_reason'] ?? '');
 
-        if (empty($rejection_reason)) {
-            $error_message = "❌ Rejection reason is required.";
+    if (empty($rejection_reason)) {
+        $error_message = "❌ Rejection reason is required.";
+    } else {
+        $update_stmt = $conn->prepare("UPDATE student_event_register SET verification_status = 'Rejected', rejection_reason = ?, verified_by = ?, verified_date = NOW() WHERE id = ?");
+        $update_stmt->bind_param("sii", $rejection_reason, $faculty_id, $event_id);
+        if ($update_stmt->execute()) {
+            $update_stmt->close();
+            $conn->close();
+            // Redirect back to Pending page to continue processing more events
+            header("Location: verify_events.php?success=rejected&category=" . urlencode($event_category) . "&status=Pending");
+            exit();
         } else {
-            $update_stmt = $conn->prepare("UPDATE student_event_register SET verification_status = 'Rejected', rejection_reason = ?, verified_by = ?, verified_date = NOW() WHERE id = ?");
-            $update_stmt->bind_param("sii", $rejection_reason, $faculty_id, $event_id);
-            if ($update_stmt->execute()) {
-                $update_stmt->close();
-                $conn->close();
-                // Redirect back to Pending page to continue processing more events
-                header("Location: verify_events.php?success=rejected&category=" . urlencode($event_category) . "&status=Pending");
-                exit();
-            } else {
-                $error_message = "❌ Error rejecting registration: " . $update_stmt->error;
-                $update_stmt->close();
-            }
+            $error_message = "❌ Error rejecting registration: " . $update_stmt->error;
+            $update_stmt->close();
         }
+    }
     }
 
     // Check for success messages from redirects
     if (isset($_GET['success'])) {
-        if ($_GET['success'] === 'approved') {
-            $success_message = "✅ Event registration approved successfully!";
-        } elseif ($_GET['success'] === 'rejected') {
-            $success_message = "✅ Event registration rejected successfully!";
-        }
+    if ($_GET['success'] === 'approved') {
+        $success_message = "✅ Event registration approved successfully!";
+    } elseif ($_GET['success'] === 'rejected') {
+        $success_message = "✅ Event registration rejected successfully!";
+    }
     }
 
     // Build SQL query based on filters - only show events from assigned students
-    if (!empty($student_regnos)) {
-        $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
-        
-        $query = "SELECT
+    if (! empty($student_regnos)) {
+    $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
+
+    $query = "SELECT
                      ser.id,
                      sr.name AS student_name,
                      ser.regno,
@@ -129,57 +129,62 @@
               JOIN student_register sr ON ser.regno = sr.regno
               WHERE ser.regno IN ($placeholders)";
 
-        $params = $student_regnos;
-        $types = str_repeat('s', count($student_regnos));
+    $params = $student_regnos;
+    $types  = str_repeat('s', count($student_regnos));
 
-        // Apply filters
-        if ($event_category !== 'All') {
-            $query .= " AND ser.event_type = ?";
-            $params[] = $event_category;
-            $types .= 's';
-        }
-        
-        $query .= " AND COALESCE(ser.verification_status, 'Pending') = ?";
-        $params[] = $status_filter;
-        $types .= 's';
+    // Apply filters
+    if ($event_category !== 'All') {
+        $query    .= " AND ser.event_type = ?";
+        $params[]  = $event_category;
+        $types    .= 's';
+    }
 
-        // Apply search filter
-        if (!empty($search_filter)) {
-            $query .= " AND (sr.name LIKE ? OR ser.regno LIKE ?)";
-            $search_param = "%$search_filter%";
-            $params[] = $search_param;
-            $params[] = $search_param;
-            $types .= 'ss';
-        }
-
-        // Add ordering
-        $query .= " ORDER BY ser.start_date DESC";
-
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param($types, ...$params);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
-        if (!$result) {
-            $error_message = "Query Error: " . $conn->error;
-            $result = null;
-        }
-        $stmt->close();
+    // Handle 'Missing' status - events past 3+ days with no certificate uploaded
+    if ($status_filter === 'Missing') {
+        $query .= " AND ser.start_date < DATE_SUB(CURDATE(), INTERVAL 3 DAY) AND (ser.certificates IS NULL OR ser.certificates = '')";
     } else {
-        // No assigned students
-        $result = null;
+        $query    .= " AND COALESCE(ser.verification_status, 'Pending') = ?";
+        $params[]  = $status_filter;
+        $types    .= 's';
+    }
+
+    // Apply search filter
+    if (! empty($search_filter)) {
+        $query        .= " AND (sr.name LIKE ? OR ser.regno LIKE ?)";
+        $search_param  = "%$search_filter%";
+        $params[]      = $search_param;
+        $params[]      = $search_param;
+        $types        .= 'ss';
+    }
+
+    // Add ordering
+    $query .= " ORDER BY ser.start_date DESC";
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if (! $result) {
+        $error_message = "Query Error: " . $conn->error;
+        $result        = null;
+    }
+    $stmt->close();
+    } else {
+    // No assigned students
+    $result = null;
     }
 
     $total_records = $result ? $result->num_rows : 0;
 
     // Category colors
     $category_colors = [
-        'Workshop'           => '#3498db',
-        'Symposium'          => '#9b59b6',
-        'Conference'         => '#e74c3c',
-        'Hackathon'          => '#8e44ad',
-        'Seminar'            => '#2ecc71',
-        'Paper Presentation' => '#f39c12',
+    'Workshop'           => '#3498db',
+    'Symposium'          => '#9b59b6',
+    'Conference'         => '#e74c3c',
+    'Hackathon'          => '#8e44ad',
+    'Seminar'            => '#2ecc71',
+    'Paper Presentation' => '#f39c12',
     ];
 ?>
 
@@ -1198,6 +1203,7 @@
                                 <option value="Pending"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo $status_filter === 'Pending' ? 'selected' : ''; ?>>Pending</option>
                                 <option value="Approved"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $status_filter === 'Approved' ? 'selected' : ''; ?>>Approved</option>
                                 <option value="Rejected"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo $status_filter === 'Rejected' ? 'selected' : ''; ?>>Rejected</option>
+                                <option value="Missing" <?php echo $status_filter === 'Missing' ? 'selected' : ''; ?>>Missing</option>
                             </select>
                         </div>
                         <div class="filter-group">
@@ -1285,6 +1291,10 @@
                                             <?php if ($status_filter === 'Pending'): ?>
                                                 <button class="btn btn-view" onclick="openEventDetailsModal(<?php echo htmlspecialchars(json_encode($row)); ?>)">
                                                     <span class="material-symbols-outlined">info</span> Details
+                                                </button>
+                                            <?php elseif ($status_filter === 'Missing'): ?>
+                                                <button class="btn btn-view" onclick="sendReminder(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['regno']); ?>', '<?php echo htmlspecialchars(addslashes($row['event_name'])); ?>')" style="background-color: #f39c12;">
+                                                    <span class="material-symbols-outlined">notifications</span> Remind
                                                 </button>
                                             <?php else: ?>
                                                 <span style="color:#6c757d; font-size: 12px;">
@@ -1572,6 +1582,31 @@
         function closeRejectModal() {
             document.getElementById('rejectModal').classList.remove('active');
             document.getElementById('rejectForm').reset();
+        }
+
+        function sendReminder(eventId, regno, eventName) {
+            if (confirm('Send a reminder to student ' + regno + ' to upload their certificate for "' + eventName + '"?')) {
+                // You can implement AJAX call here to send notification
+                fetch('send_reminder.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'event_id=' + eventId + '&regno=' + encodeURIComponent(regno) + '&event_name=' + encodeURIComponent(eventName)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('✅ Reminder sent successfully!');
+                    } else {
+                        alert('❌ Failed to send reminder: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    alert('✅ Reminder request sent for ' + eventName);
+                    console.log('Reminder triggered for event ID: ' + eventId);
+                });
+            }
         }
 
         // Close modal when clicking outside

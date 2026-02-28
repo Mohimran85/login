@@ -105,6 +105,27 @@
     <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
     <!-- Web App Manifest for Push Notifications -->
     <link rel="manifest" href="../manifest.json">
+    <!-- OneSignal Web Push Notifications -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "29fbebb0-954f-41f3-8f31-c3f57f61740b",
+          allowLocalhostAsSecureOrigin: true,
+        });
+
+        // Set external user ID (student registration number)
+        const studentRegno = '<?php echo addslashes($regno); ?>';
+        if (studentRegno) {
+          OneSignal.login(studentRegno);
+          console.log('OneSignal: Logged in as ' + studentRegno);
+        }
+
+        // Prompt for permission if not already granted
+        OneSignal.Notifications.requestPermission();
+      });
+    </script>
     <!-- css link -->
     <link rel="stylesheet" href="student_dashboard.css" />
     <!-- google icons -->
@@ -142,7 +163,7 @@
           top: 0;
           left: 0;
           right: 0;
-          z-index: 999;
+          z-index: 1002;
           width: 100%;
           padding: 0 20px;
           height: 70px;
@@ -155,6 +176,8 @@
 
         .header-title {
           font-size: 20px;
+          max-width: calc(100% - 120px);
+          pointer-events: none;
         }
 
         .sidebar {
@@ -537,10 +560,16 @@
         color: #1a408c;
       }
 
-      .notification-header .mark-all {
+      .notification-header-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .notification-header .mark-all,
+      .notification-header .clear-all {
         background: none;
         border: none;
-        color: #1a408c;
         cursor: pointer;
         font-size: 12px;
         text-decoration: underline;
@@ -548,8 +577,20 @@
         transition: all 0.3s ease;
       }
 
+      .notification-header .mark-all {
+        color: #1a408c;
+      }
+
       .notification-header .mark-all:hover {
         color: #15306b;
+      }
+
+      .notification-header .clear-all {
+        color: #dc3545;
+      }
+
+      .notification-header .clear-all:hover {
+        color: #a71d2a;
       }
 
       .notification-list {
@@ -652,8 +693,23 @@
         .notification-bell-container {
           position: absolute;
           top: 12px;
-          right: 20px;
-          z-index: 1001;
+          right: 15px;
+          z-index: 1003;
+          pointer-events: auto;
+        }
+
+        .notification-bell {
+          width: 40px;
+          height: 40px;
+          margin: 0;
+          pointer-events: auto;
+          -webkit-tap-highlight-color: transparent;
+          touch-action: manipulation;
+        }
+
+        .notification-bell .material-symbols-outlined {
+          font-size: 20px;
+          pointer-events: none;
         }
 
         .notification-dropdown {
@@ -667,16 +723,7 @@
           margin: 0 20px;
           border-radius: 15px 15px 0 0;
           box-shadow: 0 -8px 25px rgba(0,0,0,0.15);
-        }
-
-        .notification-bell {
-          width: 40px;
-          height: 40px;
-          margin: 0;
-        }
-
-        .notification-bell .material-symbols-outlined {
-          font-size: 20px;
+          z-index: 1004;
         }
       }
     </style>
@@ -708,7 +755,10 @@
           <div class="notification-dropdown" id="notificationDropdown">
             <div class="notification-header">
               <h3>Notifications</h3>
-              <button class="mark-all" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+              <div class="notification-header-actions">
+                <button class="mark-all" onclick="markAllNotificationsAsRead()">Mark all as read</button>
+                <button class="clear-all" onclick="clearAllNotifications()">Clear all</button>
+              </div>
             </div>
             <ul class="notification-list" id="notificationList">
               <li class="notification-empty">
@@ -1128,13 +1178,13 @@
                     const timeString = getTimeString(date);
 
                     const li = document.createElement('li');
-                    li.className = `notification-item ${notification.is_read ? '' : 'unread'}`;
+                    li.className = `notification-item ${(notification.is_read == 0 || notification.is_read === null) ? 'unread' : ''}`;
                     li.innerHTML = `
                         <div class="notification-item-icon">
                             <span class="material-symbols-outlined">emoji_events</span>
                         </div>
                         <div class="notification-item-content">
-                            <h4>${escapeHtml(notification.hackathon_title)}</h4>
+                            <h4>${escapeHtml(notification.title || notification.hackathon_title)}</h4>
                             <p>${escapeHtml(notification.message)}</p>
                             <span class="notification-item-time">${timeString}</span>
                         </div>
@@ -1153,47 +1203,81 @@
                 });
             }
 
+            function resolveNotificationLink(link) {
+                if (!link) return '/event_management_system/login/student/hackathons.php';
+                // Already a full absolute path
+                if (link.startsWith('/event_management_system/')) return link;
+                // Relative path starting with /student/
+                if (link.startsWith('/student/')) return '/event_management_system/login' + link;
+                // Relative path starting with student/
+                if (link.startsWith('student/')) return '/event_management_system/login/' + link;
+                // Relative filename like hackathons.php
+                if (!link.startsWith('/') && !link.startsWith('http')) return '/event_management_system/login/student/' + link;
+                return link;
+            }
+
             function handleNotificationClick(notificationId, link) {
                 // Close dropdown immediately
                 notificationDropdown.classList.remove('show');
                 notificationOverlay.classList.remove('show');
 
-                // Mark as read and redirect
+                const fullLink = resolveNotificationLink(link);
+
+                // Mark as read then redirect (always redirect regardless of mark_as_read result)
                 fetch(`ajax/get_notifications.php?action=mark_as_read&id=${notificationId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success && link) {
-                            // Fix relative links by prepending base path
-                            let fullLink = link;
-                            if (link.startsWith('/student/')) {
-                                fullLink = '/event_management_system/login' + link;
-                            }
-                            window.location.href = fullLink;
-                        }
-                    })
-                    .catch(error => {
-                        console.log('Error marking notification as read:', error);
-                        // Still redirect even if marking as read fails
-                        if (link) {
-                            let fullLink = link;
-                            if (link.startsWith('/student/')) {
-                                fullLink = '/event_management_system/login' + link;
-                            }
-                            window.location.href = fullLink;
-                        }
+                    .finally(() => {
+                        window.location.href = fullLink;
                     });
             }
 
-            function markAllNotificationsAsRead() {
+            window.clearAllNotifications = function() {
+                if (!confirm('Are you sure you want to clear all notifications?')) return;
+
+                // Immediately clear UI
+                const notificationList = document.getElementById('notificationList');
+                notificationList.innerHTML = `
+                    <li class="notification-empty">
+                        <span class="notification-empty-icon material-symbols-outlined">notifications_none</span>
+                        <p>No notifications</p>
+                    </li>
+                `;
+                const notificationBadge = document.getElementById('notificationBadge');
+                notificationBadge.classList.add('hidden');
+                notificationBadge.textContent = '0';
+
+                fetch('ajax/get_notifications.php?action=clear_all')
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            loadNotifications();
+                        }
+                    })
+                    .catch(error => console.log('Error clearing notifications:', error));
+            };
+
+            window.markAllNotificationsAsRead = function() {
+                // Immediately update UI for instant feedback
+                const notificationItems = document.querySelectorAll('#notificationList .notification-item.unread');
+                notificationItems.forEach(item => item.classList.remove('unread'));
+                const notificationBadge = document.getElementById('notificationBadge');
+                notificationBadge.classList.add('hidden');
+                notificationBadge.textContent = '0';
+
                 fetch('ajax/get_notifications.php?action=mark_all_read')
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.success) {
                             loadNotifications();
                         }
                     })
                     .catch(error => console.log('Error marking all notifications as read:', error));
-            }
+            };
 
             function getTimeString(date) {
                 const now = new Date();

@@ -196,19 +196,26 @@
                         $hackathon_id,
                         $title,
                         $registration_deadline,
-                        $description
+                        $description,
+                        $poster_url
                     );
 
                     // Log notification in database
-                    $students = $db->executeQuery("SELECT regno FROM student_register");
+                    $students          = $db->executeQuery("SELECT regno FROM student_register");
+                    $new_hackathon_msg = 'Organized by ' . $organizer
+                    . ' | Starts: ' . date('M d, Y', strtotime($start_date))
+                    . ' | Deadline: ' . date('M d, Y', strtotime($registration_deadline));
+                    if (! empty($theme)) {
+                        $new_hackathon_msg .= ' | Theme: ' . $theme;
+                    }
                     foreach ($students as $student) {
                         $db->executeQuery(
-                            "INSERT INTO notifications (user_regno, notification_type, title, message, link, sent_at)
+                            "INSERT INTO notifications (student_regno, notification_type, title, message, link, sent_at)
                              VALUES (?, 'hackathon', ?, ?, ?, NOW())",
                             [
                                 $student['regno'],
-                                '🚀 ' . $title,
-                                'Register before ' . date('M d, Y', strtotime($registration_deadline)),
+                                '🚀 New Hackathon: ' . $title,
+                                $new_hackathon_msg,
                                 '/event_management_system/login/student/hackathons.php?id=' . $hackathon_id,
                             ],
                             'ssss'
@@ -216,6 +223,71 @@
                     }
 
                     $success_message = "✅ Hackathon created! Notifications sent to all students automatically.";
+                }
+
+                // Schedule automatic reminders (1 day before deadline, starts tomorrow, etc.)
+                if (in_array($status, ['upcoming', 'ongoing'])) {
+                    try {
+                        // Create reminders table if not exists
+                        $db->executeQuery("CREATE TABLE IF NOT EXISTS hackathon_reminders (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            hackathon_id INT NOT NULL,
+                            reminder_type VARCHAR(50) NOT NULL,
+                            scheduled_for DATETIME NOT NULL,
+                            sent TINYINT(1) DEFAULT 0,
+                            sent_at DATETIME NULL,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            UNIQUE KEY unique_reminder (hackathon_id, reminder_type),
+                            INDEX idx_scheduled (scheduled_for, sent)
+                        )");
+
+                        $now = new DateTime();
+
+                        // 1 day before registration deadline
+                        if (! empty($registration_deadline)) {
+                            $deadline_dt    = new DateTime($registration_deadline);
+                            $one_day_before = clone $deadline_dt;
+                            $one_day_before->modify('-1 day');
+                            if ($one_day_before > $now) {
+                                $db->executeQuery(
+                                    "INSERT IGNORE INTO hackathon_reminders (hackathon_id, reminder_type, scheduled_for) VALUES (?, '1_day_reg', ?)",
+                                    [$hackathon_id, $one_day_before->format('Y-m-d H:i:s')], 'is'
+                                );
+                            }
+
+                            // 3 days before
+                            $three_days = clone $deadline_dt;
+                            $three_days->modify('-3 days');
+                            if ($three_days > $now) {
+                                $db->executeQuery(
+                                    "INSERT IGNORE INTO hackathon_reminders (hackathon_id, reminder_type, scheduled_for) VALUES (?, '3_days_reg', ?)",
+                                    [$hackathon_id, $three_days->format('Y-m-d H:i:s')], 'is'
+                                );
+                            }
+                        }
+
+                        // Starts tomorrow + starts today
+                        if (! empty($start_date)) {
+                            $start_dt   = new DateTime($start_date);
+                            $day_before = clone $start_dt;
+                            $day_before->modify('-1 day');
+                            if ($day_before > $now) {
+                                $db->executeQuery(
+                                    "INSERT IGNORE INTO hackathon_reminders (hackathon_id, reminder_type, scheduled_for) VALUES (?, 'starts_tomorrow', ?)",
+                                    [$hackathon_id, $day_before->format('Y-m-d H:i:s')], 'is'
+                                );
+                            }
+                            if ($start_dt > $now) {
+                                $db->executeQuery(
+                                    "INSERT IGNORE INTO hackathon_reminders (hackathon_id, reminder_type, scheduled_for) VALUES (?, 'starts_today', ?)",
+                                    [$hackathon_id, $start_dt->format('Y-m-d H:i:s')], 'is'
+                                );
+                            }
+                        }
+                        error_log("Reminders scheduled for new hackathon #{$hackathon_id}");
+                    } catch (Exception $e) {
+                        error_log("Error scheduling reminders: " . $e->getMessage());
+                    }
                 }
 
                 // Redirect after 2 seconds

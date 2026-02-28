@@ -3,10 +3,13 @@
     require_once __DIR__ . '/../includes/security.php';
     require_once __DIR__ . '/../includes/DatabaseManager.php';
 
-    // Prevent caching
-    header("Cache-Control: no-cache, no-store, must-revalidate");
+    // Prevent caching with stronger headers
+    header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+    header("Cache-Control: post-check=0, pre-check=0", false);
     header("Pragma: no-cache");
-    header("Expires: 0");
+    header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");
+    header("Last-Modified: " . gmdate('D, d M Y H:i:s') . " GMT");
+    header("ETag: " . md5(microtime()));
 
     // Require student authentication
     requireAuth('../index.php');
@@ -42,11 +45,11 @@
     $db = DatabaseManager::getInstance();
 
     // Get filter parameters
-    $filter_status = isset($_GET['status']) ? $_GET['status'] : 'upcoming';
+    $filter_status = isset($_GET['status']) ? $_GET['status'] : 'all';
     $search_query  = isset($_GET['search']) ? $_GET['search'] : '';
 
-    // Build WHERE clause - only show upcoming and ongoing hackathons (not drafts or cancelled)
-    $where_conditions = ["hp.status IN ('upcoming', 'ongoing')"];
+    // Build WHERE clause - show upcoming, ongoing, and completed hackathons (not drafts or cancelled)
+    $where_conditions = ["hp.status IN ('upcoming', 'ongoing', 'completed')"];
     $params           = [];
 
     if (! empty($filter_status) && $filter_status !== 'all') {
@@ -90,6 +93,27 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="student_dashboard.css">
     <link rel="manifest" href="../manifest.json">
+    <!-- OneSignal Web Push Notifications -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "29fbebb0-954f-41f3-8f31-c3f57f61740b",
+          allowLocalhostAsSecureOrigin: true,
+        });
+
+        // Set external user ID (student registration number)
+        const studentRegno = '<?php echo addslashes($student_regno); ?>';
+        if (studentRegno) {
+          OneSignal.login(studentRegno);
+          console.log('OneSignal: Logged in as ' + studentRegno);
+        }
+
+        // Prompt for permission if not already granted
+        OneSignal.Notifications.requestPermission();
+      });
+    </script>
     <style>
         /* Main Content */
         .main {
@@ -692,6 +716,7 @@
                                     <option value="all" <?php echo $filter_status === 'all' ? 'selected' : ''; ?>>All</option>
                                     <option value="upcoming" <?php echo $filter_status === 'upcoming' ? 'selected' : ''; ?>>Upcoming</option>
                                     <option value="ongoing" <?php echo $filter_status === 'ongoing' ? 'selected' : ''; ?>>Ongoing</option>
+                                    <option value="completed" <?php echo $filter_status === 'completed' ? 'selected' : ''; ?>>Completed</option>
                                 </select>
                             </div>
 

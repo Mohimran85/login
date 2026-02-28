@@ -102,6 +102,7 @@ body.sidebar-open {
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
+  pointer-events: none;
 }
 
 .header-title p {
@@ -109,6 +110,7 @@ body.sidebar-open {
   font-weight: 600;
   color: var(--primary-color);
   margin: 0;
+  pointer-events: auto;
 }
 
 /* Top In-App Notification Banner */
@@ -1070,12 +1072,17 @@ body.sidebar-open {
 
   .notification-bell-container {
     top: 12px !important;
-    right: 16px !important;
+    right: 15px !important;
+    z-index: 1003 !important;
+    pointer-events: auto !important;
   }
 
   .notification-bell {
     width: 40px !important;
     height: 40px !important;
+    pointer-events: auto !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   .notification-dropdown {
@@ -1087,6 +1094,7 @@ body.sidebar-open {
     max-width: none !important;
     max-height: 70vh !important;
     border-radius: 16px 16px 0 0 !important;
+    z-index: 1004 !important;
   }
 
   .sidebar {
