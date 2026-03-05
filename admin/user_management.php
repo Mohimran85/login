@@ -3,15 +3,13 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Database connection
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get user data for header profile
     $username  = $_SESSION['username'];
@@ -21,82 +19,82 @@
     $tables    = ['student_register', 'teacher_register'];
 
     foreach ($tables as $table) {
-        $sql  = "SELECT name FROM $table WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sql  = "SELECT name FROM $table WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_type = $table === 'student_register' ? 'student' : 'teacher';
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $user_type = $table === 'student_register' ? 'student' : 'teacher';
 
-            // Check if user is admin (you can modify this logic based on your admin identification)
-            if ($user_type === 'teacher') {
-                // Add your admin check logic here - for now, all teachers have admin access
-                $is_admin = true;
-            }
-            break;
+        // Check if user is admin (you can modify this logic based on your admin identification)
+        if ($user_type === 'teacher') {
+            // Add your admin check logic here - for now, all teachers have admin access
+            $is_admin = true;
         }
-        $stmt->close();
+        break;
+    }
+    $stmt->close();
     }
 
-                                 // Check teacher status if user is a teacher
+                             // Check teacher status if user is a teacher
     $teacher_status = 'teacher'; // Default status
     if ($user_type === 'teacher') {
-        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
-        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
-        $teacher_status_stmt->bind_param("s", $username);
-        $teacher_status_stmt->execute();
-        $teacher_status_result = $teacher_status_stmt->get_result();
+    $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+    $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+    $teacher_status_stmt->bind_param("s", $username);
+    $teacher_status_stmt->execute();
+    $teacher_status_result = $teacher_status_stmt->get_result();
 
-        if ($teacher_status_result->num_rows > 0) {
-            $status_data    = $teacher_status_result->fetch_assoc();
-            $teacher_status = $status_data['status'];
-        }
-        $teacher_status_stmt->close();
+    if ($teacher_status_result->num_rows > 0) {
+        $status_data    = $teacher_status_result->fetch_assoc();
+        $teacher_status = $status_data['status'];
+    }
+    $teacher_status_stmt->close();
     }
 
     // Redirect teachers without admin access to teacher panel
     if ($user_type === 'teacher' && ! in_array($teacher_status, ['admin', 'teacher'])) {
-        $_SESSION['access_denied'] = 'Your account access is restricted. Please contact an administrator for access to management features.';
-        header("Location: ../teacher/index.php");
-        exit();
+    $_SESSION['access_denied'] = 'Your account access is restricted. Please contact an administrator for access to management features.';
+    header("Location: ../teacher/index.php");
+    exit();
     }
 
     // Only allow admin-level teachers to access user management
     if ($user_type === 'teacher' && $teacher_status !== 'admin') {
-        $_SESSION['access_denied'] = 'Only administrators can access user management. Your role is: ' . ucfirst($teacher_status);
-        header("Location: ../teacher/index.php");
-        exit();
+    $_SESSION['access_denied'] = 'Only administrators can access user management. Your role is: ' . ucfirst($teacher_status);
+    header("Location: ../teacher/index.php");
+    exit();
     }
 
     // Redirect students who shouldn't have access to user management
     if ($user_type === 'student') {
-        header("Location: ../student/index.php");
-        exit();
+    header("Location: ../student/index.php");
+    exit();
     }
 
     // Function to safely check and add status column
     function ensureStatusColumn($conn, $table_name)
     {
-        $check_column  = "SHOW COLUMNS FROM $table_name LIKE 'status'";
-        $column_result = $conn->query($check_column);
+    $check_column  = "SHOW COLUMNS FROM $table_name LIKE 'status'";
+    $column_result = $conn->query($check_column);
 
-        if ($column_result->num_rows == 0) {
-            // Set default based on table type
-            $default_status = ($table_name === 'teacher_register') ? 'teacher' : 'student';
-            $add_column     = "ALTER TABLE $table_name ADD COLUMN status VARCHAR(20) DEFAULT '$default_status'";
-            $conn->query($add_column);
-        } else {
-            // Update existing active/inactive values to new role-based system
-            $update_active = "UPDATE $table_name SET status = CASE
+    if ($column_result->num_rows == 0) {
+        // Set default based on table type
+        $default_status = ($table_name === 'teacher_register') ? 'teacher' : 'student';
+        $add_column     = "ALTER TABLE $table_name ADD COLUMN status VARCHAR(20) DEFAULT '$default_status'";
+        $conn->query($add_column);
+    } else {
+        // Update existing active/inactive values to new role-based system
+        $update_active = "UPDATE $table_name SET status = CASE
                               WHEN status = 'active' THEN '" . (($table_name === 'teacher_register') ? 'teacher' : 'student') . "'
                               WHEN status = 'inactive' THEN 'inactive'
                               ELSE status
                               END";
-            $conn->query($update_active);
-        }
+        $conn->query($update_active);
+    }
     }
 
     // Ensure status column exists in both tables
@@ -108,126 +106,126 @@
     $error_message   = '';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (isset($_POST['action'])) {
-            switch ($_POST['action']) {
-                case 'delete_user':
-                    $user_id    = (int) $_POST['user_id'];
-                    $table_name = $_POST['table_name'];
+    if (isset($_POST['action'])) {
+        switch ($_POST['action']) {
+            case 'delete_user':
+                $user_id    = (int) $_POST['user_id'];
+                $table_name = $_POST['table_name'];
 
-                    $allowed_tables = ['student_register', 'teacher_register'];
-                    if (in_array($table_name, $allowed_tables)) {
-                        $delete_sql  = "DELETE FROM $table_name WHERE id = ?";
-                        $delete_stmt = $conn->prepare($delete_sql);
-                        $delete_stmt->bind_param("i", $user_id);
+                $allowed_tables = ['student_register', 'teacher_register'];
+                if (in_array($table_name, $allowed_tables)) {
+                    $delete_sql  = "DELETE FROM $table_name WHERE id = ?";
+                    $delete_stmt = $conn->prepare($delete_sql);
+                    $delete_stmt->bind_param("i", $user_id);
 
-                        if ($delete_stmt->execute()) {
-                            $success_message = "User deleted successfully!";
-                        } else {
-                            $error_message = "Error deleting user: " . $conn->error;
-                        }
-                        $delete_stmt->close();
+                    if ($delete_stmt->execute()) {
+                        $success_message = "User deleted successfully!";
+                    } else {
+                        $error_message = "Error deleting user: " . $conn->error;
                     }
-                    break;
+                    $delete_stmt->close();
+                }
+                break;
 
-                case 'change_role':
-                    $user_id    = (int) $_POST['user_id'];
-                    $table_name = $_POST['table_name'];
-                    $new_role   = $_POST['new_role'];
+            case 'change_role':
+                $user_id    = (int) $_POST['user_id'];
+                $table_name = $_POST['table_name'];
+                $new_role   = $_POST['new_role'];
 
-                    $allowed_tables = ['student_register', 'teacher_register'];
-                    $allowed_roles  = ['admin', 'teacher', 'student'];
+                $allowed_tables = ['student_register', 'teacher_register'];
+                $allowed_roles  = ['admin', 'teacher', 'student'];
 
-                    if (in_array($table_name, $allowed_tables) && in_array($new_role, $allowed_roles)) {
-                        // Ensure status column exists
-                        ensureStatusColumn($conn, $table_name);
+                if (in_array($table_name, $allowed_tables) && in_array($new_role, $allowed_roles)) {
+                    // Ensure status column exists
+                    ensureStatusColumn($conn, $table_name);
 
-                        // Validate role assignment based on table
-                        $valid_assignment = true;
-                        if ($table_name === 'student_register' && ! in_array($new_role, ['student'])) {
-                            $valid_assignment = false;
-                            $error_message    = "Students can only have 'student' role.";
+                    // Validate role assignment based on table
+                    $valid_assignment = true;
+                    if ($table_name === 'student_register' && ! in_array($new_role, ['student'])) {
+                        $valid_assignment = false;
+                        $error_message    = "Students can only have 'student' role.";
+                    }
+                    if ($table_name === 'teacher_register' && ! in_array($new_role, ['admin', 'teacher'])) {
+                        $valid_assignment = false;
+                        $error_message    = "Teachers can only have 'admin' or 'teacher' roles.";
+                    }
+
+                    if ($valid_assignment) {
+                        $update_sql  = "UPDATE $table_name SET status = ? WHERE id = ?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("si", $new_role, $user_id);
+
+                        if ($update_stmt->execute()) {
+                            $success_message = "User role updated successfully to " . ucfirst($new_role) . "!";
+                        } else {
+                            $error_message = "Error updating user role: " . $conn->error;
                         }
-                        if ($table_name === 'teacher_register' && ! in_array($new_role, ['admin', 'teacher'])) {
-                            $valid_assignment = false;
-                            $error_message    = "Teachers can only have 'admin' or 'teacher' roles.";
-                        }
+                        $update_stmt->close();
+                    }
+                }
+                break;
 
-                        if ($valid_assignment) {
-                            $update_sql  = "UPDATE $table_name SET status = ? WHERE id = ?";
-                            $update_stmt = $conn->prepare($update_sql);
-                            $update_stmt->bind_param("si", $new_role, $user_id);
+            case 'edit_user':
+                $user_id    = (int) $_POST['user_id'];
+                $table_name = $_POST['table_name'];
+                $name       = trim($_POST['name']);
+                $username   = trim($_POST['username']);
+                $email      = trim($_POST['email']);
+                $department = $_POST['department'];
+                $identifier = trim($_POST['identifier']);
+                $dob        = isset($_POST['dob']) ? trim($_POST['dob']) : null;
+
+                $allowed_tables = ['student_register', 'teacher_register'];
+
+                if (in_array($table_name, $allowed_tables)) {
+                    // Validation
+                    if (empty($name) || empty($username) || empty($email) || empty($department) || empty($identifier)) {
+                        $error_message = "All fields are required!";
+                    } elseif (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        $error_message = "Invalid email format!";
+                    } else {
+                        // Check for username/email uniqueness (excluding current user)
+                        $email_column      = ($table_name === 'student_register') ? 'personal_email' : 'email';
+                        $identifier_column = ($table_name === 'student_register') ? 'regno' : 'faculty_id';
+
+                        $check_unique_sql = "SELECT id FROM $table_name WHERE (username = ? OR $email_column = ? OR $identifier_column = ?) AND id != ?";
+                        $check_stmt       = $conn->prepare($check_unique_sql);
+                        $check_stmt->bind_param("sssi", $username, $email, $identifier, $user_id);
+                        $check_stmt->execute();
+                        $check_result = $check_stmt->get_result();
+
+                        if ($check_result->num_rows > 0) {
+                            $error_message = "Username, email, or identifier already exists for another user!";
+                        } else {
+                            // Update user information
+                            if ($table_name === 'student_register' && ! empty($dob)) {
+                                $update_sql  = "UPDATE $table_name SET name = ?, username = ?, $email_column = ?, department = ?, $identifier_column = ?, dob = ? WHERE id = ?";
+                                $update_stmt = $conn->prepare($update_sql);
+                                $update_stmt->bind_param("ssssssi", $name, $username, $email, $department, $identifier, $dob, $user_id);
+                            } else {
+                                $update_sql  = "UPDATE $table_name SET name = ?, username = ?, $email_column = ?, department = ?, $identifier_column = ? WHERE id = ?";
+                                $update_stmt = $conn->prepare($update_sql);
+                                $update_stmt->bind_param("sssssi", $name, $username, $email, $department, $identifier, $user_id);
+                            }
 
                             if ($update_stmt->execute()) {
-                                $success_message = "User role updated successfully to " . ucfirst($new_role) . "!";
+                                $success_message = "User information updated successfully!";
                             } else {
-                                $error_message = "Error updating user role: " . $conn->error;
+                                $error_message = "Error updating user information: " . $conn->error;
                             }
                             $update_stmt->close();
                         }
+                        $check_stmt->close();
                     }
-                    break;
-
-                case 'edit_user':
-                    $user_id    = (int) $_POST['user_id'];
-                    $table_name = $_POST['table_name'];
-                    $name       = trim($_POST['name']);
-                    $username   = trim($_POST['username']);
-                    $email      = trim($_POST['email']);
-                    $department = $_POST['department'];
-                    $identifier = trim($_POST['identifier']);
-                    $dob        = isset($_POST['dob']) ? trim($_POST['dob']) : null;
-
-                    $allowed_tables = ['student_register', 'teacher_register'];
-
-                    if (in_array($table_name, $allowed_tables)) {
-                        // Validation
-                        if (empty($name) || empty($username) || empty($email) || empty($department) || empty($identifier)) {
-                            $error_message = "All fields are required!";
-                        } elseif (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                            $error_message = "Invalid email format!";
-                        } else {
-                            // Check for username/email uniqueness (excluding current user)
-                            $email_column      = ($table_name === 'student_register') ? 'personal_email' : 'email';
-                            $identifier_column = ($table_name === 'student_register') ? 'regno' : 'faculty_id';
-
-                            $check_unique_sql = "SELECT id FROM $table_name WHERE (username = ? OR $email_column = ? OR $identifier_column = ?) AND id != ?";
-                            $check_stmt       = $conn->prepare($check_unique_sql);
-                            $check_stmt->bind_param("sssi", $username, $email, $identifier, $user_id);
-                            $check_stmt->execute();
-                            $check_result = $check_stmt->get_result();
-
-                            if ($check_result->num_rows > 0) {
-                                $error_message = "Username, email, or identifier already exists for another user!";
-                            } else {
-                                // Update user information
-                                if ($table_name === 'student_register' && ! empty($dob)) {
-                                    $update_sql  = "UPDATE $table_name SET name = ?, username = ?, $email_column = ?, department = ?, $identifier_column = ?, dob = ? WHERE id = ?";
-                                    $update_stmt = $conn->prepare($update_sql);
-                                    $update_stmt->bind_param("ssssssi", $name, $username, $email, $department, $identifier, $dob, $user_id);
-                                } else {
-                                    $update_sql  = "UPDATE $table_name SET name = ?, username = ?, $email_column = ?, department = ?, $identifier_column = ? WHERE id = ?";
-                                    $update_stmt = $conn->prepare($update_sql);
-                                    $update_stmt->bind_param("sssssi", $name, $username, $email, $department, $identifier, $user_id);
-                                }
-
-                                if ($update_stmt->execute()) {
-                                    $success_message = "User information updated successfully!";
-                                } else {
-                                    $error_message = "Error updating user information: " . $conn->error;
-                                }
-                                $update_stmt->close();
-                            }
-                            $check_stmt->close();
-                        }
-                    }
-                    break;
-            }
+                }
+                break;
         }
-
-        // Counselor-student assignment not required per current requirement; no-op here.
     }
 
-                                                                                // Get filter parameters
+    // Counselor-student assignment not required per current requirement; no-op here.
+    }
+
+                                                                            // Get filter parameters
     $filter_user_type = isset($_GET['user_type']) ? $_GET['user_type'] : 'all'; // Default to 'all' for admin users
     $filter_status    = isset($_GET['status']) ? $_GET['status'] : 'all';
     $search_query     = isset($_GET['search']) ? $_GET['search'] : '';
@@ -237,14 +235,14 @@
 
     // Restrict teachers to only manage teachers (except admin-level teachers)
     if ($user_type === 'teacher' && $teacher_status !== 'admin') {
-        $filter_user_type = 'teacher';
+    $filter_user_type = 'teacher';
     }
 
     // Validate search query
     $search_error = '';
     if (! empty($search_query) && strlen(trim($search_query)) < 2) {
-        $search_error = 'Search query must be at least 2 characters long.';
-        $search_query = '';
+    $search_error = 'Search query must be at least 2 characters long.';
+    $search_query = '';
     }
 
     $student_query = "SELECT id, name, username, personal_email as email, regno as identifier, department,
@@ -263,14 +261,14 @@
 
     // Add search conditions to queries
     if (! empty($search_query)) {
-        $student_query .= " AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
-        $teacher_query .= " AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
+    $student_query .= " AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
+    $teacher_query .= " AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
     }
 
     // Add status filter to queries
     if ($filter_status !== 'all') {
-        $student_query .= " AND COALESCE(status, 'student') = ?";
-        $teacher_query .= " AND COALESCE(status, 'teacher') = ?";
+    $student_query .= " AND COALESCE(status, 'student') = ?";
+    $teacher_query .= " AND COALESCE(status, 'teacher') = ?";
     }
 
     // Combine queries based on user type filter and user permissions
@@ -278,93 +276,93 @@
     $param_types = "";
 
     if ($user_type === 'teacher' && $teacher_status !== 'admin') {
-        // Non-admin teachers can only see teacher records
-        $final_query      = $teacher_query . " ORDER BY id DESC";
-        $count_base_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1";
+    // Non-admin teachers can only see teacher records
+    $final_query      = $teacher_query . " ORDER BY id DESC";
+    $count_base_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1";
     } elseif ($filter_user_type === 'student') {
-        $final_query      = $student_query . " ORDER BY id DESC";
-        $count_base_query = "SELECT COUNT(*) as total FROM student_register WHERE 1=1";
+    $final_query      = $student_query . " ORDER BY id DESC";
+    $count_base_query = "SELECT COUNT(*) as total FROM student_register WHERE 1=1";
     } elseif ($filter_user_type === 'teacher') {
-        $final_query      = $teacher_query . " ORDER BY id DESC";
-        $count_base_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1";
+    $final_query      = $teacher_query . " ORDER BY id DESC";
+    $count_base_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1";
     } else {
-        $final_query      = "($student_query) UNION ($teacher_query) ORDER BY sort_order DESC";
-        $count_base_query = "SELECT COUNT(*) as total FROM (($student_query) UNION ($teacher_query)) as combined_users";
+    $final_query      = "($student_query) UNION ($teacher_query) ORDER BY sort_order DESC";
+    $count_base_query = "SELECT COUNT(*) as total FROM (($student_query) UNION ($teacher_query)) as combined_users";
     }
 
     // Add search conditions to parameters
     if (! empty($search_query)) {
-        $search_param = "%$search_query%";
-        if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
-            // Only teacher search parameters
-            for ($i = 0; $i < 4; $i++) {
-                $params[] = $search_param;
-                $param_types .= "s";
-            }
-        } elseif ($filter_user_type === 'student') {
-            // Only student search parameters
-            for ($i = 0; $i < 4; $i++) {
-                $params[] = $search_param;
-                $param_types .= "s";
-            }
-        } else {
-            // Both student and teacher search parameters
-            for ($i = 0; $i < 8; $i++) {
-                $params[] = $search_param;
-                $param_types .= "s";
-            }
+    $search_param = "%$search_query%";
+    if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
+        // Only teacher search parameters
+        for ($i = 0; $i < 4; $i++) {
+            $params[]     = $search_param;
+            $param_types .= "s";
         }
+    } elseif ($filter_user_type === 'student') {
+        // Only student search parameters
+        for ($i = 0; $i < 4; $i++) {
+            $params[]     = $search_param;
+            $param_types .= "s";
+        }
+    } else {
+        // Both student and teacher search parameters
+        for ($i = 0; $i < 8; $i++) {
+            $params[]     = $search_param;
+            $param_types .= "s";
+        }
+    }
     }
 
     // Add status filter to parameters
     if ($filter_status !== 'all') {
-        if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
-            // Only teacher status parameter
-            $params[] = $filter_status;
-            $param_types .= "s";
-        } elseif ($filter_user_type === 'student') {
-            // Only student status parameter
-            $params[] = $filter_status;
-            $param_types .= "s";
-        } else {
-            // Both student and teacher status parameters
-            $params[] = $filter_status;
-            $params[] = $filter_status;
-            $param_types .= "ss";
-        }
+    if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
+        // Only teacher status parameter
+        $params[]     = $filter_status;
+        $param_types .= "s";
+    } elseif ($filter_user_type === 'student') {
+        // Only student status parameter
+        $params[]     = $filter_status;
+        $param_types .= "s";
+    } else {
+        // Both student and teacher status parameters
+        $params[]     = $filter_status;
+        $params[]     = $filter_status;
+        $param_types .= "ss";
+    }
     }
 
     // Build count query with same conditions
     if (! empty($search_query)) {
-        if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
-            $count_base_query .= " AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
-        } elseif ($filter_user_type === 'student') {
-            $count_base_query .= " AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
-        } else {
-            // For 'all' users, we need to handle UNION differently
-            $student_count_query = "SELECT COUNT(*) as total FROM student_register WHERE 1=1 AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
-            $teacher_count_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1 AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
+    if (($user_type === 'teacher' && $teacher_status !== 'admin') || $filter_user_type === 'teacher') {
+        $count_base_query .= " AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
+    } elseif ($filter_user_type === 'student') {
+        $count_base_query .= " AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
+    } else {
+        // For 'all' users, we need to handle UNION differently
+        $student_count_query = "SELECT COUNT(*) as total FROM student_register WHERE 1=1 AND (name LIKE ? OR username LIKE ? OR personal_email LIKE ? OR regno LIKE ?)";
+        $teacher_count_query = "SELECT COUNT(*) as total FROM teacher_register WHERE 1=1 AND (name LIKE ? OR username LIKE ? OR email LIKE ? OR faculty_id LIKE ?)";
 
-            if ($filter_status !== 'all') {
-                $student_count_query .= " AND COALESCE(status, 'student') = ?";
-                $teacher_count_query .= " AND COALESCE(status, 'teacher') = ?";
-            }
-
-            $count_base_query = "SELECT (($student_count_query) + ($teacher_count_query)) as total";
+        if ($filter_status !== 'all') {
+            $student_count_query .= " AND COALESCE(status, 'student') = ?";
+            $teacher_count_query .= " AND COALESCE(status, 'teacher') = ?";
         }
+
+        $count_base_query = "SELECT (($student_count_query) + ($teacher_count_query)) as total";
+    }
     }
 
     if ($filter_status !== 'all' && $filter_user_type !== 'all') {
-        $count_base_query .= " AND COALESCE(status, '" . (($filter_user_type === 'student') ? 'student' : 'teacher') . "') = ?";
+    $count_base_query .= " AND COALESCE(status, '" . (($filter_user_type === 'student') ? 'student' : 'teacher') . "') = ?";
     } // Get total count for pagination
     if (! empty($params)) {
-        $count_stmt = $conn->prepare($count_base_query);
-        $count_stmt->bind_param($param_types, ...$params);
-        $count_stmt->execute();
-        $total_users = $count_stmt->get_result()->fetch_assoc()['total'];
-        $count_stmt->close();
+    $count_stmt = $conn->prepare($count_base_query);
+    $count_stmt->bind_param($param_types, ...$params);
+    $count_stmt->execute();
+    $total_users = $count_stmt->get_result()->fetch_assoc()['total'];
+    $count_stmt->close();
     } else {
-        $total_users = $conn->query($count_base_query)->fetch_assoc()['total'];
+    $total_users = $conn->query($count_base_query)->fetch_assoc()['total'];
     }
 
     // Calculate pagination
@@ -373,46 +371,46 @@
 
     // Add pagination to final query
     if ($entries_per_page < PHP_INT_MAX) {
-        $final_query .= " LIMIT $entries_per_page OFFSET $offset";
+    $final_query .= " LIMIT $entries_per_page OFFSET $offset";
     }
 
     // Execute final query
     if (! empty($params)) {
-        $users_stmt = $conn->prepare($final_query);
-        if ($users_stmt) {
-            $users_stmt->bind_param($param_types, ...$params);
-            $users_stmt->execute();
-            $users_result = $users_stmt->get_result();
-        } else {
-            $error_message = "Query preparation failed: " . $conn->error;
-            $users_result  = false;
-        }
+    $users_stmt = $conn->prepare($final_query);
+    if ($users_stmt) {
+        $users_stmt->bind_param($param_types, ...$params);
+        $users_stmt->execute();
+        $users_result = $users_stmt->get_result();
     } else {
-        $users_result = $conn->query($final_query);
-        if (! $users_result) {
-            $error_message = "Query execution failed: " . $conn->error;
-        }
+        $error_message = "Query preparation failed: " . $conn->error;
+        $users_result  = false;
+    }
+    } else {
+    $users_result = $conn->query($final_query);
+    if (! $users_result) {
+        $error_message = "Query execution failed: " . $conn->error;
+    }
     }
 
     // Get statistics (only for teachers if user is non-admin teacher)
     if ($user_type === 'teacher' && $teacher_status !== 'admin') {
-        $total_students  = 0; // Non-admin teachers can't see student count
-        $total_teachers  = $conn->query("SELECT COUNT(*) as count FROM teacher_register")->fetch_assoc()['count'];
-        $active_students = 0; // Non-admin teachers can't see student count
+    $total_students  = 0; // Non-admin teachers can't see student count
+    $total_teachers  = $conn->query("SELECT COUNT(*) as count FROM teacher_register")->fetch_assoc()['count'];
+    $active_students = 0; // Non-admin teachers can't see student count
 
-        // Safe query for active/admin teachers
-        $active_teachers_result = $conn->query("SELECT COUNT(*) as count FROM teacher_register WHERE COALESCE(status, 'teacher') IN ('teacher', 'admin')");
-        $active_teachers        = $active_teachers_result ? $active_teachers_result->fetch_assoc()['count'] : $total_teachers;
+    // Safe query for active/admin teachers
+    $active_teachers_result = $conn->query("SELECT COUNT(*) as count FROM teacher_register WHERE COALESCE(status, 'teacher') IN ('teacher', 'admin')");
+    $active_teachers        = $active_teachers_result ? $active_teachers_result->fetch_assoc()['count'] : $total_teachers;
     } else {
-        $total_students = $conn->query("SELECT COUNT(*) as count FROM student_register")->fetch_assoc()['count'];
-        $total_teachers = $conn->query("SELECT COUNT(*) as count FROM teacher_register")->fetch_assoc()['count'];
+    $total_students = $conn->query("SELECT COUNT(*) as count FROM student_register")->fetch_assoc()['count'];
+    $total_teachers = $conn->query("SELECT COUNT(*) as count FROM teacher_register")->fetch_assoc()['count'];
 
-        // Safe queries for active users
-        $active_students_result = $conn->query("SELECT COUNT(*) as count FROM student_register WHERE COALESCE(status, 'student') = 'student'");
-        $active_students        = $active_students_result ? $active_students_result->fetch_assoc()['count'] : $total_students;
+    // Safe queries for active users
+    $active_students_result = $conn->query("SELECT COUNT(*) as count FROM student_register WHERE COALESCE(status, 'student') = 'student'");
+    $active_students        = $active_students_result ? $active_students_result->fetch_assoc()['count'] : $total_students;
 
-        $active_teachers_result = $conn->query("SELECT COUNT(*) as count FROM teacher_register WHERE COALESCE(status, 'teacher') IN ('teacher', 'admin')");
-        $active_teachers        = $active_teachers_result ? $active_teachers_result->fetch_assoc()['count'] : $total_teachers;
+    $active_teachers_result = $conn->query("SELECT COUNT(*) as count FROM teacher_register WHERE COALESCE(status, 'teacher') IN ('teacher', 'admin')");
+    $active_teachers        = $active_teachers_result ? $active_teachers_result->fetch_assoc()['count'] : $total_teachers;
     }
 
     // No counselor-student assignment UI; dropdown datasets removed.
@@ -426,10 +424,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>User Management - Admin Dashboard</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="./CSS/report.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1640,7 +1638,7 @@
 
 <?php
     if (isset($users_stmt)) {
-        $users_stmt->close();
+    $users_stmt->close();
     }
 $conn->close();
 ?>

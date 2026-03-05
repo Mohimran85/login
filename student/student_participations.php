@@ -7,10 +7,8 @@
     exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die("Connection failed: " . htmlspecialchars($conn->connect_error));
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get logged-in user's data
     $username     = $_SESSION['username'];
@@ -85,7 +83,7 @@
     COUNT(*) as total_events,
     COUNT(CASE WHEN prize IS NOT NULL AND prize != '' AND prize != 'Participation' THEN 1 END) as events_won,
     COUNT(CASE WHEN prize = 'first' THEN 1 END) as first_prizes,
-    COUNT(CASE WHEN prize = 'secound' THEN 1 END) as second_prizes,
+    COUNT(CASE WHEN prize = 'second' THEN 1 END) as second_prizes,
     COUNT(CASE WHEN prize = 'third' THEN 1 END) as third_prizes
     FROM student_event_register WHERE regno = ?";
     $stats_stmt = $conn->prepare($stats_sql);
@@ -125,9 +123,9 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>My Participations - Event Management System</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <!-- Web App Manifest for Push Notifications -->
     <link rel="manifest" href="../manifest.json">
     <link rel="stylesheet" href="student_dashboard.css">

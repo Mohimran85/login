@@ -196,6 +196,7 @@ function validatePasswordStrength($password, $minLength = 8)
 
 /**
  * Check if user is authenticated
+ * Also verifies 2FA is complete when required.
  *
  * @return bool
  */
@@ -205,7 +206,28 @@ function isAuthenticated()
         session_start();
     }
 
+    // If 2FA is pending but not verified, user is NOT authenticated yet
+    if (isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
+        && (! isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== true)) {
+        return false;
+    }
+
     return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
+}
+
+/**
+ * Check if user has a pending 2FA verification
+ *
+ * @return bool True if 2FA verification is still pending
+ */
+function is2faPending()
+{
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    return isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
+        && (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true);
 }
 
 /**

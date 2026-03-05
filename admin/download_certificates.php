@@ -14,10 +14,8 @@ if (! class_exists('ZipArchive')) {
     die('Error: ZIP extension is not enabled in PHP. Please enable it in php.ini by uncommenting "extension=zip" and restart Apache.');
 }
 
-$conn = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
 // Get filter parameters from POST
 $year       = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
@@ -44,30 +42,30 @@ if ($year !== null) {
     $year_conditions    = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
     $where_conditions[] = "($year_conditions)";
     foreach ($year_patterns as $pattern) {
-        $bind_types .= 's';
-        $bind_values[] = $pattern;
+        $bind_types    .= 's';
+        $bind_values[]  = $pattern;
     }
 }
 
 // Add department filter if selected
 if ($department !== null) {
-    $where_conditions[] = "e.department = ?";
-    $bind_types .= 's';
-    $bind_values[] = $department;
+    $where_conditions[]  = "e.department = ?";
+    $bind_types         .= 's';
+    $bind_values[]       = $department;
 }
 
 // Add semester filter if selected
 if ($semester !== null) {
-    $where_conditions[] = "e.semester = ?";
-    $bind_types .= 's';
-    $bind_values[] = $semester;
+    $where_conditions[]  = "e.semester = ?";
+    $bind_types         .= 's';
+    $bind_values[]       = $semester;
 }
 
 // Add event type filter if selected
 if ($event_type !== null) {
-    $where_conditions[] = "e.event_type = ?";
-    $bind_types .= 's';
-    $bind_values[] = $event_type;
+    $where_conditions[]  = "e.event_type = ?";
+    $bind_types         .= 's';
+    $bind_values[]       = $event_type;
 }
 
 // Add location filter if selected

@@ -7,16 +7,34 @@
     exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die("Connection failed: " . htmlspecialchars($conn->connect_error));
+    // Block access if 2FA verification is still pending
+    if (isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
+    && (! isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== true)) {
+    header("Location: ../verify_2fa.php");
+    exit();
     }
 
-    // Get student data
+    require_once __DIR__ . '/../includes/db_config.php';
+    require_once __DIR__ . '/../includes/TotpManager.php';
+    $conn = get_db_connection();
+
+    // Check 2FA status
+    $totpMgr        = new TotpManager();
+    $is_2fa_enabled = $totpMgr->isEnabled($conn, $_SESSION['username'], 'student_register');
+
     $username     = $_SESSION['username'];
     $student_data = null;
     $message      = '';
     $message_type = '';
+
+    // Check for 2FA success message from setup
+    if (isset($_GET['2fa']) && $_GET['2fa'] === 'enabled') {
+    $message      = 'Two-factor authentication has been enabled successfully!';
+    $message_type = 'success';
+    } elseif (isset($_GET['2fa']) && $_GET['2fa'] === 'disabled') {
+    $message      = 'Two-factor authentication has been disabled.';
+    $message_type = 'success';
+    }
 
     // Fetch complete student data
     $sql  = "SELECT * FROM student_register WHERE username=?";
@@ -136,9 +154,9 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>My Profile - Event Management System</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <!-- Web App Manifest for Push Notifications -->
     <link rel="manifest" href="../manifest.json">
     <link rel="stylesheet" href="student_dashboard.css">
@@ -152,12 +170,12 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
-          appId: "29fbebb0-954f-41f3-8f31-c3f57f61740b",
+          appId: <?php echo json_encode(getenv('ONESIGNAL_APP_ID') ?: ''); ?>,
           allowLocalhostAsSecureOrigin: true,
         });
 
         // Set external user ID (student registration number)
-        const studentRegno = '<?php echo addslashes($student_data['regno']); ?>';
+        const studentRegno = <?php echo json_encode($student_data['regno']); ?>;
         if (studentRegno) {
           OneSignal.login(studentRegno);
           console.log('OneSignal: Logged in as ' + studentRegno);
@@ -1143,16 +1161,51 @@
                             </div>
                         </form>
                     </div>
+
+                    <!-- Two-Factor Authentication Section -->
+                    <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e9ecef;">
+                        <h3 class="form-title">
+                            <span class="material-symbols-outlined">verified_user</span>
+                            Two-Factor Authentication
+                        </h3>
+
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <?php if ($is_2fa_enabled): ?>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #e8f5e9; color: #2e7d32;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
+                                    Enabled
+                                </span>
+                            <?php else: ?>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #fff8e1; color: #e65100;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">warning</span>
+                                    Not Configured
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <p style="color: #666; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+                            <?php if ($is_2fa_enabled): ?>
+                                Your account is protected with two-factor authentication.
+                                You'll be asked for a verification code each time you sign in.
+                            <?php else: ?>
+                                Add an extra layer of security by requiring a code from your
+                                authenticator app when signing in.
+                            <?php endif; ?>
+                        </p>
+
+                        <a href="../setup_2fa.php" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                            <span class="material-symbols-outlined">settings</span>
+                            <?php echo $is_2fa_enabled ? 'Manage 2FA Settings' : 'Enable Two-Factor Authentication'; ?>
+                        </a>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
-
     <script>
-        // Toggle password visibility
         function togglePasswordVisibility(button) {
-            const passwordField = button.closest('.password-field');
-            const input = passwordField.querySelector('.form-input');
+            const input = button.parentElement.querySelector('input');
             const icon = button.querySelector('.material-symbols-outlined');
 
             if (input.type === 'password') {

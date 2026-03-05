@@ -3,15 +3,13 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Get user data for header profile
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     $username  = $_SESSION['username'];
     $user_data = null;
@@ -19,34 +17,34 @@
     $tables    = ['student_register', 'teacher_register'];
 
     foreach ($tables as $table) {
-        $sql  = "SELECT name FROM $table WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sql  = "SELECT name FROM $table WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_type = $table === 'student_register' ? 'student' : 'teacher';
-            break;
-        }
-        $stmt->close();
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        break;
+    }
+    $stmt->close();
     }
 
     // Handle delete operation (students only)
     if (isset($_POST['delete_id'])) {
-        $delete_id = $_POST['delete_id'];
+    $delete_id = $_POST['delete_id'];
 
-        $delete_sql = "DELETE FROM student_event_register WHERE id = ?";
+    $delete_sql = "DELETE FROM student_event_register WHERE id = ?";
 
-        $delete_stmt = $conn->prepare($delete_sql);
-        $delete_stmt->bind_param("i", $delete_id);
-        if ($delete_stmt->execute()) {
-            $success_message = "Student record deleted successfully!";
-        } else {
-            $error_message = "Error deleting record: " . $conn->error;
-        }
-        $delete_stmt->close();
+    $delete_stmt = $conn->prepare($delete_sql);
+    $delete_stmt->bind_param("i", $delete_id);
+    if ($delete_stmt->execute()) {
+        $success_message = "Student record deleted successfully!";
+    } else {
+        $error_message = "Error deleting record: " . $conn->error;
+    }
+    $delete_stmt->close();
     }
 
     // Get filter parameters
@@ -63,8 +61,8 @@
     // Validate search query
     $search_error = '';
     if (! empty($search_query) && strlen(trim($search_query)) < 2) {
-        $search_error = 'Search query must be at least 2 characters long.';
-        $search_query = ''; // Reset search query to prevent database errors
+    $search_error = 'Search query must be at least 2 characters long.';
+    $search_query = ''; // Reset search query to prevent database errors
     }
 
     // Build WHERE clause based on filters - separate for student and teacher queries
@@ -77,54 +75,54 @@
 
     // Build conditions for students
     if (! empty($filter_event_type)) {
-        $student_where_conditions[] = "se.event_type = ?";
-        $teacher_where_conditions[] = "te.event_type = ?";
-        $student_params[]           = $filter_event_type;
-        $teacher_params[]           = $filter_event_type;
-        $student_param_types .= "s";
-        $teacher_param_types .= "s";
+    $student_where_conditions[]  = "se.event_type = ?";
+    $teacher_where_conditions[]  = "te.event_type = ?";
+    $student_params[]            = $filter_event_type;
+    $teacher_params[]            = $filter_event_type;
+    $student_param_types        .= "s";
+    $teacher_param_types        .= "s";
     }
 
     if (! empty($filter_department)) {
-        $student_where_conditions[] = "se.department = ?";
-        $teacher_where_conditions[] = "te.department = ?";
-        $student_params[]           = $filter_department;
-        $teacher_params[]           = $filter_department;
-        $student_param_types .= "s";
-        $teacher_param_types .= "s";
+    $student_where_conditions[]  = "se.department = ?";
+    $teacher_where_conditions[]  = "te.department = ?";
+    $student_params[]            = $filter_department;
+    $teacher_params[]            = $filter_department;
+    $student_param_types        .= "s";
+    $teacher_param_types        .= "s";
     }
 
     if (! empty($filter_year)) {
-        $student_where_conditions[] = "se.current_year = ?";
-        // For teachers, we'll skip year filter as they don't have current_year
-        $student_params[] = $filter_year;
-        $student_param_types .= "s";
+    $student_where_conditions[]  = "se.current_year = ?";
+    // For teachers, we'll skip year filter as they don't have current_year
+    $student_params[]     = $filter_year;
+    $student_param_types .= "s";
     }
 
     if (! empty($filter_prize) && $filter_prize !== 'all') {
-        if ($filter_prize === 'no_prize') {
-            $student_where_conditions[] = "(se.prize IS NULL OR se.prize = '' OR se.prize = 'No Prize')";
-            // Teachers don't have prize field in staff_event_reg, so we'll skip this filter for them
-        } else {
-            $student_where_conditions[] = "se.prize = ?";
-            // Skip prize filter for teachers as they don't have this field
-            $student_params[] = $filter_prize;
-            $student_param_types .= "s";
-        }
+    if ($filter_prize === 'no_prize') {
+        $student_where_conditions[] = "(se.prize IS NULL OR se.prize = '' OR se.prize = 'No Prize')";
+        // Teachers don't have prize field in staff_event_reg, so we'll skip this filter for them
+    } else {
+        $student_where_conditions[]  = "se.prize = ?";
+        // Skip prize filter for teachers as they don't have this field
+        $student_params[]     = $filter_prize;
+        $student_param_types .= "s";
+    }
     }
 
     if (! empty($search_query)) {
-        $student_where_conditions[] = "(sr.name LIKE ? OR se.regno LIKE ? OR se.event_name LIKE ?)";
-        $teacher_where_conditions[] = "(tr.name LIKE ? OR te.staff_id LIKE ? OR te.topic LIKE ?)";
-        $search_param               = "%$search_query%";
-        $student_params[]           = $search_param;
-        $student_params[]           = $search_param;
-        $student_params[]           = $search_param;
-        $teacher_params[]           = $search_param;
-        $teacher_params[]           = $search_param;
-        $teacher_params[]           = $search_param;
-        $student_param_types .= "sss";
-        $teacher_param_types .= "sss";
+    $student_where_conditions[]  = "(sr.name LIKE ? OR se.regno LIKE ? OR se.event_name LIKE ?)";
+    $teacher_where_conditions[]  = "(tr.name LIKE ? OR te.staff_id LIKE ? OR te.topic LIKE ?)";
+    $search_param                = "%$search_query%";
+    $student_params[]            = $search_param;
+    $student_params[]            = $search_param;
+    $student_params[]            = $search_param;
+    $teacher_params[]            = $search_param;
+    $teacher_params[]            = $search_param;
+    $teacher_params[]            = $search_param;
+    $student_param_types        .= "sss";
+    $teacher_param_types        .= "sss";
     }
 
     $student_where_clause = ! empty($student_where_conditions) ? "WHERE " . implode(" AND ", $student_where_conditions) : "";
@@ -132,32 +130,32 @@
 
     // Build the UNION query based on participant type filter
     if ($filter_participant_type === 'student') {
-        // Only students
-        $count_sql = "SELECT COUNT(*) as total FROM student_event_register se
+    // Only students
+    $count_sql = "SELECT COUNT(*) as total FROM student_event_register se
                       LEFT JOIN student_register sr ON se.regno = sr.regno $student_where_clause";
-        $count_params      = $student_params;
-        $count_param_types = $student_param_types;
+    $count_params      = $student_params;
+    $count_param_types = $student_param_types;
     } elseif ($filter_participant_type === 'teacher') {
-        // Only teachers
-        $count_sql = "SELECT COUNT(*) as total FROM staff_event_reg te
+    // Only teachers
+    $count_sql = "SELECT COUNT(*) as total FROM staff_event_reg te
                       LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id $teacher_where_clause";
-        $count_params      = $teacher_params;
-        $count_param_types = $teacher_param_types;
+    $count_params      = $teacher_params;
+    $count_param_types = $teacher_param_types;
     } else {
-        // Both students and teachers (UNION)
-        $count_sql = "SELECT COUNT(*) as total FROM (
+    // Both students and teachers (UNION)
+    $count_sql = "SELECT COUNT(*) as total FROM (
             SELECT se.id FROM student_event_register se
             LEFT JOIN student_register sr ON se.regno = sr.regno $student_where_clause
             UNION ALL
             SELECT te.id FROM staff_event_reg te
             LEFT JOIN teacher_register tr ON te.staff_id = tr.faculty_id $teacher_where_clause
         ) as combined";
-        $count_params      = array_merge($student_params, $teacher_params);
-        $count_param_types = $student_param_types . $teacher_param_types;
+    $count_params      = array_merge($student_params, $teacher_params);
+    $count_param_types = $student_param_types . $teacher_param_types;
     }
     $count_stmt = $conn->prepare($count_sql);
     if (! empty($count_params)) {
-        $count_stmt->bind_param($count_param_types, ...$count_params);
+    $count_stmt->bind_param($count_param_types, ...$count_params);
     }
     $count_stmt->execute();
     $total_records = $count_stmt->get_result()->fetch_assoc()['total'];
@@ -175,10 +173,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>Participants</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="./CSS/report.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
@@ -770,7 +768,7 @@
                   <select name="prize" id="prize">
                     <option value="">All</option>
                     <option value="first"                                          <?php echo($filter_prize === 'first') ? 'selected' : ''; ?>>First Prize</option>
-                    <option value="secound"                                            <?php echo($filter_prize === 'secound') ? 'selected' : ''; ?>>Second Prize</option>
+                    <option value="second"                                            <?php echo($filter_prize === 'second') ? 'selected' : ''; ?>>Second Prize</option>
                     <option value="third"                                          <?php echo($filter_prize === 'third') ? 'selected' : ''; ?>>Third Prize</option>
                     <option value="no_prize"                                             <?php echo($filter_prize === 'no_prize') ? 'selected' : ''; ?>>No Prize</option>
                   </select>
@@ -931,8 +929,8 @@
 
               // Add pagination parameters only if not showing all entries
               if ($entries_param !== 'all') {
-                  $main_params[] = $entries_per_page;
-                  $main_params[] = $offset;
+                  $main_params[]     = $entries_per_page;
+                  $main_params[]     = $offset;
                   $main_param_types .= "ii";
               }
 
@@ -1057,7 +1055,7 @@
                               <span class='material-symbols-outlined'>edit</span>
                             </a>";
                       }
-                      echo "<button onclick='confirmDelete(" . $row['id'] . ", \"" . $row['participant_type'] . "\")' class='btn btn-danger' title='Delete'>
+                      echo "<button onclick='confirmDelete(" . (int) $row['id'] . ", " . htmlspecialchars(json_encode($row['participant_type']), ENT_QUOTES, 'UTF-8') . ")' class='btn btn-danger' title='Delete'>
                           <span class='material-symbols-outlined'>delete</span>
                         </button>";
                       echo "</div>";

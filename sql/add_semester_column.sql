@@ -1,6 +1,6 @@
     -- Add semester column to student_register table
     ALTER TABLE student_register 
-    ADD COLUMN semester VARCHAR(2) DEFAULT '3' AFTER department;
+    ADD COLUMN IF NOT EXISTS semester VARCHAR(2) DEFAULT '3' AFTER department;
 
     -- Update all existing records to semester 3
     UPDATE student_register 

@@ -3,14 +3,12 @@
 
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get teacher data and check if they are a counselor
     $username     = $_SESSION['username'];
@@ -26,19 +24,19 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $teacher_data = $result->fetch_assoc();
-        $is_counselor = ($teacher_data['status'] === 'counselor' || $teacher_data['status'] === 'admin');
-        $is_admin     = ($teacher_data['status'] === 'admin');
-        $counselor_id = $teacher_data['id'];
+    $teacher_data = $result->fetch_assoc();
+    $is_counselor = ($teacher_data['status'] === 'counselor' || $teacher_data['status'] === 'admin');
+    $is_admin     = ($teacher_data['status'] === 'admin');
+    $counselor_id = $teacher_data['id'];
     } else {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     if (! $is_counselor) {
-        $_SESSION['access_denied'] = 'Only counselors can access OD approvals. Your role is: ' . ucfirst($teacher_data['status']);
-        header("Location: index.php");
-        exit();
+    $_SESSION['access_denied'] = 'Only counselors can access OD approvals. Your role is: ' . ucfirst($teacher_data['status']);
+    header("Location: index.php");
+    exit();
     }
 
     // Get assigned students for this counselor
@@ -51,7 +49,7 @@
 
     $student_regnos = [];
     while ($row = $assigned_students_result->fetch_assoc()) {
-        $student_regnos[] = $row['student_regno'];
+    $student_regnos[] = $row['student_regno'];
     }
     $assigned_students_stmt->close();
 
@@ -60,77 +58,77 @@
 
     // Handle OD request approval/rejection
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_od_status'])) {
-        $od_id             = $_POST['od_id'];
-        $new_status        = $_POST['new_status'];
-        $counselor_remarks = trim($_POST['counselor_remarks']);
+    $od_id             = $_POST['od_id'];
+    $new_status        = $_POST['new_status'];
+    $counselor_remarks = trim($_POST['counselor_remarks']);
 
-        $update_sql  = "UPDATE od_requests SET status = ?, counselor_remarks = ?, response_date = CURRENT_TIMESTAMP WHERE id = ? AND counselor_id = ?";
-        $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("ssii", $new_status, $counselor_remarks, $od_id, $counselor_id);
+    $update_sql  = "UPDATE od_requests SET status = ?, counselor_remarks = ?, response_date = CURRENT_TIMESTAMP WHERE id = ? AND counselor_id = ?";
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->bind_param("ssii", $new_status, $counselor_remarks, $od_id, $counselor_id);
 
-        if ($update_stmt->execute()) {
-            $message      = "OD request " . ucfirst($new_status) . " successfully!";
-            $message_type = 'success';
-        } else {
-            $message      = "Error updating OD request: " . $conn->error;
-            $message_type = 'error';
-        }
-        $update_stmt->close();
+    if ($update_stmt->execute()) {
+        $message      = "OD request " . ucfirst($new_status) . " successfully!";
+        $message_type = 'success';
+    } else {
+        $message      = "Error updating OD request: " . $conn->error;
+        $message_type = 'error';
+    }
+    $update_stmt->close();
     }
 
     // Get OD requests only from assigned students
     if (! empty($student_regnos)) {
-        $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
+    $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
 
-        $od_requests_sql = "SELECT od.*, sr.name as student_name, sr.department, sr.year_of_join, od.group_members
+    $od_requests_sql = "SELECT od.*, sr.name as student_name, sr.department, sr.year_of_join, od.group_members
                             FROM od_requests od
                             JOIN student_register sr ON od.student_regno = sr.regno
                             WHERE od.student_regno IN ($placeholders) AND od.counselor_id = ?
                             ORDER BY od.request_date DESC";
-        $od_requests_stmt = $conn->prepare($od_requests_sql);
+    $od_requests_stmt = $conn->prepare($od_requests_sql);
 
-        $params = array_merge($student_regnos, [$counselor_id]);
-        $types  = str_repeat('s', count($student_regnos)) . 'i';
-        $od_requests_stmt->bind_param($types, ...$params);
-        $od_requests_stmt->execute();
-        $od_requests_result = $od_requests_stmt->get_result();
+    $params = array_merge($student_regnos, [$counselor_id]);
+    $types  = str_repeat('s', count($student_regnos)) . 'i';
+    $od_requests_stmt->bind_param($types, ...$params);
+    $od_requests_stmt->execute();
+    $od_requests_result = $od_requests_stmt->get_result();
 
-        // Fetch all results into an array for reuse
-        $od_requests_array = [];
-        while ($row = $od_requests_result->fetch_assoc()) {
-            $od_requests_array[] = $row;
-        }
-        $od_requests_stmt->close();
+    // Fetch all results into an array for reuse
+    $od_requests_array = [];
+    while ($row = $od_requests_result->fetch_assoc()) {
+        $od_requests_array[] = $row;
+    }
+    $od_requests_stmt->close();
     } else {
-        $od_requests_array = [];
+    $od_requests_array = [];
     }
 
     // Get statistics only for assigned students
     if (! empty($student_regnos)) {
-        $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
+    $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
 
-        $stats_sql = "SELECT
+    $stats_sql = "SELECT
                         COUNT(*) as total_requests,
                         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_requests,
                         SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_requests,
                         SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected_requests
                       FROM od_requests WHERE student_regno IN ($placeholders) AND counselor_id = ?";
-        $stats_stmt = $conn->prepare($stats_sql);
+    $stats_stmt = $conn->prepare($stats_sql);
 
-        $params = array_merge($student_regnos, [$counselor_id]);
-        $types  = str_repeat('s', count($student_regnos)) . 'i';
-        $stats_stmt->bind_param($types, ...$params);
-        $stats_stmt->execute();
-        $stats_result = $stats_stmt->get_result();
-        $stats        = $stats_result->fetch_assoc();
-        $stats_stmt->close();
+    $params = array_merge($student_regnos, [$counselor_id]);
+    $types  = str_repeat('s', count($student_regnos)) . 'i';
+    $stats_stmt->bind_param($types, ...$params);
+    $stats_stmt->execute();
+    $stats_result = $stats_stmt->get_result();
+    $stats        = $stats_result->fetch_assoc();
+    $stats_stmt->close();
     } else {
-        $stats = [
-            'total_requests'    => 0,
-            'pending_requests'  => 0,
-            'approved_requests' => 0,
-            'rejected_requests' => 0,
-        ];
+    $stats = [
+        'total_requests'    => 0,
+        'pending_requests'  => 0,
+        'approved_requests' => 0,
+        'rejected_requests' => 0,
+    ];
     }
 
     $stmt->close();
@@ -146,10 +144,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>OD Approvals - Teacher Dashboard</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="../student/student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -1988,7 +1986,7 @@
                                                 $poster_path    = '../student/uploads/posters/' . $request['event_poster'];
                                                 $file_extension = strtolower(pathinfo($request['event_poster'], PATHINFO_EXTENSION));
                                             ?>
-                                            <?php if (in_array($file_extension, ['jpg', 'jpeg', 'png']) && file_exists($poster_path)): ?>
+                                            <?php if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'webp']) && file_exists($poster_path)): ?>
                                                 <button onclick="openPosterModal('<?php echo htmlspecialchars($poster_path); ?>')"
                                                         style="background: #0c3878; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.3s ease;"
                                                         onmouseover="this.style.background='#2d5aa0'; this.style.transform='scale(1.05)'"
@@ -2181,7 +2179,7 @@
                                 ?>
 
                                 <div style="display: flex; flex-direction: column; gap: 15px;">
-                                    <?php if (in_array($file_extension, ['jpg', 'jpeg', 'png']) && file_exists($poster_path)): ?>
+                                    <?php if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'webp']) && file_exists($poster_path)): ?>
                                     <div style="text-align: center;">
                                         <img src="<?php echo htmlspecialchars($poster_path); ?>"
                                              alt="Event Poster"

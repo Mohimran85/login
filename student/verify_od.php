@@ -1,4 +1,4 @@
-8<?php
+<?php
     /**
  * Public OD Letter Verification Page
  * This page allows anyone with the OD ID to view approved OD letters
@@ -6,11 +6,9 @@
  */
 
     // NO SESSION CHECK - This is a public page
+    require_once __DIR__ . '/../includes/db_config.php';
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-    }
+    $conn = get_db_connection();
 
     // Get OD request ID from URL
     if (! isset($_GET['od_id']) || empty($_GET['od_id'])) {
@@ -301,7 +299,7 @@
         </div>
     <?php else: ?>
         <div class="verification-banner no-print">
-            <h2>✅ OD Letter Verified</h2>
+            <h2> OD Letter Verified</h2>
             <p>This On Duty letter has been officially approved by Sona College of Technology</p>
             <p style="font-size: 12px; margin-top: 10px;"><strong>Ref No:</strong> SCT/OD/<?php echo date('Y'); ?>/<?php echo str_pad($od_data['id'], 4, '0', STR_PAD_LEFT); ?></p>
         </div>

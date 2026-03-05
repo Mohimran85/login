@@ -3,83 +3,109 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    // Block access if 2FA verification is still pending
+    if (isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
+    && (! isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== true)) {
+    header("Location: ../verify_2fa.php");
+    exit();
     }
+
+    require_once __DIR__ . '/../includes/db_config.php';
+    require_once __DIR__ . '/../includes/TotpManager.php';
+    $conn = get_db_connection();
+
+    // Check 2FA status
+    $totpMgr = new TotpManager();
+    // Determine which table the admin is in
+    $admin_2fa_table = 'teacher_register';
+    $check_admin     = $conn->prepare("SELECT id FROM teacher_register WHERE username = ?");
+    $check_admin->bind_param("s", $_SESSION['username']);
+    $check_admin->execute();
+    if ($check_admin->get_result()->num_rows === 0) {
+    $admin_2fa_table = 'student_register';
+    }
+    $check_admin->close();
+    $is_2fa_enabled = $totpMgr->isEnabled($conn, $_SESSION['username'], $admin_2fa_table);
 
     $message  = "";
     $username = $_SESSION['username'];
 
+    // Check for 2FA success message from setup
+    if (isset($_GET['2fa']) && $_GET['2fa'] === 'enabled') {
+    $message = "<div style='color:green;'>Two-factor authentication has been enabled successfully!</div>";
+    } elseif (isset($_GET['2fa']) && $_GET['2fa'] === 'disabled') {
+    $message = "<div style='color:green;'>Two-factor authentication has been disabled.</div>";
+    }
+
     // Handle form submission for updates
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['update_profile'])) {
-        $name           = trim($_POST["name"]);
-        $dob            = $_POST["dob"];
-        $regno          = trim($_POST["regno"]);
-        $year_of_join   = $_POST["batch"];
-        $degree         = $_POST["degree"];
-        $department     = $_POST["department"];
-        $personal_email = trim($_POST["personal_email"]);
-        $password       = $_POST["password"];
-        $re_password    = $_POST["re-password"];
+    $name           = trim($_POST["name"]);
+    $dob            = $_POST["dob"];
+    $regno          = trim($_POST["regno"]);
+    $year_of_join   = $_POST["batch"];
+    $degree         = $_POST["degree"];
+    $department     = $_POST["department"];
+    $personal_email = trim($_POST["personal_email"]);
+    $password       = $_POST["password"];
+    $re_password    = $_POST["re-password"];
 
-        // Validation
-        if ($password !== $re_password) {
-            $message = "<div style='color:red;'>Passwords do not match.</div>";
-        } else {
-            // Update query - determine if it's student or teacher
-            $tables = ['student_register', 'teacher_register'];
+    // Validation
+    if ($password !== $re_password) {
+        $message = "<div style='color:red;'>Passwords do not match.</div>";
+    } else {
+        // Update query - determine if it's student or teacher
+        $tables = ['student_register', 'teacher_register'];
 
-            foreach ($tables as $table) {
-                $column_email = $table === 'student_register' ? 'personal_email' : 'email';
+        foreach ($tables as $table) {
+            $column_email = $table === 'student_register' ? 'personal_email' : 'email';
 
-                // Check if user exists in this table
-                $check_sql  = "SELECT id FROM $table WHERE username=?";
-                $check_stmt = $conn->prepare($check_sql);
-                $check_stmt->bind_param("s", $username);
-                $check_stmt->execute();
-                $check_result = $check_stmt->get_result();
+            // Check if user exists in this table
+            $check_sql  = "SELECT id FROM $table WHERE username=?";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("s", $username);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
 
-                if ($check_result->num_rows > 0) {
-                    // Update the record
-                    if (! empty($password)) {
-                        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                        if ($table === 'student_register') {
-                            $update_sql  = "UPDATE $table SET name=?, dob=?, regno=?, year_of_join=?, degree=?, department=?, $column_email=?, password=? WHERE username=?";
-                            $update_stmt = $conn->prepare($update_sql);
-                            $update_stmt->bind_param("sssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $hashed_password, $username);
-                        } else {
-                            $update_sql  = "UPDATE $table SET name=?, department=?, $column_email=?, password=? WHERE username=?";
-                            $update_stmt = $conn->prepare($update_sql);
-                            $update_stmt->bind_param("sssss", $name, $department, $personal_email, $hashed_password, $username);
-                        }
+            if ($check_result->num_rows > 0) {
+                // Update the record
+                if (! empty($password)) {
+                    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                    if ($table === 'student_register') {
+                        $update_sql  = "UPDATE $table SET name=?, dob=?, regno=?, year_of_join=?, degree=?, department=?, $column_email=?, password=? WHERE username=?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("sssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $hashed_password, $username);
                     } else {
-                        if ($table === 'student_register') {
-                            $update_sql  = "UPDATE $table SET name=?, dob=?, regno=?, year_of_join=?, degree=?, department=?, $column_email=? WHERE username=?";
-                            $update_stmt = $conn->prepare($update_sql);
-                            $update_stmt->bind_param("ssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $username);
-                        } else {
-                            $update_sql  = "UPDATE $table SET name=?, department=?, $column_email=? WHERE username=?";
-                            $update_stmt = $conn->prepare($update_sql);
-                            $update_stmt->bind_param("ssss", $name, $department, $personal_email, $username);
-                        }
+                        $update_sql  = "UPDATE $table SET name=?, department=?, $column_email=?, password=? WHERE username=?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("sssss", $name, $department, $personal_email, $hashed_password, $username);
                     }
-
-                    if ($update_stmt->execute()) {
-                        $message = "<div style='color:green;'>Profile updated successfully!</div>";
+                } else {
+                    if ($table === 'student_register') {
+                        $update_sql  = "UPDATE $table SET name=?, dob=?, regno=?, year_of_join=?, degree=?, department=?, $column_email=? WHERE username=?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("ssssssss", $name, $dob, $regno, $year_of_join, $degree, $department, $personal_email, $username);
                     } else {
-                        $message = "<div style='color:red;'>Error updating profile: " . $update_stmt->error . "</div>";
+                        $update_sql  = "UPDATE $table SET name=?, department=?, $column_email=? WHERE username=?";
+                        $update_stmt = $conn->prepare($update_sql);
+                        $update_stmt->bind_param("ssss", $name, $department, $personal_email, $username);
                     }
-                    $update_stmt->close();
-                    break;
                 }
-                $check_stmt->close();
+
+                if ($update_stmt->execute()) {
+                    $message = "<div style='color:green;'>Profile updated successfully!</div>";
+                } else {
+                    $message = "<div style='color:red;'>Error updating profile: " . htmlspecialchars($update_stmt->error, ENT_QUOTES, 'UTF-8') . "</div>";
+                }
+                $update_stmt->close();
+                break;
             }
+            $check_stmt->close();
         }
+    }
     }
 
     // Fetch user data
@@ -88,51 +114,51 @@
     $tables    = ['student_register', 'teacher_register'];
 
     foreach ($tables as $table) {
-        $column_email = $table === 'student_register' ? 'personal_email' : 'email';
-        $columns      = $table === 'student_register'
-            ? "name, dob, regno, year_of_join, degree, department, $column_email"
-            : "name, faculty_id, department, $column_email";
+    $column_email = $table === 'student_register' ? 'personal_email' : 'email';
+    $columns      = $table === 'student_register'
+        ? "name, dob, regno, year_of_join, degree, department, $column_email"
+        : "name, faculty_id, department, $column_email";
 
-        $sql  = "SELECT $columns FROM $table WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sql  = "SELECT $columns FROM $table WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_type = $table === 'student_register' ? 'student' : 'teacher';
-            break;
-        }
-        $stmt->close();
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        break;
+    }
+    $stmt->close();
     }
 
     // Check teacher status and redirect appropriately
     if ($user_type === 'teacher') {
-        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
-        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
-        $teacher_status_stmt->bind_param("s", $username);
-        $teacher_status_stmt->execute();
-        $teacher_status_result = $teacher_status_stmt->get_result();
+    $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+    $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+    $teacher_status_stmt->bind_param("s", $username);
+    $teacher_status_stmt->execute();
+    $teacher_status_result = $teacher_status_stmt->get_result();
 
-        $teacher_status = 'teacher';
-        if ($teacher_status_result->num_rows > 0) {
-            $status_data    = $teacher_status_result->fetch_assoc();
-            $teacher_status = $status_data['status'];
-        }
-        $teacher_status_stmt->close();
+    $teacher_status = 'teacher';
+    if ($teacher_status_result->num_rows > 0) {
+        $status_data    = $teacher_status_result->fetch_assoc();
+        $teacher_status = $status_data['status'];
+    }
+    $teacher_status_stmt->close();
 
-        // Only allow admin teachers to access admin profile
-        if ($teacher_status !== 'admin') {
-            header("Location: ../teacher/profile.php");
-            exit();
-        }
+    // Only allow admin teachers to access admin profile
+    if ($teacher_status !== 'admin') {
+        header("Location: ../teacher/profile.php");
+        exit();
+    }
     }
 
     // Redirect students to their profile
     if ($user_type === 'student') {
-        header("Location: ../student/profile.php");
-        exit();
+    header("Location: ../student/profile.php");
+    exit();
     }
 
     $conn->close();
@@ -145,10 +171,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>Profile</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="./CSS/profile_css.css" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -376,6 +402,38 @@
               <button type="button" id="cancelBtn" onclick="cancelEdit()" style="display:none;">Cancel</button>
             </div>
           </form>
+
+          <!-- Two-Factor Authentication Section -->
+          <div style="margin-top: 30px; padding: 20px; border: 2px solid #e9ecef; border-radius: 10px; background: #fafbfc;">
+            <h3 style="color: #1e4276; font-size: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined" style="font-size: 20px;">verified_user</span>
+              Two-Factor Authentication
+            </h3>
+
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+              <?php if ($is_2fa_enabled): ?>
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #e8f5e9; color: #2e7d32;">
+                  &#10003; Enabled
+                </span>
+              <?php else: ?>
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #fff8e1; color: #e65100;">
+                  &#9888; Not Configured
+                </span>
+              <?php endif; ?>
+            </div>
+
+            <p style="color: #666; font-size: 13px; line-height: 1.5; margin-bottom: 12px;">
+              <?php if ($is_2fa_enabled): ?>
+                Your account is protected with two-factor authentication.
+              <?php else: ?>
+                Add an extra layer of security to your admin account.
+              <?php endif; ?>
+            </p>
+
+            <a href="../setup_2fa.php" style="display: inline-block; padding: 8px 16px; background: #1e4276; color: white; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500;">
+              <?php echo $is_2fa_enabled ? 'Manage 2FA Settings' : 'Enable 2FA'; ?>
+            </a>
+          </div>
         </div>
       </div>
     </div>

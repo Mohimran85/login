@@ -2,35 +2,29 @@
     // Check if user is already logged in
     session_start();
     if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
-        // Redirect based on user role
-        if (isset($_SESSION['role']) && $_SESSION['role'] === 'student') {
-            header("Location: student/index.php");
-        } else {
-            header("Location: admin/index.php");
-        }
-        exit();
+    // Redirect based on user role
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'student') {
+        header("Location: student/index.php");
+    } else {
+        header("Location: admin/index.php");
+    }
+    exit();
     }
 
-    $servername  = "localhost";
-    $db_username = "root";
-    $db_password = "";
-    $dbname      = "event_management_system";
-
-    $conn = new mysqli($servername, $db_username, $db_password, $dbname);
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once 'includes/db_config.php';
+    require_once 'includes/TotpManager.php';
+    $conn = get_db_connection();
 
     // Function to safely check and add status column
     function ensureStatusColumn($conn, $table_name)
     {
-        $check_column  = "SHOW COLUMNS FROM $table_name LIKE 'status'";
-        $column_result = $conn->query($check_column);
+    $check_column  = "SHOW COLUMNS FROM $table_name LIKE 'status'";
+    $column_result = $conn->query($check_column);
 
-        if ($column_result->num_rows == 0) {
-            $add_column = "ALTER TABLE $table_name ADD COLUMN status VARCHAR(20) DEFAULT 'active'";
-            $conn->query($add_column);
-        }
+    if ($column_result->num_rows == 0) {
+        $add_column = "ALTER TABLE $table_name ADD COLUMN status VARCHAR(20) DEFAULT 'active'";
+        $conn->query($add_column);
+    }
     }
 
     // Ensure status column exists in teacher table
@@ -39,85 +33,98 @@
     $error_message = "";
 
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $username = trim($_POST['name']);
-        $password = $_POST['password'];
+    $username = trim($_POST['name']);
+    $password = $_POST['password'];
 
-        if (empty($username) || empty($password)) {
-            $error_message = "Please enter both username and password.";
-        } else {
-            // Search in both tables: student_register and teacher_register
-            $tables          = ['student_register', 'teacher_register'];
-            $user_found      = false;
-            $hashed_password = "";
+    if (empty($username) || empty($password)) {
+        $error_message = "Please enter both username and password.";
+    } else {
+        // Search in both tables: student_register and teacher_register
+        $tables          = ['student_register', 'teacher_register'];
+        $user_found      = false;
+        $hashed_password = "";
 
-            foreach ($tables as $table) {
-                // We consider username or personal_email/email for login
-                $column_username = $table === 'student_register' ? 'username' : 'username';
-                $column_email    = $table === 'student_register' ? 'personal_email' : 'email';
+        foreach ($tables as $table) {
+            // We consider username or personal_email/email for login
+            $column_username = $table === 'student_register' ? 'username' : 'username';
+            $column_email    = $table === 'student_register' ? 'personal_email' : 'email';
 
-                $sql  = "SELECT username, password FROM $table WHERE $column_username=? OR $column_email=? LIMIT 1";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ss", $username, $username);
-                $stmt->execute();
-                $stmt->store_result();
+            $sql  = "SELECT username, password FROM $table WHERE $column_username=? OR $column_email=? LIMIT 1";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ss", $username, $username);
+            $stmt->execute();
+            $stmt->store_result();
 
-                if ($stmt->num_rows === 1) {
-                    $user_found      = true;
-                    $actual_username = "";
-                    $stmt->bind_result($actual_username, $hashed_password);
-                    $stmt->fetch();
-                    $stmt->close();
-                    break;
-                }
+            if ($stmt->num_rows === 1) {
+                $user_found      = true;
+                $actual_username = "";
+                $stmt->bind_result($actual_username, $hashed_password);
+                $stmt->fetch();
                 $stmt->close();
+                break;
             }
+            $stmt->close();
+        }
 
-            if ($user_found) {
-                if (password_verify($password, $hashed_password)) {
-                    // Password correct: user logged in successfully
-                    // Start a session and save user info
-                    session_start();
-                    $_SESSION['username']  = $actual_username; // Use actual username, not the login input
-                    $_SESSION['role']      = ($table === 'student_register') ? 'student' : 'teacher';
-                    $_SESSION['logged_in'] = true;
+        if ($user_found) {
+            if (password_verify($password, $hashed_password)) {
+                // Password correct — now check if 2FA is enabled
+                $totp = new TotpManager();
+                $role = ($table === 'student_register') ? 'student' : 'teacher';
 
-                    // Redirect based on user role and status
-                    if ($_SESSION['role'] === 'student') {
-                        header("Location: student/index.php");
-                    } else {
-                        // For teachers, check their role/status before allowing admin access
-                        $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
-                        $teacher_status_stmt = $conn->prepare($teacher_status_sql);
-                        $teacher_status_stmt->bind_param("s", $actual_username); // Use actual username
-                        $teacher_status_stmt->execute();
-                        $teacher_status_result = $teacher_status_stmt->get_result();
-
-                        $teacher_status = 'teacher'; // Default status
-                        if ($teacher_status_result->num_rows > 0) {
-                            $status_data    = $teacher_status_result->fetch_assoc();
-                            $teacher_status = $status_data['status'];
-                        }
-                        $teacher_status_stmt->close();
-
-                        // Redirect based on teacher role/status
-                        if ($teacher_status === 'inactive') {
-                            $_SESSION['access_denied'] = 'Your account is inactive. Please contact an administrator to restore access.';
-                            header("Location: teacher/index.php");
-                        } elseif ($teacher_status === 'admin') {
-                            header("Location: admin/index.php");
-                        } else {
-                            // Regular teachers go to teacher dashboard
-                            header("Location: teacher/index.php");
-                        }
-                    }
+                if ($totp->isEnabled($conn, $actual_username, $table)) {
+                    // 2FA is enabled: set pending session and redirect to verification
+                    $_SESSION['2fa_pending']  = true;
+                    $_SESSION['2fa_username'] = $actual_username;
+                    $_SESSION['2fa_role']     = $role;
+                    $_SESSION['2fa_table']    = $table;
+                    $_SESSION['2fa_attempts'] = 0;
+                    $_SESSION['2fa_time']     = time();
+                    $conn->close();
+                    header("Location: verify_2fa.php");
                     exit();
-                } else {
-                    $error_message = "Invalid username or password.";
                 }
+
+                // No 2FA: proceed with normal login
+                $_SESSION['username']  = $actual_username;
+                $_SESSION['role']      = $role;
+                $_SESSION['logged_in'] = true;
+
+                // Redirect based on user role and status
+                if ($_SESSION['role'] === 'student') {
+                    header("Location: student/index.php");
+                } else {
+                    // For teachers, check their role/status before allowing admin access
+                    $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
+                    $teacher_status_stmt = $conn->prepare($teacher_status_sql);
+                    $teacher_status_stmt->bind_param("s", $actual_username);
+                    $teacher_status_stmt->execute();
+                    $teacher_status_result = $teacher_status_stmt->get_result();
+
+                    $teacher_status = 'teacher';
+                    if ($teacher_status_result->num_rows > 0) {
+                        $status_data    = $teacher_status_result->fetch_assoc();
+                        $teacher_status = $status_data['status'];
+                    }
+                    $teacher_status_stmt->close();
+
+                    if ($teacher_status === 'inactive') {
+                        $_SESSION['access_denied'] = 'Your account is inactive. Please contact an administrator to restore access.';
+                        header("Location: teacher/index.php");
+                    } elseif ($teacher_status === 'admin') {
+                        header("Location: admin/index.php");
+                    } else {
+                        header("Location: teacher/index.php");
+                    }
+                }
+                exit();
             } else {
                 $error_message = "Invalid username or password.";
             }
+        } else {
+            $error_message = "Invalid username or password.";
         }
+    }
     }
 
     $conn->close();
@@ -131,10 +138,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>Event Management - Login</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="./asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="./asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="./asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="./asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="./assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="styles.css" />
     <style>
         .header {

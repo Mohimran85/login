@@ -13,10 +13,8 @@
 
     // Check if user is admin
     $username = $_SESSION['username'];
-    $conn     = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'error' => 'Database connection failed']));
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     $teacher_status_sql = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ? LIMIT 1";
     $stmt               = $conn->prepare($teacher_status_sql);
@@ -128,10 +126,10 @@
     <meta name="color-scheme" content="light only">
     <title>Hackathon Management - Admin Dashboard</title>
     <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <!-- CSS -->
     <link rel="stylesheet" href="./CSS/styles.css">
     <!-- Google Icons -->
@@ -879,13 +877,13 @@
                                         <?php echo $hackathon['confirmed_applications']; ?>
                                     </td>
                                     <td>
-                                        <div class="view-count" onclick="showViewDetails(<?php echo $hackathon['id']; ?>, '<?php echo addslashes(htmlspecialchars($hackathon['title'])); ?>')" style="cursor: pointer;" title="Click to see view details">
+                                        <div class="view-count" onclick="showViewDetails(<?php echo (int) $hackathon['id']; ?>, <?php echo htmlspecialchars(json_encode($hackathon['title']), ENT_QUOTES, 'UTF-8'); ?>)" style="cursor: pointer;" title="Click to see view details">
                                             <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
                                             <?php echo number_format($hackathon['view_count']); ?>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="status-badge status-<?php echo $hackathon['status']; ?>">
+                                        <span class="status-badge status-<?php echo htmlspecialchars($hackathon['status'], ENT_QUOTES, 'UTF-8'); ?>">
                                             <?php echo ucfirst($hackathon['status']); ?>
                                         </span>
                                     </td>
@@ -902,7 +900,7 @@
                                             </a>
                                             <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this hackathon?')">
                                                 <input type="hidden" name="delete_id" value="<?php echo $hackathon['id']; ?>">
-                                                <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? ''; ?>">
+                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                                                 <button type="submit" class="icon-btn delete" title="Delete">
                                                     <span class="material-symbols-outlined">delete</span>
                                                 </button>

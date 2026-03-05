@@ -11,6 +11,13 @@
     exit();
     }
 
+    // Block access if 2FA verification is still pending
+    if (isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
+    && (! isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== true)) {
+    header("Location: ../verify_2fa.php");
+    exit();
+    }
+
     // Initialize optimized managers
     $db    = DatabaseManager::getInstance();
     $cache = CacheManager::getInstance();
@@ -100,9 +107,9 @@
     <meta name="color-scheme" content="light only">
     <title>Student Dashboard - Event Management System</title>
     <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <!-- Web App Manifest for Push Notifications -->
     <link rel="manifest" href="../manifest.json">
     <!-- OneSignal Web Push Notifications -->
@@ -111,12 +118,12 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
-          appId: "29fbebb0-954f-41f3-8f31-c3f57f61740b",
+          appId: <?php echo json_encode(getenv('ONESIGNAL_APP_ID') ?: ''); ?>,
           allowLocalhostAsSecureOrigin: true,
         });
 
         // Set external user ID (student registration number)
-        const studentRegno = '<?php echo addslashes($regno); ?>';
+        const studentRegno = <?php echo json_encode($regno); ?>;
         if (studentRegno) {
           OneSignal.login(studentRegno);
           console.log('OneSignal: Logged in as ' + studentRegno);
@@ -843,7 +850,7 @@
       <div class="main">
         <!-- Welcome Section -->
         <div class="welcome-section">
-          <h1>Welcome back,<?php echo explode(' ', $student_data['name'])[0]; ?>!</h1>
+          <h1>Welcome back,<?php echo htmlspecialchars(explode(' ', $student_data['name'])[0], ENT_QUOTES, 'UTF-8'); ?>!</h1>
           <p>Track your event participations and achievements</p>
         </div>
 
@@ -990,7 +997,7 @@
                     <div class="od-request-details">
                       <h4><?php echo htmlspecialchars($od_request['event_name']); ?></h4>
                       <p class="od-request-meta">
-                        <span class="od-status                                                                                                                                                                                                                                                                                                                                   <?php echo $od_request['status']; ?>">
+                        <span class="od-status                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($od_request['status'], ENT_QUOTES, 'UTF-8'); ?>">
                           <?php echo ucfirst($od_request['status']); ?>
                         </span>
                         <span class="od-date"><?php echo date('M d, Y', strtotime($od_request['event_date'])); ?></span>

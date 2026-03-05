@@ -6,11 +6,9 @@
  */
 
     // NO SESSION CHECK - This is a public page
+    require_once 'includes/db_config.php';
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-    }
+    $conn = get_db_connection();
 
     // Get OD request ID from URL
     if (! isset($_GET['od_id']) || empty($_GET['od_id'])) {
@@ -81,331 +79,368 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo $od_data ? 'OD Letter Verification - ' . htmlspecialchars($od_data['student_name']) : 'OD Letter Not Found'; ?></title>
     <style>
-        @media print {
-            body {
-                margin: 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .no-print { display: none !important; }
-            .page-break { page-break-before: always; }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: "Times New Roman", serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #333;
             line-height: 1.6;
-            margin: 0;
             padding: 20px;
-            background: white;
-            color: #000;
-            font-size: 14px;
         }
 
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        /* Verification Banner */
         .verification-banner {
-            background: linear-gradient(135deg, #28a745, #20c997);
+            background:linear-gradient(135deg, #0c3878, #03285e);
             color: white;
-            padding: 15px;
+            padding: 20px;
             text-align: center;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 4px 20px rgba(40, 167, 69, 0.25);
         }
 
-        .verification-banner h2 {
-            margin: 0 0 10px 0;
-            font-size: 22px;
-        }
-
-        .verification-banner p {
-            margin: 0;
-            font-size: 14px;
-            opacity: 0.95;
-        }
+        .verification-banner h2 { font-size: 20px; margin-bottom: 5px; font-weight: 700; }
+        .verification-banner p { font-size: 13px; opacity: 0.95; }
+        .verification-banner .ref { font-size: 12px; margin-top: 8px; background: rgba(255,255,255,0.2); display: inline-block; padding: 3px 12px; border-radius: 20px; }
 
         .error-banner {
             background: linear-gradient(135deg, #dc3545, #c82333);
             color: white;
-            padding: 20px;
+            padding: 30px;
             text-align: center;
-            border-radius: 10px;
-            margin: 50px auto;
+            border-radius: 12px;
+            margin: 40px auto;
             max-width: 600px;
-            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            box-shadow: 0 4px 20px rgba(220, 53, 69, 0.25);
         }
 
-        .error-banner h2 {
-            margin: 0 0 15px 0;
-            font-size: 24px;
-        }
+        .error-banner h2 { font-size: 22px; margin-bottom: 10px; }
+        .error-banner p { font-size: 15px; }
 
-        .error-banner p {
-            margin: 0;
-            font-size: 16px;
-            line-height: 1.6;
+        /* Card */
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 18px;
+            overflow: hidden;
         }
-
-        .letterhead {
-            text-align: center;
-            border-bottom: 3px solid #0c3878;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            position: relative;
-        }
-
-        .letterhead-content {
+        .card-header {
+            padding: 14px 20px;
+            font-weight: 700;
+            font-size: 15px;
+            color: #fff;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-            position: relative;
-            gap: 20px;
+            gap: 8px;
         }
 
-        .college-logo {
-            width: 120px;
-            height: 80px;
-            object-fit: contain;
-            flex-shrink: 0;
-        }
+        .card-body { padding: 0; }
 
-        .college-info {
-            flex: 1;
-            text-align: center;
-        }
+        .card-header.student { background: #0c3878; }
+        .card-header.event { background: #1565c0; }
+        .card-header.approval { background: #28a745; }
+        .card-header.group { background: #6f42c1; }
 
-        .college-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: #0c3878;
-            margin-bottom: 5px;
-            letter-spacing: 1px;
+        /* Detail Tables */
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-
-        .college-address {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-
-        .document-title {
-            font-size: 18px;
-            font-weight: bold;
-            text-decoration: underline;
-            margin: 15px 0 15px 0;
-            text-align: center;
-            color: #0c3878;
-            letter-spacing: 2px;
-        }
-
-        .letter-content {
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        .letter-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-size: 12px;
-        }
-
-        .letter-date {
-            text-align: right;
-        }
-
-        .letter-body {
-            margin-bottom: 20px;
-            text-align: justify;
-        }
-
-        .student-details, .event-details {
-            margin: 12px 0;
-            background: #f9f9f9;
-            padding: 10px;
-            border-left: 4px solid #0c3878;
-            border-radius: 0 5px 5px 0;
-        }
-
-        .signature-section {
-            margin-top: 100px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        .signature-box {
-            text-align: center;
-            width: 200px;
-        }
-
-        .signature-line {
-            border-top: 1px solid #000;
-            margin-bottom: 5px;
-            height: 40px;
-            margin-top: 10px;
-        }
-
-        .signature-title {
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 3px;
-        }
-
-        .signature-name {
-            font-size: 11px;
-            color: #666;
-        }
-
-        .action-buttons {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 2px solid #2196f3;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #0c3878, #1565c0);
-            color: white;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
+        .detail-table tr { border-bottom: 1px solid #f0f0f0; }
+        .detail-table tr:last-child { border-bottom: none; }
+        .detail-table td {
+            padding: 10px 20px;
             font-size: 14px;
-            margin: 10px;
-            text-decoration: none;
+            vertical-align: top;
+        }
+        .detail-table .label {
+            font-weight: 600;
+            color: #555;
+            width: 40%;
+            background: #fafbfc;
+        }
+        .detail-table .value {
+            color: #222;
+        }
+
+        /* Group Members Table */
+        .members-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .members-table th {
+            background: #f5f0ff;
+            color: #4a2d8a;
+            padding: 10px 16px;
+            font-size: 13px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .members-table td {
+            padding: 10px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid #f0f0f0;
+            word-break: break-word;
+        }
+        .members-table tr:last-child td { border-bottom: none; }
+        .members-table .sno { width: 40px; text-align: center; }
+        .members-table .primary-badge {
+            background: #0c3878;
+            color: #fff;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
             display: inline-block;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(12, 56, 120, 0.3);
+            margin-top: 2px;
+            font-weight: 600;
         }
 
-        .btn:hover {
-            background: linear-gradient(135deg, #0a2d5a, #0d47a1);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(12, 56, 120, 0.4);
+        /* Approval Status */
+        .status-badge {
+            display: inline-block;
+            padding: 5px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        @page {
-            margin: 0.75in;
-            size: A4;
+        /* Remarks */
+        .remarks-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 16px;
+            margin: 0 20px 15px;
+            border-radius: 0 6px 6px 0;
+            font-size: 13px;
+            color: #856404;
+            font-style: italic;
+        }
+
+        /* Footer */
+        .footer-note {
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: 20px;
+            padding: 15px;
+        }
+
+        /* Print */
+        @media print {
+            body { background: #fff; padding: 10px; }
+            .no-print { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #ddd; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 10px; }
+            .detail-table .label { width: 45%; }
+            .detail-table td { padding: 8px 12px; font-size: 13px; }
+
+            /* Stack group members table on small screens */
+            .members-table thead { display: none; }
+            .members-table, .members-table tbody, .members-table tr, .members-table td {
+                display: block;
+                width: 100%;
+            }
+            .members-table tr {
+                padding: 12px 16px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .members-table tr:last-child { border-bottom: none; }
+            .members-table td {
+                padding: 3px 0;
+                border-bottom: none;
+                font-size: 13px;
+            }
+            .members-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #555;
+                margin-right: 8px;
+            }
+            .members-table .sno { display: none; }
+            .members-table .primary-badge { margin-left: 4px; }
         }
     </style>
 </head>
 <body>
     <?php if ($error_message): ?>
         <div class="error-banner">
-            <h2>❌ Verification Failed</h2>
+            <h2>Verification Failed</h2>
             <p><?php echo htmlspecialchars($error_message); ?></p>
         </div>
     <?php else: ?>
-        <div class="verification-banner no-print">
-            <h2>✅ OD Letter Verified</h2>
+    <div class="container">
+
+        <!-- Verification Banner -->
+        <div class="verification-banner">
+
+            <h2>OD Letter Verified Successfully</h2>
             <p>This On Duty letter has been officially approved by Sona College of Technology</p>
-            <p style="font-size: 12px; margin-top: 10px;"><strong>Ref No:</strong> SCT/OD/<?php echo date('Y'); ?>/<?php echo str_pad($od_data['id'], 4, '0', STR_PAD_LEFT); ?></p>
+            <div class="ref">Ref: SCT/OD/<?php echo date('Y'); ?>/<?php echo str_pad($od_data['id'], 4, '0', STR_PAD_LEFT); ?></div>
         </div>
 
-        <div class="action-buttons no-print">
-            <button onclick="window.print()" class="btn">🖨️ Print / Save as PDF</button>
+        <!-- Student Details Card -->
+        <div class="card">
+            <div class="card-header student">
+                 Student Details
+            </div>
+            <div class="card-body">
+                <table class="detail-table">
+                    <tr>
+                        <td class="label">Student Name</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['student_name']); ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Register Number</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['student_regno']); ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Degree</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['student_degree'] ?? 'N/A'); ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Department</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['student_department'] ?? 'N/A'); ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Class Counselor</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['counselor_name']); ?> (<?php echo htmlspecialchars($od_data['counselor_department']); ?>)</td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
-        <div class="letter-content">
-            <div class="letterhead">
-                <div class="letterhead-content">
-                    <img src="student/sona_logo.jpg" alt="Sona College Logo" class="college-logo" height="100px" width="200">
-                    <div class="college-info">
-                        <div class="college-name">SONA COLLEGE OF TECHNOLOGY</div>
-                        <div class="college-address">
-                            (Autonomous | Affiliated to Anna University)<br>
-                            Salem - 636 005, Tamil Nadu, India<br>
-                            ☎ +91-427-2331129 | ✉ info@sonatech.ac.in | 🌐 www.sonatech.ac.in<br>
-                            NAAC Accredited with A++ Grade | ISO 9001:2015 Certified
-                        </div>
-                    </div>
-                </div>
+        <!-- Group Members Card (if any) -->
+        <?php if (! empty($group_members_details)): ?>
+        <div class="card">
+            <div class="card-header group">
+                 Group Members (<?php echo count($group_members_details) + 1; ?> participants)
             </div>
-
-            <div class="document-title">ON DUTY (OD) PERMISSION LETTER</div>
-
-            <div class="letter-header">
-                <div class="letter-ref">
-                    <strong>Ref No:</strong> SCT/OD/<?php echo date('Y'); ?>/<?php echo str_pad($od_data['id'], 4, '0', STR_PAD_LEFT); ?>
-                </div>
-                <div class="letter-date">
-                    <strong>Date:</strong> <?php echo $current_date; ?>
-                </div>
+            <div class="card-body">
+                <table class="members-table">
+                    <thead>
+                        <tr>
+                            <th class="sno">S.No</th>
+                            <th>Name</th>
+                            <th>Reg. No</th>
+                            <th>Department</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="sno">1</td>
+                            <td data-label="Name: "><?php echo htmlspecialchars($od_data['student_name']); ?> <span class="primary-badge">PRIMARY</span></td>
+                            <td data-label="Reg. No: "><?php echo htmlspecialchars($od_data['student_regno']); ?></td>
+                            <td data-label="Dept: "><?php echo htmlspecialchars($od_data['student_department'] ?? 'N/A'); ?></td>
+                        </tr>
+                        <?php $count = 2;foreach ($group_members_details as $member): ?>
+                        <tr>
+                            <td class="sno"><?php echo $count++; ?></td>
+                            <td data-label="Name: "><?php echo htmlspecialchars($member['name']); ?></td>
+                            <td data-label="Reg. No: "><?php echo htmlspecialchars($member['regno']); ?></td>
+                            <td data-label="Dept: "><?php echo htmlspecialchars($member['department'] ?? 'N/A'); ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
             </div>
+        </div>
+        <?php endif; ?>
 
-            <div class="letter-body">
-                <p><strong>To Whom It May Concern,</strong></p>
+        <!-- Event Details Card -->
+        <div class="card">
+            <div class="card-header event">
+                Event Details
+            </div>
+            <div class="card-body">
+                <table class="detail-table">
+                    <tr>
+                        <td class="label">Event Name</td>
+                        <td class="value"><strong><?php echo htmlspecialchars($od_data['event_name']); ?></strong></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Event Date</td>
+                        <td class="value"><?php echo date('l, F d, Y', strtotime($od_data['event_date'])); ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Event Time</td>
+                        <td class="value"><?php echo date('h:i A', strtotime($od_data['event_time'])); ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Duration</td>
+                        <td class="value"><?php echo isset($od_data['event_days']) ? htmlspecialchars($od_data['event_days']) . ' day(s)' : '1 day'; ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Venue / Location</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['event_state']) . ', ' . htmlspecialchars($od_data['event_district']); ?></td>
+                    </tr>
+                    <?php if (! empty($od_data['event_description'])): ?>
+                    <tr>
+                        <td class="label">Description</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['event_description']); ?></td>
+                    </tr>
+                    <?php endif; ?>
+                    <tr>
+                        <td class="label">Reason for OD</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['reason']); ?></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
 
-                <p style="text-align: justify; line-height: 1.5;">
-                    This is to certify that <strong><?php echo htmlspecialchars($od_data['student_name']); ?></strong>,
-                    bearing Register Number <strong><?php echo htmlspecialchars($od_data['student_regno']); ?></strong>,
-                    a student of <strong><?php echo htmlspecialchars($od_data['student_degree'] ?? 'N/A'); ?></strong>
-                    <strong><?php echo htmlspecialchars($od_data['student_department'] ?? 'N/A'); ?></strong> department,
-                    under the guidance of Class Counselor <strong><?php echo htmlspecialchars($od_data['counselor_name']); ?></strong>,
-                    <?php echo empty($group_members_details) ? 'has' : 'along with the team members listed below, have'; ?>
-                    been granted On Duty (OD) permission to participate in the mentioned event and
-                    <?php echo empty($group_members_details) ? 'is' : 'are'; ?> hereby authorized to remain OD from regular classes for the specified duration.
-                </p>
-
-                <?php if (! empty($group_members_details)): ?>
-                    <div class="student-details" style="background: #e3f2fd; border-left-color: #2196f3; padding: 12px 15px;">
-                        <p style="margin: 0; line-height: 1.6;">
-                            <strong style="color: #1976d2;">🔹 GROUP OD:</strong>
-                            This is a group participation request. Additional team members:
-                            <strong>
-                                <?php
-                                    $member_names = [];
-                                    foreach ($group_members_details as $member) {
-                                        $member_names[] = htmlspecialchars($member['name']) . ' (' . htmlspecialchars($member['regno']) . ')';
-                                    }
-                                    echo implode(', ', $member_names);
-                                ?>
-                            </strong>.
-                            Total participants: <strong><?php echo count($group_members_details) + 1; ?></strong> (including primary requester).
-                        </p>
-                    </div>
+        <!-- Approval Details Card -->
+        <div class="card">
+            <div class="card-header approval">
+                Approval Details
+            </div>
+            <div class="card-body">
+                <table class="detail-table">
+                    <tr>
+                        <td class="label">Status</td>
+                        <td class="value"><span class="status-badge status-approved">APPROVED</span></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Approved By</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['counselor_name']); ?> (Class Counselor)</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Faculty ID</td>
+                        <td class="value"><?php echo htmlspecialchars($od_data['faculty_id'] ?? 'N/A'); ?></td>
+                    </tr>
+                    <tr>
+                        <td class="label">Approved On</td>
+                        <td class="value"><?php echo $od_data['response_date'] ? date('F d, Y \a\t h:i A', strtotime($od_data['response_date'])) : $current_date; ?></td>
+                    </tr>
+                </table>
+                <?php if (! empty($od_data['counselor_remarks'])): ?>
+                <div class="remarks-box">
+                    <strong>Counselor Remarks:</strong> <?php echo htmlspecialchars($od_data['counselor_remarks']); ?>
+                </div>
                 <?php endif; ?>
-
-                <p style="text-align: justify; line-height: 1.5;">
-                    <?php echo empty($group_members_details) ? 'The student is' : 'The students are'; ?>
-                    permitted to attend <strong><?php echo htmlspecialchars($od_data['event_name']); ?></strong>,
-                    scheduled on <strong><?php echo date('l, F d, Y', strtotime($od_data['event_date'])); ?></strong>
-                    at <strong><?php echo date('h:i A', strtotime($od_data['event_time'])); ?></strong>,
-                    to be held at <strong><?php echo htmlspecialchars($od_data['event_state']) . ', ' . htmlspecialchars($od_data['event_district']); ?></strong>
-                    for a duration of <strong><?php echo isset($od_data['event_days']) ? htmlspecialchars($od_data['event_days']) . ' day(s)' : 'one day'; ?></strong>.
-                    <?php echo htmlspecialchars($od_data['event_description']); ?>
-                    The purpose of this OD request is: <?php echo htmlspecialchars($od_data['reason']); ?>.
-                </p>
-
-                <p style="margin-top: 15px; text-align: justify; line-height: 1.8;">
-                    This request has been <strong>officially approved</strong> by
-                    <strong><?php echo htmlspecialchars($od_data['counselor_name']); ?></strong> (Class Counselor)
-                    on <strong><?php echo $od_data['response_date'] ? date('F d, Y \a\t h:i A', strtotime($od_data['response_date'])) : $current_date; ?></strong><?php if (! empty($od_data['counselor_remarks'])): ?> with the following remarks:
-                    <em><?php echo htmlspecialchars($od_data['counselor_remarks']); ?></em><?php endif; ?>.
-                    The above-mentioned student has our permission to participate in the stated event.
-                    We request your kind cooperation in allowing the student to attend this academic/co-curricular activity.
-                    This letter serves as official documentation for the On Duty permission granted by the institution.
-                    <strong>Please note:</strong> This OD letter is valid exclusively for the specified event date and duration.
-                    The student must resume regular academic activities immediately upon completion of the event.
-                </p>
-            </div>
-
-            <div class="signature-section">
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-title">Class Counselor</div>
-                    <div class="signature-name"><?php echo htmlspecialchars($od_data['counselor_name']); ?></div>
-                </div>
-
-                <div class="signature-box">
-                    <div class="signature-line"></div>
-                    <div class="signature-title">Head of Department</div>
-                </div>
             </div>
         </div>
+
+        <div class="footer-note">
+            This is a digitally verified document from Sona College of Technology.<br>
+            Ref: SCT/OD/<?php echo date('Y'); ?>/<?php echo str_pad($od_data['id'], 4, '0', STR_PAD_LEFT); ?> |
+            Verified on: <?php echo $current_date; ?>
+        </div>
+
+    </div>
     <?php endif; ?>
 </body>
 </html>

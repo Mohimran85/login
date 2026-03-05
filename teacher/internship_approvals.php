@@ -3,14 +3,12 @@
 
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get teacher data and check if they are a counselor
     $username     = $_SESSION['username'];
@@ -25,20 +23,20 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $teacher_data = $result->fetch_assoc();
-        $is_admin     = ($teacher_data['status'] === 'admin');
-        $is_counselor = ($teacher_data['status'] === 'counselor' || $is_admin);
-        $teacher_name = $teacher_data['name'] ?? 'Teacher';
-        $teacher_dept = $teacher_data['department'] ?? 'N/A';
+    $teacher_data = $result->fetch_assoc();
+    $is_admin     = ($teacher_data['status'] === 'admin');
+    $is_counselor = ($teacher_data['status'] === 'counselor' || $is_admin);
+    $teacher_name = $teacher_data['name'] ?? 'Teacher';
+    $teacher_dept = $teacher_data['department'] ?? 'N/A';
     } else {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     if (! $is_counselor) {
-        $_SESSION['access_denied'] = 'Only counselors can access internship approvals. Your role is: ' . ucfirst($teacher_data['status']);
-        header("Location: index.php");
-        exit();
+    $_SESSION['access_denied'] = 'Only counselors can access internship approvals. Your role is: ' . ucfirst($teacher_data['status']);
+    header("Location: index.php");
+    exit();
     }
 
     $message      = '';
@@ -46,28 +44,28 @@
 
     // Handle internship approval/rejection
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship_status'])) {
-        $internship_id     = intval($_POST['internship_id']);
-        $new_status        = $_POST['new_status'];
-        $counselor_remarks = trim($_POST['counselor_remarks']);
+    $internship_id     = intval($_POST['internship_id']);
+    $new_status        = $_POST['new_status'];
+    $counselor_remarks = trim($_POST['counselor_remarks']);
 
-        // Validate status
-        if (! in_array($new_status, ['pending', 'approved', 'rejected'])) {
-            $message      = "Invalid status provided.";
-            $message_type = 'error';
+    // Validate status
+    if (! in_array($new_status, ['pending', 'approved', 'rejected'])) {
+        $message      = "Invalid status provided.";
+        $message_type = 'error';
+    } else {
+        $update_sql  = "UPDATE internship_submissions SET approval_status = ?, counselor_remarks = ?, approved_by = ?, approval_date = CURRENT_TIMESTAMP WHERE id = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("ssii", $new_status, $counselor_remarks, $teacher_data['id'], $internship_id);
+
+        if ($update_stmt->execute()) {
+            $message      = "Internship " . ucfirst($new_status) . " successfully!";
+            $message_type = 'success';
         } else {
-            $update_sql  = "UPDATE internship_submissions SET approval_status = ?, counselor_remarks = ?, approved_by = ?, approval_date = CURRENT_TIMESTAMP WHERE id = ?";
-            $update_stmt = $conn->prepare($update_sql);
-            $update_stmt->bind_param("ssii", $new_status, $counselor_remarks, $teacher_data['id'], $internship_id);
-
-            if ($update_stmt->execute()) {
-                $message      = "Internship " . ucfirst($new_status) . " successfully!";
-                $message_type = 'success';
-            } else {
-                $message      = "Error updating internship: " . $conn->error;
-                $message_type = 'error';
-            }
-            $update_stmt->close();
+            $message      = "Error updating internship: " . $conn->error;
+            $message_type = 'error';
         }
+        $update_stmt->close();
+    }
     }
 
     // Get assigned students for this counselor
@@ -80,7 +78,7 @@
 
     $student_regnos = [];
     while ($row = $assigned_students_result->fetch_assoc()) {
-        $student_regnos[] = $row['student_regno'];
+    $student_regnos[] = $row['student_regno'];
     }
     $assigned_students_stmt->close();
 
@@ -91,79 +89,79 @@
 
     // Get internship submissions for assigned students
     if (! empty($student_regnos)) {
-        $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
+    $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
 
-        // Build WHERE clause with filters
-        $where_conditions = ["i.regno IN ($placeholders)"];
-        $params           = $student_regnos;
-        $types            = str_repeat('s', count($student_regnos));
+    // Build WHERE clause with filters
+    $where_conditions = ["i.regno IN ($placeholders)"];
+    $params           = $student_regnos;
+    $types            = str_repeat('s', count($student_regnos));
 
-        if (! empty($search_filter)) {
-            $where_conditions[] = "(sr.name LIKE ? OR i.regno LIKE ? OR i.company_name LIKE ? OR i.role_title LIKE ?)";
-            $search_param       = "%$search_filter%";
-            $params[]           = $search_param;
-            $params[]           = $search_param;
-            $params[]           = $search_param;
-            $params[]           = $search_param;
-            $types .= 'ssss';
-        }
+    if (! empty($search_filter)) {
+        $where_conditions[]  = "(sr.name LIKE ? OR i.regno LIKE ? OR i.company_name LIKE ? OR i.role_title LIKE ?)";
+        $search_param        = "%$search_filter%";
+        $params[]            = $search_param;
+        $params[]            = $search_param;
+        $params[]            = $search_param;
+        $params[]            = $search_param;
+        $types              .= 'ssss';
+    }
 
-        if (! empty($status_filter)) {
-            $where_conditions[] = "i.approval_status = ?";
-            $params[]           = $status_filter;
-            $types .= 's';
-        }
+    if (! empty($status_filter)) {
+        $where_conditions[]  = "i.approval_status = ?";
+        $params[]            = $status_filter;
+        $types              .= 's';
+    }
 
-        if (! empty($department_filter)) {
-            $where_conditions[] = "sr.department = ?";
-            $params[]           = $department_filter;
-            $types .= 's';
-        }
+    if (! empty($department_filter)) {
+        $where_conditions[]  = "sr.department = ?";
+        $params[]            = $department_filter;
+        $types              .= 's';
+    }
 
-        $where_clause = implode(' AND ', $where_conditions);
+    $where_clause = implode(' AND ', $where_conditions);
 
-        $internship_sql = "SELECT i.*, sr.name as student_name, sr.department, sr.year_of_join
+    $internship_sql = "SELECT i.*, sr.name as student_name, sr.department, sr.year_of_join
                           FROM internship_submissions i
                           JOIN student_register sr ON i.regno = sr.regno
                           WHERE $where_clause
                           ORDER BY i.submission_date DESC";
-        $internship_stmt = $conn->prepare($internship_sql);
-        $internship_stmt->bind_param($types, ...$params);
-        $internship_stmt->execute();
-        $internship_result = $internship_stmt->get_result();
+    $internship_stmt = $conn->prepare($internship_sql);
+    $internship_stmt->bind_param($types, ...$params);
+    $internship_stmt->execute();
+    $internship_result = $internship_stmt->get_result();
 
-        // Fetch all results into an array for reuse
-        $internship_array = [];
-        while ($row = $internship_result->fetch_assoc()) {
-            $internship_array[] = $row;
-        }
-        $internship_stmt->close();
+    // Fetch all results into an array for reuse
+    $internship_array = [];
+    while ($row = $internship_result->fetch_assoc()) {
+        $internship_array[] = $row;
+    }
+    $internship_stmt->close();
     } else {
-        $internship_array = [];
+    $internship_array = [];
     }
 
     // Get statistics
     if (! empty($student_regnos)) {
-        $stats_sql = "SELECT
+    $stats_sql = "SELECT
                         COUNT(*) as total_submissions,
                         SUM(CASE WHEN COALESCE(approval_status, 'pending') = 'pending' THEN 1 ELSE 0 END) as pending_submissions,
                         SUM(CASE WHEN COALESCE(approval_status, 'pending') = 'approved' THEN 1 ELSE 0 END) as approved_submissions,
                         SUM(CASE WHEN COALESCE(approval_status, 'pending') = 'rejected' THEN 1 ELSE 0 END) as rejected_submissions
                       FROM internship_submissions
                       WHERE regno IN ($placeholders)";
-        $stats_stmt = $conn->prepare($stats_sql);
-        $stats_stmt->bind_param(str_repeat('s', count($student_regnos)), ...$student_regnos);
-        $stats_stmt->execute();
-        $stats_result = $stats_stmt->get_result();
-        $stats        = $stats_result->fetch_assoc();
-        $stats_stmt->close();
+    $stats_stmt = $conn->prepare($stats_sql);
+    $stats_stmt->bind_param(str_repeat('s', count($student_regnos)), ...$student_regnos);
+    $stats_stmt->execute();
+    $stats_result = $stats_stmt->get_result();
+    $stats        = $stats_result->fetch_assoc();
+    $stats_stmt->close();
     } else {
-        $stats = [
-            'total_submissions'    => 0,
-            'pending_submissions'  => 0,
-            'approved_submissions' => 0,
-            'rejected_submissions' => 0,
-        ];
+    $stats = [
+        'total_submissions'    => 0,
+        'pending_submissions'  => 0,
+        'approved_submissions' => 0,
+        'rejected_submissions' => 0,
+    ];
     }
 
     $stmt->close();
@@ -178,10 +176,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>Internship Approvals - Teacher Dashboard</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="../student/student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">

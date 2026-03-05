@@ -11,16 +11,16 @@ class OneSignalManager
 
     public function __construct()
     {
-        // Load from .env file
-        $this->appId      = $this->loadEnv("ONESIGNAL_APP_ID") ?: "29fbebb0-954f-41f3-8f31-c3f57f61740b";
+        // Load from .env file - no hardcoded fallbacks
+        $this->appId      = $this->loadEnv("ONESIGNAL_APP_ID");
         $this->restApiKey = $this->loadEnv("ONESIGNAL_REST_API_KEY");
 
-        // Log for debugging
         if (empty($this->appId)) {
-            error_log("OneSignal: APP ID not found");
+            error_log("OneSignal: APP ID not configured. Set ONESIGNAL_APP_ID in .env");
+            throw new \RuntimeException("OneSignal APP ID is required but not configured.");
         }
         if (empty($this->restApiKey)) {
-            error_log("OneSignal: REST API KEY not found");
+            error_log("OneSignal: REST API KEY not configured. Set ONESIGNAL_REST_API_KEY in .env");
         }
     }
 
@@ -154,8 +154,8 @@ class OneSignalManager
             "headings"          => ["en" => $title],
             "contents"          => ["en" => $message],
             "data"              => array_merge(["link" => $link], $data),
-            "chrome_icon"       => "asserts/images/logo.png",
-            "chrome_web_icon"   => "asserts/images/logo.png",
+            "chrome_icon"       => "assets/images/logo.png",
+            "chrome_web_icon"   => "assets/images/logo.png",
         ];
 
         // Add poster image if available

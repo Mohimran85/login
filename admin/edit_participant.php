@@ -6,15 +6,13 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Database connection
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get user data for header profile
     $username  = $_SESSION['username'];
@@ -23,18 +21,18 @@
     $tables    = ['student_register', 'teacher_register'];
 
     foreach ($tables as $table) {
-        $sql  = "SELECT name FROM $table WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sql  = "SELECT name FROM $table WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_type = $table === 'student_register' ? 'student' : 'teacher';
-            break;
-        }
-        $stmt->close();
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        break;
+    }
+    $stmt->close();
     }
 
     $success_message = "";
@@ -44,105 +42,105 @@
     $participant_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
     if ($participant_id <= 0) {
-        header("Location: participants.php");
-        exit();
+    header("Location: participants.php");
+    exit();
     }
 
     // Handle form submission
     if ($_POST && isset($_POST['update_participant'])) {
-        $regno         = trim($_POST['regno']);
-        $current_year  = $_POST['current_year'];
-        $semester      = $_POST['semester'];
-        $department    = $_POST['department'];
-        $event_type    = $_POST['event_type'];
-        $event_name    = trim($_POST['event_name']);
-        $attended_date = $_POST['attended_date'];
-        $organisation  = trim($_POST['organisation']);
-        $prize         = $_POST['prize'];
-        $prize_amount  = trim($_POST['prize_amount']);
+    $regno         = trim($_POST['regno']);
+    $current_year  = $_POST['current_year'];
+    $semester      = $_POST['semester'];
+    $department    = $_POST['department'];
+    $event_type    = $_POST['event_type'];
+    $event_name    = trim($_POST['event_name']);
+    $attended_date = $_POST['attended_date'];
+    $organisation  = trim($_POST['organisation']);
+    $prize         = $_POST['prize'];
+    $prize_amount  = trim($_POST['prize_amount']);
 
-        // Validate required fields
-        if (empty($regno) || empty($event_name) || empty($attended_date)) {
-            $error_message = "Registration number, event name, and date are required!";
-        } else {
-            // Handle file uploads
-            $poster_filename      = "";
-            $certificate_filename = "";
+    // Validate required fields
+    if (empty($regno) || empty($event_name) || empty($attended_date)) {
+        $error_message = "Registration number, event name, and date are required!";
+    } else {
+        // Handle file uploads
+        $poster_filename      = "";
+        $certificate_filename = "";
 
-            // Get current files
-            $current_sql  = "SELECT event_poster, certificates FROM student_event_register WHERE id = ?";
-            $current_stmt = $conn->prepare($current_sql);
-            $current_stmt->bind_param("i", $participant_id);
-            $current_stmt->execute();
-            $current_result = $current_stmt->get_result();
-            $current_data   = $current_result->fetch_assoc();
-            $current_stmt->close();
+        // Get current files
+        $current_sql  = "SELECT event_poster, certificates FROM student_event_register WHERE id = ?";
+        $current_stmt = $conn->prepare($current_sql);
+        $current_stmt->bind_param("i", $participant_id);
+        $current_stmt->execute();
+        $current_result = $current_stmt->get_result();
+        $current_data   = $current_result->fetch_assoc();
+        $current_stmt->close();
 
-            $poster_filename      = $current_data['event_poster'];
-            $certificate_filename = $current_data['certificates'];
+        $poster_filename      = $current_data['event_poster'];
+        $certificate_filename = $current_data['certificates'];
 
-            // Handle poster upload with compression
-            if (isset($_FILES['event_poster']) && $_FILES['event_poster']['error'] == 0) {
-                $poster_ext    = pathinfo($_FILES['event_poster']['name'], PATHINFO_EXTENSION);
-                $base_filename = "../uploads/poster_" . uniqid() . "_" . time();
+        // Handle poster upload with compression
+        if (isset($_FILES['event_poster']) && $_FILES['event_poster']['error'] == 0) {
+            $poster_ext    = pathinfo($_FILES['event_poster']['name'], PATHINFO_EXTENSION);
+            $base_filename = "../uploads/poster_" . uniqid() . "_" . time();
 
-                // Compress and save
-                $compression_result = FileCompressor::compressUploadedFile(
-                    $_FILES['event_poster']['tmp_name'],
-                    $base_filename,
-                    $poster_ext,
-                    85
-                );
+            // Compress and save
+            $compression_result = FileCompressor::compressUploadedFile(
+                $_FILES['event_poster']['tmp_name'],
+                $base_filename,
+                $poster_ext,
+                85
+            );
 
-                if ($compression_result['success']) {
-                    $poster_filename = basename($compression_result['path']);
-                } else {
-                    $error_message = "Failed to upload poster file.";
-                }
+            if ($compression_result['success']) {
+                $poster_filename = basename($compression_result['path']);
+            } else {
+                $error_message = "Failed to upload poster file.";
             }
+        }
 
-            // Handle certificate upload with compression
-            if (isset($_FILES['certificates']) && $_FILES['certificates']['error'] == 0) {
-                $cert_ext      = pathinfo($_FILES['certificates']['name'], PATHINFO_EXTENSION);
-                $base_filename = "../uploads/cert_" . uniqid() . "_" . time();
+        // Handle certificate upload with compression
+        if (isset($_FILES['certificates']) && $_FILES['certificates']['error'] == 0) {
+            $cert_ext      = pathinfo($_FILES['certificates']['name'], PATHINFO_EXTENSION);
+            $base_filename = "../uploads/cert_" . uniqid() . "_" . time();
 
-                // Compress and save
-                $compression_result = FileCompressor::compressUploadedFile(
-                    $_FILES['certificates']['tmp_name'],
-                    $base_filename,
-                    $cert_ext,
-                    85
-                );
+            // Compress and save
+            $compression_result = FileCompressor::compressUploadedFile(
+                $_FILES['certificates']['tmp_name'],
+                $base_filename,
+                $cert_ext,
+                85
+            );
 
-                if ($compression_result['success']) {
-                    $certificate_filename = basename($compression_result['path']);
-                } else {
-                    $error_message = "Failed to upload certificate file.";
-                }
+            if ($compression_result['success']) {
+                $certificate_filename = basename($compression_result['path']);
+            } else {
+                $error_message = "Failed to upload certificate file.";
             }
+        }
 
-            if (empty($error_message)) {
-                // Update participant record
-                $update_sql = "UPDATE student_event_register SET
+        if (empty($error_message)) {
+            // Update participant record
+            $update_sql = "UPDATE student_event_register SET
                           regno = ?, current_year = ?, semester = ?, department = ?,
                           event_type = ?, event_name = ?, attended_date = ?, organisation = ?,
                           prize = ?, prize_amount = ?, event_poster = ?, certificates = ?
                           WHERE id = ?";
 
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("ssssssssssssi",
-                    $regno, $current_year, $semester, $department,
-                    $event_type, $event_name, $attended_date, $organisation,
-                    $prize, $prize_amount, $poster_filename, $certificate_filename, $participant_id);
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("ssssssssssssi",
+                $regno, $current_year, $semester, $department,
+                $event_type, $event_name, $attended_date, $organisation,
+                $prize, $prize_amount, $poster_filename, $certificate_filename, $participant_id);
 
-                if ($update_stmt->execute()) {
-                    $success_message = "Participant record updated successfully!";
-                } else {
-                    $error_message = "Error updating record: " . $conn->error;
-                }
-                $update_stmt->close();
+            if ($update_stmt->execute()) {
+                $success_message = "Participant record updated successfully!";
+            } else {
+                $error_message = "Error updating record: " . $conn->error;
             }
+            $update_stmt->close();
         }
+    }
     }
 
     // Fetch participant data
@@ -156,8 +154,8 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows == 0) {
-        header("Location: participants.php");
-        exit();
+    header("Location: participants.php");
+    exit();
     }
 
     $participant = $result->fetch_assoc();
@@ -401,7 +399,7 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="header-logo">
-                <img class="logo" src="./asserts/sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
+                <img class="logo" src="./assets/sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
             </div>
             <div class="header-title">
                 <p>Event Management Dashboard</p>
@@ -457,11 +455,11 @@
                 <h2>Edit Participant Record</h2>
 
                 <?php if (! empty($success_message)): ?>
-                    <div class="alert alert-success"><?php echo $success_message; ?></div>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($success_message, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php endif; ?>
 
                 <?php if (! empty($error_message)): ?>
-                    <div class="alert alert-error"><?php echo $error_message; ?></div>
+                    <div class="alert alert-error"><?php echo htmlspecialchars($error_message, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php endif; ?>
 
                 <div class="form-container">
@@ -555,7 +553,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="attended_date">Event Date *</label>
-                                    <input type="date" id="attended_date" name="attended_date" value="<?php echo $participant['attended_date']; ?>" required>
+                                    <input type="date" id="attended_date" name="attended_date" value="<?php echo htmlspecialchars($participant['attended_date'], ENT_QUOTES, 'UTF-8'); ?>" required>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -577,7 +575,7 @@
                                     <select id="prize" name="prize">
                                         <option value="">No Prize</option>
                                         <option value="first"                                                              <?php echo($participant['prize'] === 'first') ? 'selected' : ''; ?>>First Prize</option>
-                                        <option value="secound"                                                                <?php echo($participant['prize'] === 'secound') ? 'selected' : ''; ?>>Second Prize</option>
+                                        <option value="second"                                                                <?php echo($participant['prize'] === 'second') ? 'selected' : ''; ?>>Second Prize</option>
                                         <option value="third"                                                              <?php echo($participant['prize'] === 'third') ? 'selected' : ''; ?>>Third Prize</option>
                                         <option value="Participation"                                                                      <?php echo($participant['prize'] === 'Participation') ? 'selected' : ''; ?>>Participation Certificate</option>
                                         <option value="Excellence"                                                                   <?php echo($participant['prize'] === 'Excellence') ? 'selected' : ''; ?>>Excellence Award</option>

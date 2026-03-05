@@ -17,10 +17,8 @@
     // Verify user is a student
     $username      = $_SESSION['username'];
     $student_query = "SELECT regno, name FROM student_register WHERE username = ? LIMIT 1";
-    $conn          = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'error' => 'Database connection failed']));
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     $stmt = $conn->prepare($student_query);
     if (! $stmt) {
@@ -99,12 +97,12 @@
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       OneSignalDeferred.push(async function(OneSignal) {
         await OneSignal.init({
-          appId: "29fbebb0-954f-41f3-8f31-c3f57f61740b",
+          appId: <?php echo json_encode(getenv('ONESIGNAL_APP_ID') ?: ''); ?>,
           allowLocalhostAsSecureOrigin: true,
         });
 
         // Set external user ID (student registration number)
-        const studentRegno = '<?php echo addslashes($student_regno); ?>';
+        const studentRegno = <?php echo json_encode($student_regno); ?>;
         if (studentRegno) {
           OneSignal.login(studentRegno);
           console.log('OneSignal: Logged in as ' + studentRegno);
@@ -756,7 +754,7 @@
                                     <span class="material-symbols-outlined">emoji_events</span>
                                 </div>
                             <?php endif; ?>
-                            <span class="status-badge status-<?php echo $hackathon['status']; ?>">
+                            <span class="status-badge status-<?php echo htmlspecialchars($hackathon['status'], ENT_QUOTES, 'UTF-8'); ?>">
                                 <?php echo ucfirst($hackathon['status']); ?>
                             </span>
                         </div>

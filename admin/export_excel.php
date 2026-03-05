@@ -7,10 +7,8 @@ if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit();
 }
 
-$conn = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
 // Get filter parameters from POST (for reports.php) or GET (for participants.php)
 // Check if this is a reports export (POST with at least one filter parameter)
@@ -47,30 +45,30 @@ if ($is_report_export) {
         $year_conditions    = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
         $where_conditions[] = "($year_conditions)";
         foreach ($year_patterns as $pattern) {
-            $bind_types .= 's';
-            $bind_values[] = $pattern;
+            $bind_types    .= 's';
+            $bind_values[]  = $pattern;
         }
     }
 
     // Add department filter if selected
     if ($department !== null) {
-        $where_conditions[] = "e.department = ?";
-        $bind_types .= 's';
-        $bind_values[] = $department;
+        $where_conditions[]  = "e.department = ?";
+        $bind_types         .= 's';
+        $bind_values[]       = $department;
     }
 
     // Add semester filter if selected
     if ($semester !== null) {
-        $where_conditions[] = "e.semester = ?";
-        $bind_types .= 's';
-        $bind_values[] = $semester;
+        $where_conditions[]  = "e.semester = ?";
+        $bind_types         .= 's';
+        $bind_values[]       = $semester;
     }
 
     // Add event type filter if selected
     if ($event_type !== null) {
-        $where_conditions[] = "e.event_type = ?";
-        $bind_types .= 's';
-        $bind_values[] = $event_type;
+        $where_conditions[]  = "e.event_type = ?";
+        $bind_types         .= 's';
+        $bind_values[]       = $event_type;
     }
 
     // Add location filter if selected
@@ -172,25 +170,25 @@ $param_types              = "";
 
 // Build conditions for students
 if (! empty($filter_event_type)) {
-    $student_where_conditions[] = "se.event_type = ?";
-    $teacher_where_conditions[] = "te.event_type = ?";
-    $params[]                   = $filter_event_type;
-    $params[]                   = $filter_event_type;
-    $param_types .= "ss";
+    $student_where_conditions[]  = "se.event_type = ?";
+    $teacher_where_conditions[]  = "te.event_type = ?";
+    $params[]                    = $filter_event_type;
+    $params[]                    = $filter_event_type;
+    $param_types                .= "ss";
 }
 
 if (! empty($filter_department)) {
-    $student_where_conditions[] = "se.department = ?";
-    $teacher_where_conditions[] = "te.department = ?";
-    $params[]                   = $filter_department;
-    $params[]                   = $filter_department;
-    $param_types .= "ss";
+    $student_where_conditions[]  = "se.department = ?";
+    $teacher_where_conditions[]  = "te.department = ?";
+    $params[]                    = $filter_department;
+    $params[]                    = $filter_department;
+    $param_types                .= "ss";
 }
 
 if (! empty($filter_year)) {
-    $student_where_conditions[] = "se.current_year = ?";
+    $student_where_conditions[]  = "se.current_year = ?";
     // Skip year filter for teachers as they don't have current_year
-    $params[] = $filter_year;
+    $params[]     = $filter_year;
     $param_types .= "s";
 }
 
@@ -198,23 +196,23 @@ if (! empty($filter_prize) && $filter_prize !== 'all') {
     if ($filter_prize === 'no_prize') {
         $student_where_conditions[] = "(se.prize IS NULL OR se.prize = '' OR se.prize = 'No Prize')";
     } else {
-        $student_where_conditions[] = "se.prize = ?";
-        $params[]                   = $filter_prize;
-        $param_types .= "s";
+        $student_where_conditions[]  = "se.prize = ?";
+        $params[]                    = $filter_prize;
+        $param_types                .= "s";
     }
 }
 
 if (! empty($search_query)) {
-    $student_where_conditions[] = "(sr.name LIKE ? OR se.regno LIKE ? OR se.event_name LIKE ?)";
-    $teacher_where_conditions[] = "(tr.name LIKE ? OR te.staff_id LIKE ? OR te.topic LIKE ?)";
-    $search_param               = "%$search_query%";
-    $params[]                   = $search_param;
-    $params[]                   = $search_param;
-    $params[]                   = $search_param;
-    $params[]                   = $search_param;
-    $params[]                   = $search_param;
-    $params[]                   = $search_param;
-    $param_types .= "ssssss";
+    $student_where_conditions[]  = "(sr.name LIKE ? OR se.regno LIKE ? OR se.event_name LIKE ?)";
+    $teacher_where_conditions[]  = "(tr.name LIKE ? OR te.staff_id LIKE ? OR te.topic LIKE ?)";
+    $search_param                = "%$search_query%";
+    $params[]                    = $search_param;
+    $params[]                    = $search_param;
+    $params[]                    = $search_param;
+    $params[]                    = $search_param;
+    $params[]                    = $search_param;
+    $params[]                    = $search_param;
+    $param_types                .= "ssssss";
 }
 
 $student_where_clause = ! empty($student_where_conditions) ? "WHERE " . implode(" AND ", $student_where_conditions) : "";

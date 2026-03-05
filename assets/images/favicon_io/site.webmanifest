@@ -3,12 +3,12 @@
   "short_name": "EMS Teacher",
   "icons": [
     {
-      "src": "/login/asserts/images/favicon_io/android-chrome-192x192.png",
+      "src": "/login/assets/images/favicon_io/android-chrome-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/login/asserts/images/favicon_io/android-chrome-512x512.png",
+      "src": "/login/assets/images/favicon_io/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

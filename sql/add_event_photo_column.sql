@@ -2,7 +2,7 @@
 -- Run this SQL script to add the optional event photo field
 
 ALTER TABLE student_event_register 
-ADD COLUMN event_photo VARCHAR(255) NULL AFTER certificates;
+ADD COLUMN IF NOT EXISTS event_photo VARCHAR(255) NULL AFTER certificates;
 
 -- Update column comment for clarity
 ALTER TABLE student_event_register 

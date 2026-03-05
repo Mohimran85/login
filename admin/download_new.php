@@ -12,10 +12,8 @@ if (! isset($_GET['id']) || ! isset($_GET['type'])) {
 $id   = intval($_GET['id']);
 $type = $_GET['type'];
 
-$conn = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    die("Connection failed");
-}
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
 // Get BLOB data
 $sql  = "SELECT certificates, event_name, regno FROM student_event_register WHERE id = ?";

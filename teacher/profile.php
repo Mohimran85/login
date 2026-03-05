@@ -3,20 +3,39 @@
 
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    // Block access if 2FA verification is still pending
+    if (isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
+    && (! isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== true)) {
+    header("Location: ../verify_2fa.php");
+    exit();
     }
 
-    // Get teacher data
+    require_once __DIR__ . '/../includes/db_config.php';
+    require_once __DIR__ . '/../includes/TotpManager.php';
+    $conn = get_db_connection();
+
+    // Check 2FA status
+    $totpMgr        = new TotpManager();
+    $is_2fa_enabled = $totpMgr->isEnabled($conn, $_SESSION['username'], 'teacher_register');
+
+    // Check for 2FA success message from setup
+    if (isset($_GET['2fa']) && $_GET['2fa'] === 'enabled') {
+    $message      = 'Two-factor authentication has been enabled successfully!';
+    $message_type = 'success';
+    } elseif (isset($_GET['2fa']) && $_GET['2fa'] === 'disabled') {
+    $message      = 'Two-factor authentication has been disabled.';
+    $message_type = 'success';
+    }
     $username     = $_SESSION['username'];
     $teacher_data = null;
+    if (empty($message)) {
     $message      = '';
     $message_type = '';
+    }
     $is_admin     = false;
     $is_counselor = false;
 
@@ -28,115 +47,115 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $teacher_data = $result->fetch_assoc();
-        $is_admin     = ($teacher_data['status'] === 'admin');
-        $is_counselor = ($teacher_data['status'] === 'counselor' || $is_admin);
+    $teacher_data = $result->fetch_assoc();
+    $is_admin     = ($teacher_data['status'] === 'admin');
+    $is_counselor = ($teacher_data['status'] === 'counselor' || $is_admin);
     } else {
-        // Fallback: use student data structure for now
-        $sql  = "SELECT * FROM student_register WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    // Fallback: use student data structure for now
+    $sql  = "SELECT * FROM student_register WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $teacher_data = $result->fetch_assoc();
-        } else {
-            header("Location: ../index.php");
-            exit();
-        }
+    if ($result->num_rows > 0) {
+        $teacher_data = $result->fetch_assoc();
+    } else {
+        header("Location: ../index.php");
+        exit();
+    }
     }
 
     // Handle profile update
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (isset($_POST['update_profile'])) {
-            // Handle profile information update
-            $name       = trim($_POST['name']);
-            $email      = trim($_POST['email']);
-            $department = trim($_POST['department']);
+    if (isset($_POST['update_profile'])) {
+        // Handle profile information update
+        $name       = trim($_POST['name']);
+        $email      = trim($_POST['email']);
+        $department = trim($_POST['department']);
 
-            // Validate inputs
-            if (empty($name) || empty($email)) {
-                $message      = "Name and email are required fields.";
-                $message_type = "error";
+        // Validate inputs
+        if (empty($name) || empty($email)) {
+            $message      = "Name and email are required fields.";
+            $message_type = "error";
+        } else {
+            // Determine which table to update
+            $table = isset($teacher_data['faculty_id']) ? 'teacher_register' : 'student_register';
+
+            if ($table === 'teacher_register') {
+                $update_sql = "UPDATE teacher_register SET name=?, email=?, department=? WHERE username=?";
             } else {
-                // Determine which table to update
-                $table = isset($teacher_data['faculty_id']) ? 'teacher_register' : 'student_register';
-
-                if ($table === 'teacher_register') {
-                    $update_sql = "UPDATE teacher_register SET name=?, email=?, department=? WHERE username=?";
-                } else {
-                    $update_sql = "UPDATE student_register SET name=?, personal_email=?, department=? WHERE username=?";
-                }
-
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("ssss", $name, $email, $department, $username);
-
-                if ($update_stmt->execute()) {
-                    $message      = "Profile updated successfully!";
-                    $message_type = "success";
-
-                    // Refresh teacher data
-                    $stmt->execute();
-                    $result       = $stmt->get_result();
-                    $teacher_data = $result->fetch_assoc();
-                } else {
-                    $message      = "Error updating profile: " . htmlspecialchars($update_stmt->error);
-                    $message_type = "error";
-                }
-                $update_stmt->close();
+                $update_sql = "UPDATE student_register SET name=?, personal_email=?, department=? WHERE username=?";
             }
-        } elseif (isset($_POST['update_password'])) {
-            // Handle password update
-            $current_password = $_POST['current_password'];
-            $new_password     = $_POST['new_password'];
-            $confirm_password = $_POST['confirm_password'];
 
-            // Validate password inputs
-            if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
-                $message      = "All password fields are required.";
-                $message_type = "error";
-            } elseif ($new_password !== $confirm_password) {
-                $message      = "New password and confirm password do not match.";
-                $message_type = "error";
-            } elseif (strlen($new_password) < 6) {
-                $message      = "New password must be at least 6 characters long.";
-                $message_type = "error";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("ssss", $name, $email, $department, $username);
+
+            if ($update_stmt->execute()) {
+                $message      = "Profile updated successfully!";
+                $message_type = "success";
+
+                // Refresh teacher data
+                $stmt->execute();
+                $result       = $stmt->get_result();
+                $teacher_data = $result->fetch_assoc();
             } else {
-                // Verify current password
-                $table                = isset($teacher_data['faculty_id']) ? 'teacher_register' : 'student_register';
-                $current_password_sql = "SELECT password FROM $table WHERE username=?";
-                $current_stmt         = $conn->prepare($current_password_sql);
-                $current_stmt->bind_param("s", $username);
-                $current_stmt->execute();
-                $current_result = $current_stmt->get_result();
+                $message      = "Error updating profile: " . htmlspecialchars($update_stmt->error);
+                $message_type = "error";
+            }
+            $update_stmt->close();
+        }
+    } elseif (isset($_POST['update_password'])) {
+        // Handle password update
+        $current_password = $_POST['current_password'];
+        $new_password     = $_POST['new_password'];
+        $confirm_password = $_POST['confirm_password'];
 
-                if ($current_result->num_rows > 0) {
-                    $current_data = $current_result->fetch_assoc();
+        // Validate password inputs
+        if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+            $message      = "All password fields are required.";
+            $message_type = "error";
+        } elseif ($new_password !== $confirm_password) {
+            $message      = "New password and confirm password do not match.";
+            $message_type = "error";
+        } elseif (strlen($new_password) < 6) {
+            $message      = "New password must be at least 6 characters long.";
+            $message_type = "error";
+        } else {
+            // Verify current password
+            $table                = isset($teacher_data['faculty_id']) ? 'teacher_register' : 'student_register';
+            $current_password_sql = "SELECT password FROM $table WHERE username=?";
+            $current_stmt         = $conn->prepare($current_password_sql);
+            $current_stmt->bind_param("s", $username);
+            $current_stmt->execute();
+            $current_result = $current_stmt->get_result();
 
-                    if (password_verify($current_password, $current_data['password'])) {
-                        // Update password
-                        $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
-                        $password_update_sql = "UPDATE $table SET password=? WHERE username=?";
-                        $password_stmt       = $conn->prepare($password_update_sql);
-                        $password_stmt->bind_param("ss", $hashed_new_password, $username);
+            if ($current_result->num_rows > 0) {
+                $current_data = $current_result->fetch_assoc();
 
-                        if ($password_stmt->execute()) {
-                            $message      = "Password updated successfully!";
-                            $message_type = "success";
-                        } else {
-                            $message      = "Error updating password: " . htmlspecialchars($password_stmt->error);
-                            $message_type = "error";
-                        }
-                        $password_stmt->close();
+                if (password_verify($current_password, $current_data['password'])) {
+                    // Update password
+                    $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
+                    $password_update_sql = "UPDATE $table SET password=? WHERE username=?";
+                    $password_stmt       = $conn->prepare($password_update_sql);
+                    $password_stmt->bind_param("ss", $hashed_new_password, $username);
+
+                    if ($password_stmt->execute()) {
+                        $message      = "Password updated successfully!";
+                        $message_type = "success";
                     } else {
-                        $message      = "Current password is incorrect.";
+                        $message      = "Error updating password: " . htmlspecialchars($password_stmt->error);
                         $message_type = "error";
                     }
+                    $password_stmt->close();
+                } else {
+                    $message      = "Current password is incorrect.";
+                    $message_type = "error";
                 }
-                $current_stmt->close();
             }
+            $current_stmt->close();
         }
+    }
     }
 
     // Get statistics for the profile
@@ -163,8 +182,8 @@
     $user_status_result = $user_status_stmt->get_result();
     $user_status        = 'teacher'; // default
     if ($user_status_result->num_rows > 0) {
-        $user_status_data = $user_status_result->fetch_assoc();
-        $user_status      = $user_status_data['status'];
+    $user_status_data = $user_status_result->fetch_assoc();
+    $user_status      = $user_status_data['status'];
     }
     $is_counselor = ($user_status === 'counselor' || $user_status === 'admin');
     $is_admin     = ($user_status === 'admin');
@@ -184,10 +203,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>Profile - Teacher Dashboard</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="../student/student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -801,13 +820,49 @@
                             </div>
                         </form>
                     </div>
+
+                    <!-- Two-Factor Authentication Section -->
+                    <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid #e9ecef;">
+                        <h3 class="form-title">
+                            <span class="material-symbols-outlined">verified_user</span>
+                            Two-Factor Authentication
+                        </h3>
+
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                            <?php if ($is_2fa_enabled): ?>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #e8f5e9; color: #2e7d32;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">check_circle</span>
+                                    Enabled
+                                </span>
+                            <?php else: ?>
+                                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; background: #fff8e1; color: #e65100;">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">warning</span>
+                                    Not Configured
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <p style="color: #666; font-size: 13px; line-height: 1.6; margin-bottom: 16px;">
+                            <?php if ($is_2fa_enabled): ?>
+                                Your account is protected with two-factor authentication.
+                                You'll be asked for a verification code each time you sign in.
+                            <?php else: ?>
+                                Add an extra layer of security by requiring a code from your
+                                authenticator app when signing in.
+                            <?php endif; ?>
+                        </p>
+
+                        <a href="../setup_2fa.php" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+                            <span class="material-symbols-outlined">settings</span>
+                            <?php echo $is_2fa_enabled ? 'Manage 2FA Settings' : 'Enable Two-Factor Authentication'; ?>
+                        </a>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
-
     <script>
-        // Mobile menu functionality
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const body = document.body;

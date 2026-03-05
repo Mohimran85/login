@@ -1,0 +1,15 @@
+{
+    "name": "sona/event-management",
+    "description": "Event Management System",
+    "type": "project",
+    "authors": [
+        {
+            "name": "Mohimran85",
+            "email": "imran110585@gmail.com"
+        }
+    ],
+    "require": {
+        "robthree/twofactorauth": "^3.0",
+        "dompdf/dompdf": "^3.1"
+    }
+}

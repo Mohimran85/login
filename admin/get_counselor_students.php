@@ -1,60 +1,55 @@
 <?php
-    session_start();
-    header('Content-Type: application/json');
+session_start();
+header('Content-Type: application/json');
 
-    // Check if user is logged in
-    if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        echo json_encode(['success' => false, 'error' => 'Not authenticated']);
-        exit();
-    }
+// Check if user is logged in
+if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+    exit();
+}
 
-    // Database connection
-    $servername = "localhost";
-    $db_username = "root";
-    $db_password = "";
-    $dbname = "event_management_system";
+// Database connection
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
-    $conn = new mysqli($servername, $db_username, $db_password, $dbname);
+if ($conn->connect_error) {
+    echo json_encode(['success' => false, 'error' => 'Database connection failed']);
+    exit();
+}
 
-    if ($conn->connect_error) {
-        echo json_encode(['success' => false, 'error' => 'Database connection failed']);
-        exit();
-    }
+// Get counselor ID from query parameter
+$counselor_id = isset($_GET['counselor_id']) ? intval($_GET['counselor_id']) : 0;
 
-    // Get counselor ID from query parameter
-    $counselor_id = isset($_GET['counselor_id']) ? intval($_GET['counselor_id']) : 0;
+if ($counselor_id <= 0) {
+    echo json_encode(['success' => false, 'error' => 'Invalid counselor ID']);
+    exit();
+}
 
-    if ($counselor_id <= 0) {
-        echo json_encode(['success' => false, 'error' => 'Invalid counselor ID']);
-        exit();
-    }
-
-    // Fetch students assigned to this counselor
-    $sql = "SELECT ca.id as assignment_id, ca.student_regno as regno, s.name
+// Fetch students assigned to this counselor
+$sql = "SELECT ca.id as assignment_id, ca.student_regno as regno, s.name
             FROM counselor_assignments ca
             LEFT JOIN student_register s ON ca.student_regno = s.regno
             WHERE ca.counselor_id = ? AND ca.status = 'active'
             ORDER BY ca.student_regno";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $counselor_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
 
-    $students = [];
-    while ($row = $result->fetch_assoc()) {
-        $students[] = [
-            'assignment_id' => $row['assignment_id'],
-            'regno' => $row['regno'],
-            'name' => $row['name']
-        ];
-    }
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $counselor_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
-    echo json_encode([
-        'success' => true,
-        'students' => $students
-    ]);
+$students = [];
+while ($row = $result->fetch_assoc()) {
+    $students[] = [
+        'assignment_id' => $row['assignment_id'],
+        'regno'         => $row['regno'],
+        'name'          => $row['name'],
+    ];
+}
 
-    $stmt->close();
-    $conn->close();
-?>
+echo json_encode([
+    'success'  => true,
+    'students' => $students,
+]);
+
+$stmt->close();
+$conn->close();

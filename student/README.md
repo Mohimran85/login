@@ -42,12 +42,10 @@ student/
 ├── view_poster.php         # Poster viewer with download options
 ├── download_od_letter.php  # Enhanced PDF generator
 ├── generate_od_pdf.php     # Alternative PDF generator
-├── test_system.php         # System testing and demo page
-├── database_update.sql     # Database schema updates
 ├── uploads/
 │   ├── .htaccess          # Security configuration
 │   └── posters/           # Poster storage directory
-└── asserts/
+└── assets/
     └── images/
         └── favicon_io/
 ```
@@ -119,7 +117,7 @@ $upload_path = 'uploads/posters/' . $file_name;
 ```php
 // Enhanced letterhead with logo
 $html = '<div style="text-align: center; margin-bottom: 30px;">
-    <img src="../asserts/images/sona_logo.png" style="height: 80px;">
+    <img src="../assets/images/sona_logo.png" style="height: 80px;">
     <h1>SONA COLLEGE OF TECHNOLOGY</h1>
     <p>Salem - 636005</p>
 </div>';

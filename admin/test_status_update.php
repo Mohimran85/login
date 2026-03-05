@@ -5,8 +5,15 @@
 session_start();
 require_once __DIR__ . '/../includes/DatabaseManager.php';
 
-$hackathon_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
-$test_status  = isset($_GET['status']) ? $_GET['status'] : 'upcoming';
+// Require admin authentication
+if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || ! isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    http_response_code(403);
+    die('Forbidden: Admin access required');
+}
+
+$hackathon_id     = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$allowed_statuses = ['draft', 'upcoming', 'ongoing', 'completed', 'cancelled'];
+$test_status      = isset($_GET['status']) && in_array($_GET['status'], $allowed_statuses) ? $_GET['status'] : 'upcoming';
 
 if (! $hackathon_id) {
     die("Usage: test_status_update.php?id=[hackathon_id]&status=[draft|upcoming|ongoing|completed|cancelled]");

@@ -13,14 +13,8 @@ $event_name = isset($_GET['event_name']) ? $_GET['event_name'] : '';
 $event_id   = isset($_GET['event_id']) ? $_GET['event_id'] : '';
 
 // Query database to get the actual file path
-$conn = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database connection failed',
-    ]);
-    exit;
-}
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
 $found_file = null;
 

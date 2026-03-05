@@ -1,44 +1,42 @@
 <?php
     session_start();
+    require_once 'includes/db_config.php';
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    $conn = get_db_connection();
 
     $message = "";
 
     // Handle password reset request
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['reset_password'])) {
-        $username = trim($_POST['username']);
+    $username = trim($_POST['username']);
 
-        if (empty($username)) {
-            $message = "<div class='error'>Please enter your username.</div>";
-        } else {
-            // Search for user in student_register table (only students have DOB)
-            $sql  = "SELECT username, name, dob FROM student_register WHERE username=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("s", $username);
-            $stmt->execute();
-            $result = $stmt->get_result();
+    if (empty($username)) {
+        $message = "<div class='error'>Please enter your username.</div>";
+    } else {
+        // Search for user in student_register table (only students have DOB)
+        $sql  = "SELECT username, name, dob FROM student_register WHERE username=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $username);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
-            if ($result->num_rows > 0) {
-                $user_data = $result->fetch_assoc();
-                $dob       = $user_data['dob'];
-                $name      = $user_data['name'];
+        if ($result->num_rows > 0) {
+            $user_data = $result->fetch_assoc();
+            $dob       = $user_data['dob'];
+            $name      = $user_data['name'];
 
-                if (! empty($dob)) {
-                    // Format DOB as password (remove dashes: 1999-05-15 becomes 19990515)
-                    $new_password    = str_replace('-', '', $dob);
-                    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            if (! empty($dob)) {
+                // Format DOB as password (remove dashes: 1999-05-15 becomes 19990515)
+                $new_password    = str_replace('-', '', $dob);
+                $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
-                    // Update password
-                    $update_sql  = "UPDATE student_register SET password=? WHERE username=?";
-                    $update_stmt = $conn->prepare($update_sql);
-                    $update_stmt->bind_param("ss", $hashed_password, $username);
+                // Update password
+                $update_sql  = "UPDATE student_register SET password=? WHERE username=?";
+                $update_stmt = $conn->prepare($update_sql);
+                $update_stmt->bind_param("ss", $hashed_password, $username);
 
-                    if ($update_stmt->execute()) {
-                        $message = "<div class='success'>
+                if ($update_stmt->execute()) {
+                    $message = "<div class='success'>
                         <h3>✅ Password Reset Successful!</h3>
                         <p><strong>Hello $name,</strong></p>
                         <p>Your password has been reset to your <strong>Date of Birth</strong>.</p>
@@ -48,58 +46,58 @@
                         </div>
                         <p>Please login with your new password and consider changing it in your profile for security.</p>
                     </div>";
-                    } else {
-                        $message = "<div class='error'>Error updating password. Please try again.</div>";
-                    }
-                    $update_stmt->close();
                 } else {
-                    $message = "<div class='error'>Date of Birth not found in your profile. Please contact admin.</div>";
+                    $message = "<div class='error'>Error updating password. Please try again.</div>";
                 }
+                $update_stmt->close();
             } else {
-                // Check if username exists in teacher_register
-                $teacher_sql  = "SELECT username, name, faculty_id FROM teacher_register WHERE username=?";
-                $teacher_stmt = $conn->prepare($teacher_sql);
-                $teacher_stmt->bind_param("s", $username);
-                $teacher_stmt->execute();
-                $teacher_result = $teacher_stmt->get_result();
+                $message = "<div class='error'>Date of Birth not found in your profile. Please contact admin.</div>";
+            }
+        } else {
+            // Check if username exists in teacher_register
+            $teacher_sql  = "SELECT username, name, faculty_id FROM teacher_register WHERE username=?";
+            $teacher_stmt = $conn->prepare($teacher_sql);
+            $teacher_stmt->bind_param("s", $username);
+            $teacher_stmt->execute();
+            $teacher_result = $teacher_stmt->get_result();
 
-                if ($teacher_result->num_rows > 0) {
-                    $teacher_data = $teacher_result->fetch_assoc();
-                    $faculty_id   = $teacher_data['faculty_id'];
-                    $name         = $teacher_data['name'];
+            if ($teacher_result->num_rows > 0) {
+                $teacher_data = $teacher_result->fetch_assoc();
+                $faculty_id   = $teacher_data['faculty_id'];
+                $name         = $teacher_data['name'];
 
-                    if (! empty($faculty_id)) {
-                        // Set password to faculty_id
-                        $new_password    = $faculty_id;
-                        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+                if (! empty($faculty_id)) {
+                    // Set password to faculty_id
+                    $new_password    = $faculty_id;
+                    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
 
-                        // Update password
-                        $update_sql  = "UPDATE teacher_register SET password=? WHERE username=?";
-                        $update_stmt = $conn->prepare($update_sql);
-                        $update_stmt->bind_param("ss", $hashed_password, $username);
+                    // Update password
+                    $update_sql  = "UPDATE teacher_register SET password=? WHERE username=?";
+                    $update_stmt = $conn->prepare($update_sql);
+                    $update_stmt->bind_param("ss", $hashed_password, $username);
 
-                        if ($update_stmt->execute()) {
-                            $message = "<div class='success'>
+                    if ($update_stmt->execute()) {
+                        $message = "<div class='success'>
                             <h3>✅ Password Reset Successful!</h3>
                             <p><strong>Hello $name,</strong></p>
                             <p>Your password has been reset to your <strong>Faculty ID</strong>.</p>
 
                             <p>Please login with your new password and consider changing it in your profile for security.</p>
                         </div>";
-                        } else {
-                            $message = "<div class='error'>Error updating password. Please try again.</div>";
-                        }
-                        $update_stmt->close();
                     } else {
-                        $message = "<div class='error'>Faculty ID not found in your profile. Please contact admin.</div>";
+                        $message = "<div class='error'>Error updating password. Please try again.</div>";
                     }
+                    $update_stmt->close();
                 } else {
-                    $message = "<div class='error'>Username not found. Please check your username and try again.</div>";
+                    $message = "<div class='error'>Faculty ID not found in your profile. Please contact admin.</div>";
                 }
-                $teacher_stmt->close();
+            } else {
+                $message = "<div class='error'>Username not found. Please check your username and try again.</div>";
             }
-            $stmt->close();
+            $teacher_stmt->close();
         }
+        $stmt->close();
+    }
     }
 
     $conn->close();
@@ -110,7 +108,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Reset Password - Event Management System</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="./asserts/images/Sona Logo.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./assets/images/Sona Logo.png" />
     <link rel="stylesheet" href="styles.css" />
     <style>
         /* Background image styling */

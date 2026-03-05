@@ -6,14 +6,12 @@
 
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get teacher data
     $username     = $_SESSION['username'];
@@ -28,12 +26,12 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $teacher_data = $result->fetch_assoc();
-        $is_admin     = ($teacher_data['status'] === 'admin');
-        $is_counselor = ($teacher_data['status'] === 'counselor' || $is_admin);
+    $teacher_data = $result->fetch_assoc();
+    $is_admin     = ($teacher_data['status'] === 'admin');
+    $is_counselor = ($teacher_data['status'] === 'counselor' || $is_admin);
     } else {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     $message      = '';
@@ -44,156 +42,156 @@
     $check_table_sql = "SHOW TABLES LIKE 'teacher_signatures'";
     $table_result    = $conn->query($check_table_sql);
     if ($table_result && $table_result->num_rows > 0) {
-        $table_exists = true;
+    $table_exists = true;
     }
 
     // Handle signature upload/creation only if table exists
     if ($table_exists && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        if (isset($_POST['upload_signature']) && isset($_FILES['signature_file'])) {
-            // Handle file upload signature
-            $upload_dir = 'signatures/';
-            if (! file_exists($upload_dir)) {
-                mkdir($upload_dir, 0755, true);
-            }
-
-            $file          = $_FILES['signature_file'];
-            $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
-
-            if (in_array($file['type'], $allowed_types) && $file['size'] <= 2097152) { // 2MB limit
-                $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $base_filename  = $upload_dir . 'signature_' . $teacher_data['id'] . '_' . time();
-
-                // Compress and save signature (90% quality for signatures)
-                $compression_result = FileCompressor::compressUploadedFile(
-                    $file['tmp_name'],
-                    $base_filename,
-                    $file_extension,
-                    90
-                );
-
-                if ($compression_result['success']) {
-                    $file_path = $compression_result['path'];
-                    // Deactivate old signatures
-                    $deactivate_sql  = "UPDATE teacher_signatures SET is_active = FALSE WHERE teacher_id = ?";
-                    $deactivate_stmt = $conn->prepare($deactivate_sql);
-                    $deactivate_stmt->bind_param("i", $teacher_data['id']);
-                    $deactivate_stmt->execute();
-                    $deactivate_stmt->close();
-
-                    // Create signature hash for security
-                    $signature_hash = hash('sha256', file_get_contents($file_path) . $teacher_data['id'] . time());
-
-                    // Insert new signature
-                    $insert_sql  = "INSERT INTO teacher_signatures (teacher_id, signature_type, signature_data, signature_hash) VALUES (?, 'upload', ?, ?)";
-                    $insert_stmt = $conn->prepare($insert_sql);
-                    $insert_stmt->bind_param("iss", $teacher_data['id'], $file_path, $signature_hash);
-
-                    if ($insert_stmt->execute()) {
-                        $message      = "Signature uploaded successfully!";
-                        $message_type = "success";
-                    } else {
-                        $message      = "Error saving signature to database.";
-                        $message_type = "error";
-                    }
-                    $insert_stmt->close();
-                } else {
-                    $message      = "Error uploading file.";
-                    $message_type = "error";
-                }
-            } else {
-                $message      = "Invalid file type or size. Please upload a JPEG, PNG, or GIF image under 2MB.";
-                $message_type = "error";
-            }
-        } elseif (isset($_POST['save_drawn_signature'])) {
-            // Handle drawn signature
-            $signature_data = $_POST['signature_data'];
-
-            if (! empty($signature_data)) {
-                // Deactivate old signatures
-                $deactivate_sql  = "UPDATE teacher_signatures SET is_active = FALSE WHERE teacher_id = ?";
-                $deactivate_stmt = $conn->prepare($deactivate_sql);
-                $deactivate_stmt->bind_param("i", $teacher_data['id']);
-                $deactivate_stmt->execute();
-                $deactivate_stmt->close();
-
-                // Create signature hash
-                $signature_hash = hash('sha256', $signature_data . $teacher_data['id'] . time());
-
-                // Insert new signature
-                $insert_sql  = "INSERT INTO teacher_signatures (teacher_id, signature_type, signature_data, signature_hash) VALUES (?, 'drawn', ?, ?)";
-                $insert_stmt = $conn->prepare($insert_sql);
-                $insert_stmt->bind_param("iss", $teacher_data['id'], $signature_data, $signature_hash);
-
-                if ($insert_stmt->execute()) {
-                    $message      = "Digital signature saved successfully!";
-                    $message_type = "success";
-                } else {
-                    $message      = "Error saving signature to database.";
-                    $message_type = "error";
-                }
-                $insert_stmt->close();
-            } else {
-                $message      = "Please draw your signature before saving.";
-                $message_type = "error";
-            }
-        } elseif (isset($_POST['save_text_signature'])) {
-            // Handle text signature
-            $signature_text = trim($_POST['signature_text']);
-            $font_family    = $_POST['font_family'];
-
-            if (! empty($signature_text)) {
-                $signature_data = json_encode([
-                    'text'      => $signature_text,
-                    'font'      => $font_family,
-                    'timestamp' => time(),
-                ]);
-
-                // Deactivate old signatures
-                $deactivate_sql  = "UPDATE teacher_signatures SET is_active = FALSE WHERE teacher_id = ?";
-                $deactivate_stmt = $conn->prepare($deactivate_sql);
-                $deactivate_stmt->bind_param("i", $teacher_data['id']);
-                $deactivate_stmt->execute();
-                $deactivate_stmt->close();
-
-                // Create signature hash
-                $signature_hash = hash('sha256', $signature_data . $teacher_data['id'] . time());
-
-                // Insert new signature
-                $insert_sql  = "INSERT INTO teacher_signatures (teacher_id, signature_type, signature_data, signature_hash) VALUES (?, 'text', ?, ?)";
-                $insert_stmt = $conn->prepare($insert_sql);
-                $insert_stmt->bind_param("iss", $teacher_data['id'], $signature_data, $signature_hash);
-
-                if ($insert_stmt->execute()) {
-                    $message      = "Text signature saved successfully!";
-                    $message_type = "success";
-                } else {
-                    $message      = "Error saving signature to database.";
-                    $message_type = "error";
-                }
-                $insert_stmt->close();
-            } else {
-                $message      = "Please enter your signature text.";
-                $message_type = "error";
-            }
+    if (isset($_POST['upload_signature']) && isset($_FILES['signature_file'])) {
+        // Handle file upload signature
+        $upload_dir = 'signatures/';
+        if (! file_exists($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
         }
+
+        $file          = $_FILES['signature_file'];
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
+
+        if (in_array($file['type'], $allowed_types) && $file['size'] <= 2097152) { // 2MB limit
+            $file_extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $base_filename  = $upload_dir . 'signature_' . $teacher_data['id'] . '_' . time();
+
+            // Compress and save signature (90% quality for signatures)
+            $compression_result = FileCompressor::compressUploadedFile(
+                $file['tmp_name'],
+                $base_filename,
+                $file_extension,
+                90
+            );
+
+            if ($compression_result['success']) {
+                $file_path = $compression_result['path'];
+                // Deactivate old signatures
+                $deactivate_sql  = "UPDATE teacher_signatures SET is_active = FALSE WHERE teacher_id = ?";
+                $deactivate_stmt = $conn->prepare($deactivate_sql);
+                $deactivate_stmt->bind_param("i", $teacher_data['id']);
+                $deactivate_stmt->execute();
+                $deactivate_stmt->close();
+
+                // Create signature hash for security
+                $signature_hash = hash('sha256', file_get_contents($file_path) . $teacher_data['id'] . time());
+
+                // Insert new signature
+                $insert_sql  = "INSERT INTO teacher_signatures (teacher_id, signature_type, signature_data, signature_hash) VALUES (?, 'upload', ?, ?)";
+                $insert_stmt = $conn->prepare($insert_sql);
+                $insert_stmt->bind_param("iss", $teacher_data['id'], $file_path, $signature_hash);
+
+                if ($insert_stmt->execute()) {
+                    $message      = "Signature uploaded successfully!";
+                    $message_type = "success";
+                } else {
+                    $message      = "Error saving signature to database.";
+                    $message_type = "error";
+                }
+                $insert_stmt->close();
+            } else {
+                $message      = "Error uploading file.";
+                $message_type = "error";
+            }
+        } else {
+            $message      = "Invalid file type or size. Please upload a JPEG, PNG, or GIF image under 2MB.";
+            $message_type = "error";
+        }
+    } elseif (isset($_POST['save_drawn_signature'])) {
+        // Handle drawn signature
+        $signature_data = $_POST['signature_data'];
+
+        if (! empty($signature_data)) {
+            // Deactivate old signatures
+            $deactivate_sql  = "UPDATE teacher_signatures SET is_active = FALSE WHERE teacher_id = ?";
+            $deactivate_stmt = $conn->prepare($deactivate_sql);
+            $deactivate_stmt->bind_param("i", $teacher_data['id']);
+            $deactivate_stmt->execute();
+            $deactivate_stmt->close();
+
+            // Create signature hash
+            $signature_hash = hash('sha256', $signature_data . $teacher_data['id'] . time());
+
+            // Insert new signature
+            $insert_sql  = "INSERT INTO teacher_signatures (teacher_id, signature_type, signature_data, signature_hash) VALUES (?, 'drawn', ?, ?)";
+            $insert_stmt = $conn->prepare($insert_sql);
+            $insert_stmt->bind_param("iss", $teacher_data['id'], $signature_data, $signature_hash);
+
+            if ($insert_stmt->execute()) {
+                $message      = "Digital signature saved successfully!";
+                $message_type = "success";
+            } else {
+                $message      = "Error saving signature to database.";
+                $message_type = "error";
+            }
+            $insert_stmt->close();
+        } else {
+            $message      = "Please draw your signature before saving.";
+            $message_type = "error";
+        }
+    } elseif (isset($_POST['save_text_signature'])) {
+        // Handle text signature
+        $signature_text = trim($_POST['signature_text']);
+        $font_family    = $_POST['font_family'];
+
+        if (! empty($signature_text)) {
+            $signature_data = json_encode([
+                'text'      => $signature_text,
+                'font'      => $font_family,
+                'timestamp' => time(),
+            ]);
+
+            // Deactivate old signatures
+            $deactivate_sql  = "UPDATE teacher_signatures SET is_active = FALSE WHERE teacher_id = ?";
+            $deactivate_stmt = $conn->prepare($deactivate_sql);
+            $deactivate_stmt->bind_param("i", $teacher_data['id']);
+            $deactivate_stmt->execute();
+            $deactivate_stmt->close();
+
+            // Create signature hash
+            $signature_hash = hash('sha256', $signature_data . $teacher_data['id'] . time());
+
+            // Insert new signature
+            $insert_sql  = "INSERT INTO teacher_signatures (teacher_id, signature_type, signature_data, signature_hash) VALUES (?, 'text', ?, ?)";
+            $insert_stmt = $conn->prepare($insert_sql);
+            $insert_stmt->bind_param("iss", $teacher_data['id'], $signature_data, $signature_hash);
+
+            if ($insert_stmt->execute()) {
+                $message      = "Text signature saved successfully!";
+                $message_type = "success";
+            } else {
+                $message      = "Error saving signature to database.";
+                $message_type = "error";
+            }
+            $insert_stmt->close();
+        } else {
+            $message      = "Please enter your signature text.";
+            $message_type = "error";
+        }
+    }
     } elseif (! $table_exists && $_SERVER['REQUEST_METHOD'] === 'POST') {
-        $message      = "Database setup required. Please set up the digital signature tables first.";
-        $message_type = "error";
+    $message      = "Database setup required. Please set up the digital signature tables first.";
+    $message_type = "error";
     }
 
     // Get current active signature only if table exists
     $current_signature = null;
     if ($table_exists) {
-        $signature_sql  = "SELECT * FROM teacher_signatures WHERE teacher_id = ? AND is_active = TRUE ORDER BY created_at DESC LIMIT 1";
-        $signature_stmt = $conn->prepare($signature_sql);
-        $signature_stmt->bind_param("i", $teacher_data['id']);
-        $signature_stmt->execute();
-        $signature_result = $signature_stmt->get_result();
+    $signature_sql  = "SELECT * FROM teacher_signatures WHERE teacher_id = ? AND is_active = TRUE ORDER BY created_at DESC LIMIT 1";
+    $signature_stmt = $conn->prepare($signature_sql);
+    $signature_stmt->bind_param("i", $teacher_data['id']);
+    $signature_stmt->execute();
+    $signature_result = $signature_stmt->get_result();
 
-        if ($signature_result->num_rows > 0) {
-            $current_signature = $signature_result->fetch_assoc();
-        }
-        $signature_stmt->close();
+    if ($signature_result->num_rows > 0) {
+        $current_signature = $signature_result->fetch_assoc();
+    }
+    $signature_stmt->close();
     }
 
     $stmt->close();
@@ -208,10 +206,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>Digital Signature Management - Teacher Portal</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="../student/student_dashboard.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">

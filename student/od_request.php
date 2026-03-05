@@ -10,10 +10,8 @@
     exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Migration: Ensure new columns exist for backward compatibility
     try {
@@ -364,9 +362,9 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>OD Request - Event Management System</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <!-- Web App Manifest for Push Notifications -->
     <link rel="manifest" href="../manifest.json">
     <link rel="stylesheet" href="student_dashboard.css">
@@ -1232,23 +1230,21 @@
                     <?php endif; ?>
 
                     <?php if ($counselor_info): ?>
-                    <form method="POST" action="" enctype="multipart/form-data" onsubmit="return validateAndSubmitForm(event)">
+                    <form id="odRequestForm" method="POST" action="od_request.php" enctype="multipart/form-data" novalidate>
+                        <input type="hidden" name="submit_od_request" value="1">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label class="form-label">Event Name *</label>
                                 <input type="text"
                                        name="event_name"
                                        class="form-input"
-                                       required
-                                       minlength="3"
                                        maxlength="255"
-                                       placeholder="Enter event name (3-255 characters)"
-                                       title="Event name must be 3-255 characters long">
+                                       placeholder="Enter event name (3-255 characters)">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Event State *</label>
-                                <select id="eventState" name="event_state" class="form-select" required>
+                                <select id="eventState" name="event_state" class="form-select">
                                     <option value="" disabled selected>Select State</option>
                                     <option value="Andhra Pradesh">Andhra Pradesh</option>
                                     <option value="Arunachal Pradesh">Arunachal Pradesh</option>
@@ -1283,8 +1279,8 @@
 
                             <div class="form-group">
                                 <label class="form-label">Event District *</label>
-                                <select id="eventDistrict" name="event_district" class="form-select" required disabled>
-                                    <option value="" disabled selected>Select District</option>
+                                <select id="eventDistrict" name="event_district" class="form-select">
+                                    <option value="" selected>Select District (choose state first)</option>
                                 </select>
                                 <small style="display: block; margin-top: 5px; color: #666; font-size: 0.85rem;">Please select a state first</small>
                             </div>
@@ -1296,8 +1292,7 @@
                                        class="form-input"
                                        value="<?php echo date('Y-m-d'); ?>"
                                        min="<?php echo date('Y-m-d'); ?>"
-                                       max="<?php echo date('Y-m-d', strtotime('+1 year')); ?>"
-                                       required>
+                                       max="<?php echo date('Y-m-d', strtotime('+1 year')); ?>">
                                 <small style="display: block; margin-top: 5px; color: #666; font-size: 0.85rem;">Select a future date (max 1 year from today)</small>
                             </div>
 
@@ -1306,13 +1301,12 @@
                                 <input type="time"
                                        name="event_time"
                                        class="form-input"
-                                       required
                                        title="Enter time in HH:MM format (00:00 - 23:59)">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Number of Days *</label>
-                                <select name="event_days" class="form-select" required>
+                                <select name="event_days" class="form-select">
                                     <option value="">Select number of days</option>
                                     <option value="1 hour">1 Hour</option>
                                     <option value="2 hours">2 Hours</option>
@@ -1340,8 +1334,6 @@
                                 <textarea name="event_description"
                                           id="eventDescription"
                                           class="form-textarea"
-                                          required
-                                          minlength="10"
                                           maxlength="500"
                                           placeholder="Describe what the event is about, activities involved, etc. (minimum 5 words, maximum 50 words)"
                                           oninput="countWords(this, 50, 'wordCount')"></textarea>
@@ -1387,8 +1379,6 @@
                                 <textarea name="reason"
                                           id="reasonForOD"
                                           class="form-textarea"
-                                          required
-                                          minlength="10"
                                           maxlength="500"
                                           placeholder="Explain why you need OD for this event participation (minimum 5 words, maximum 50 words)"
                                           oninput="countWords(this, 50, 'reasonWordCount')"></textarea>
@@ -1398,8 +1388,9 @@
                             </div>
                         </div>
 
+                        <div id="formValidationErrors" style="display:none; background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; border-radius:8px; padding:15px; margin-bottom:15px;"></div>
                         <div style="display: flex; gap: 15px;">
-                            <button type="submit" name="submit_od_request" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary">
                                 <span class="material-symbols-outlined">send</span>
                                 Submit OD Request
                             </button>
@@ -1472,7 +1463,7 @@
                                             $file_extension = strtolower(pathinfo($request['event_poster'], PATHINFO_EXTENSION));
                                         ?>
 
-                                        <?php if (in_array($file_extension, ['jpg', 'jpeg', 'png']) && file_exists($poster_path)): ?>
+                                        <?php if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'webp']) && file_exists($poster_path)): ?>
                                         <div style="flex-shrink: 0;">
                                             <img src="<?php echo htmlspecialchars($poster_path); ?>"
                                                  alt="Event Poster Thumbnail"
@@ -1551,7 +1542,7 @@
                                         <span class="material-symbols-outlined" style="font-size: 16px;">add_circle</span>
                                         Register for Event
                                     </a>
-                                    <a href="download_od_letter.php?od_id=<?php echo $request['id']; ?>" class="btn btn-secondary" style="font-size: 12px; padding: 8px 15px;" target="_blank">
+                                    <a href="download_od_letter.php?od_id=<?php echo $request['id']; ?>" class="btn btn-secondary" style="font-size: 12px; padding: 8px 15px;">
                                         <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
                                         Download OD Letter
                                     </a>
@@ -1984,17 +1975,28 @@
             // Auto-hide success messages
             const successMessage = document.querySelector('.message.success');
             if (successMessage) {
-                // Show popup for OD submission success
-                    setTimeout(function() {
-                        alert('✅ OD Request Submitted Successfully!\n\nYour On Duty (OD) request has been submitted and is now pending approval from your class counselor. You will be notified once your request is reviewed.');
-                    }, 500);
-
+                // Auto-hide after 8 seconds (no alert — breaks in app webviews)
                 setTimeout(() => {
+                    successMessage.style.transition = 'opacity 0.5s ease';
                     successMessage.style.opacity = '0';
                     setTimeout(() => {
                         successMessage.remove();
-                    }, 300);
-                }, 5000);
+                    }, 500);
+                }, 8000);
+            }
+        });
+
+        // Bind form submit handler via addEventListener (inline onsubmit can fail in app webviews)
+        document.addEventListener('DOMContentLoaded', function() {
+            var odForm = document.getElementById('odRequestForm');
+            if (odForm) {
+                odForm.addEventListener('submit', function(e) {
+                    var result = validateAndSubmitForm(e);
+                    if (result === false) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                });
             }
         });
 
@@ -2138,25 +2140,40 @@
         });
 
         // Form submission validation handler
-        function validateAndSubmitForm(event) {
-            const errors = validateODRequestForm(event.target);
+        function validateAndSubmitForm(e) {
+            var errorBox = document.getElementById('formValidationErrors');
+            var form = e.target || document.getElementById('odRequestForm');
 
-            if (errors.length > 0) {
-                event.preventDefault();
+            try {
+                var errors = validateODRequestForm(form);
 
-                // Display all validation errors
-                const errorMessage = "⚠️ Please fix the following errors:\n\n" + errors.join("\n");
-                alert(errorMessage);
+                if (errors.length > 0) {
+                    // Display validation errors inline (alert() can break in app webviews)
+                    if (errorBox) {
+                        errorBox.innerHTML = '<strong>⚠️ Please fix the following errors:</strong><br><br>' + errors.join('<br>');
+                        errorBox.style.display = 'block';
+                        errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
 
-                // Scroll to top of form
-                const form = event.target;
-                form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    return false;
+                }
 
-                return false;
+                // Hide error box if no errors
+                if (errorBox) errorBox.style.display = 'none';
+
+                // Ensure district select is enabled so its value is included in POST data
+                var districtSelect = document.getElementById('eventDistrict');
+                if (districtSelect) districtSelect.disabled = false;
+
+                // All validations passed, allow form submission
+                return true;
+            } catch (err) {
+                // If validation JS crashes, allow form to submit (server-side validation will catch errors)
+                console.error('Form validation error:', err);
+                var ds = document.getElementById('eventDistrict');
+                if (ds) ds.disabled = false;
+                return true;
             }
-
-            // All validations passed, allow form submission
-            return true;
         }
     </script>
     <!-- Push Notifications Manager for Median.co -->

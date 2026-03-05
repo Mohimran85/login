@@ -59,7 +59,7 @@ try {
     FROM student_event_register ser
     INNER JOIN student_register sr ON ser.regno = sr.regno
     WHERE YEAR(ser.start_date) = ?
-    AND LOWER(TRIM(ser.prize)) IN ('first', 'secound', 'third')
+    AND LOWER(TRIM(ser.prize)) IN ('first', 'second', 'third')
     AND ser.verification_status = 'Approved'";
 
     $params = [$year];
@@ -75,7 +75,7 @@ try {
     $sql .= " ORDER BY
         CASE LOWER(TRIM(ser.prize))
             WHEN 'first' THEN 1
-            WHEN 'secound' THEN 2
+            WHEN 'second' THEN 2
             WHEN 'third' THEN 3
             ELSE 4
         END,
@@ -100,7 +100,7 @@ try {
     while ($row = $result->fetch_assoc()) {
         // Standardize prize names
         $prize = ucfirst(strtolower(trim($row['prize'])));
-        if ($prize === 'Secound') {
+        if ($prize === 'Second') {
             $prize = 'Second';
         }
 

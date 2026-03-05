@@ -14,11 +14,8 @@ if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 // Check if user is admin
 $username = $_SESSION['username'];
-$conn     = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'error' => 'Database connection failed']);
-    exit();
-}
+require_once __DIR__ . '/../../includes/db_config.php';
+$conn = get_db_connection();
 
 $teacher_status_sql = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ? LIMIT 1";
 $stmt               = $conn->prepare($teacher_status_sql);

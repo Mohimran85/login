@@ -7,7 +7,7 @@
 #### Database & Backend
 
 1. ✅ **sql/create_hackathon_system.sql** - Complete database schema with 6 tables, triggers, and indexes
-2. ✅ **includes/WebPushManager.php** - Web Push notification backend with VAPID support
+2. ✅ **includes/OneSignalManager.php** - OneSignal push notification backend
 3. ✅ **sw.js** - Service Worker for push notifications and offline support
 4. ✅ **manifest.json** - PWA manifest for Median.co app conversion
 
@@ -187,7 +187,7 @@ login/
 │   └── create_hackathon_system.sql     ← Database schema
 │
 ├── includes/
-│   └── WebPushManager.php              ← Push notification backend
+│   └── OneSignalManager.php            ← OneSignal push notification backend
 │
 ├── admin/
 │   ├── hackathons.php                  ← List/manage hackathons
@@ -240,16 +240,16 @@ VAPID_SUBJECT=mailto:admin@yourdomain.com
 
 ### Database Connection
 
-The system uses existing `DatabaseManager.php` which connects to:
+The system reads database credentials from the `.env` file (see `.env.example` for the required format).
+Configure your credentials in `.env`:
 
-- **Host**: localhost
-- **User**: root
-- **Password**: (empty)
-- **Database**: event_management_system
+- **DB_HOST**: Your database host
+- **DB_USER**: Your database username
+- **DB_PASS**: Your database password
+- **DB_NAME**: event_management_system
 
-If your database credentials differ, update in:
+The centralized connection is provided by `includes/db_config.php`.
 
-- `includes/DatabaseManager.php`
 - `student/ajax/push_subscription.php` (lines 10-11)
 
 ---
@@ -284,7 +284,7 @@ If your database credentials differ, update in:
    - **Enable Push Notifications**: Yes (Web Push)
 
 4. **Upload Icons** (Required sizes)
-   - Upload to `asserts/images/`:
+   - Upload to `assets/images/`:
      - icon-192x192.png
      - icon-512x512.png
    - Or use online generator: [PWA Builder](https://www.pwabuilder.com/imageGenerator)
@@ -444,8 +444,8 @@ Replace logo in notification:
 
 ```javascript
 // Edit sw.js
-icon: '/asserts/images/logo.png',      // Your logo
-badge: '/asserts/images/badge.png',    // Small badge (72x72px)
+icon: '/assets/images/logo.png',      // Your logo
+badge: '/assets/images/badge.png',    // Small badge (72x72px)
 ```
 
 ### Add Email Notifications

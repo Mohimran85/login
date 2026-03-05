@@ -13,11 +13,16 @@
     exit();
     }
 
-    // Get user data for header profile
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    // Block access if 2FA verification is still pending
+    if (isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
+    && (! isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== true)) {
+    header("Location: ../verify_2fa.php");
+    exit();
     }
+
+    // Get user data for header profile
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     $username  = $_SESSION['username'];
     $user_data = null;
@@ -181,7 +186,7 @@
         COUNT(*) as participations,
         COUNT(DISTINCT event_type) as unique_events,
         COUNT(DISTINCT regno) as unique_participants,
-        SUM(CASE WHEN LOWER(TRIM(prize)) IN ('first', 'secound', 'third') THEN 1 ELSE 0 END) as prize_winners,
+        SUM(CASE WHEN LOWER(TRIM(prize)) IN ('first', 'second', 'third') THEN 1 ELSE 0 END) as prize_winners,
         AVG(CASE WHEN prize_amount IS NOT NULL AND prize_amount > 0 THEN CAST(REPLACE(REPLACE(prize_amount, 'Rs.', ''), ',', '') AS DECIMAL(10,2)) ELSE 0 END) as avg_prize_amount,
         MIN(start_date) as first_event_date,
         MAX(start_date) as latest_event_date
@@ -309,7 +314,7 @@
     // Count ALL prize winners for this month (each prize record = 1 winner)
     $wins_sql = "SELECT COUNT(*) as count
                      FROM student_event_register
-                     WHERE $date_condition AND LOWER(TRIM(prize)) IN ('first', 'secound', 'third')
+                     WHERE $date_condition AND LOWER(TRIM(prize)) IN ('first', 'second', 'third')
                      AND verification_status = 'Approved'";
     $wins_result = $conn->query($wins_sql);
     $wins_count  = $wins_result ? (int) $wins_result->fetch_assoc()['count'] : 0;
@@ -329,7 +334,7 @@
 
     $prev_wins_sql = "SELECT COUNT(*) as count
                           FROM student_event_register
-                          WHERE $previous_year_condition AND LOWER(TRIM(prize)) IN ('first', 'secound', 'third')
+                          WHERE $previous_year_condition AND LOWER(TRIM(prize)) IN ('first', 'second', 'third')
                           AND verification_status = 'Approved'";
     $prev_wins_result = $conn->query($prev_wins_sql);
     $prev_wins_count  = $prev_wins_result ? (int) $prev_wins_result->fetch_assoc()['count'] : 0;
@@ -429,6 +434,29 @@
     $previous_year_wins[] = 0;
     }
 
+    // Pre-fetch available years for the year selector (before closing connection)
+    $year_sql    = "SELECT DISTINCT YEAR(start_date) as year FROM student_event_register WHERE start_date IS NOT NULL ORDER BY year DESC";
+    $year_result = $conn->query($year_sql);
+
+    $available_years = [];
+    if ($year_result && $year_result->num_rows > 0) {
+    while ($year_row = $year_result->fetch_assoc()) {
+        $available_years[] = $year_row['year'];
+    }
+    }
+
+    // Generate years from current year to 10 years back
+    $current_system_year = date('Y');
+    $all_years           = [];
+    for ($i = 0; $i <= 10; $i++) {
+    $year        = $current_system_year - $i;
+    $all_years[] = $year;
+    }
+
+    // Merge available years with system years and remove duplicates
+    $all_years = array_unique(array_merge($available_years, $all_years));
+    rsort($all_years); // Sort descending
+
     $conn->close();
 ?>
 <!DOCTYPE html>
@@ -443,10 +471,10 @@
     <meta name="color-scheme" content="light only">
     <title>Event Admin Dashboard</title>
     <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <!-- css link -->
     <link rel="stylesheet" href="./CSS/styles.css" />
     <!-- google icons -->
@@ -545,37 +573,11 @@
                 <span class="year-label">Analysis Year:</span>
                 <select id="yearSelector" class="year-dropdown" onchange="changeAnalysisYear()">
                   <?php
-                      // Get available years from database
-                      $conn        = new mysqli("localhost", "root", "", "event_management_system");
-                      $year_sql    = "SELECT DISTINCT YEAR(start_date) as year FROM student_event_register WHERE start_date IS NOT NULL ORDER BY year DESC";
-                      $year_result = $conn->query($year_sql);
-
-                      $available_years = [];
-                      if ($year_result && $year_result->num_rows > 0) {
-                          while ($year_row = $year_result->fetch_assoc()) {
-                              $available_years[] = $year_row['year'];
-                          }
-                      }
-
-                      // Generate years from current year to 10 years back
-                      $current_system_year = date('Y');
-                      $all_years           = [];
-                      for ($i = 0; $i <= 10; $i++) {
-                          $year        = $current_system_year - $i;
-                          $all_years[] = $year;
-                      }
-
-                      // Merge available years with system years and remove duplicates
-                      $all_years = array_unique(array_merge($available_years, $all_years));
-                      rsort($all_years); // Sort descending
-
                       foreach ($all_years as $year) {
                           $selected = ($year == $current_year) ? 'selected' : '';
                           $has_data = in_array($year, $available_years) ? ' ✓' : ' ○';
                           echo "<option value=\"$year\" $selected>$year$has_data</option>";
                       }
-
-                      $conn->close();
                   ?>
                 </select>
                 <span class="year-info">

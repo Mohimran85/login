@@ -3,14 +3,14 @@
 
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Get poster filename from URL
     if (! isset($_GET['poster']) || empty($_GET['poster'])) {
-        header("Location: od_approvals.php");
-        exit();
+    header("Location: od_approvals.php");
+    exit();
     }
 
     $poster_file = basename($_GET['poster']); // Sanitize filename
@@ -18,8 +18,8 @@
 
     // Check if file exists
     if (! file_exists($poster_path)) {
-        header("Location: od_approvals.php");
-        exit();
+    header("Location: od_approvals.php");
+    exit();
     }
 
     // Get file extension to determine content type
@@ -27,23 +27,26 @@
 
     // Set appropriate content type
     switch ($file_extension) {
-        case 'jpg':
-        case 'jpeg':
-            $content_type = 'image/jpeg';
-            break;
-        case 'png':
-            $content_type = 'image/png';
-            break;
-        case 'pdf':
-            $content_type = 'application/pdf';
-            break;
-        default:
-            header("Location: od_approvals.php");
-            exit();
+    case 'jpg':
+    case 'jpeg':
+        $content_type = 'image/jpeg';
+        break;
+    case 'png':
+        $content_type = 'image/png';
+        break;
+    case 'webp':
+        $content_type = 'image/webp';
+        break;
+    case 'pdf':
+        $content_type = 'application/pdf';
+        break;
+    default:
+        header("Location: od_approvals.php");
+        exit();
     }
 
     // For images, show in a nice viewer
-    if (in_array($file_extension, ['jpg', 'jpeg', 'png'])) {
+    if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'webp'])) {
     ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -272,9 +275,9 @@
 </html>
 <?php
     } else {
-        // For PDFs, serve directly
-        header('Content-Type: ' . $content_type);
-        header('Content-Disposition: inline; filename="' . $poster_file . '"');
-        readfile($poster_path);
+    // For PDFs, serve directly
+    header('Content-Type: ' . $content_type);
+    header('Content-Disposition: inline; filename="' . $poster_file . '"');
+    readfile($poster_path);
 }
 ?>

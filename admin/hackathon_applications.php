@@ -13,10 +13,8 @@
 
     // Check if user is admin
     $username = $_SESSION['username'];
-    $conn     = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'error' => 'Database connection failed']));
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     $teacher_status_sql = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ? LIMIT 1";
     $stmt               = $conn->prepare($teacher_status_sql);
@@ -162,10 +160,10 @@
     <meta name="color-scheme" content="light only">
     <title>Hackathon Applications - Admin Dashboard</title>
     <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <!-- CSS -->
     <link rel="stylesheet" href="./CSS/styles.css">
     <!-- Google Icons -->
@@ -524,7 +522,7 @@
                         <span class="material-symbols-outlined">add</span>
                         Create Hackathon
                     </a>
-                    <a href="?export=csv&<?php echo http_build_query($_GET); ?>" class="btn btn-success">
+                    <a href="?export=csv&<?php echo htmlspecialchars(http_build_query($_GET), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success">
                         <span class="material-symbols-outlined">download</span>
                         Export CSV
                     </a>
@@ -662,7 +660,7 @@
                                     </small>
                                 </td>
                                 <td>
-                                    <span class="badge badge-<?php echo $app['application_type']; ?>">
+                                    <span class="badge badge-<?php echo htmlspecialchars($app['application_type'], ENT_QUOTES, 'UTF-8'); ?>">
                                         <span class="material-symbols-outlined" style="font-size: 14px;">
                                             <?php echo $app['application_type'] === 'team' ? 'groups' : 'person'; ?>
                                         </span>
@@ -687,7 +685,7 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="badge badge-<?php echo $app['status']; ?>">
+                                    <span class="badge badge-<?php echo htmlspecialchars($app['status'], ENT_QUOTES, 'UTF-8'); ?>">
                                         <span class="material-symbols-outlined" style="font-size: 14px;">
                                             <?php echo $app['status'] === 'confirmed' ? 'check_circle' : 'cancel'; ?>
                                         </span>

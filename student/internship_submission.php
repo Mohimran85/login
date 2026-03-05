@@ -15,10 +15,8 @@
     $username = $_SESSION['username'];
 
     // Fetch student data from database
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     $stmt = $conn->prepare("SELECT regno, name FROM student_register WHERE username = ?");
     $stmt->bind_param("s", $username);
@@ -128,10 +126,8 @@
         $error_message = "❌ Brief Report must be between 20 and 2000 characters.";
     } else {
         // Check for duplicate internship submission
-        $check_conn = new mysqli("localhost", "root", "", "event_management_system");
-        if ($check_conn->connect_error) {
-            $error_message = "❌ Database connection failed.";
-        } else {
+        $check_conn = get_db_connection();
+        {
             $check_stmt = $check_conn->prepare(
                 "SELECT id, company_name FROM internship_submissions
                      WHERE regno = ? AND company_name = ? AND start_date = ?"
@@ -235,11 +231,9 @@
 
         // If no errors, insert into database
         if (empty($error_message)) {
-            $conn = new mysqli("localhost", "root", "", "event_management_system");
+            $conn = get_db_connection();
 
-            if ($conn->connect_error) {
-                $error_message = "❌ Database connection failed.";
-            } else {
+            {
                 $stmt = $conn->prepare(
                     "INSERT INTO internship_submissions
                     (regno, company_name, company_website, company_address, supervisor_name, supervisor_email,

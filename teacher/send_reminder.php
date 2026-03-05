@@ -29,11 +29,8 @@ if ($event_id <= 0 || empty($regno) || empty($event_name)) {
 }
 
 // Database connection
-$conn = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
-    exit();
-}
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
 $faculty_name = $_SESSION['name'] ?? 'Your Counselor';
 

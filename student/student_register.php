@@ -14,10 +14,8 @@
     $logged_in_regno = '';
     $student_data    = null;
     if (isset($_SESSION['username'])) {
-    $conn_user = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn_user->connect_error) {
-        die("Connection failed: " . htmlspecialchars($conn_user->connect_error));
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn_user = get_db_connection();
 
     $username  = $_SESSION['username'];
     $user_sql  = "SELECT name, regno, semester, department FROM student_register WHERE username=?";
@@ -47,15 +45,10 @@
     $auto_days           = isset($_GET['days']) ? trim($_GET['days']) : '';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $servername = "localhost";
-    $username   = "root";
-    $password   = "";
-    $dbname     = "event_management_system";
-    $conn       = new mysqli($servername, $username, $password, $dbname);
-
-    if ($conn->connect_error) {
-        die("Connection failed: " . htmlspecialchars($conn->connect_error));
+    if (! function_exists('get_db_connection')) {
+        require_once __DIR__ . '/../includes/db_config.php';
     }
+    $conn = get_db_connection();
 
     // Sanitize inputs
     $regno        = isset($_POST['regno']) ? trim($_POST['regno']) : '';
@@ -1523,7 +1516,7 @@
             <select id="prize" name="prize">
               <option value="" disabled selected>Select The Prize</option>
               <option value="first">First Prize</option>
-              <option value="secound">Second Prize</option>
+              <option value="second">Second Prize</option>
               <option value="third">Third Prize</option>
               <option value="Participation">Participation</option>
             </select>

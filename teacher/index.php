@@ -3,14 +3,19 @@
 
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
+    // Block access if 2FA verification is still pending
+    if (isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
+    && (! isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== true)) {
+    header("Location: ../verify_2fa.php");
+    exit();
     }
+
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get teacher data
     $username       = $_SESSION['username'];
@@ -26,29 +31,29 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $teacher_data   = $result->fetch_assoc();
-        $teacher_status = $teacher_data['status'];
-        $is_admin       = ($teacher_status === 'admin');
+    $teacher_data   = $result->fetch_assoc();
+    $teacher_status = $teacher_data['status'];
+    $is_admin       = ($teacher_status === 'admin');
     } else {
-        // Fallback: Check if username exists in student_register table
-        $sql2  = "SELECT name, regno as employee_id FROM student_register WHERE username=?";
-        $stmt2 = $conn->prepare($sql2);
-        $stmt2->bind_param("s", $username);
-        $stmt2->execute();
-        $result2 = $stmt2->get_result();
+    // Fallback: Check if username exists in student_register table
+    $sql2  = "SELECT name, regno as employee_id FROM student_register WHERE username=?";
+    $stmt2 = $conn->prepare($sql2);
+    $stmt2->bind_param("s", $username);
+    $stmt2->execute();
+    $result2 = $stmt2->get_result();
 
-        if ($result2->num_rows > 0) {
-            $teacher_data = $result2->fetch_assoc();
-        } else {
-            // If no data found anywhere, create a default entry
-            $teacher_data = [
-                'name'        => ucfirst($username),                            // Use username as name
-                'employee_id' => 'TEMP-' . strtoupper(substr($username, 0, 4)), // Generate temp ID
-            ];
-        }
-        if (isset($stmt2)) {
-            $stmt2->close();
-        }
+    if ($result2->num_rows > 0) {
+        $teacher_data = $result2->fetch_assoc();
+    } else {
+        // If no data found anywhere, create a default entry
+        $teacher_data = [
+            'name'        => ucfirst($username),                            // Use username as name
+            'employee_id' => 'TEMP-' . strtoupper(substr($username, 0, 4)), // Generate temp ID
+        ];
+    }
+    if (isset($stmt2)) {
+        $stmt2->close();
+    }
 
     }
 
@@ -62,19 +67,19 @@
     $assigned_students_count = 0;
 
     if ($is_counselor) {
-        // Get the teacher's ID from teacher_register table for counselor assignments
-        $counselor_id_sql  = "SELECT id FROM teacher_register WHERE username = ?";
-        $counselor_id_stmt = $conn->prepare($counselor_id_sql);
-        $counselor_id_stmt->bind_param("s", $username);
-        $counselor_id_stmt->execute();
-        $counselor_id_result = $counselor_id_stmt->get_result();
+    // Get the teacher's ID from teacher_register table for counselor assignments
+    $counselor_id_sql  = "SELECT id FROM teacher_register WHERE username = ?";
+    $counselor_id_stmt = $conn->prepare($counselor_id_sql);
+    $counselor_id_stmt->bind_param("s", $username);
+    $counselor_id_stmt->execute();
+    $counselor_id_result = $counselor_id_stmt->get_result();
 
-        if ($counselor_id_result->num_rows > 0) {
-            $counselor_data = $counselor_id_result->fetch_assoc();
-            $counselor_id   = $counselor_data['id'];
+    if ($counselor_id_result->num_rows > 0) {
+        $counselor_data = $counselor_id_result->fetch_assoc();
+        $counselor_id   = $counselor_data['id'];
 
-            // Get assigned students for this counselor
-            $assigned_students_sql = "SELECT ca.student_regno, sr.name, sr.department, sr.year_of_join, ca.assigned_date,
+        // Get assigned students for this counselor
+        $assigned_students_sql = "SELECT ca.student_regno, sr.name, sr.department, sr.year_of_join, ca.assigned_date,
                                             COUNT(ser.id) as total_events,
                                             SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prizes_won
                                      FROM counselor_assignments ca
@@ -83,23 +88,23 @@
                                      WHERE ca.counselor_id = ? AND ca.status = 'active'
                                      GROUP BY ca.student_regno, sr.name, sr.department, sr.year_of_join, ca.assigned_date
                                      ORDER BY ca.assigned_date DESC, sr.name";
-            $assigned_students_stmt = $conn->prepare($assigned_students_sql);
-            $assigned_students_stmt->bind_param("i", $counselor_id);
-            $assigned_students_stmt->execute();
-            $assigned_students       = $assigned_students_stmt->get_result();
-            $assigned_students_count = $assigned_students->num_rows;
-            $assigned_students_stmt->close();
-        }
-        $counselor_id_stmt->close();
+        $assigned_students_stmt = $conn->prepare($assigned_students_sql);
+        $assigned_students_stmt->bind_param("i", $counselor_id);
+        $assigned_students_stmt->execute();
+        $assigned_students       = $assigned_students_stmt->get_result();
+        $assigned_students_count = $assigned_students->num_rows;
+        $assigned_students_stmt->close();
+    }
+    $counselor_id_stmt->close();
     }
 
     // Total students participated in events (from student_event_register)
     $total_participants_sql = "SELECT COUNT(DISTINCT regno) as participants FROM student_event_register";
     $participants_result    = $conn->query($total_participants_sql);
     if ($participants_result) {
-        $total_participants = $participants_result->fetch_assoc()['participants'];
+    $total_participants = $participants_result->fetch_assoc()['participants'];
     } else {
-        $total_participants = 0;
+    $total_participants = 0;
     }
 
     // Recent student activities (last 5)
@@ -110,47 +115,47 @@
                          ORDER BY ser.start_date DESC, ser.id DESC LIMIT 5";
     $recent_stmt = $conn->prepare($recent_events_sql);
     if ($recent_stmt) {
-        $recent_stmt->execute();
-        $recent_events = $recent_stmt->get_result();
+    $recent_stmt->execute();
+    $recent_events = $recent_stmt->get_result();
     } else {
-        // Fallback: create empty result
-        $recent_events = null;
+    // Fallback: create empty result
+    $recent_events = null;
     }
 
     // Event type breakdown for student events
     // For counselors, show only their assigned students' event types
     if ($is_counselor && $counselor_id) {
-        $event_types_sql = "SELECT ser.event_type, COUNT(*) as count
+    $event_types_sql = "SELECT ser.event_type, COUNT(*) as count
                            FROM student_event_register ser
                            INNER JOIN counselor_assignments ca ON ser.regno = ca.student_regno
                            WHERE ca.counselor_id = ? AND ca.status = 'active'
                            GROUP BY ser.event_type
                            ORDER BY count DESC LIMIT 8";
-        $types_stmt = $conn->prepare($event_types_sql);
-        $types_stmt->bind_param("i", $counselor_id);
+    $types_stmt = $conn->prepare($event_types_sql);
+    $types_stmt->bind_param("i", $counselor_id);
+    $types_stmt->execute();
+    $event_types_result = $types_stmt->get_result();
+    } else {
+    // For non-counselors, show all student event types
+    $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register
+                           GROUP BY event_type ORDER BY count DESC LIMIT 8";
+    $types_stmt = $conn->prepare($event_types_sql);
+    if ($types_stmt) {
         $types_stmt->execute();
         $event_types_result = $types_stmt->get_result();
     } else {
-        // For non-counselors, show all student event types
-        $event_types_sql = "SELECT event_type, COUNT(*) as count FROM student_event_register
-                           GROUP BY event_type ORDER BY count DESC LIMIT 8";
-        $types_stmt = $conn->prepare($event_types_sql);
-        if ($types_stmt) {
-            $types_stmt->execute();
-            $event_types_result = $types_stmt->get_result();
-        } else {
-            $event_types_result = null;
-        }
+        $event_types_result = null;
+    }
     }
 
     // Store event types in array and calculate total for progress bar
     $event_types_array = [];
     $total_events      = 0;
     if ($event_types_result) {
-        while ($row = $event_types_result->fetch_assoc()) {
-            $event_types_array[] = $row;
-            $total_events += $row['count'];
-        }
+    while ($row = $event_types_result->fetch_assoc()) {
+        $event_types_array[]  = $row;
+        $total_events        += $row['count'];
+    }
     }
 
     // Get recently registered students (last 10)
@@ -166,25 +171,25 @@
     // Get student registration statistics by event type
     // For counselors, show only their assigned students' event types
     if ($is_counselor && $counselor_id) {
-        $student_stats_sql = "SELECT ser.event_type, COUNT(DISTINCT ser.regno) as student_count,
+    $student_stats_sql = "SELECT ser.event_type, COUNT(DISTINCT ser.regno) as student_count,
                                     COUNT(ser.id) as total_registrations
                              FROM student_event_register ser
                              INNER JOIN counselor_assignments ca ON ser.regno = ca.student_regno
                              WHERE ca.counselor_id = ? AND ca.status = 'active'
                              GROUP BY ser.event_type
                              ORDER BY student_count DESC";
-        $student_stats_stmt = $conn->prepare($student_stats_sql);
-        $student_stats_stmt->bind_param("i", $counselor_id);
-        $student_stats_stmt->execute();
-        $student_stats_result = $student_stats_stmt->get_result();
+    $student_stats_stmt = $conn->prepare($student_stats_sql);
+    $student_stats_stmt->bind_param("i", $counselor_id);
+    $student_stats_stmt->execute();
+    $student_stats_result = $student_stats_stmt->get_result();
     } else {
-        // For non-counselors, show all student event types
-        $student_stats_sql = "SELECT ser.event_type, COUNT(DISTINCT ser.regno) as student_count,
+    // For non-counselors, show all student event types
+    $student_stats_sql = "SELECT ser.event_type, COUNT(DISTINCT ser.regno) as student_count,
                                     COUNT(ser.id) as total_registrations
                              FROM student_event_register ser
                              GROUP BY ser.event_type
                              ORDER BY student_count DESC";
-        $student_stats_result = $conn->query($student_stats_sql);
+    $student_stats_result = $conn->query($student_stats_sql);
     }
 
     // Get top performing students (students with prizes)
@@ -201,11 +206,11 @@
 
     $stmt->close();
     if (isset($recent_stmt)) {
-        $recent_stmt->close();
+    $recent_stmt->close();
     }
 
     if (isset($types_stmt)) {
-        $types_stmt->close();
+    $types_stmt->close();
     }
 
 ?>
@@ -218,10 +223,10 @@
     <meta name="color-scheme" content="light only">
     <title>Teacher Dashboard - Event Management System</title>
     <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <!-- css link -->
     <link rel="stylesheet" href="../student/student_dashboard.css" />
     <!-- google icons -->
@@ -727,7 +732,7 @@
         </div>
         <div class="icon">
           <img
-            src="../asserts/images/Sona Logo.png"
+            src="../assets/images/Sona Logo.png"
             alt="Sona College Logo"
           />
         </div>

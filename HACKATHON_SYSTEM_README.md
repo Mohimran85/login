@@ -7,6 +7,7 @@ This feature adds a complete hackathon posting and application system to your Ev
 ## 🎯 Features Implemented
 
 ### Admin Features
+
 - ✅ Create, edit, and delete hackathon posts
 - ✅ Upload poster images (auto-compressed to WebP)
 - ✅ Upload rules PDF documents
@@ -17,6 +18,7 @@ This feature adds a complete hackathon posting and application system to your Ev
 - ✅ Track hackathon views
 
 ### Student Features
+
 - ✅ Browse available hackathons with filters
 - ✅ View detailed hackathon information
 - ✅ Apply individually or as a team
@@ -27,6 +29,7 @@ This feature adds a complete hackathon posting and application system to your Ev
 - ✅ Auto-confirm registrations (no approval needed)
 
 ### Technical Features
+
 - ✅ Web Push API (compatible with Median.co)
 - ✅ Service Worker for offline support
 - ✅ Progressive Web App (PWA) manifest
@@ -55,6 +58,7 @@ mysql -u root -p event_management_system < sql/create_hackathon_system.sql
 ```
 
 This creates 6 new tables:
+
 - `hackathon_posts` - Stores hackathon information
 - `hackathon_applications` - Stores student applications
 - `hackathon_views` - Tracks views for analytics
@@ -67,15 +71,17 @@ This creates 6 new tables:
 #### Generate VAPID Keys (One-time)
 
 VAPID keys are automatically generated when the system first runs. They are stored in:
+
 ```
 cache/vapid_keys.json
 ```
 
-**
+\*\*
 
-IMPORTANT**: Keep this file secure! Do not commit to version control.
+IMPORTANT\*\*: Keep this file secure! Do not commit to version control.
 
 For production, it's recommended to use environment variables:
+
 ```php
 // In your .env or config file:
 VAPID_PUBLIC_KEY=your_public_key_here
@@ -86,6 +92,7 @@ VAPID_SUBJECT=mailto:admin@yourdomain.com
 #### Enable Service Worker
 
 The service worker file is already created at:
+
 ```
 sw.js (root directory)
 ```
@@ -110,8 +117,8 @@ Add hackathons link to student navigation. In `student/index.php`, add:
 
 ```html
 <a href="hackathons.php" class="nav-link">
-    <span class="material-symbols-outlined">emoji_events</span>
-    <span>Hackathons</span>
+  <span class="material-symbols-outlined">emoji_events</span>
+  <span>Hackathons</span>
 </a>
 ```
 
@@ -119,8 +126,8 @@ Add to admin navigation in `admin/index.php`:
 
 ```html
 <a href="hackathons.php" class="nav-link">
-    <span class="material-symbols-outlined">emoji_events</span>
-    <span>Hackathons</span>
+  <span class="material-symbols-outlined">emoji_events</span>
+  <span>Hackathons</span>
 </a>
 ```
 
@@ -129,7 +136,7 @@ Add to admin navigation in `admin/index.php`:
 Add to student header/dashboard (`student/index.php`):
 
 ```html
-<link rel="manifest" href="../manifest.json">
+<link rel="manifest" href="../manifest.json" />
 <script src="js/push-manager.js"></script>
 ```
 
@@ -187,7 +194,7 @@ Add to student header/dashboard (`student/index.php`):
    - Theme and tags
    - "Days left" warning if deadline close
 
-####  Viewing Details
+#### Viewing Details
 
 1. Click on any hackathon card
 2. Detailed page shows:
@@ -215,11 +222,13 @@ Add to student header/dashboard (`student/index.php`):
 #### Receiving Notifications
 
 **First-time setup:**
+
 1. Browser will prompt: "Allow notifications from this site?"
 2. Click **"Allow"**
 3. Your device is now subscribed to push notifications
 
 **When admin posts hackathon:**
+
 - Receive instant push notification on all your devices
 - Notification includes:
   - Hackathon title
@@ -228,6 +237,7 @@ Add to student header/dashboard (`student/index.php`):
 - Notification saved in notification center
 
 **Notification Center:**
+
 - Bell icon in header shows unread count
 - Click to see all notifications
 - Mark as read individually or all at once
@@ -240,7 +250,7 @@ Add to student header/dashboard (`student/index.php`):
 - ✅ **Authorization**: Role-based access (admin/student)
 - ✅ **CSRF Protection**: Tokens on all forms
 - ✅ **SQL Injection Prevention**: Prepared statements
-- ✅ **File Upload Validation**: 
+- ✅ **File Upload Validation**:
   - MIME type checking (server-side)
   - Extension whitelisting
   - File size limits
@@ -266,7 +276,7 @@ This system is fully compatible with [Median.co](https://median.co) for converti
 1. **manifest.json**: Already created with proper icons and metadata
 2. **Service Worker**: Registered at root (`sw.js`)
 3. **Push Notifications**: Uses standard Web Push API (no FCM dependency)
-4. **Icons**: Place app icons in `asserts/images/`:
+4. **Icons**: Place app icons in `assets/images/`:
    - icon-192x192.png (required)
    - icon-512x512.png (required)
    - icon-72x72.png, icon-96x96.png, etc. (optional)
@@ -288,21 +298,23 @@ This system is fully compatible with [Median.co](https://median.co) for converti
 ### Testing Push Notifications
 
 **On Web (Chrome/Firefox/Edge):**
+
 ```javascript
 // Open browser console on student page
 // Check if service worker is registered:
-navigator.serviceWorker.getRegistration().then(reg => console.log(reg));
+navigator.serviceWorker.getRegistration().then((reg) => console.log(reg));
 
 // Check notification permission:
 console.log(Notification.permission);
 
 // Check active subscriptions:
-fetch('/student/ajax/push_subscription.php?action=status')
-    .then(r => r.json())
-    .then(d => console.log(d));
+fetch("/student/ajax/push_subscription.php?action=status")
+  .then((r) => r.json())
+  .then((d) => console.log(d));
 ```
 
 **On Android (via Median.co app):**
+
 1. Install APK on device
 2. Grant notification permission when prompted
 3. Admin posts hackathon with "Send notification" checked
@@ -332,7 +344,7 @@ login/
 │   └── js/
 │       └── push-manager.js         # Push notification client (TODO)
 ├── includes/
-│   ├── WebPushManager.php          # Web Push backend
+│   ├── OneSignalManager.php        # OneSignal push notification backend
 │   ├── DatabaseManager.php         # Existing DB utility
 │   ├── FileCompressor.php          # Existing file compression
 │   ├── security.php                # Existing security functions
@@ -367,8 +379,8 @@ background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
 Replace notification icon in `sw.js`:
 
 ```javascript
-icon: '/asserts/images/logo.png',  // Your logo
-badge: '/asserts/images/badge.png', // Small badge icon (72x72px)
+icon: '/assets/images/logo.png',  // Your logo
+badge: '/assets/images/badge.png', // Small badge icon (72x72px)
 ```
 
 ### Email Notifications (Future Enhancement)
@@ -397,10 +409,11 @@ foreach ($students as $student) {
 **Problem**: Students don't receive notifications
 
 **Solutions**:
+
 1. Check browser console for errors
 2. Verify service worker is registered:
    ```javascript
-   navigator.serviceWorker.getRegistrations().then(regs => console.log(regs));
+   navigator.serviceWorker.getRegistrations().then((regs) => console.log(regs));
    ```
 3. Check notification permission:
    ```javascript
@@ -421,6 +434,7 @@ foreach ($students as $student) {
 **Problem**: Poster/PDF upload fails
 
 **Solutions**:
+
 1. Check directory permissions:
    ```bash
    chmod 755 uploads/hackathon_posters
@@ -441,6 +455,7 @@ foreach ($students as $student) {
 **Problem**: SQL errors when creating hackathon
 
 **Solutions**:
+
 1. Verify tables exist:
    ```sql
    SHOW TABLES LIKE 'hackathon%';
@@ -459,17 +474,18 @@ foreach ($students as $student) {
 **Problem**: Changes to sw.js not reflecting
 
 **Solutions**:
+
 1. Hard refresh: `Ctrl+Shift+R` (Windows) or `Cmd+Shift+R` (Mac)
 2. Unregister old service worker:
    ```javascript
-   navigator.serviceWorker.getRegistrations().then(regs => {
-       regs.forEach(reg => reg.unregister());
+   navigator.serviceWorker.getRegistrations().then((regs) => {
+     regs.forEach((reg) => reg.unregister());
    });
    ```
 3. Clear browser cache
 4. Update CACHE_VERSION in sw.js:
    ```javascript
-   const CACHE_VERSION = 'v2'; // Increment this
+   const CACHE_VERSION = "v2"; // Increment this
    ```
 
 ## 📊 Database Queries for Analytics
@@ -486,7 +502,7 @@ LIMIT 10;
 ### Application Statistics
 
 ```sql
-SELECT 
+SELECT
     hp.title,
     COUNT(ha.id) as total_applications,
     SUM(CASE WHEN ha.application_type = 'team' THEN 1 ELSE 0 END) as team_apps,
@@ -500,7 +516,7 @@ ORDER BY total_applications DESC;
 ### Push Notification Success Rate
 
 ```sql
-SELECT 
+SELECT
     DATE(attempted_at) as date,
     COUNT(*) as total_sent,
     SUM(CASE WHEN status = 'sent' THEN 1 ELSE 0 END) as successful,
@@ -515,7 +531,7 @@ LIMIT 30;
 ### Most Active Students
 
 ```sql
-SELECT 
+SELECT
     sr.name,
     sr.regno,
     COUNT(ha.id) as applications_count
@@ -530,6 +546,7 @@ LIMIT 20;
 ## ✅ Testing Checklist
 
 ### Admin Testing
+
 - [ ] Create hackathon with all fields
 - [ ] Upload poster (JPG/PNG) - verify compression
 - [ ] Upload rules PDF - verify compression
@@ -542,12 +559,13 @@ LIMIT 20;
 - [ ] Export applications to CSV
 
 ### Student Testing
+
 - [ ] Browse hackathons list
 - [ ] Filter by status (upcoming/ongoing)
 - [ ] Search by keywords
 - [ ] View hackathon details
 - [ ] Apply as individual
-- [ ] Apply as  team
+- [ ] Apply as team
 - [ ] View "My Applications"
 - [ ] Withdraw application
 - [ ] Receive push notification
@@ -556,6 +574,7 @@ LIMIT 20;
 - [ ] Mark notifications as read
 
 ### Security Testing
+
 - [ ] Access admin pages as student (should block)
 - [ ] Submit form without CSRFtoken (should fail)
 - [ ] Upload PHP file as poster (should reject)
@@ -566,6 +585,7 @@ LIMIT 20;
 - [ ] Apply twice for same hackathon (should prevent)
 
 ### Browser/Device Testing
+
 - [ ] Chrome (Windows/Mac/Android)
 - [ ] Firefox (Windows/Mac)
 - [ ] Edge (Windows)
@@ -593,6 +613,7 @@ The following files are referenced but need to be created:
 10. **admin/ajax/hackathons.php** - Admin AJAX endpoints
 
 These will be implemented in the next phase. Priority:
+
 1. Student details & apply pages (for functionality)
 2. Push notification client (for notifications)
 3. Notification center (for viewing history)
@@ -602,6 +623,7 @@ These will be implemented in the next phase. Priority:
 ## 📞 Support
 
 For issues or questions:
+
 1. Check this README first
 2. Review error logs: `/xampp/apache/logs/error.log`
 3. Check database logs: `push_notification_log`, `notifications`

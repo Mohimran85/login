@@ -2,8 +2,14 @@
 session_start();
 require_once "includes/DatabaseManager.php";
 
+// Require admin authentication
+if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || ! isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    http_response_code(403);
+    die('Forbidden: Admin access required');
+}
+
 $db           = DatabaseManager::getInstance();
-$hackathon_id = $_GET['id'] ?? 0;
+$hackathon_id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
 if ($hackathon_id) {
     echo "<h2>Debug Info for Hackathon ID: $hackathon_id</h2>";

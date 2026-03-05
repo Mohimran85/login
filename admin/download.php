@@ -27,10 +27,8 @@ if (! in_array($type, $valid_types)) {
     die("Invalid file type");
 }
 
-$conn = new mysqli("localhost", "root", "", "event_management_system");
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
 // Select the file data based on type and participant type
 if ($participant_type === 'teacher') {

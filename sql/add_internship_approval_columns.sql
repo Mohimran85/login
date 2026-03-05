@@ -2,11 +2,10 @@
 -- Run this SQL in phpMyAdmin to add the missing columns
 
 ALTER TABLE `internship_submissions`
-ADD COLUMN `approval_status` VARCHAR(20) DEFAULT 'pending' AFTER `submission_date`,
-ADD COLUMN `counselor_remarks` TEXT NULL AFTER `approval_status`,
-ADD COLUMN `approved_by` INT NULL AFTER `counselor_remarks`,
-ADD COLUMN `approval_date` DATETIME NULL AFTER `approved_by`,
-ADD INDEX `idx_approval_status` (`approval_status`);
+ADD COLUMN IF NOT EXISTS `approval_status` ENUM('pending', 'approved', 'rejected') DEFAULT 'pending' AFTER `submission_date`,
+ADD COLUMN IF NOT EXISTS `counselor_remarks` TEXT NULL AFTER `approval_status`,
+ADD COLUMN IF NOT EXISTS `approved_by` INT NULL AFTER `counselor_remarks`,
+ADD COLUMN IF NOT EXISTS `approval_date` DATETIME NULL AFTER `approved_by`;
 
 -- Update any existing records to have 'pending' status
 UPDATE `internship_submissions` SET `approval_status` = 'pending' WHERE `approval_status` IS NULL;

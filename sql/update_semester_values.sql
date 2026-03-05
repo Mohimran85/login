@@ -34,3 +34,4 @@ SELECT ser.regno, sr.name, ser.event_name, ser.semester
 FROM student_event_register ser
 JOIN student_register sr ON ser.regno = sr.regno
 ORDER BY ser.regno, ser.id;
+*/

@@ -1,10 +1,10 @@
 <?php
     // Enable output compression
     if (! ob_get_level()) {
-        ob_start("ob_gzhandler");
+    ob_start("ob_gzhandler");
     }
 
-                                                  // Set caching headers
+                                              // Set caching headers
     header("Cache-Control: public, max-age=300"); // Cache for 5 minutes
     header("Expires: " . gmdate("D, d M Y H:i:s", time() + 300) . " GMT");
 
@@ -12,14 +12,12 @@
 
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get teacher data
     $username     = $_SESSION['username'];
@@ -36,87 +34,87 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $teacher_data = $result->fetch_assoc();
-        $is_counselor = ($teacher_data['status'] === 'counselor');
-        $counselor_id = $teacher_data['id'];
+    $teacher_data = $result->fetch_assoc();
+    $is_counselor = ($teacher_data['status'] === 'counselor');
+    $counselor_id = $teacher_data['id'];
     } else {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Check if user is a counselor
     if (! $is_counselor) {
-        header("Location: index.php");
-        exit();
+    header("Location: index.php");
+    exit();
     }
 
     // Handle bulk semester update for all assigned students
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_bulk_semester'])) {
-        $bulk_semester = $_POST['bulk_semester'];
+    $bulk_semester = $_POST['bulk_semester'];
 
-        if (! empty($bulk_semester)) {
-            // Get all students assigned to this counselor
-            $get_students_sql = "SELECT student_regno FROM counselor_assignments
+    if (! empty($bulk_semester)) {
+        // Get all students assigned to this counselor
+        $get_students_sql = "SELECT student_regno FROM counselor_assignments
                                 WHERE counselor_id = ? AND status = 'active'";
-            $get_students_stmt = $conn->prepare($get_students_sql);
-            $get_students_stmt->bind_param("i", $counselor_id);
-            $get_students_stmt->execute();
-            $students_result = $get_students_stmt->get_result();
+        $get_students_stmt = $conn->prepare($get_students_sql);
+        $get_students_stmt->bind_param("i", $counselor_id);
+        $get_students_stmt->execute();
+        $students_result = $get_students_stmt->get_result();
 
-            $updated_count = 0;
-            while ($student = $students_result->fetch_assoc()) {
-                $update_sql  = "UPDATE student_register SET semester = ? WHERE regno = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("ss", $bulk_semester, $student['student_regno']);
+        $updated_count = 0;
+        while ($student = $students_result->fetch_assoc()) {
+            $update_sql  = "UPDATE student_register SET semester = ? WHERE regno = ?";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("ss", $bulk_semester, $student['student_regno']);
 
-                if ($update_stmt->execute() && $update_stmt->affected_rows > 0) {
-                    $updated_count++;
-                }
-                $update_stmt->close();
+            if ($update_stmt->execute() && $update_stmt->affected_rows > 0) {
+                $updated_count++;
             }
-            $get_students_stmt->close();
-
-            $_SESSION['success_message'] = "Successfully updated semester to $bulk_semester for $updated_count student(s)!";
-        } else {
-            $_SESSION['error_message'] = "Please select a semester.";
+            $update_stmt->close();
         }
+        $get_students_stmt->close();
 
-        // Redirect to avoid form resubmission
-        header("Location: assigned_students.php");
-        exit();
+        $_SESSION['success_message'] = "Successfully updated semester to $bulk_semester for $updated_count student(s)!";
+    } else {
+        $_SESSION['error_message'] = "Please select a semester.";
+    }
+
+    // Redirect to avoid form resubmission
+    header("Location: assigned_students.php");
+    exit();
     }
 
     // Handle individual semester updates
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_all_semesters'])) {
-        $semesters     = $_POST['semester'] ?? [];
-        $updated_count = 0;
-        $failed_count  = 0;
+    $semesters     = $_POST['semester'] ?? [];
+    $updated_count = 0;
+    $failed_count  = 0;
 
-        foreach ($semesters as $regno => $new_semester) {
-            if (! empty($new_semester)) {
-                $update_sql  = "UPDATE student_register SET semester = ? WHERE regno = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("ss", $new_semester, $regno);
+    foreach ($semesters as $regno => $new_semester) {
+        if (! empty($new_semester)) {
+            $update_sql  = "UPDATE student_register SET semester = ? WHERE regno = ?";
+            $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("ss", $new_semester, $regno);
 
-                if ($update_stmt->execute() && $update_stmt->affected_rows > 0) {
-                    $updated_count++;
-                } else {
-                    $failed_count++;
-                }
-                $update_stmt->close();
+            if ($update_stmt->execute() && $update_stmt->affected_rows > 0) {
+                $updated_count++;
+            } else {
+                $failed_count++;
             }
+            $update_stmt->close();
         }
+    }
 
-        if ($updated_count > 0) {
-            $_SESSION['success_message'] = "Successfully updated semester for $updated_count student(s)!";
-        }
-        if ($failed_count > 0) {
-            $_SESSION['error_message'] = "Failed to update $failed_count student(s).";
-        }
+    if ($updated_count > 0) {
+        $_SESSION['success_message'] = "Successfully updated semester for $updated_count student(s)!";
+    }
+    if ($failed_count > 0) {
+        $_SESSION['error_message'] = "Failed to update $failed_count student(s).";
+    }
 
-        // Redirect to avoid form resubmission
-        header("Location: assigned_students.php");
-        exit();
+    // Redirect to avoid form resubmission
+    header("Location: assigned_students.php");
+    exit();
     }
 
     // Pagination settings
@@ -135,24 +133,24 @@
     $types            = 'i';
 
     if (! empty($search)) {
-        $where_conditions[] = "(sr.name LIKE ? OR sr.regno LIKE ? OR sr.personal_email LIKE ?)";
-        $search_param       = "%$search%";
-        $params[]           = $search_param;
-        $params[]           = $search_param;
-        $params[]           = $search_param;
-        $types .= 'sss';
+    $where_conditions[]  = "(sr.name LIKE ? OR sr.regno LIKE ? OR sr.personal_email LIKE ?)";
+    $search_param        = "%$search%";
+    $params[]            = $search_param;
+    $params[]            = $search_param;
+    $params[]            = $search_param;
+    $types              .= 'sss';
     }
 
     if (! empty($semester_filter)) {
-        $where_conditions[] = "sr.semester = ?";
-        $params[]           = $semester_filter;
-        $types .= 's';
+    $where_conditions[]  = "sr.semester = ?";
+    $params[]            = $semester_filter;
+    $types              .= 's';
     }
 
     if (! empty($event_category_filter)) {
-        $where_conditions[] = "ser.event_type = ?";
-        $params[]           = $event_category_filter;
-        $types .= 's';
+    $where_conditions[]  = "ser.event_type = ?";
+    $params[]            = $event_category_filter;
+    $types              .= 's';
     }
 
     $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
@@ -160,13 +158,13 @@
     // Get total records for pagination
     // Include LEFT JOIN if event category filter is applied
     if (! empty($event_category_filter)) {
-        $count_sql = "SELECT COUNT(DISTINCT sr.regno) as total
+    $count_sql = "SELECT COUNT(DISTINCT sr.regno) as total
                       FROM counselor_assignments ca
                       JOIN student_register sr ON ca.student_regno = sr.regno
                       LEFT JOIN student_event_register ser ON sr.regno = ser.regno
                       $where_clause";
     } else {
-        $count_sql = "SELECT COUNT(*) as total
+    $count_sql = "SELECT COUNT(*) as total
                       FROM counselor_assignments ca
                       JOIN student_register sr ON ca.student_regno = sr.regno
                       $where_clause";
@@ -196,7 +194,7 @@
 
     $params[] = $records_per_page;
     $params[] = $offset;
-    $types .= 'ii';
+    $types    .= 'ii';
 
     $students_stmt = $conn->prepare($students_sql);
     $students_stmt->bind_param($types, ...$params);
@@ -206,7 +204,7 @@
     // Store all results in an array
     $students_data = [];
     while ($row = $students_result->fetch_assoc()) {
-        $students_data[] = $row;
+    $students_data[] = $row;
     }
 
     // Get available event categories for filter dropdown
@@ -222,7 +220,7 @@
     $event_categories_result = $event_cat_stmt->get_result();
     $event_categories        = [];
     while ($row = $event_categories_result->fetch_assoc()) {
-        $event_categories[] = $row['event_type'];
+    $event_categories[] = $row['event_type'];
     }
     $event_cat_stmt->close();
 
@@ -1361,6 +1359,6 @@
 <?php
     $conn->close();
     if (ob_get_level()) {
-        ob_end_flush();
+    ob_end_flush();
     }
 ?>

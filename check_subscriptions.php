@@ -1,5 +1,12 @@
 <?php
+session_start();
 require_once "includes/OneSignalManager.php";
+
+// Require admin authentication
+if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || ! isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    http_response_code(403);
+    die('Forbidden: Admin access required');
+}
 
 $envFile = __DIR__ . "/.env";
 $lines   = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

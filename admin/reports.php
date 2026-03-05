@@ -3,15 +3,13 @@
 
     // Check if user is logged in
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
     // Get user data for header profile
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     $username  = $_SESSION['username'];
     $user_data = null;
@@ -19,18 +17,18 @@
     $tables    = ['student_register', 'teacher_register'];
 
     foreach ($tables as $table) {
-        $sql  = "SELECT name FROM $table WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sql  = "SELECT name FROM $table WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $user_type = $table === 'student_register' ? 'student' : 'teacher';
-            break;
-        }
-        $stmt->close();
+    if ($result->num_rows > 0) {
+        $user_data = $result->fetch_assoc();
+        $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        break;
+    }
+    $stmt->close();
     }
 
     // Don't close connection here as it's used later in the file
@@ -43,10 +41,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>Report</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="./CSS/report.css" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet"/>
@@ -202,10 +200,7 @@
             <p class="main_report_heading">Report</p>
             <?php
                 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-                    $conn = new mysqli("localhost", "root", "", "event_management_system");
-                    if ($conn->connect_error) {
-                        die("Connection failed: " . $conn->connect_error);
-                    }
+                    // Reuse existing $conn from above
 
                     $year       = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
                     $department = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
@@ -231,30 +226,30 @@
                         $year_conditions    = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
                         $where_conditions[] = "($year_conditions)";
                         foreach ($year_patterns as $pattern) {
-                            $bind_types .= 's';
-                            $bind_values[] = $pattern;
+                            $bind_types    .= 's';
+                            $bind_values[]  = $pattern;
                         }
                     }
 
                     // Add department filter if selected
                     if ($department !== null) {
-                        $where_conditions[] = "e.department = ?";
-                        $bind_types .= 's';
-                        $bind_values[] = $department;
+                        $where_conditions[]  = "e.department = ?";
+                        $bind_types         .= 's';
+                        $bind_values[]       = $department;
                     }
 
                     // Add semester filter if selected
                     if ($semester !== null) {
-                        $where_conditions[] = "e.semester = ?";
-                        $bind_types .= 's';
-                        $bind_values[] = $semester;
+                        $where_conditions[]  = "e.semester = ?";
+                        $bind_types         .= 's';
+                        $bind_values[]       = $semester;
                     }
 
                     // Add event type filter if selected
                     if ($event_type !== null) {
-                        $where_conditions[] = "e.event_type = ?";
-                        $bind_types .= 's';
-                        $bind_values[] = $event_type;
+                        $where_conditions[]  = "e.event_type = ?";
+                        $bind_types         .= 's';
+                        $bind_values[]       = $event_type;
                     }
 
                     // Add location filter if selected

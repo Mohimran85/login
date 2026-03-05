@@ -2,6 +2,7 @@
 -- This migration links notifications to specific hackathons
 
 ALTER TABLE notifications 
-ADD COLUMN hackathon_id INT DEFAULT NULL AFTER user_regno,
-ADD FOREIGN KEY (hackathon_id) REFERENCES hackathon_posts(id) ON DELETE CASCADE,
-ADD INDEX idx_hackathon_id (hackathon_id);
+ADD COLUMN IF NOT EXISTS hackathon_id INT DEFAULT NULL AFTER user_regno;
+
+-- Add index separately (only if not already present)
+CREATE INDEX IF NOT EXISTS idx_hackathon_id ON notifications(hackathon_id);

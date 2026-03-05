@@ -158,9 +158,9 @@ VALUES (
 -- ============================================================================
 
 -- Additional composite indexes for common queries
-CREATE INDEX idx_hackathon_status_deadline ON hackathon_posts(status, registration_deadline);
-CREATE INDEX idx_applications_hackathon_status ON hackathon_applications(hackathon_id, status);
-CREATE INDEX idx_notifications_user_read ON notifications(user_regno, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_hackathon_status_deadline ON hackathon_posts(status, registration_deadline);
+CREATE INDEX IF NOT EXISTS idx_applications_hackathon_status ON hackathon_applications(hackathon_id, status);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_regno, is_read, created_at DESC);
 
 -- ============================================================================
 -- TRIGGERS
@@ -168,6 +168,7 @@ CREATE INDEX idx_notifications_user_read ON notifications(user_regno, is_read, c
 
 -- Trigger to update current_registrations count when application is created
 DELIMITER $$
+DROP TRIGGER IF EXISTS after_application_insert$$
 CREATE TRIGGER after_application_insert
 AFTER INSERT ON hackathon_applications
 FOR EACH ROW
@@ -180,6 +181,7 @@ BEGIN
 END$$
 
 -- Trigger to update current_registrations count when application status changes
+DROP TRIGGER IF EXISTS after_application_update$$
 CREATE TRIGGER after_application_update
 AFTER UPDATE ON hackathon_applications
 FOR EACH ROW
@@ -200,6 +202,7 @@ BEGIN
 END$$
 
 -- Trigger to set read_at timestamp when notification is marked as read
+DROP TRIGGER IF EXISTS after_notification_read$$
 CREATE TRIGGER after_notification_read
 BEFORE UPDATE ON notifications
 FOR EACH ROW

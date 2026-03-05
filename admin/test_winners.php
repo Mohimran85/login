@@ -16,7 +16,8 @@
  */
 
 // Only allow in development environment
-if (! defined('APP_ENV') || getenv('APP_ENV') !== 'development') {
+$app_env = defined('APP_ENV') ? APP_ENV : getenv('APP_ENV');
+if ($app_env !== 'development') {
     http_response_code(404);
     die('Not found');
 }

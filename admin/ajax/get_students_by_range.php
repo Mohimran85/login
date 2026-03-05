@@ -9,12 +9,8 @@ if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 // Database connection
-$servername  = "localhost";
-$db_username = "root";
-$db_password = "";
-$dbname      = "event_management_system";
-
-$conn = new mysqli($servername, $db_username, $db_password, $dbname);
+require_once __DIR__ . '/../../includes/db_config.php';
+$conn = get_db_connection();
 
 if ($conn->connect_error) {
     echo json_encode(['success' => false, 'error' => 'Database connection failed']);

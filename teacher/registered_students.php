@@ -1,10 +1,10 @@
 <?php
     // Enable output compression
     if (! ob_get_level()) {
-        ob_start("ob_gzhandler");
+    ob_start("ob_gzhandler");
     }
 
-                                                  // Set caching headers
+                                              // Set caching headers
     header("Cache-Control: public, max-age=300"); // Cache for 5 minutes
     header("Expires: " . gmdate("D, d M Y H:i:s", time() + 300) . " GMT");
 
@@ -12,14 +12,12 @@
 
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-        header("Location: ../index.php");
-        exit();
+    header("Location: ../index.php");
+    exit();
     }
 
-    $conn = new mysqli("localhost", "root", "", "event_management_system");
-    if ($conn->connect_error) {
-        die("Connection failed: " . $conn->connect_error);
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get teacher data
     $username       = $_SESSION['username'];
@@ -36,24 +34,24 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        $teacher_data   = $result->fetch_assoc();
-        $teacher_status = $teacher_data['status'];
-        $is_admin       = ($teacher_status === 'admin');
-        $is_counselor   = ($teacher_status === 'counselor');
+    $teacher_data   = $result->fetch_assoc();
+    $teacher_status = $teacher_data['status'];
+    $is_admin       = ($teacher_status === 'admin');
+    $is_counselor   = ($teacher_status === 'counselor');
     } else {
-        // Fallback: use student data structure for now
-        $sql  = "SELECT name, regno as employee_id FROM student_register WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    // Fallback: use student data structure for now
+    $sql  = "SELECT name, regno as employee_id FROM student_register WHERE username=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            $teacher_data = $result->fetch_assoc();
-        } else {
-            header("Location: ../index.php");
-            exit();
-        }
+    if ($result->num_rows > 0) {
+        $teacher_data = $result->fetch_assoc();
+    } else {
+        header("Location: ../index.php");
+        exit();
+    }
     }
 
     // Pagination settings
@@ -74,42 +72,42 @@
     $types            = '';
 
     if (! empty($search)) {
-        $where_conditions[] = "(sr.name LIKE ? OR sr.regno LIKE ? OR ser.event_name LIKE ?)";
-        $search_param       = "%$search%";
-        $params[]           = $search_param;
-        $params[]           = $search_param;
-        $params[]           = $search_param;
-        $types .= 'sss';
+    $where_conditions[]  = "(sr.name LIKE ? OR sr.regno LIKE ? OR ser.event_name LIKE ?)";
+    $search_param        = "%$search%";
+    $params[]            = $search_param;
+    $params[]            = $search_param;
+    $params[]            = $search_param;
+    $types              .= 'sss';
     }
 
     if (! empty($event_type_filter)) {
-        $where_conditions[] = "ser.event_type = ?";
-        $params[]           = $event_type_filter;
-        $types .= 's';
+    $where_conditions[]  = "ser.event_type = ?";
+    $params[]            = $event_type_filter;
+    $types              .= 's';
     }
 
     if (! empty($department_filter)) {
-        $where_conditions[] = "sr.department = ?";
-        $params[]           = $department_filter;
-        $types .= 's';
+    $where_conditions[]  = "sr.department = ?";
+    $params[]            = $department_filter;
+    $types              .= 's';
     }
 
     if (! empty($prize_filter)) {
-        if ($prize_filter === 'winner') {
-            $where_conditions[] = "ser.prize IN ('First', 'Second', 'Third')";
-        } else {
-            $where_conditions[] = "ser.prize = ?";
-            $params[]           = $prize_filter;
-            $types .= 's';
-        }
+    if ($prize_filter === 'winner') {
+        $where_conditions[] = "ser.prize IN ('First', 'Second', 'Third')";
+    } else {
+        $where_conditions[]  = "ser.prize = ?";
+        $params[]            = $prize_filter;
+        $types              .= 's';
+    }
     }
 
     if (! empty($location_filter)) {
-        if ($location_filter === 'tamilnadu') {
-            $where_conditions[] = "ser.state = 'Tamil Nadu'";
-        } elseif ($location_filter === 'outside') {
-            $where_conditions[] = "ser.state != 'Tamil Nadu'";
-        }
+    if ($location_filter === 'tamilnadu') {
+        $where_conditions[] = "ser.state = 'Tamil Nadu'";
+    } elseif ($location_filter === 'outside') {
+        $where_conditions[] = "ser.state != 'Tamil Nadu'";
+    }
     }
 
     $where_clause = ! empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
@@ -121,13 +119,13 @@
                   $where_clause";
 
     if (! empty($params)) {
-        $count_stmt = $conn->prepare($count_sql);
-        $count_stmt->bind_param($types, ...$params);
-        $count_stmt->execute();
-        $total_records = $count_stmt->get_result()->fetch_assoc()['total'];
-        $count_stmt->close();
+    $count_stmt = $conn->prepare($count_sql);
+    $count_stmt->bind_param($types, ...$params);
+    $count_stmt->execute();
+    $total_records = $count_stmt->get_result()->fetch_assoc()['total'];
+    $count_stmt->close();
     } else {
-        $total_records = $conn->query($count_sql)->fetch_assoc()['total'];
+    $total_records = $conn->query($count_sql)->fetch_assoc()['total'];
     }
 
     $total_pages = ceil($total_records / $records_per_page);
@@ -144,7 +142,7 @@
 
     $params[] = $records_per_page;
     $params[] = $offset;
-    $types .= 'ii';
+    $types    .= 'ii';
 
     $students_stmt = $conn->prepare($students_sql);
     $students_stmt->bind_param($types, ...$params);
@@ -154,7 +152,7 @@
     // Store all results in an array to avoid duplicate data
     $students_data = [];
     while ($row = $students_result->fetch_assoc()) {
-        $students_data[] = $row;
+    $students_data[] = $row;
     }
 
     // Get filter options (optimize by caching results)
@@ -182,10 +180,10 @@
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
     <title>Registered Students - Teacher Dashboard</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="../asserts/images/favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../asserts/images/favicon_io/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="../asserts/images/favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="../asserts/images/favicon_io/site.webmanifest">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
+    <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <link rel="stylesheet" href="../student/student_dashboard.css">
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
@@ -963,7 +961,7 @@
                                 <option value="">All</option>
                                 <option value="winner"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $prize_filter === 'winner' ? 'selected' : ''; ?>>Prize Winners</option>
                                 <option value="first"                                                                                                                                                                <?php echo $prize_filter === 'first' ? 'selected' : ''; ?>>First Prize</option>
-                                <option value="secound"                                                                                                                                                                      <?php echo $prize_filter === 'secound' ? 'selected' : ''; ?>>Second Prize</option>
+                                <option value="second"                                                                                                                                                                      <?php echo $prize_filter === 'second' ? 'selected' : ''; ?>>Second Prize</option>
                                 <option value="third"                                                                                                                                                                <?php echo $prize_filter === 'third' ? 'selected' : ''; ?>>Third Prize</option>
                                 <option value="Participation"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $prize_filter === 'Participation' ? 'selected' : ''; ?>>Participation</option>
                             </select>

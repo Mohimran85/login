@@ -1,0 +1,45 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Cache directory (contains VAPID keys and runtime cache)
+cache/
+
+# Upload directories
+uploads/
+student/uploads/
+teacher/signatures/
+
+# Debug and test files that should not be in production
+fix_env.php
+student/test_path.php
+debug_onesignal.php
+debug_notifications.php
+verify_env.php
+
+# Logs
+logs/
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dependencies
+node_modules/
+vendor/
+
+# Temporary files
+*.tmp
+*.bak
+*.orig
+composer.phar

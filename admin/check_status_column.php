@@ -2,8 +2,14 @@
 /**
  * Diagnostic: Check the status column definition in hackathon_posts table
  */
+session_start();
+if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || ! isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    http_response_code(403);
+    die('Forbidden: Admin access required');
+}
 
-$conn = new mysqli("localhost", "root", "", "event_management_system");
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);

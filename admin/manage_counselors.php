@@ -8,12 +8,8 @@
     }
 
     // Database connection
-    $servername  = "localhost";
-    $db_username = "root";
-    $db_password = "";
-    $dbname      = "event_management_system";
-
-    $conn = new mysqli($servername, $db_username, $db_password, $dbname);
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -72,11 +68,7 @@
     $message      = '';
     $message_type = '';
 
-    $conn = new mysqli($servername, $db_username, $db_password, $dbname);
-
-    if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-    }
+    // Connection already established above
 
     $message      = '';
     $message_type = '';
@@ -315,7 +307,7 @@
             gap: 20px;
             margin-bottom: 30px;
         }
-    
+
         .stat-card {
             background: white;
             padding: 25px;
@@ -1080,14 +1072,14 @@
 
         <div class="teachers-grid">
             <?php while ($teacher = $teachers_result->fetch_assoc()): ?>
-                <div class="teacher-card<?php echo $teacher['status']; ?>">
+                <div class="teacher-card<?php echo htmlspecialchars($teacher['status'], ENT_QUOTES, 'UTF-8'); ?>">
                     <div class="teacher-header">
                         <div>
                             <div class="teacher-name">
                                 <?php echo htmlspecialchars($teacher['name']); ?>
                             </div>
                         </div>
-                        <span class="status-badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $teacher['status']; ?>">
+                        <span class="status-badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo htmlspecialchars($teacher['status'], ENT_QUOTES, 'UTF-8'); ?>">
                             <?php
                                 if ($teacher['status'] == 'counselor') {
                                     echo '🎓 COUNSELOR';

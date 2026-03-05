@@ -9,11 +9,8 @@ if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 // Check user permissions
 $username = $_SESSION['username'];
-$conn     = new mysqli("localhost", "root", "", "event_management_system");
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once __DIR__ . '/../includes/db_config.php';
+$conn = get_db_connection();
 
 $user_type      = "";
 $teacher_status = 'teacher';

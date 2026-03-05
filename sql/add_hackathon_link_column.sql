@@ -3,5 +3,5 @@
 -- Created: 2026-02-21
 
 ALTER TABLE hackathon_posts 
-ADD COLUMN hackathon_link VARCHAR(500) DEFAULT NULL COMMENT 'External registration or information link' 
+ADD COLUMN IF NOT EXISTS hackathon_link VARCHAR(500) DEFAULT NULL COMMENT 'External registration or information link' 
 AFTER rules_pdf;

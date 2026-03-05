@@ -1,9 +1,16 @@
 <?php
 // Quick database status column checker
+session_start();
+if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || ! isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    http_response_code(403);
+    die('Forbidden: Admin access required');
+}
+
 require_once __DIR__ . '/../includes/DatabaseManager.php';
+require_once __DIR__ . '/../includes/db_config.php';
 
 $db   = DatabaseManager::getInstance();
-$conn = new mysqli("localhost", "root", "", "event_management_system");
+$conn = get_db_connection();
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
