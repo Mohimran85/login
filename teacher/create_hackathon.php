@@ -35,7 +35,6 @@
     $stmt->close();
     $is_admin_user       = ($row['status'] === 'admin');
     $is_coordinator_user = (bool) $row['is_hackathon_coordinator'];
-    $is_counselor_user   = ($row['status'] === 'counselor' || $row['status'] === 'admin');
     $conn->close();
 
     $db = DatabaseManager::getInstance();
@@ -570,7 +569,7 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="icon">
-                <img src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
+                <img src="sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
             </div>
             <div class="header-title">
                 <p>Event Management System</p>
@@ -584,8 +583,6 @@
                     <?php
                         if ($is_admin_user) {
                             echo 'Admin Portal';
-                        } elseif ($is_counselor_user) {
-                            echo 'Counselor Portal';
                         } elseif ($is_coordinator_user) {
                             echo 'Coordinator Portal';
                         } else {
@@ -601,16 +598,7 @@
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($admin_name); ?></div>
                 <div class="student-regno">
-                    <?php
-                        if ($is_admin_user) {
-                            echo '(Admin)';
-                        } elseif ($is_counselor_user) {
-                            echo '(Counselor)';
-                        } else {
-                            echo '(Coordinator)';
-                        }
-
-                    ?>
+                    <?php echo $is_admin_user ? '(Admin)' : '(Coordinator)'; ?>
                 </div>
             </div>
 
@@ -622,64 +610,52 @@
                             Dashboard
                         </a>
                     </li>
-                    <?php if ($is_counselor_user && ! $is_admin_user): ?>
                     <li class="nav-item">
-                        <a href="../teacher/assigned_students.php" class="nav-link">
-                            <span class="material-symbols-outlined">supervisor_account</span>
-                            My Assigned Students
+                        <a href="registered_students.php" class="nav-link">
+                            <span class="material-symbols-outlined">group</span>
+                            Registered Students
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a href="../teacher/od_approvals.php" class="nav-link">
-                            <span class="material-symbols-outlined">approval</span>
-                            OD Approvals
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="../teacher/internship_approvals.php" class="nav-link">
-                            <span class="material-symbols-outlined">school</span>
-                            Internship Approvals
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="../teacher/verify_events.php" class="nav-link">
-                            <span class="material-symbols-outlined">card_giftcard</span>
-                            Event Certificate Validation
-                        </a>
-                    </li>
-                    <?php endif; ?>
-                    <?php if ($is_admin_user): ?>
-                    <li class="nav-item">
-                        <a href="user_management.php" class="nav-link">
-                            <span class="material-symbols-outlined">manage_accounts</span>
-                            User Management
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="manage_counselors.php" class="nav-link">
-                            <span class="material-symbols-outlined">school</span>
-                            Manage Counselors
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="participants.php" class="nav-link">
-                            <span class="material-symbols-outlined">people</span>
-                            Participants
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="reports.php" class="nav-link">
-                            <span class="material-symbols-outlined">bar_chart</span>
-                            Reports
-                        </a>
-                    </li>
-                    <?php endif; ?>
+                    <?php if ($is_coordinator_user && ! $is_admin_user): ?>
                     <li class="nav-item">
                         <a href="hackathons.php" class="nav-link active">
                             <span class="material-symbols-outlined">workspace_premium</span>
                             Hackathons
                         </a>
                     </li>
+                    <?php endif; ?>
+                    <?php if ($is_admin_user): ?>
+                    <li class="nav-item">
+                        <a href="../admin/index.php" class="nav-link">
+                            <span class="material-symbols-outlined">admin_panel_settings</span>
+                            Admin Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/user_management.php" class="nav-link">
+                            <span class="material-symbols-outlined">manage_accounts</span>
+                            User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/manage_counselors.php" class="nav-link">
+                            <span class="material-symbols-outlined">school</span>
+                            Manage Counselors
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/participants.php" class="nav-link">
+                            <span class="material-symbols-outlined">people</span>
+                            Participants
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="../admin/reports.php" class="nav-link">
+                            <span class="material-symbols-outlined">bar_chart</span>
+                            Reports
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <li class="nav-item">
                         <a href="profile.php" class="nav-link">
                             <span class="material-symbols-outlined">person</span>
@@ -687,7 +663,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="logout.php" class="nav-link">
+                        <a href="../admin/logout.php" class="nav-link">
                             <span class="material-symbols-outlined">logout</span>
                             Logout
                         </a>

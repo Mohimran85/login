@@ -73,6 +73,26 @@
     $message      = '';
     $message_type = '';
 
+    // Handle hackathon coordinator toggle
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['toggle_coordinator'])) {
+    $teacher_id      = intval($_POST['teacher_id']);
+    $coordinator_val = isset($_POST['is_hackathon_coordinator']) ? 1 : 0;
+
+    $update_sql  = "UPDATE teacher_register SET is_hackathon_coordinator = ? WHERE id = ?";
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->bind_param("ii", $coordinator_val, $teacher_id);
+
+    if ($update_stmt->execute()) {
+        $label        = $coordinator_val ? 'enabled' : 'disabled';
+        $message      = "Hackathon Coordinator role $label successfully!";
+        $message_type = 'success';
+    } else {
+        $message      = "Error updating coordinator role: " . $conn->error;
+        $message_type = 'error';
+    }
+    $update_stmt->close();
+    }
+
     // Handle role change
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_role'])) {
     $teacher_id = $_POST['teacher_id'];
@@ -92,7 +112,7 @@
     }
 
     // Get all teachers with their student assignment counts
-    $teachers_sql = "SELECT t.id, t.name, t.email, t.username, t.status,
+    $teachers_sql = "SELECT t.id, t.name, t.email, t.username, t.status, COALESCE(t.is_hackathon_coordinator, 0) as is_hackathon_coordinator,
                      (SELECT COUNT(*) FROM counselor_assignments ca WHERE ca.counselor_id = t.id AND ca.status = 'active') as student_count
                  FROM teacher_register t
                  ORDER BY FIELD(t.status, 'admin', 'counselor', 'active', 'inactive'), t.name";
@@ -186,9 +206,10 @@
     $stats_sql = "SELECT
     (SELECT COUNT(*) FROM teacher_register) as total_teachers,
     (SELECT COUNT(*) FROM teacher_register WHERE status = 'counselor') as total_counselors,
-    (SELECT COUNT(*) FROM counselor_assignments WHERE status = 'active') as total_assigned";
+    (SELECT COUNT(*) FROM counselor_assignments WHERE status = 'active') as total_assigned,
+    (SELECT COUNT(*) FROM teacher_register WHERE is_hackathon_coordinator = 1) as total_coordinators";
     $stats_result = $conn->query($stats_sql);
-    $stats        = $stats_result ? $stats_result->fetch_assoc() : ['total_teachers' => 0, 'total_counselors' => 0, 'total_assigned' => 0];
+    $stats        = $stats_result ? $stats_result->fetch_assoc() : ['total_teachers' => 0, 'total_counselors' => 0, 'total_assigned' => 0, 'total_coordinators' => 0];
 ?>
 
 <!DOCTYPE html>
@@ -1021,6 +1042,10 @@
                 <div class="stat-number"><?php echo $stats['total_assigned']; ?></div>
                 <div class="stat-label">Students Assigned</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number"><?php echo $stats['total_coordinators']; ?></div>
+                <div class="stat-label">Hackathon Coordinators</div>
+            </div>
 
         </div>
 
@@ -1092,6 +1117,9 @@
                                 }
                             ?>
                         </span>
+                        <?php if ($teacher['is_hackathon_coordinator']): ?>
+                        <span class="status-badge" style="background: #e8f5e9; color: #2e7d32; font-size: 11px; padding: 4px 10px;">🏆 COORDINATOR</span>
+                        <?php endif; ?>
                     </div>
 
                     <div class="teacher-info">
@@ -1121,6 +1149,20 @@
                                 <span class="icon-text">
                                     <span class="material-symbols-outlined">update</span>
                                     Update Role
+                                </span>
+                            </button>
+                        </form>
+
+                        <form method="POST" style="margin-top: 8px; display: flex; align-items: center; gap: 10px;">
+                            <input type="hidden" name="teacher_id" value="<?php echo $teacher['id']; ?>">
+                            <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: #333;">
+                                <input type="checkbox" name="is_hackathon_coordinator" value="1" <?php echo $teacher['is_hackathon_coordinator'] ? 'checked' : ''; ?> style="width: 18px; height: 18px; accent-color: #2e7d32;">
+                                🏆 Hackathon Coordinator
+                            </label>
+                            <button type="submit" name="toggle_coordinator" class="btn btn-primary" style="padding: 6px 14px; font-size: 13px;">
+                                <span class="icon-text">
+                                    <span class="material-symbols-outlined" style="font-size: 16px;">save</span>
+                                    Save
                                 </span>
                             </button>
                         </form>

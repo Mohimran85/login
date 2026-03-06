@@ -18,22 +18,24 @@
     $conn = get_db_connection();
 
     // Get teacher data
-    $username       = $_SESSION['username'];
-    $teacher_data   = null;
-    $teacher_status = 'teacher'; // Default status
-    $is_admin       = false;
+    $username                 = $_SESSION['username'];
+    $teacher_data             = null;
+    $teacher_status           = 'teacher'; // Default status
+    $is_admin                 = false;
+    $is_hackathon_coordinator = false;
 
     // Try to get teacher data from teacher_register table first
-    $sql  = "SELECT name, faculty_id as employee_id, COALESCE(status, 'teacher') as status FROM teacher_register WHERE username=?";
+    $sql  = "SELECT name, faculty_id as employee_id, COALESCE(status, 'teacher') as status, COALESCE(is_hackathon_coordinator, 0) as is_hackathon_coordinator FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-    $teacher_data   = $result->fetch_assoc();
-    $teacher_status = $teacher_data['status'];
-    $is_admin       = ($teacher_status === 'admin');
+    $teacher_data             = $result->fetch_assoc();
+    $teacher_status           = $teacher_data['status'];
+    $is_admin                 = ($teacher_status === 'admin');
+    $is_hackathon_coordinator = (bool) ($teacher_data['is_hackathon_coordinator'] ?? 0);
     } else {
     // Fallback: Check if username exists in student_register table
     $sql2  = "SELECT name, regno as employee_id FROM student_register WHERE username=?";
@@ -769,6 +771,8 @@
                     echo 'Admin Portal';
                 } elseif ($is_counselor) {
                     echo 'Counselor Portal';
+                } elseif ($is_hackathon_coordinator) {
+                    echo 'Coordinator Portal';
                 } else {
                     echo 'Teacher Portal';
                 }
@@ -787,6 +791,8 @@
                     echo ' (Admin)';
                 } elseif ($is_counselor) {
                     echo ' (Counselor)';
+                } elseif ($is_hackathon_coordinator) {
+                    echo ' (Coordinator)';
                 }
             ?>
           </div>
@@ -829,6 +835,14 @@
               <a href="verify_events.php" class="nav-link">
                 <span class="material-symbols-outlined">card_giftcard</span>
                 Event Certificate Validation
+              </a>
+            </li>
+            <?php endif; ?>
+            <?php if ($is_hackathon_coordinator && ! $is_admin): ?>
+            <li class="nav-item">
+              <a href="hackathons.php" class="nav-link">
+                <span class="material-symbols-outlined">workspace_premium</span>
+                Hackathons
               </a>
             </li>
             <?php endif; ?>
