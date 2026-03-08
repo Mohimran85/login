@@ -86,9 +86,10 @@
                 }
 
                 // No 2FA: proceed with normal login
-                $_SESSION['username']  = $actual_username;
-                $_SESSION['role']      = $role;
-                $_SESSION['logged_in'] = true;
+                $_SESSION['username']      = $actual_username;
+                $_SESSION['role']          = $role;
+                $_SESSION['logged_in']     = true;
+                $_SESSION['last_activity'] = time();
 
                 // Redirect based on user role and status
                 if ($_SESSION['role'] === 'student') {
@@ -446,6 +447,11 @@ img{
             <?php
                 if (! empty($error_message)) {
                     echo "<div class='message error-message'>$error_message</div>";
+                }
+
+                // Check for session timeout message
+                if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
+                    echo "<div class='message error-message'>Your session has expired due to inactivity. Please log in again.</div>";
                 }
 
                 // Check for logout success message

@@ -35,6 +35,7 @@
     $stmt->close();
     $is_admin_user       = ($row['status'] === 'admin');
     $is_coordinator_user = (bool) $row['is_hackathon_coordinator'];
+    $is_counselor_user   = ($row['status'] === 'counselor' || $row['status'] === 'admin');
     $conn->close();
 
     $db = DatabaseManager::getInstance();
@@ -329,6 +330,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <style>
+        /* Global mobile fixes */
+        * { box-sizing: border-box; }
+        html, body { overflow-x: hidden; width: 100%; }
+
         /* Page-specific styles */
         .page-header-section {
             background: white;
@@ -341,18 +346,18 @@
             align-items: center;
         }
 
-        .header-title {
+        .page-header-title {
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        .header-title h1 {
+        .page-header-title h1 {
             font-size: 28px;
             color: #0c3878;
         }
 
-        .header-title .material-symbols-outlined {
+        .page-header-title .material-symbols-outlined {
             font-size: 36px;
             color: #0c3878;
         }
@@ -555,9 +560,63 @@
 
             .page-header-section {
                 flex-direction: column;
-                gap: 20px;
+                gap: 15px;
                 align-items: flex-start;
+                padding: 18px;
             }
+
+            .header-actions {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .header-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .page-header-title h1 {
+                font-size: 20px;
+            }
+
+            .page-header-title .material-symbols-outlined {
+                font-size: 28px;
+            }
+
+            .form-container {
+                padding: 18px;
+            }
+
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .form-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main { padding: 15px; }
+
+            .file-input-label {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main { padding: 10px; }
+            .form-container { padding: 14px; }
+            .page-header-title h1 { font-size: 18px; }
+            .btn { padding: 10px 16px; font-size: 13px; }
         }
     </style>
 </head>
@@ -583,6 +642,8 @@
                     <?php
                         if ($is_admin_user) {
                             echo 'Admin Portal';
+                        } elseif ($is_counselor_user) {
+                            echo 'Counselor Portal';
                         } elseif ($is_coordinator_user) {
                             echo 'Coordinator Portal';
                         } else {
@@ -598,7 +659,15 @@
             <div class="student-info">
                 <div class="student-name"><?php echo htmlspecialchars($admin_name); ?></div>
                 <div class="student-regno">
-                    <?php echo $is_admin_user ? '(Admin)' : '(Coordinator)'; ?>
+                    <?php
+                        if ($is_admin_user) {
+                            echo '(Admin)';
+                        } elseif ($is_counselor_user) {
+                            echo '(Counselor)';
+                        } else {
+                            echo '(Coordinator)';
+                        }
+                    ?>
                 </div>
             </div>
 
@@ -616,6 +685,32 @@
                             Registered Students
                         </a>
                     </li>
+                    <?php if ($is_counselor_user && ! $is_admin_user): ?>
+                    <li class="nav-item">
+                        <a href="assigned_students.php" class="nav-link">
+                            <span class="material-symbols-outlined">supervisor_account</span>
+                            My Assigned Students
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="od_approvals.php" class="nav-link">
+                            <span class="material-symbols-outlined">approval</span>
+                            OD Approvals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="internship_approvals.php" class="nav-link">
+                            <span class="material-symbols-outlined">school</span>
+                            Internship Approvals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="verify_events.php" class="nav-link">
+                            <span class="material-symbols-outlined">card_giftcard</span>
+                            Event Certificate Validation
+                        </a>
+                    </li>
+                    <?php endif; ?>
                     <?php if ($is_coordinator_user && ! $is_admin_user): ?>
                     <li class="nav-item">
                         <a href="hackathons.php" class="nav-link active">
@@ -676,7 +771,7 @@
         <div class="main">
             <!-- Page Header Section -->
             <div class="page-header-section">
-                <div class="header-title">
+                <div class="page-header-title">
                     <span class="material-symbols-outlined">add_circle</span>
                     <h1>Create New Hackathon</h1>
                 </div>

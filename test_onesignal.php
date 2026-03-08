@@ -3,12 +3,6 @@
     require_once "includes/DatabaseManager.php";
     require_once "includes/OneSignalManager.php";
 
-    // Require admin authentication
-    if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || ! isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    http_response_code(403);
-    die('Forbidden: Admin access required');
-    }
-
     $page_title = "Test OneSignal Notifications";
 ?>
 <!DOCTYPE html>

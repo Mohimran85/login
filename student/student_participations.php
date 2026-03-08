@@ -463,10 +463,7 @@ fd3s        .participations-title {
 
             .grid-container {
                 grid-template-columns: 1fr;
-                grid-template-rows: 60px 1fr;
-                grid-template-areas:
-                    "header"
-                    "main";
+                grid-template-areas: "main";
                 min-height: 100vh;
                 width: 100%;
                 max-width: 100vw;
@@ -512,7 +509,7 @@ fd3s        .participations-title {
             .main {
                 width: 100% !important;
                 max-width: 100vw;
-                padding: 80px 15px 20px 15px;
+                padding: 10px 15px 20px 15px;
                 margin: 0 !important;
                 grid-area: main;
                 box-sizing: border-box;

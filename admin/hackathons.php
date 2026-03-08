@@ -925,7 +925,8 @@
                                     <td>#<?php echo $hackathon['id']; ?></td>
                                     <td>
                                         <?php if ($hackathon['poster_url']): ?>
-                                            <img src="<?php echo htmlspecialchars($hackathon['poster_url']); ?>" alt="Poster" class="hackathon-poster">
+                                            <?php $poster_path = ltrim($hackathon['poster_url'], '/'); ?>
+                                            <img src="../<?php echo htmlspecialchars($poster_path); ?>" alt="Poster" class="hackathon-poster">
                                         <?php else: ?>
                                             <span class="material-symbols-outlined" style="font-size: 50px; color: #ddd;">image</span>
                                         <?php endif; ?>

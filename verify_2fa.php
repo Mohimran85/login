@@ -131,10 +131,11 @@
     function completeLogin($conn, $username, $role, $table)
     {
     // Set full session
-    $_SESSION['username']     = $username;
-    $_SESSION['role']         = $role;
-    $_SESSION['logged_in']    = true;
-    $_SESSION['2fa_verified'] = true;
+    $_SESSION['username']      = $username;
+    $_SESSION['role']          = $role;
+    $_SESSION['logged_in']     = true;
+    $_SESSION['last_activity'] = time();
+    $_SESSION['2fa_verified']  = true;
 
     // Clear 2FA pending data
     unset($_SESSION['2fa_pending'], $_SESSION['2fa_username'], $_SESSION['2fa_role'],

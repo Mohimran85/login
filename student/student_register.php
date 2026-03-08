@@ -309,9 +309,9 @@
     );
 
     if ($stmt->execute()) {
-        header("Location: index.php");
         $stmt->close();
         $conn->close();
+        header("Location: student_register.php?success=1");
         exit;
     } else {
         echo "<p style='color:red;'>Error: " . htmlspecialchars($stmt->error) . "</p>";
@@ -1312,6 +1312,21 @@
   <form action="" method="POST" enctype="multipart/form-data" class="registration-form">
     <div class="registration-container">
       <h2 class="form-title">  Student Event Registration</h2>
+
+      <?php if (isset($_GET['success']) && $_GET['success'] == '1'): ?>
+        <div id="success-banner" style="background:#d4edda;color:#155724;border:1px solid #c3e6cb;border-radius:8px;padding:14px 20px;margin-bottom:20px;font-weight:500;display:flex;align-items:center;gap:10px;">
+          ✅ Registration Successful! Your event has been submitted.
+        </div>
+        <script>
+          // Scroll to top so banner is visible
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          // Auto-hide after 5 seconds
+          setTimeout(function() {
+            var b = document.getElementById('success-banner');
+            if (b) b.style.display = 'none';
+          }, 5000);
+        </script>
+      <?php endif; ?>
 
       <!-- Personal Information Section -->
       <div class="form-section">

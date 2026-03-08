@@ -176,6 +176,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <style>
+        /* Global mobile fixes */
+        * { box-sizing: border-box; max-width: 100%; }
+        html, body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
+        .grid-container { max-width: 100vw; overflow-x: hidden; }
+
         /* Page-specific styles */
         .page-header-section {
             background: white;
@@ -192,11 +197,14 @@
             display: flex;
             align-items: center;
             gap: 15px;
+            min-width: 0;
         }
 
         .page-header-title h1 {
             font-size: 28px;
             color: #0c3878;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         .page-header-title .material-symbols-outlined {
@@ -425,11 +433,7 @@
             text-overflow: ellipsis;
         }
 
-        @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+        .mobile-card-label { display: none; font-weight: 600; color: #0c3878; font-size: 12px; text-transform: uppercase; margin-bottom: 4px; }
 
         @media (max-width: 1024px) {
             .filter-row {
@@ -439,6 +443,93 @@
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .page-header-section {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .header-actions .btn {
+                flex: 1;
+                min-width: 0;
+                justify-content: center;
+                font-size: 13px;
+                padding: 10px 14px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main { padding: 15px !important; width: 100% !important; min-width: 0; }
+            .page-header-section { padding: 18px; flex-direction: column; gap: 12px; align-items: flex-start; }
+            .page-header-title { min-width: 0; width: 100%; }
+            .page-header-title h1 { font-size: 20px; white-space: normal; word-break: break-word; }
+            .page-header-title .material-symbols-outlined { font-size: 28px; flex-shrink: 0; }
+            .header-actions { width: 100%; flex-direction: column; }
+            .header-actions .btn { width: 100%; justify-content: center; font-size: 13px; padding: 10px 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .stat-card { padding: 15px; min-width: 0; }
+            .stat-icon { width: 45px; height: 45px; font-size: 22px; flex-shrink: 0; }
+            .stat-info { min-width: 0; }
+            .stat-info h3 { font-size: 22px; }
+            .stat-info p { font-size: 12px; }
+            .filters { padding: 15px; }
+            .filter-row { grid-template-columns: 1fr; gap: 10px; }
+            .filter-row input, .filter-row select { width: 100%; font-size: 14px; }
+            .table-container { padding: 12px; overflow-x: visible; }
+
+            /* Card-based table layout */
+            table, thead, tbody, th, td, tr { display: block; max-width: 100%; }
+            thead { display: none; }
+            .mobile-card-label { display: block; }
+            tbody tr {
+                background: white;
+                border: 1px solid #e9ecef;
+                border-radius: 10px;
+                padding: 15px;
+                margin-bottom: 12px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            }
+            tbody tr:hover { background: #fafbfc; }
+            tbody td {
+                padding: 6px 0;
+                border-bottom: none;
+                display: flex;
+                flex-direction: column;
+                overflow-wrap: break-word;
+                word-break: break-word;
+            }
+            .truncate { max-width: 100%; white-space: normal; }
+
+            /* Modal responsive */
+            #detailsModal > div {
+                margin: 15px auto !important;
+                padding: 20px !important;
+                width: 95% !important;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            #detailsModal > div > div > div {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .main { padding: 10px 8px !important; }
+            .page-header-section { padding: 15px; }
+            .page-header-title h1 { font-size: 18px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .stat-card { gap: 10px; padding: 12px; }
+            .stat-icon { width: 40px; height: 40px; font-size: 20px; }
+            .stat-info h3 { font-size: 20px; }
+            .filters { padding: 12px; }
+            .table-container { padding: 10px; }
+            .btn { font-size: 13px; padding: 10px 14px; }
         }
     </style>
 </head>
@@ -725,13 +816,18 @@
                     <tbody>
                         <?php foreach ($applications as $app): ?>
                             <tr>
-                                <td><strong>#<?php echo $app['id']; ?></strong></td>
                                 <td>
+                                    <span class="mobile-card-label">ID</span>
+                                    <strong>#<?php echo $app['id']; ?></strong>
+                                </td>
+                                <td>
+                                    <span class="mobile-card-label">Student</span>
                                     <strong><?php echo htmlspecialchars($app['student_name']); ?></strong><br>
                                     <small style="color: #999;"><?php echo htmlspecialchars($app['student_regno']); ?></small><br>
                                     <small style="color: #999;"><?php echo htmlspecialchars($app['department']); ?></small>
                                 </td>
                                 <td>
+                                    <span class="mobile-card-label">Hackathon</span>
                                     <strong><?php echo htmlspecialchars($app['hackathon_title']); ?></strong><br>
                                     <small style="color: #999;">
                                         <?php echo date('M d', strtotime($app['start_date'])); ?> -
@@ -739,6 +835,7 @@
                                     </small>
                                 </td>
                                 <td>
+                                    <span class="mobile-card-label">Type</span>
                                     <span class="badge badge-<?php echo htmlspecialchars($app['application_type'], ENT_QUOTES, 'UTF-8'); ?>">
                                         <span class="material-symbols-outlined" style="font-size: 14px;">
                                             <?php echo $app['application_type'] === 'team' ? 'groups' : 'person'; ?>
@@ -747,6 +844,7 @@
                                     </span>
                                 </td>
                                 <td>
+                                    <span class="mobile-card-label">Team/Project</span>
                                     <?php if ($app['application_type'] === 'team'): ?>
                                         <strong><?php echo htmlspecialchars($app['team_name'] ?? 'N/A'); ?></strong><br>
                                         <?php
@@ -764,6 +862,7 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
+                                    <span class="mobile-card-label">Status</span>
                                     <span class="badge badge-<?php echo htmlspecialchars($app['status'], ENT_QUOTES, 'UTF-8'); ?>">
                                         <span class="material-symbols-outlined" style="font-size: 14px;">
                                             <?php echo $app['status'] === 'confirmed' ? 'check_circle' : 'cancel'; ?>
@@ -771,8 +870,12 @@
                                         <?php echo ucfirst($app['status']); ?>
                                     </span>
                                 </td>
-                                <td><?php echo date('M d, Y', strtotime($app['applied_at'])); ?></td>
                                 <td>
+                                    <span class="mobile-card-label">Applied Date</span>
+                                    <?php echo date('M d, Y', strtotime($app['applied_at'])); ?>
+                                </td>
+                                <td>
+                                    <span class="mobile-card-label">Actions</span>
                                     <a href="javascript:void(0)"
                                        onclick="viewDetails(<?php echo htmlspecialchars(json_encode($app)); ?>)"
                                        class="view-details">

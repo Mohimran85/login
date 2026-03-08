@@ -134,8 +134,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; max-width: 100%; }
+        * { box-sizing: border-box; }
         html, body { overflow-x: hidden; width: 100%; position: relative; }
+        img { max-width: 100%; height: auto; }
 
         /* Hackathon page styles */
         .page-header-section {
@@ -160,8 +161,8 @@
             gap: 12px;
         }
 
-        .page-header-title h1 { font-size: 24px; color: #0c3878; font-weight: 600; }
-        .page-header-title .material-symbols-outlined { font-size: 32px; color: #0c3878; }
+        .page-header-title h1 { font-size: 24px; color: #0c3878; font-weight: 600; word-break: break-word; }
+        .page-header-title .material-symbols-outlined { font-size: 32px; color: #0c3878; flex-shrink: 0; }
 
         .header-actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
@@ -299,15 +300,72 @@
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .no-data { text-align: center; padding: 30px; color: #999; }
 
-        @media (max-width: 768px) {
+        /* Responsive table card layout for mobile */
+        .mobile-card-label { display: none; font-weight: 600; color: #0c3878; font-size: 12px; text-transform: uppercase; margin-bottom: 4px; }
+
+        @media (max-width: 1024px) {
             .header-content { flex-direction: column; align-items: flex-start; }
+            .header-actions { width: 100%; }
+            .header-actions .btn { flex: 1; justify-content: center; font-size: 13px; padding: 10px 14px; }
+            .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .filters-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .page-header-section { padding: 15px; margin-bottom: 15px; }
+            .page-header-title h1 { font-size: 18px; }
+            .page-header-title .material-symbols-outlined { font-size: 24px; }
+            .page-header-title p { font-size: 12px !important; }
+            .header-actions { flex-direction: column; }
+            .header-actions .btn { width: 100%; justify-content: center; font-size: 13px; padding: 10px 14px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+            .stat-card { padding: 14px; }
+            .stat-card-value { font-size: 22px; }
+            .stat-card-icon { font-size: 22px; }
+            .filters-section { padding: 15px; margin-bottom: 15px; }
             .filters-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            .main { padding: 15px; }
+            .table-container { padding: 10px; overflow-x: visible; }
+
+            /* Card-based table layout */
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            .mobile-card-label { display: block; }
+            tbody tr {
+                background: white;
+                border: 1px solid #e9ecef;
+                border-radius: 10px;
+                padding: 15px;
+                margin-bottom: 12px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+            }
+            tbody tr:hover { background: #fafbfc; }
+            tbody td {
+                padding: 6px 0;
+                border-bottom: none;
+                display: flex;
+                flex-direction: column;
+            }
+            tbody td:empty { display: none; }
+            .actions-cell { justify-content: flex-start; padding-top: 8px; border-top: 1px solid #f0f0f0; margin-top: 6px; }
+            .hackathon-poster { width: 60px; height: 60px; }
+
+            /* Modal responsive */
+            .modal-content { width: 95%; margin: 3% auto; max-height: 90vh; }
+            .modal-body { padding: 15px; max-height: 70vh; }
+            .view-stats { grid-template-columns: 1fr; }
+            .views-table th, .views-table td { padding: 8px 6px; font-size: 12px; }
+            .modal-header h2 { font-size: 15px; }
         }
 
         @media (max-width: 480px) {
-            .stats-grid { grid-template-columns: 1fr; }
+            .page-header-section { padding: 12px; }
+            .page-header-title h1 { font-size: 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stat-card-value { font-size: 20px; }
+            .stat-card-title { font-size: 11px; }
+            .pagination button { padding: 6px 10px; font-size: 12px; }
+            .btn { padding: 9px 14px; font-size: 12px; gap: 6px; }
+            .btn .material-symbols-outlined { font-size: 18px; }
         }
     </style>
 </head>
@@ -471,11 +529,11 @@
                         </div>
                     </div>
                     <div class="header-actions">
-                        <a href="../admin/create_hackathon.php" class="btn btn-primary">
+                        <a href="create_hackathon.php" class="btn btn-primary">
                             <span class="material-symbols-outlined">add</span>
                             Create Hackathon
                         </a>
-                        <a href="../admin/hackathon_applications.php" class="btn btn-secondary">
+                        <a href="hackathon_applications.php" class="btn btn-secondary">
                             <span class="material-symbols-outlined">list_alt</span>
                             View Applications
                         </a>
@@ -611,47 +669,69 @@
                         <?php else: ?>
                             <?php foreach ($hackathons as $hackathon): ?>
                                 <tr>
-                                    <td>#<?php echo $hackathon['id']; ?></td>
                                     <td>
+                                        <span class="mobile-card-label">ID</span>
+                                        #<?php echo $hackathon['id']; ?>
+                                    </td>
+                                    <td>
+                                        <span class="mobile-card-label">Poster</span>
                                         <?php if ($hackathon['poster_url']): ?>
-                                            <img src="<?php echo htmlspecialchars($hackathon['poster_url']); ?>" alt="Poster" class="hackathon-poster">
+                                            <?php $poster_path = ltrim($hackathon['poster_url'], '/'); ?>
+                                            <img src="../<?php echo htmlspecialchars($poster_path); ?>" alt="Poster" class="hackathon-poster">
                                         <?php else: ?>
                                             <span class="material-symbols-outlined" style="font-size: 45px; color: #ddd;">image</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
+                                        <span class="mobile-card-label">Title</span>
                                         <strong><?php echo htmlspecialchars($hackathon['title']); ?></strong>
                                         <?php if ($hackathon['theme']): ?>
                                             <br><small style="color: #999;">Theme: <?php echo htmlspecialchars($hackathon['theme']); ?></small>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo htmlspecialchars($hackathon['organizer']); ?></td>
                                     <td>
+                                        <span class="mobile-card-label">Organizer</span>
+                                        <?php echo htmlspecialchars($hackathon['organizer']); ?>
+                                    </td>
+                                    <td>
+                                        <span class="mobile-card-label">Dates</span>
                                         <?php echo date('M d, Y', strtotime($hackathon['start_date'])); ?><br>
                                         <small style="color: #999;">to <?php echo date('M d, Y', strtotime($hackathon['end_date'])); ?></small>
                                     </td>
-                                    <td><?php echo date('M d, Y H:i', strtotime($hackathon['registration_deadline'])); ?></td>
-                                    <td><?php echo $hackathon['confirmed_applications']; ?></td>
                                     <td>
+                                        <span class="mobile-card-label">Deadline</span>
+                                        <?php echo date('M d, Y H:i', strtotime($hackathon['registration_deadline'])); ?>
+                                    </td>
+                                    <td>
+                                        <span class="mobile-card-label">Participants</span>
+                                        <?php echo $hackathon['confirmed_applications']; ?>
+                                    </td>
+                                    <td>
+                                        <span class="mobile-card-label">Views</span>
                                         <div class="view-count" onclick="showViewDetails(<?php echo (int) $hackathon['id']; ?>, <?php echo htmlspecialchars(json_encode($hackathon['title']), ENT_QUOTES, 'UTF-8'); ?>)" style="cursor: pointer;" title="Click to see view details">
                                             <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
                                             <?php echo number_format($hackathon['view_count']); ?>
                                         </div>
                                     </td>
                                     <td>
+                                        <span class="mobile-card-label">Status</span>
                                         <span class="status-badge status-<?php echo htmlspecialchars($hackathon['status'], ENT_QUOTES, 'UTF-8'); ?>">
                                             <?php echo ucfirst($hackathon['status']); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo htmlspecialchars($hackathon['created_by_name']); ?></td>
                                     <td>
+                                        <span class="mobile-card-label">Created By</span>
+                                        <?php echo htmlspecialchars($hackathon['created_by_name']); ?>
+                                    </td>
+                                    <td>
+                                        <span class="mobile-card-label">Actions</span>
                                         <div class="actions-cell">
                                             <?php if (! empty($hackathon['hackathon_link'])): ?>
                                                 <a href="<?php echo htmlspecialchars($hackathon['hackathon_link']); ?>" class="icon-btn" title="External Link" target="_blank">
                                                     <span class="material-symbols-outlined">link</span>
                                                 </a>
                                             <?php endif; ?>
-                                            <a href="../admin/edit_hackathon.php?id=<?php echo $hackathon['id']; ?>" class="icon-btn" title="Edit">
+                                            <a href="edit_hackathon.php?id=<?php echo $hackathon['id']; ?>" class="icon-btn" title="Edit">
                                                 <span class="material-symbols-outlined">edit</span>
                                             </a>
                                             <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this hackathon?')">

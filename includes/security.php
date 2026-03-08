@@ -212,6 +212,11 @@ function isAuthenticated()
         return false;
     }
 
+    // Check session timeout if the handler is loaded
+    if (function_exists('checkSessionTimeout')) {
+        checkSessionTimeout();
+    }
+
     return isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 }
 

@@ -1,105 +1,211 @@
 <?php
     session_start();
     require_once 'includes/db_config.php';
+    require_once 'includes/csrf.php';
+    require_once 'includes/TotpManager.php';
 
     $conn = get_db_connection();
+    $totp = new TotpManager();
 
     $message = "";
+    $step    = $_SESSION['reset_step'] ?? 1;
 
-    // Handle password reset request
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['reset_password'])) {
-    $username = trim($_POST['username']);
+    // Handle cancel / start over
+    if (isset($_GET['cancel'])) {
+    unset($_SESSION['reset_step'], $_SESSION['reset_username'], $_SESSION['reset_table'],
+        $_SESSION['reset_name'], $_SESSION['reset_role'], $_SESSION['reset_2fa_attempts']);
+    header("Location: forgot_password_dob.php");
+    exit();
+    }
 
-    if (empty($username)) {
-        $message = "<div class='error'>Please enter your username.</div>";
+    // ─── STEP 1: Look up user by email or username ───
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['find_user'])) {
+    if (! validateCSRFToken($_POST['csrf_token'] ?? '')) {
+        $message = "<div class='error'>Invalid request. Please try again.</div>";
     } else {
-        // Search for user in student_register table (only students have DOB)
-        $sql  = "SELECT username, name, dob FROM student_register WHERE username=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $username);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $input = trim($_POST['username']);
 
-        if ($result->num_rows > 0) {
-            $user_data = $result->fetch_assoc();
-            $dob       = $user_data['dob'];
-            $name      = $user_data['name'];
-
-            if (! empty($dob)) {
-                // Format DOB as password (remove dashes: 1999-05-15 becomes 19990515)
-                $new_password    = str_replace('-', '', $dob);
-                $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-
-                // Update password
-                $update_sql  = "UPDATE student_register SET password=? WHERE username=?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("ss", $hashed_password, $username);
-
-                if ($update_stmt->execute()) {
-                    $message = "<div class='success'>
-                        <h3>✅ Password Reset Successful!</h3>
-                        <p><strong>Hello $name,</strong></p>
-                        <p>Your password has been reset to your <strong>Date of Birth</strong>.</p>
-                        <div class='password-info'>
-                            <p><strong>Your new password format:</strong> YYYYMMDD</p>
-                            <p><em>Example: If your DOB is 15-May-1999, your password is: 19990515</em></p>
-                        </div>
-                        <p>Please login with your new password and consider changing it in your profile for security.</p>
-                    </div>";
-                } else {
-                    $message = "<div class='error'>Error updating password. Please try again.</div>";
-                }
-                $update_stmt->close();
-            } else {
-                $message = "<div class='error'>Date of Birth not found in your profile. Please contact admin.</div>";
-            }
+        if (empty($input)) {
+            $message = "<div class='error'>Please enter your username or email.</div>";
         } else {
-            // Check if username exists in teacher_register
-            $teacher_sql  = "SELECT username, name, faculty_id FROM teacher_register WHERE username=?";
-            $teacher_stmt = $conn->prepare($teacher_sql);
-            $teacher_stmt->bind_param("s", $username);
-            $teacher_stmt->execute();
-            $teacher_result = $teacher_stmt->get_result();
+            $found_user  = null;
+            $found_table = null;
 
-            if ($teacher_result->num_rows > 0) {
-                $teacher_data = $teacher_result->fetch_assoc();
-                $faculty_id   = $teacher_data['faculty_id'];
-                $name         = $teacher_data['name'];
+            // Search student_register (email column = personal_email)
+            $sql  = "SELECT username, name FROM student_register WHERE username=? OR personal_email=? LIMIT 1";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ss", $input, $input);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->num_rows > 0) {
+                $found_user  = $result->fetch_assoc();
+                $found_table = 'student_register';
+            }
+            $stmt->close();
 
-                if (! empty($faculty_id)) {
-                    // Set password to faculty_id
-                    $new_password    = $faculty_id;
-                    $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+            // If not found in students, search teacher_register (email column = email)
+            if (! $found_user) {
+                $sql  = "SELECT username, name FROM teacher_register WHERE username=? OR email=? LIMIT 1";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("ss", $input, $input);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($result->num_rows > 0) {
+                    $found_user  = $result->fetch_assoc();
+                    $found_table = 'teacher_register';
+                }
+                $stmt->close();
+            }
 
-                    // Update password
-                    $update_sql  = "UPDATE teacher_register SET password=? WHERE username=?";
-                    $update_stmt = $conn->prepare($update_sql);
-                    $update_stmt->bind_param("ss", $hashed_password, $username);
+            if ($found_user) {
+                $username = $found_user['username'];
+                $name     = $found_user['name'];
+                $role     = ($found_table === 'student_register') ? 'student' : 'teacher';
 
-                    if ($update_stmt->execute()) {
-                        $message = "<div class='success'>
-                            <h3>✅ Password Reset Successful!</h3>
-                            <p><strong>Hello $name,</strong></p>
-                            <p>Your password has been reset to your <strong>Faculty ID</strong>.</p>
-
-                            <p>Please login with your new password and consider changing it in your profile for security.</p>
-                        </div>";
-                    } else {
-                        $message = "<div class='error'>Error updating password. Please try again.</div>";
-                    }
-                    $update_stmt->close();
+                // Check if 2FA is enabled
+                if ($totp->isEnabled($conn, $username, $found_table)) {
+                    // Store info in session and move to step 2
+                    $_SESSION['reset_step']         = 2;
+                    $_SESSION['reset_username']     = $username;
+                    $_SESSION['reset_table']        = $found_table;
+                    $_SESSION['reset_name']         = $name;
+                    $_SESSION['reset_role']         = $role;
+                    $_SESSION['reset_2fa_attempts'] = 0;
+                    $step                           = 2;
                 } else {
-                    $message = "<div class='error'>Faculty ID not found in your profile. Please contact admin.</div>";
+                    $message = "<div class='error'>
+                            <h3>⚠️ 2FA Not Enabled</h3>
+                            <p>Two-Factor Authentication is not enabled on your account.</p>
+                            <p>Password reset requires 2FA verification for security. Please contact the administrator to reset your password.</p>
+                        </div>";
                 }
             } else {
-                $message = "<div class='error'>Username not found. Please check your username and try again.</div>";
+                $message = "<div class='error'>Account not found. Please check your username or email and try again.</div>";
             }
-            $teacher_stmt->close();
         }
-        $stmt->close();
     }
     }
 
+    // ─── STEP 2: Verify 2FA code and reset password ───
+    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['verify_2fa'])) {
+    if (! validateCSRFToken($_POST['csrf_token'] ?? '')) {
+        $message = "<div class='error'>Invalid request. Please try again.</div>";
+    } elseif (! isset($_SESSION['reset_username'], $_SESSION['reset_table'])) {
+        // Session expired
+        unset($_SESSION['reset_step']);
+        $step    = 1;
+        $message = "<div class='error'>Session expired. Please start over.</div>";
+    } else {
+        $username = $_SESSION['reset_username'];
+        $table    = $_SESSION['reset_table'];
+        $name     = $_SESSION['reset_name'];
+        $role     = $_SESSION['reset_role'];
+        $code     = preg_replace('/\s+/', '', $_POST['totp_code'] ?? '');
+
+        // Rate limit: max 5 attempts
+        $max_attempts                   = 5;
+        $_SESSION['reset_2fa_attempts'] = ($_SESSION['reset_2fa_attempts'] ?? 0) + 1;
+
+        if ($_SESSION['reset_2fa_attempts'] > $max_attempts) {
+            unset($_SESSION['reset_step'], $_SESSION['reset_username'], $_SESSION['reset_table'],
+                $_SESSION['reset_name'], $_SESSION['reset_role'], $_SESSION['reset_2fa_attempts']);
+            $step    = 1;
+            $message = "<div class='error'>Too many failed attempts. Please try again later.</div>";
+        } elseif (empty($code) || ! preg_match('/^\d{6}$/', $code)) {
+            $step      = 2;
+            $remaining = $max_attempts - $_SESSION['reset_2fa_attempts'];
+            $message   = "<div class='error'>Please enter a valid 6-digit code. $remaining attempts remaining.</div>";
+        } else {
+            // Get and verify the TOTP secret
+            $encryptedSecret = $totp->getSecret($conn, $username, $table);
+            $secret          = $totp->decryptSecret($encryptedSecret);
+
+            if ($secret && $totp->verifyCode($secret, $code)) {
+                // 2FA verified — reset password
+                if ($table === 'student_register') {
+                    // Reset to DOB
+                    $sql  = "SELECT dob FROM student_register WHERE username=?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("s", $username);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $row    = $result->fetch_assoc();
+                    $stmt->close();
+
+                    if (! empty($row['dob'])) {
+                        $new_password    = str_replace('-', '', $row['dob']);
+                        $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+
+                        $update_stmt = $conn->prepare("UPDATE student_register SET password=? WHERE username=?");
+                        $update_stmt->bind_param("ss", $hashed_password, $username);
+
+                        if ($update_stmt->execute()) {
+                            $escaped_name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+                            $message      = "<div class='success'>
+                                    <h3>✅ Password Reset Successful!</h3>
+                                    <p><strong>Hello $escaped_name,</strong></p>
+                                    <p>Your password has been reset to your <strong>Date of Birth</strong>.</p>
+                                    <div class='password-info'>
+                                        <p><strong>Your new password format:</strong> YYYYMMDD</p>
+                                        <p><em>Example: If your DOB is 15-May-1999, your password is: 19990515</em></p>
+                                    </div>
+                                    <p>Please login with your new password and consider changing it in your profile for security.</p>
+                                </div>";
+                        } else {
+                            $message = "<div class='error'>Error updating password. Please try again.</div>";
+                        }
+                        $update_stmt->close();
+                    } else {
+                        $message = "<div class='error'>Date of Birth not found in your profile. Please contact admin.</div>";
+                    }
+                } else {
+                    // Teacher — reset to Faculty ID
+                    $sql  = "SELECT faculty_id FROM teacher_register WHERE username=?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("s", $username);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    $row    = $result->fetch_assoc();
+                    $stmt->close();
+
+                    if (! empty($row['faculty_id'])) {
+                        $hashed_password = password_hash($row['faculty_id'], PASSWORD_DEFAULT);
+
+                        $update_stmt = $conn->prepare("UPDATE teacher_register SET password=? WHERE username=?");
+                        $update_stmt->bind_param("ss", $hashed_password, $username);
+
+                        if ($update_stmt->execute()) {
+                            $escaped_name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+                            $message      = "<div class='success'>
+                                    <h3>✅ Password Reset Successful!</h3>
+                                    <p><strong>Hello $escaped_name,</strong></p>
+                                    <p>Your password has been reset to your <strong>Faculty ID</strong>.</p>
+                                    <p>Please login with your new password and consider changing it in your profile for security.</p>
+                                </div>";
+                        } else {
+                            $message = "<div class='error'>Error updating password. Please try again.</div>";
+                        }
+                        $update_stmt->close();
+                    } else {
+                        $message = "<div class='error'>Faculty ID not found in your profile. Please contact admin.</div>";
+                    }
+                }
+
+                // Clear reset session data
+                unset($_SESSION['reset_step'], $_SESSION['reset_username'], $_SESSION['reset_table'],
+                    $_SESSION['reset_name'], $_SESSION['reset_role'], $_SESSION['reset_2fa_attempts']);
+                $step = 3; // Show success
+            } else {
+                // Invalid code
+                $step      = 2;
+                $remaining = $max_attempts - $_SESSION['reset_2fa_attempts'];
+                $message   = "<div class='error'>Invalid verification code. $remaining attempts remaining.</div>";
+            }
+        }
+    }
+    }
+
+    $csrf_token = generateCSRFToken();
     $conn->close();
 ?>
 <!DOCTYPE html>
@@ -470,32 +576,67 @@
 
             <?php if (! empty($message)): ?>
                 <?php echo $message; ?>
+            <?php endif; ?>
 
-                <?php if (strpos($message, 'successful') !== false || strpos($message, 'Success') !== false): ?>
-                    <div style="text-align: center;">
-                        <a href="index.php" class="login-link">Go to Login Page</a>
+            <?php if ($step === 3 || (strpos($message, 'Successful') !== false)): ?>
+                <!-- Success — show login link -->
+                <div style="text-align: center;">
+                    <a href="index.php" class="login-link">Go to Login Page</a>
+                </div>
+
+            <?php elseif ($step === 2 && isset($_SESSION['reset_username'])): ?>
+                <!-- Step 2: 2FA Verification -->
+                <div class="info-box">
+                    <h4>🔐 Two-Factor Authentication Required</h4>
+                    <p>Enter the 6-digit code from your authenticator app to verify your identity.</p>
+                </div>
+
+                <form method="POST" autocomplete="off">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>" />
+                    <div class="item">
+                        <label for="totp_code">Enter 2FA Code:</label>
+                        <input
+                            type="text"
+                            name="totp_code"
+                            id="totp_code"
+                            placeholder="Enter 6-digit code"
+                            required
+                            maxlength="6"
+                            pattern="\d{6}"
+                            inputmode="numeric"
+                            autocomplete="one-time-code"
+                            style="text-align: center; font-size: 16px; letter-spacing: 4px;"
+                        />
                     </div>
-                <?php endif; ?>
-            <?php else: ?>
+                    <div class="item">
+                        <input type="submit" name="verify_2fa" value="Verify & Reset Password" id="button" />
+                    </div>
+                </form>
+                <a href="forgot_password_dob.php?cancel=1" class="back-link">← Start Over</a>
+
+            <?php elseif ($step === 1): ?>
+                <!-- Step 1: Enter username or email -->
                 <div class="info-box">
                     <h4>📋 Password Reset Information</h4>
                     <p><strong>For Students:</strong> Password will be reset to your Date of Birth (YYYYMMDD format)</p>
                     <p><strong>For Teachers:</strong> Password will be reset to your Faculty ID</p>
+                    <p style="margin-top: 10px;"><strong>Note:</strong> Two-Factor Authentication must be enabled on your account to reset your password.</p>
                 </div>
 
                 <form method="POST">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>" />
                     <div class="item">
-                        <label for="username">Enter Your Username:</label>
+                        <label for="username">Enter Your Username or Email:</label>
                         <input
                             type="text"
                             name="username"
-                            placeholder="Enter your username (student or teacher)"
+                            placeholder="Enter your username or email"
                             required
                             autocomplete="username"
                         />
                     </div>
                     <div class="item">
-                        <input type="submit" name="reset_password" value="Reset Password" id="button" />
+                        <input type="submit" name="find_user" value="Continue" id="button" />
                     </div>
                 </form>
             <?php endif; ?>
@@ -509,10 +650,13 @@
     </footer>
 
     <script>
-        // Auto-focus username input
+        // Auto-focus the relevant input
         document.addEventListener('DOMContentLoaded', function() {
+            const totpInput = document.getElementById('totp_code');
             const usernameInput = document.querySelector('input[name="username"]');
-            if (usernameInput) {
+            if (totpInput) {
+                totpInput.focus();
+            } else if (usernameInput) {
                 usernameInput.focus();
             }
         });

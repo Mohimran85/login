@@ -54,3 +54,5 @@ function get_db_connection(): mysqli
     $conn->set_charset('utf8mb4');
     return $conn;
 }
+
+require_once __DIR__ . '/session_timeout.php';

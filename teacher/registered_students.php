@@ -851,6 +851,12 @@
                             Event Certificate Validation
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="reports.php" class="nav-link">
+                            <span class="material-symbols-outlined">bar_chart</span>
+                            Reports
+                        </a>
+                    </li>
                     <?php endif; ?>
                     <?php if ($is_admin): ?>
                     <li class="nav-item">
