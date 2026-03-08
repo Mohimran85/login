@@ -203,6 +203,7 @@ class CacheManager
     public function invalidateUserCache($regno)
     {
         $patterns = [
+            "dashboard_{$regno}",
             "student_dashboard_{$regno}",
             "student_stats_{$regno}",
             "student_recent_{$regno}",

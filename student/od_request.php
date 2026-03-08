@@ -310,6 +310,9 @@
 
                 if ($insert_stmt->execute()) {
                     $_SESSION['od_success'] = true;
+                    // Invalidate dashboard cache so new OD request appears immediately
+                    $dashboard_cache_key = 'EMS_CACHE_dashboard_' . $student_data['regno'];
+                    unset($_SESSION[$dashboard_cache_key]);
                     $insert_stmt->close();
                     $conn->close();
                     header("Location: od_request.php");

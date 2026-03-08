@@ -106,13 +106,13 @@ function getDashboardStats($db, $cache, $regno)
     if (! $data) {
         try {
             // Get total events
-            $totalEventsQuery = "SELECT COUNT(*) as total FROM student_participations WHERE regno = ?";
+            $totalEventsQuery = "SELECT COUNT(*) as total FROM student_event_register WHERE regno = ? AND verification_status = 'Approved'";
             $totalResult      = $db->executeQuery($totalEventsQuery, [$regno]);
             $totalEvents      = $totalResult[0]['total'] ?? 0;
 
             // Get events won
-            $eventsWonQuery = "SELECT COUNT(*) as won FROM student_participations
-                             WHERE regno = ? AND prize IS NOT NULL AND prize != '' AND prize != 'No Prize'";
+            $eventsWonQuery = "SELECT COUNT(*) as won FROM student_event_register
+                             WHERE regno = ? AND verification_status = 'Approved' AND prize IN ('First', 'Second', 'Third')";
             $wonResult = $db->executeQuery($eventsWonQuery, [$regno]);
             $eventsWon = $wonResult[0]['won'] ?? 0;
 
@@ -122,7 +122,7 @@ function getDashboardStats($db, $cache, $regno)
                             SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
                             SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
                             SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
-                            FROM od_requests WHERE regno = ?";
+                            FROM od_requests WHERE student_regno = ?";
             $odResult = $db->executeQuery($odStatsQuery, [$regno]);
             $odStats  = $odResult[0] ?? ['total' => 0, 'pending' => 0, 'approved' => 0, 'rejected' => 0];
 
@@ -169,19 +169,22 @@ function getRecentActivities($db, $cache, $regno)
 
     if (! $data) {
         try {
-            $query = "SELECT event_name, event_type, attended_date, prize
-                     FROM student_participations
-                     WHERE regno = ?
-                     ORDER BY attended_date DESC
+            $query = "SELECT event_name, event_type, start_date, end_date, no_of_days, prize
+                     FROM student_event_register
+                     WHERE regno = ? AND verification_status = 'Approved'
+                     ORDER BY start_date DESC, id DESC
                      LIMIT 10";
             $activities = $db->executeQuery($query, [$regno]);
 
             $data = array_map(function ($activity) {
+                $dateStr = $activity['start_date'] === $activity['end_date']
+                    ? date('M d, Y', strtotime($activity['start_date']))
+                    : date('M d', strtotime($activity['start_date'])) . ' - ' . date('M d, Y', strtotime($activity['end_date']));
                 return [
                     'event_name'     => $activity['event_name'],
                     'event_type'     => $activity['event_type'],
-                    'attended_date'  => $activity['attended_date'],
-                    'formatted_date' => date('M d, Y', strtotime($activity['attended_date'])),
+                    'attended_date'  => $activity['start_date'],
+                    'formatted_date' => $dateStr . ' (' . $activity['no_of_days'] . ' day' . ($activity['no_of_days'] > 1 ? 's' : '') . ')',
                     'prize'          => $activity['prize'],
                     'has_prize'      => ! empty($activity['prize']) && $activity['prize'] !== 'No Prize',
                 ];
@@ -207,7 +210,7 @@ function getEventBreakdown($db, $cache, $regno)
     if (! $data) {
         try {
             $query = "SELECT event_type, COUNT(*) as count
-                     FROM student_participations
+                     FROM student_event_register
                      WHERE regno = ?
                      GROUP BY event_type
                      ORDER BY count DESC
@@ -244,7 +247,7 @@ function getODRequests($db, $cache, $regno)
         try {
             $query = "SELECT event_name, status, request_date, event_date
                      FROM od_requests
-                     WHERE regno = ?
+                     WHERE student_regno = ?
                      ORDER BY request_date DESC
                      LIMIT 10";
             $requests = $db->executeQuery($query, [$regno]);

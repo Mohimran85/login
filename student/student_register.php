@@ -309,6 +309,9 @@
     );
 
     if ($stmt->execute()) {
+        // Invalidate dashboard cache so newly registered event appears immediately
+        $dashboard_cache_key = 'EMS_CACHE_dashboard_' . $regno;
+        unset($_SESSION[$dashboard_cache_key]);
         $stmt->close();
         $conn->close();
         header("Location: student_register.php?success=1");

@@ -46,15 +46,14 @@
 
     $regno = $student_data['regno'];
 
-    // Try to get dashboard data from cache
+    // Always fetch fresh dashboard data (avoids stale session cache issues)
     $dashboard_cache_key = "dashboard_" . $regno;
-    $dashboard_data      = $cache->get($dashboard_cache_key);
+    $cache->delete($dashboard_cache_key);
 
-    if (! $dashboard_data) {
-    // Get all dashboard data in optimized single query
+    // Get all dashboard data
     $dashboard_stats = $db->getStudentDashboardData($regno);
 
-    // Get additional data with caching
+    // Get additional data
     $recent_activities = $db->getRecentActivities($regno, 5);
     $event_types_data  = $db->getEventTypeBreakdown($regno, 8);
     $recent_od_data    = $db->getRecentODRequests($regno, 3);
@@ -66,16 +65,12 @@
 
     // Combine all data
     $dashboard_data = [
-        'stats'              => $dashboard_stats,
-        'recent_events'      => $recent_activities,
-        'event_types'        => $event_types_data,
-        'recent_od_requests' => $recent_od_data,
-        'internship_count'   => $internship_count,
+    'stats'              => $dashboard_stats,
+    'recent_events'      => $recent_activities,
+    'event_types'        => $event_types_data,
+    'recent_od_requests' => $recent_od_data,
+    'internship_count'   => $internship_count,
     ];
-
-    // Cache dashboard data for 5 minutes
-    $cache->set($dashboard_cache_key, $dashboard_data, 300);
-    }
 
     // Extract data for backward compatibility
     $total_events     = $dashboard_data['stats']['total_events'] ?? 0;
