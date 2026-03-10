@@ -100,7 +100,8 @@
                 $result       = $stmt->get_result();
                 $teacher_data = $result->fetch_assoc();
             } else {
-                $message      = "Error updating profile: " . htmlspecialchars($update_stmt->error);
+                error_log('Profile update error: ' . $update_stmt->error);
+                $message      = "Error updating profile. Please try again.";
                 $message_type = "error";
             }
             $update_stmt->close();
@@ -144,7 +145,8 @@
                         $message      = "Password updated successfully!";
                         $message_type = "success";
                     } else {
-                        $message      = "Error updating password: " . htmlspecialchars($password_stmt->error);
+                        error_log('Password update error: ' . $password_stmt->error);
+                        $message      = "Error updating password. Please try again.";
                         $message_type = "error";
                     }
                     $password_stmt->close();

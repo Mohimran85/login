@@ -47,7 +47,7 @@ class PdfGenerator
         // Set headers for PDF output
         if ($destination === 'D' || $destination === 'I') {
             header('Content-Type: application/pdf');
-            header('Content-Disposition: ' . ($destination === 'D' ? 'attachment' : 'inline') . '; filename="' . $filename . '"');
+            header('Content-Disposition: ' . ($destination === 'D' ? 'attachment' : 'inline') . '; filename="' . rawurlencode(basename($filename)) . '"');
             header('Cache-Control: private, max-age=0, must-revalidate');
             header('Pragma: public');
         }

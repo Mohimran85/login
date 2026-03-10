@@ -26,23 +26,29 @@
     if ($result->num_rows > 0) {
         $user_data = $result->fetch_assoc();
         $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        $stmt->close();
         break;
     }
     $stmt->close();
     }
 
-    // Handle delete operation (students only)
+    // Handle delete operation
     if (isset($_POST['delete_id'])) {
-    $delete_id = $_POST['delete_id'];
+    $delete_id   = (int) $_POST['delete_id'];
+    $delete_type = isset($_POST['delete_type']) ? $_POST['delete_type'] : 'student';
 
-    $delete_sql = "DELETE FROM student_event_register WHERE id = ?";
+    $allowed_delete_types = ['student' => 'student_event_register', 'teacher' => 'teacher_event_register'];
+    $delete_table         = isset($allowed_delete_types[$delete_type]) ? $allowed_delete_types[$delete_type] : 'student_event_register';
+
+    $delete_sql = "DELETE FROM $delete_table WHERE id = ?";
 
     $delete_stmt = $conn->prepare($delete_sql);
     $delete_stmt->bind_param("i", $delete_id);
     if ($delete_stmt->execute()) {
-        $success_message = "Student record deleted successfully!";
+        $success_message = "Record deleted successfully!";
     } else {
-        $error_message = "Error deleting record: " . $conn->error;
+        error_log('Delete error: ' . $conn->error);
+        $error_message = "Error deleting record.";
     }
     $delete_stmt->close();
     }
@@ -400,7 +406,7 @@
       .participants-table th {
         background-color: #f8f9fa;
         font-weight: 600;
-        color: #ffffffff;
+        color: #212529;
         position: sticky;
         top: 0;
       }
@@ -631,6 +637,10 @@
               <a href="manage_counselors.php">Manage Counselors</a>
             </li>
             <li class="sidebar-list-item">
+              <span class="material-symbols-outlined">emoji_events</span>
+              <a href="hackathons.php">Hackathons</a>
+            </li>
+            <li class="sidebar-list-item">
               <span class="material-symbols-outlined">bar_chart</span>
               <a href="reports.php">Reports</a>
             </li>
@@ -689,11 +699,11 @@
                     <option value="">All Event Types</option>
                     <?php
                         // Get distinct event types from both tables
-                        $types_sql = "SELECT DISTINCT event_type FROM student_event_register WHERE event_type IS NOT NULL
+                        $types_sql  = "SELECT DISTINCT event_type FROM student_event_register WHERE event_type IS NOT NULL
                                      UNION
                                      SELECT DISTINCT event_type FROM staff_event_reg WHERE event_type IS NOT NULL
                                      ORDER BY event_type";
-                        $types_result = $conn->query($types_sql);
+                        $types_result  = $conn->query($types_sql);
                         if ($types_result) {
                             while ($type_row = $types_result->fetch_assoc()) {
                                 $selected = ($filter_event_type === $type_row['event_type']) ? 'selected' : '';

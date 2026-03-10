@@ -78,7 +78,11 @@
     // Function to safely check and add status column
     function ensureStatusColumn($conn, $table_name)
     {
-    $check_column  = "SHOW COLUMNS FROM $table_name LIKE 'status'";
+    $allowed_tables = ['student_register', 'teacher_register'];
+    if (! in_array($table_name, $allowed_tables)) {
+        return;
+    }
+    $check_column  = "SHOW COLUMNS FROM `$table_name` LIKE 'status'";
     $column_result = $conn->query($check_column);
 
     if ($column_result->num_rows == 0) {
@@ -166,20 +170,20 @@
                 break;
 
             case 'edit_user':
-                $user_id    = (int) $_POST['user_id'];
-                $table_name = $_POST['table_name'];
-                $name       = trim($_POST['name']);
-                $username   = trim($_POST['username']);
-                $email      = trim($_POST['email']);
-                $department = $_POST['department'];
-                $identifier = trim($_POST['identifier']);
-                $dob        = isset($_POST['dob']) ? trim($_POST['dob']) : null;
+                $user_id         = (int) $_POST['user_id'];
+                $table_name      = $_POST['table_name'];
+                $name            = trim($_POST['name']);
+                $target_username = trim($_POST['username']);
+                $email           = trim($_POST['email']);
+                $department      = $_POST['department'];
+                $identifier      = trim($_POST['identifier']);
+                $dob             = isset($_POST['dob']) ? trim($_POST['dob']) : null;
 
                 $allowed_tables = ['student_register', 'teacher_register'];
 
                 if (in_array($table_name, $allowed_tables)) {
                     // Validation
-                    if (empty($name) || empty($username) || empty($email) || empty($department) || empty($identifier)) {
+                    if (empty($name) || empty($target_username) || empty($email) || empty($department) || empty($identifier)) {
                         $error_message = "All fields are required!";
                     } elseif (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
                         $error_message = "Invalid email format!";
@@ -190,7 +194,7 @@
 
                         $check_unique_sql = "SELECT id FROM $table_name WHERE (username = ? OR $email_column = ? OR $identifier_column = ?) AND id != ?";
                         $check_stmt       = $conn->prepare($check_unique_sql);
-                        $check_stmt->bind_param("sssi", $username, $email, $identifier, $user_id);
+                        $check_stmt->bind_param("sssi", $target_username, $email, $identifier, $user_id);
                         $check_stmt->execute();
                         $check_result = $check_stmt->get_result();
 
@@ -201,11 +205,11 @@
                             if ($table_name === 'student_register' && ! empty($dob)) {
                                 $update_sql  = "UPDATE $table_name SET name = ?, username = ?, $email_column = ?, department = ?, $identifier_column = ?, dob = ? WHERE id = ?";
                                 $update_stmt = $conn->prepare($update_sql);
-                                $update_stmt->bind_param("ssssssi", $name, $username, $email, $department, $identifier, $dob, $user_id);
+                                $update_stmt->bind_param("ssssssi", $name, $target_username, $email, $department, $identifier, $dob, $user_id);
                             } else {
                                 $update_sql  = "UPDATE $table_name SET name = ?, username = ?, $email_column = ?, department = ?, $identifier_column = ? WHERE id = ?";
                                 $update_stmt = $conn->prepare($update_sql);
-                                $update_stmt->bind_param("sssssi", $name, $username, $email, $department, $identifier, $user_id);
+                                $update_stmt->bind_param("sssssi", $name, $target_username, $email, $department, $identifier, $user_id);
                             }
 
                             if ($update_stmt->execute()) {
@@ -231,7 +235,7 @@
     $search_query     = isset($_GET['search']) ? $_GET['search'] : '';
     $entries_param    = isset($_GET['entries']) ? $_GET['entries'] : '10';
     $entries_per_page = ($entries_param === 'all') ? PHP_INT_MAX : (int) $entries_param;
-    $current_page     = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+    $current_page     = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
 
     // Restrict teachers to only manage teachers (except admin-level teachers)
     if ($user_type === 'teacher' && $teacher_status !== 'admin') {
@@ -999,6 +1003,10 @@
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">emoji_events</span>
+                        <a href="hackathons.php">Hackathons</a>
+                    </li>
+                    <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">bar_chart</span>
                         <a href="reports.php">Reports</a>
                     </li>
@@ -1031,15 +1039,15 @@
             <div class="main-content">
                 <!-- Alert Messages -->
                 <?php if (! empty($success_message)): ?>
-                    <div class="alert alert-success"><?php echo $success_message; ?></div>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($success_message, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php endif; ?>
 
                 <?php if (! empty($error_message)): ?>
-                    <div class="alert alert-error"><?php echo $error_message; ?></div>
+                    <div class="alert alert-error"><?php echo htmlspecialchars($error_message, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php endif; ?>
 
                 <?php if (! empty($search_error)): ?>
-                    <div class="alert alert-error"><?php echo $search_error; ?></div>
+                    <div class="alert alert-error"><?php echo htmlspecialchars($search_error, ENT_QUOTES, 'UTF-8'); ?></div>
                 <?php endif; ?>
 
                 <!-- Statistics -->
@@ -1216,7 +1224,7 @@
                                             <td><?php echo date('M d, Y', strtotime($user['year_of_join'])); ?></td>
                                             <td>
                                                 <div class="action-buttons">
-                                                    <button onclick="openEditModal(<?php echo $user['id']; ?>, '<?php echo $user['user_type']; ?>', '<?php echo htmlspecialchars($user['name']); ?>', '<?php echo htmlspecialchars($user['username']); ?>', '<?php echo htmlspecialchars($user['email']); ?>', '<?php echo htmlspecialchars($user['department']); ?>', '<?php echo htmlspecialchars($user['identifier']); ?>', '<?php echo htmlspecialchars($user['dob'] ?? ''); ?>')"
+                                                    <button onclick="openEditModal(<?php echo (int) $user['id']; ?>, <?php echo json_encode($user['user_type']); ?>, <?php echo json_encode($user['name']); ?>, <?php echo json_encode($user['username']); ?>, <?php echo json_encode($user['email']); ?>, <?php echo json_encode($user['department']); ?>, <?php echo json_encode($user['identifier']); ?>, <?php echo json_encode($user['dob'] ?? ''); ?>)"
                                                             class="btn btn-warning" title="Edit User">
                                                         <span class="material-symbols-outlined">edit</span>
                                                     </button>

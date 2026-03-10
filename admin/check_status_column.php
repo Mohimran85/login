@@ -12,7 +12,8 @@ require_once __DIR__ . '/../includes/db_config.php';
 $conn = get_db_connection();
 
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    error_log('check_status_column: Connection failed: ' . $conn->connect_error);
+    die("Connection failed");
 }
 
 echo "<h2>Status Column Definition Check</h2>";
@@ -45,7 +46,7 @@ $result = $conn->query("SELECT id, title, status, LENGTH(status) as status_lengt
 if ($result) {
     echo "Recent hackathons:\n";
     while ($row = $result->fetch_assoc()) {
-        echo "ID: {$row['id']}, Title: {$row['title']}, Status: '{$row['status']}' (length: {$row['status_length']})\n";
+        echo "ID: {$row['id']}, Title: " . htmlspecialchars($row['title'], ENT_QUOTES, 'UTF-8') . ", Status: '{$row['status']}' (length: {$row['status_length']})\n";
     }
 }
 

@@ -123,9 +123,6 @@ p {
   font-weight: 500;
   color: #1e4276;
 }
-.material-symbols-outlined {
-  padding-right: 10px;
-}
 /* SIDE BAR */
 #sidebar {
   grid-area: sidebar;
@@ -523,7 +520,7 @@ a {
   flex: 1;
 }
 
-.year-label {
+.comparison-year-label {
   display: block;
   font-size: 0.85rem;
   opacity: 0.8;
@@ -1543,6 +1540,7 @@ a {
   -webkit-font-feature-settings: "liga";
   font-feature-settings: "liga";
   -webkit-font-smoothing: antialiased;
+  padding-right: 10px;
 }
 
 /* Loading states for charts */

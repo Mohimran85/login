@@ -130,12 +130,25 @@
  */
     function completeLogin($conn, $username, $role, $table)
     {
+    session_regenerate_id(true);
+
+    // Generate single-device session token and persist it to DB
+    $session_token = bin2hex(random_bytes(32));
+    $tok_table     = ($role === 'student') ? 'student_register' : 'teacher_register';
+    $tok_stmt      = $conn->prepare("UPDATE `$tok_table` SET session_token = ? WHERE username = ?");
+    if ($tok_stmt) {
+        $tok_stmt->bind_param("ss", $session_token, $username);
+        $tok_stmt->execute();
+        $tok_stmt->close();
+    }
+
     // Set full session
     $_SESSION['username']      = $username;
     $_SESSION['role']          = $role;
     $_SESSION['logged_in']     = true;
     $_SESSION['last_activity'] = time();
     $_SESSION['2fa_verified']  = true;
+    $_SESSION['session_token'] = $session_token;
 
     // Clear 2FA pending data
     unset($_SESSION['2fa_pending'], $_SESSION['2fa_username'], $_SESSION['2fa_role'],
@@ -164,7 +177,8 @@
             $_SESSION['access_denied'] = 'Your account is inactive. Please contact an administrator.';
             $redirect                  = 'teacher/index.php';
         } elseif ($teacher_status === 'admin') {
-            $redirect = 'admin/index.php';
+            $_SESSION['role'] = 'admin';
+            $redirect         = 'admin/index.php';
         } else {
             $redirect = 'teacher/index.php';
         }

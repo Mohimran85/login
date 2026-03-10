@@ -250,7 +250,7 @@ Configure your credentials in `.env`:
 
 The centralized connection is provided by `includes/db_config.php`.
 
-- `student/ajax/push_subscription.php` (lines 10-11)
+- Review `student/ajax/push_subscription.php` (lines 10-11) for Web Push subscription handling and VAPID key configuration.
 
 ---
 
@@ -552,6 +552,6 @@ The core hackathon system is now implemented with:
 ---
 
 **Version**: 1.0.0  
-**Last Updated**: February 20, 2026  
+**Last Updated**: March 8, 2026  
 **Files Created**: 11  
 **Lines of Code**: ~4,500

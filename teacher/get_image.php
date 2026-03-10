@@ -88,7 +88,7 @@ if ($found_file && file_exists($found_file)) {
         }
 
         // Force inline display (not download)
-        header('Content-Disposition: inline; filename="' . basename($found_file) . '"');
+        header('Content-Disposition: inline; filename="' . rawurlencode(basename($found_file)) . '"');
         header('Content-Length: ' . filesize($found_file));
         header('Cache-Control: public, max-age=86400'); // Cache for 1 day
 
@@ -102,12 +102,7 @@ if ($found_file && file_exists($found_file)) {
 } else {
     // No file found, return error with debug info
     echo json_encode([
-        'success'    => false,
-        'message'    => ucfirst($type) . ' not found',
-        'searched'   => $search_paths,
-        'event_name' => $event_name,
-        'regno'      => $regno,
-        'event_id'   => $event_id,
-        'column'     => isset($column) ? $column : 'unknown',
+        'success' => false,
+        'message' => ucfirst($type) . ' not found',
     ]);
 }

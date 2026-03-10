@@ -18,7 +18,11 @@
     // Function to safely check and add status column
     function ensureStatusColumn($conn, $table_name)
     {
-    $check_column  = "SHOW COLUMNS FROM $table_name LIKE 'status'";
+    $allowed_tables = ['student_register', 'teacher_register'];
+    if (! in_array($table_name, $allowed_tables, true)) {
+        return;
+    }
+    $check_column  = "SHOW COLUMNS FROM `$table_name` LIKE 'status'";
     $column_result = $conn->query($check_column);
 
     if ($column_result->num_rows == 0) {
@@ -29,6 +33,26 @@
 
     // Ensure status column exists in teacher table
     ensureStatusColumn($conn, 'teacher_register');
+
+    // Function to safely check and add session_token column (single-device enforcement)
+    function ensureSessionTokenColumn($conn, $table_name)
+    {
+    $allowed_tables = ['student_register', 'teacher_register'];
+    if (! in_array($table_name, $allowed_tables, true)) {
+        return;
+    }
+    $check_column  = "SHOW COLUMNS FROM `$table_name` LIKE 'session_token'";
+    $column_result = $conn->query($check_column);
+
+    if ($column_result->num_rows == 0) {
+        $add_column = "ALTER TABLE `$table_name` ADD COLUMN session_token VARCHAR(64) DEFAULT NULL";
+        $conn->query($add_column);
+    }
+    }
+
+    // Ensure session_token column exists in both user tables
+    ensureSessionTokenColumn($conn, 'student_register');
+    ensureSessionTokenColumn($conn, 'teacher_register');
 
     $error_message = "";
 
@@ -86,10 +110,23 @@
                 }
 
                 // No 2FA: proceed with normal login
+                session_regenerate_id(true);
+
+                // Generate single-device session token and persist it to DB
+                $session_token = bin2hex(random_bytes(32));
+                $tok_table     = ($role === 'student') ? 'student_register' : 'teacher_register';
+                $tok_stmt      = $conn->prepare("UPDATE `$tok_table` SET session_token = ? WHERE username = ?");
+                if ($tok_stmt) {
+                    $tok_stmt->bind_param("ss", $session_token, $actual_username);
+                    $tok_stmt->execute();
+                    $tok_stmt->close();
+                }
+
                 $_SESSION['username']      = $actual_username;
                 $_SESSION['role']          = $role;
                 $_SESSION['logged_in']     = true;
                 $_SESSION['last_activity'] = time();
+                $_SESSION['session_token'] = $session_token;
 
                 // Redirect based on user role and status
                 if ($_SESSION['role'] === 'student') {
@@ -113,6 +150,7 @@
                         $_SESSION['access_denied'] = 'Your account is inactive. Please contact an administrator to restore access.';
                         header("Location: teacher/index.php");
                     } elseif ($teacher_status === 'admin') {
+                        $_SESSION['role'] = 'admin';
                         header("Location: admin/index.php");
                     } else {
                         header("Location: teacher/index.php");
@@ -452,6 +490,11 @@ img{
                 // Check for session timeout message
                 if (isset($_GET['timeout']) && $_GET['timeout'] == '1') {
                     echo "<div class='message error-message'>Your session has expired due to inactivity. Please log in again.</div>";
+                }
+
+                // Check for concurrent login message (single-device enforcement)
+                if (isset($_GET['concurrent']) && $_GET['concurrent'] == '1') {
+                    echo "<div class='message error-message'>&#9888; Someone logged into your account from another device. You have been signed out for security.</div>";
                 }
 
                 // Check for logout success message

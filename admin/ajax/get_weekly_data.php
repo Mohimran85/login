@@ -2,8 +2,12 @@
 session_start();
 header('Content-Type: application/json');
 
-// Check if user is logged in
+// Check if user is logged in and is admin
 if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    echo json_encode(['success' => false, 'error' => 'Unauthorized']);
+    exit();
+}
+if (! isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     echo json_encode(['success' => false, 'error' => 'Unauthorized']);
     exit();
 }
@@ -57,9 +61,10 @@ $start_date = date('Y-m-d', strtotime("$year-$start_month_sql-01"));
 $end_date   = date('Y-m-t', strtotime("$year-$end_month_sql-01"));
 
 // Get all weeks in the range
-$current_date = new DateTime($start_date);
-$end_date_obj = new DateTime($end_date);
-$week_num     = 1;
+$current_date   = new DateTime($start_date);
+$end_date_obj   = new DateTime($end_date);
+$start_date_obj = new DateTime($start_date);
+$week_num       = 1;
 
 while ($current_date <= $end_date_obj) {
     // Get week start (Monday) and end (Sunday)
@@ -69,9 +74,12 @@ while ($current_date <= $end_date_obj) {
     $week_end = clone $week_start;
     $week_end->modify('+6 days');
 
-    // Ensure we don't go beyond end date
+    // Clamp to requested range
+    if ($week_start < $start_date_obj) {
+        $week_start = clone $start_date_obj;
+    }
     if ($week_end > $end_date_obj) {
-        $week_end = $end_date_obj;
+        $week_end = clone $end_date_obj;
     }
 
     $week_start_str = $week_start->format('Y-m-d');
@@ -80,22 +88,36 @@ while ($current_date <= $end_date_obj) {
     // Count events for this week (unique event types)
     $events_sql = "SELECT COUNT(DISTINCT event_type) as count
                    FROM student_event_register
-                   WHERE start_date BETWEEN '$week_start_str' AND '$week_end_str'
+                   WHERE start_date BETWEEN ? AND ?
                    AND event_type IS NOT NULL AND event_type != ''
                    AND verification_status = 'Approved'";
 
-    $events_result = $conn->query($events_sql);
-    $events_count  = $events_result ? (int) $events_result->fetch_assoc()['count'] : 0;
+    $events_stmt  = $conn->prepare($events_sql);
+    $events_count = 0;
+    if ($events_stmt) {
+        $events_stmt->bind_param('ss', $week_start_str, $week_end_str);
+        $events_stmt->execute();
+        $events_result = $events_stmt->get_result();
+        $events_count  = $events_result ? (int) $events_result->fetch_assoc()['count'] : 0;
+        $events_stmt->close();
+    }
 
     // Count prize winners for this week
     $wins_sql = "SELECT COUNT(*) as count
                  FROM student_event_register
-                 WHERE start_date BETWEEN '$week_start_str' AND '$week_end_str'
+                 WHERE start_date BETWEEN ? AND ?
                  AND LOWER(TRIM(prize)) IN ('first', 'second', 'third')
                  AND verification_status = 'Approved'";
 
-    $wins_result = $conn->query($wins_sql);
-    $wins_count  = $wins_result ? (int) $wins_result->fetch_assoc()['count'] : 0;
+    $wins_stmt  = $conn->prepare($wins_sql);
+    $wins_count = 0;
+    if ($wins_stmt) {
+        $wins_stmt->bind_param('ss', $week_start_str, $week_end_str);
+        $wins_stmt->execute();
+        $wins_result = $wins_stmt->get_result();
+        $wins_count  = $wins_result ? (int) $wins_result->fetch_assoc()['count'] : 0;
+        $wins_stmt->close();
+    }
 
     // Format week label
     $week_label = 'Week ' . $week_num . ' (' . $week_start->format('M d') . '-' . $week_end->format('M d') . ')';
@@ -116,7 +138,7 @@ while ($current_date <= $end_date_obj) {
 }
 
 $month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-$date_range  = $month_names[$start_month] . ' - ' . $month_names[$end_month] . ' ' . $year;
+$date_range  = $month_names[$start_month - 1] . ' - ' . $month_names[$end_month - 1] . ' ' . $year;
 
 $conn->close();
 

@@ -30,6 +30,7 @@
     if ($result->num_rows > 0) {
         $user_data = $result->fetch_assoc();
         $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        $stmt->close();
         break;
     }
     $stmt->close();
@@ -136,7 +137,8 @@
             if ($update_stmt->execute()) {
                 $success_message = "Participant record updated successfully!";
             } else {
-                $error_message = "Error updating record: " . $conn->error;
+                error_log('edit_participant update error: ' . $conn->error);
+                $error_message = "An internal error occurred while updating the record.";
             }
             $update_stmt->close();
         }
@@ -435,6 +437,10 @@
                         <a href="user_management.php">User Management</a>
                     </li>
                     <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">emoji_events</span>
+                        <a href="hackathons.php">Hackathons</a>
+                    </li>
+                    <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">bar_chart</span>
                         <a href="reports.php">Reports</a>
                     </li>
@@ -579,7 +585,7 @@
                                         <option value="third"                                                              <?php echo($participant['prize'] === 'third') ? 'selected' : ''; ?>>Third Prize</option>
                                         <option value="Participation"                                                                      <?php echo($participant['prize'] === 'Participation') ? 'selected' : ''; ?>>Participation Certificate</option>
                                         <option value="Excellence"                                                                   <?php echo($participant['prize'] === 'Excellence') ? 'selected' : ''; ?>>Excellence Award</option>
-                                    </select>#0a2d5f
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="prize_amount">Prize Amount</label>
@@ -650,7 +656,7 @@
         document.getElementById('prize').addEventListener('change', function() {
             const prizeAmount = document.getElementById('prize_amount');
             const prizeAmountLabel = prizeAmount.previousElementSibling;
-            if (this.value === 'First' || this.value === 'Second' || this.value === 'Third') {
+            if (this.value === 'first' || this.value === 'second' || this.value === 'third') {
                 prizeAmount.style.display = 'block';
                 prizeAmountLabel.style.display = 'block';
             } else {

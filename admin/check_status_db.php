@@ -9,11 +9,11 @@ if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || ! isse
 require_once __DIR__ . '/../includes/DatabaseManager.php';
 require_once __DIR__ . '/../includes/db_config.php';
 
-$db   = DatabaseManager::getInstance();
 $conn = get_db_connection();
 
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    error_log('check_status_db: Connection failed: ' . $conn->connect_error);
+    die("Unable to connect to database");
 }
 
 echo "<h2>Status Column Definition Check</h2>";
@@ -35,11 +35,13 @@ $result = $conn->query("SELECT id, title, status, LENGTH(status) as status_lengt
 
 if ($result) {
     while ($row = $result->fetch_assoc()) {
+        $safeTitle  = htmlspecialchars(substr($row['title'], 0, 30), ENT_QUOTES, 'UTF-8');
+        $safeStatus = htmlspecialchars($row['status'], ENT_QUOTES, 'UTF-8');
         echo sprintf(
             "ID: %-4d | Title: %-30s | Status: %-12s | Length: %-2d | Hex: %s\n",
             $row['id'],
-            substr($row['title'], 0, 30),
-            "'" . $row['status'] . "'",
+            $safeTitle,
+            "'" . $safeStatus . "'",
             $row['status_length'],
             $row['status_hex']
         );
@@ -57,11 +59,13 @@ $invalid_count = 0;
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $clean_status = strtolower(trim($row['status']));
+        $safe_status  = htmlspecialchars($row['status'], ENT_QUOTES, 'UTF-8');
+        $safe_id      = (int) $row['id'];
         if (! in_array($clean_status, $valid_statuses)) {
-            echo "❌ INVALID - ID {$row['id']}: '{$row['status']}' (cleaned: '{$clean_status}')\n";
+            echo "❌ INVALID - ID {$safe_id}: '{$safe_status}' (cleaned: '{$clean_status}')\n";
             $invalid_count++;
         } else {
-            echo "✅ VALID - ID {$row['id']}: '{$row['status']}'\n";
+            echo "✅ VALID - ID {$safe_id}: '{$safe_status}'\n";
         }
     }
 }

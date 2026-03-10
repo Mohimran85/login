@@ -38,6 +38,7 @@ try {
         error_log('Database connection failed: ' . $conn->connect_error);
         throw new Exception('Database connection failed');
     }
+    $conn->set_charset('utf8mb4');
 
     // Get year parameter
     $year = isset($_GET['year']) && is_numeric($_GET['year']) ? (int) $_GET['year'] : date('Y');

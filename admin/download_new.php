@@ -9,8 +9,7 @@ if (! isset($_GET['id']) || ! isset($_GET['type'])) {
     die("Invalid request");
 }
 
-$id   = intval($_GET['id']);
-$type = $_GET['type'];
+$id = intval($_GET['id']);
 
 require_once __DIR__ . '/../includes/db_config.php';
 $conn = get_db_connection();
@@ -49,7 +48,8 @@ if ($row = $result->fetch_assoc()) {
         }
 
         if (! $filePath) {
-            die("Certificate file not found. Searched in: " . implode(", ", $possiblePaths));
+            error_log('Certificate file not found. Searched in: ' . implode(', ', $possiblePaths));
+            die("Certificate file not found.");
         }
 
         $fileData = file_get_contents($filePath);
@@ -72,7 +72,8 @@ if ($row = $result->fetch_assoc()) {
     }
 
     // Create filename
-    $filename = "STU_" . $row['regno'] . "_" . preg_replace('/[^a-zA-Z0-9_-]/', '_', $row['event_name']) . "_certificate." . $ext;
+    $safe_regno = preg_replace('/[^A-Za-z0-9_-]/', '', $row['regno']);
+    $filename   = "STU_" . $safe_regno . "_" . preg_replace('/[^a-zA-Z0-9_-]/', '_', $row['event_name']) . "_certificate." . $ext;
 
     // Clear any output
     while (ob_get_level()) {

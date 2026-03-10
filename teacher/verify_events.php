@@ -91,7 +91,8 @@
             header("Location: verify_events.php?success=rejected&category=" . urlencode($event_category) . "&status=Pending");
             exit();
         } else {
-            $error_message = "❌ Error rejecting registration: " . $update_stmt->error;
+            error_log('Event rejection error: ' . $update_stmt->error);
+            $error_message = "❌ Error rejecting registration. Please try again.";
             $update_stmt->close();
         }
     }
@@ -110,53 +111,87 @@
     if (! empty($student_regnos)) {
     $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
 
-    $query = "SELECT
-                     ser.id,
-                     sr.name AS student_name,
-                     ser.regno,
-                     ser.event_name,
-                     ser.organisation as organizer,
-                     ser.start_date as event_date,
-                     ser.event_type as category,
-                     ser.prize,
-                     ser.certificates as certificate_file,
-                     ser.event_photo,
-                     COALESCE(ser.verification_status, 'Pending') as status,
-                     ser.start_date as created_at
-              FROM student_event_register ser
-              JOIN student_register sr ON ser.regno = sr.regno
-              WHERE ser.regno IN ($placeholders)";
-
-    $params = $student_regnos;
-    $types  = str_repeat('s', count($student_regnos));
-
-    // Apply filters
-    if ($event_category !== 'All') {
-        $query    .= " AND ser.event_type = ?";
-        $params[]  = $event_category;
-        $types    .= 's';
-    }
-
-    // Handle 'Missing' status - events past 3+ days with no certificate uploaded
     if ($status_filter === 'Missing') {
-        $query .= " AND ser.start_date < DATE_SUB(CURDATE(), INTERVAL 3 DAY) AND (ser.certificates IS NULL OR ser.certificates = '')";
+        // Missing: OD approved events where certificate not uploaded within 3 days after event ends
+        // Event end = event_date + (event_days - 1). Missing if 3 days passed after end and no certificate.
+        $query = "SELECT
+                         odr.id,
+                         sr.name AS student_name,
+                         odr.student_regno as regno,
+                         odr.event_name,
+                         odr.event_location as organizer,
+                         odr.event_date as event_date,
+                         COALESCE(ser.event_type, '') as category,
+                         COALESCE(ser.prize, '') as prize,
+                         ser.certificates as certificate_file,
+                         ser.event_photo,
+                         'Missing' as status,
+                         odr.event_date as created_at
+                  FROM od_requests odr
+                  JOIN student_register sr ON odr.student_regno = sr.regno
+                  LEFT JOIN student_event_register ser
+                      ON odr.student_regno = ser.regno AND odr.event_name = ser.event_name
+                  WHERE odr.status = 'approved'
+                  AND odr.student_regno IN ($placeholders)
+                  AND DATE_ADD(odr.event_date, INTERVAL (COALESCE(odr.event_days, 1) + 2) DAY) < CURDATE()
+                  AND (ser.id IS NULL OR ser.certificates IS NULL OR ser.certificates = '')";
+
+        $params = $student_regnos;
+        $types  = str_repeat('s', count($student_regnos));
+
+        // Apply search filter
+        if (! empty($search_filter)) {
+            $query        .= " AND (sr.name LIKE ? OR odr.student_regno LIKE ?)";
+            $search_param  = "%$search_filter%";
+            $params[]      = $search_param;
+            $params[]      = $search_param;
+            $types        .= 'ss';
+        }
+
+        $query .= " ORDER BY odr.event_date DESC";
     } else {
+        $query = "SELECT
+                         ser.id,
+                         sr.name AS student_name,
+                         ser.regno,
+                         ser.event_name,
+                         ser.organisation as organizer,
+                         ser.start_date as event_date,
+                         ser.event_type as category,
+                         ser.prize,
+                         ser.certificates as certificate_file,
+                         ser.event_photo,
+                         COALESCE(ser.verification_status, 'Pending') as status,
+                         ser.start_date as created_at
+                  FROM student_event_register ser
+                  JOIN student_register sr ON ser.regno = sr.regno
+                  WHERE ser.regno IN ($placeholders)";
+
+        $params = $student_regnos;
+        $types  = str_repeat('s', count($student_regnos));
+
+        // Apply category filter
+        if ($event_category !== 'All') {
+            $query    .= " AND ser.event_type = ?";
+            $params[]  = $event_category;
+            $types    .= 's';
+        }
+
         $query    .= " AND COALESCE(ser.verification_status, 'Pending') = ?";
         $params[]  = $status_filter;
         $types    .= 's';
-    }
 
-    // Apply search filter
-    if (! empty($search_filter)) {
-        $query        .= " AND (sr.name LIKE ? OR ser.regno LIKE ?)";
-        $search_param  = "%$search_filter%";
-        $params[]      = $search_param;
-        $params[]      = $search_param;
-        $types        .= 'ss';
-    }
+        // Apply search filter
+        if (! empty($search_filter)) {
+            $query        .= " AND (sr.name LIKE ? OR ser.regno LIKE ?)";
+            $search_param  = "%$search_filter%";
+            $params[]      = $search_param;
+            $params[]      = $search_param;
+            $types        .= 'ss';
+        }
 
-    // Add ordering
-    $query .= " ORDER BY ser.start_date DESC";
+        $query .= " ORDER BY ser.start_date DESC";
+    }
 
     $stmt = $conn->prepare($query);
     $stmt->bind_param($types, ...$params);
@@ -1385,13 +1420,20 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    console.log('Reminder response:', data);
+                    if (data.push_debug) console.log('Push debug:', data.push_debug);
                     if (data.success) {
-                        alert('✅ Reminder sent successfully!');
+                        if (data.push === 'sent') {
+                            alert('✅ Reminder sent successfully! Push notification delivered.');
+                        } else {
+                            alert('✅ In-app reminder sent. Push notification could not be delivered — student may need to open the app once to register for push notifications.');
+                        }
                     } else {
                         alert('❌ Failed to send reminder: ' + (data.message || 'Unknown error'));
                     }
                 })
                 .catch(error => {
+                    console.error('Reminder error:', error);
                     alert('✅ Reminder request sent for ' + eventName);
                     console.log('Reminder triggered for event ID: ' + eventId);
                 });

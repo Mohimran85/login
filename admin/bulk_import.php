@@ -13,21 +13,8 @@
     }
 
     // Database connection
-    $db_host = getenv('DB_HOST') ?: 'localhost';
-    $db_user = getenv('DB_USER');
-    $db_pass = getenv('DB_PASS');
-    $db_name = getenv('DB_NAME') ?: 'event_management_system';
-
-    if (! $db_user || ! $db_pass) {
-    error_log('Database credentials missing in environment');
-    die('Configuration error');
-    }
-
-    $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
-    if ($conn->connect_error) {
-    error_log('Database connection failed: ' . $conn->connect_error);
-    die('Database connection failed');
-    }
+    require_once __DIR__ . '/../includes/db_config.php';
+    $conn = get_db_connection();
 
     // Get user data for header profile
     $username       = $_SESSION['username'];
@@ -169,7 +156,7 @@
                 return [];
             }
 
-            while (($row = fgetcsv($handle, 1000, ",", '"', "\\")) !== false) {
+            while (($row = fgetcsv($handle, 0, ",", '"', "\\")) !== false) {
                 // Skip completely empty rows
                 if (empty(array_filter($row, function ($cell) {
                     return ! empty(trim($cell));
@@ -278,6 +265,7 @@
     $department     = $row['department'];
     $year_of_join   = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
     $degree         = ! empty($row['degree']) ? $row['degree'] : '';
+    $semester       = ! empty($row['semester']) ? $row['semester'] : '1';
 
     // Parse DOB - handle various date formats
     $dob = null;
@@ -311,10 +299,10 @@
     // TODO: Set password_reset_required flag when that column is added
 
     // Insert student with all available fields
-    $insert_sql  = "INSERT INTO student_register (name, dob, username, regno, year_of_join, degree, department, personal_email, password, status, reg_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+    $insert_sql  = "INSERT INTO student_register (name, dob, username, regno, year_of_join, degree, department, semester, personal_email, password, status, reg_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
     $insert_stmt = $conn->prepare($insert_sql);
 
-    $insert_stmt->bind_param("ssssssssss",
+    $insert_stmt->bind_param("sssssssssss",
         $name,
         $dob,
         $username,
@@ -322,6 +310,7 @@
         $year_of_join,
         $degree,
         $department,
+        $semester,
         $personal_email,
         $password,
         $status
@@ -366,14 +355,16 @@
     $check_stmt->close();
 
     // Prepare data with defaults
-    $name         = $row['name'];
-    $username     = $row['username'];
-    $email        = $row['email'];
-    $faculty_id   = $row['faculty_id'];
-    $department   = $row['department'];
-    $year_of_join = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
-    $password     = password_hash('sona123', PASSWORD_DEFAULT); // Hash the default password
-    $status       = 'teacher';                                  // Default status
+    $name               = $row['name'];
+    $username           = $row['username'];
+    $email              = $row['email'];
+    $faculty_id         = $row['faculty_id'];
+    $department         = $row['department'];
+    $year_of_join       = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
+    $generated_password = bin2hex(random_bytes(8)); // 16 character random password
+    $password           = password_hash($generated_password, PASSWORD_DEFAULT);
+    $status             = 'teacher'; // Default status
+                                     // TODO: Send $generated_password to user via email or secure token flow
 
     // Insert teacher with all available fields including password and created_at
     $insert_sql  = "INSERT INTO teacher_register (name, username, faculty_id, year_of_join, department, email, password, created_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
@@ -671,6 +662,10 @@
                         <a href="bulk_import.php">Bulk Import</a>
                     </li>
                     <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">emoji_events</span>
+                        <a href="hackathons.php">Hackathons</a>
+                    </li>
+                    <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">bar_chart</span>
                         <a href="reports.php">Reports</a>
                     </li>
@@ -710,15 +705,15 @@
 
                 <!-- Import Steps -->
                 <div class="import-steps">
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo ! $show_preview && empty($import_results) ? 'active' : ''; ?>">
+                    <div class="step <?php echo ! $show_preview && empty($import_results) ? 'active' : ''; ?>">
                         <div class="step-number">1</div>
                         <span>Upload File</span>
                     </div>
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo $show_preview ? 'active' : ''; ?>">
+                    <div class="step <?php echo $show_preview ? 'active' : ''; ?>">
                         <div class="step-number">2</div>
                         <span>Preview & Confirm</span>
                     </div>
-                    <div class="step                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     <?php echo ! empty($import_results) ? 'active' : ''; ?>">
+                    <div class="step <?php echo ! empty($import_results) ? 'active' : ''; ?>">
                         <div class="step-number">3</div>
                         <span>Import Results</span>
                     </div>

@@ -57,6 +57,7 @@ function requireCSRFToken($data = null, $key = 'csrf_token')
 
     if (! isset($data[$key]) || ! validateCSRFToken($data[$key])) {
         error_log("CSRF validation failed from IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+        header('Content-Type: application/json; charset=utf-8');
         http_response_code(403);
         die(json_encode(['success' => false, 'error' => 'Invalid security token. Please refresh and try again.']));
     }

@@ -128,6 +128,7 @@
     if ($result->num_rows > 0) {
         $user_data = $result->fetch_assoc();
         $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        $stmt->close();
         break;
     }
     $stmt->close();
@@ -158,6 +159,12 @@
     // Redirect students to their profile
     if ($user_type === 'student') {
     header("Location: ../student/profile.php");
+    exit();
+    }
+
+    // Guard against missing user data
+    if (empty($user_type) || empty($user_data)) {
+    header("Location: ../index.php");
     exit();
     }
 
@@ -232,6 +239,10 @@
             <li class="sidebar-list-item">
               <span class="material-symbols-outlined">school</span>
               <a href="manage_counselors.php">Manage Counselors</a>
+            </li>
+            <li class="sidebar-list-item">
+              <span class="material-symbols-outlined">emoji_events</span>
+              <a href="hackathons.php">Hackathons</a>
             </li>
             <li class="sidebar-list-item">
               <span class="material-symbols-outlined">bar_chart</span>
@@ -467,7 +478,7 @@
 
           // Enable form fields (except username and regno which should stay disabled)
           inputs.forEach(input => {
-            if (input.name !== 'username_display' && input.name !== 'regno') {
+            if (input.name !== 'username_display' && input.name !== 'regno' && input.name !== 'faculty_id') {
               input.removeAttribute('readonly');
             }
           });

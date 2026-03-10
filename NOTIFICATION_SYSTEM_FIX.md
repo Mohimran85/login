@@ -76,7 +76,7 @@ SOLUTION IMPLEMENTED:
      hp.title as hackathon_title
    FROM notifications n
    LEFT JOIN hackathon_posts hp ON n.hackathon_id = hp.id
-   WHERE n.user_regno = ?
+   WHERE n.student_regno = ?
    ORDER BY n.sent_at DESC
    LIMIT 20
    ```

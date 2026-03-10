@@ -76,9 +76,7 @@ VAPID keys are automatically generated when the system first runs. They are stor
 cache/vapid_keys.json
 ```
 
-\*\*
-
-IMPORTANT\*\*: Keep this file secure! Do not commit to version control.
+**IMPORTANT**: Keep this file secure! Do not commit to version control.
 
 For production, it's recommended to use environment variables:
 
@@ -108,7 +106,15 @@ mkdir -p uploads/hackathon_posters
 mkdir -p uploads/hackathon_rules
 chmod 755 uploads/hackathon_posters
 chmod 755 uploads/hackathon_rules
-chmod 600 cache/vapid_keys.json  # Secure VAPID keys
+# Option A: Set owner to web server user and keep 600
+chown www-data:www-data cache/vapid_keys.json
+chmod 600 cache/vapid_keys.json
+
+# Option B: Make group-readable for web server group
+chown root:www-data cache/vapid_keys.json
+chmod 640 cache/vapid_keys.json
+
+# Note: Ensure the web server user can read this file
 ```
 
 ### 4. Update Navigation
@@ -265,7 +271,7 @@ Add to student header/dashboard (`student/index.php`):
 - Use HTTPS in production (required for Web Push)
 - Regularly update database credentials
 - Monitor `push_notification_log` for failures
-- Review `security_log` for suspicious activity
+- Review application error logs for suspicious activity
 
 ## 📱 Median.co Web-to-App Conversion
 
@@ -344,7 +350,7 @@ login/
 │   └── js/
 │       └── push-manager.js         # Push notification client (TODO)
 ├── includes/
-│   ├── OneSignalManager.php        # OneSignal push notification backend
+│   ├── OneSignalManager.php        # Push notification backend (OneSignal third-party integration; VAPID Web Push is handled separately)
 │   ├── DatabaseManager.php         # Existing DB utility
 │   ├── FileCompressor.php          # Existing file compression
 │   ├── security.php                # Existing security functions

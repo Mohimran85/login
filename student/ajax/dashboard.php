@@ -87,11 +87,11 @@ try {
     ]);
 
 } catch (Exception $e) {
+    error_log('Dashboard error: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'error'   => 'Server error',
-        'message' => $e->getMessage(),
     ]);
 }
 
@@ -211,7 +211,7 @@ function getEventBreakdown($db, $cache, $regno)
         try {
             $query = "SELECT event_type, COUNT(*) as count
                      FROM student_event_register
-                     WHERE regno = ?
+                     WHERE regno = ? AND verification_status = 'verified'
                      GROUP BY event_type
                      ORDER BY count DESC
                      LIMIT 10";

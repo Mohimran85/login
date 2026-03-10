@@ -45,20 +45,20 @@
             $group_regnos = array_filter(array_map('trim', explode(',', $od_data['group_members'])));
 
             if (! empty($group_regnos)) {
-                // Escape each regno for SQL safety
-                $escaped_regnos = array_map(function ($regno) use ($conn) {
-                    return "'" . $conn->real_escape_string($regno) . "'";
-                }, $group_regnos);
-
-                $regnos_list  = implode(',', $escaped_regnos);
-                $group_sql    = "SELECT regno, name, department FROM student_register WHERE regno IN ($regnos_list)";
-                $group_result = $conn->query($group_sql);
+                $placeholders = implode(',', array_fill(0, count($group_regnos), '?'));
+                $types        = str_repeat('s', count($group_regnos));
+                $group_sql    = "SELECT regno, name, department FROM student_register WHERE regno IN ($placeholders)";
+                $group_stmt   = $conn->prepare($group_sql);
+                $group_stmt->bind_param($types, ...$group_regnos);
+                $group_stmt->execute();
+                $group_result = $group_stmt->get_result();
 
                 if ($group_result) {
                     while ($member = $group_result->fetch_assoc()) {
                         $group_members_details[] = $member;
                     }
                 }
+                $group_stmt->close();
             }
         }
     }

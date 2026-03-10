@@ -12,7 +12,9 @@ if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     exit();
 }
 
+$year = filter_input(INPUT_GET, 'year', FILTER_VALIDATE_INT);
+
 echo json_encode([
     'test' => 'working',
-    'year' => $_GET['year'] ?? 'not provided',
+    'year' => $year !== false && $year !== null ? $year : null,
 ]);

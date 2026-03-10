@@ -31,6 +31,7 @@
     if ($result->num_rows > 0) {
         $user_data = $result->fetch_assoc();
         $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        $stmt->close();
         break;
     }
     $stmt->close();
@@ -87,7 +88,8 @@
         $message      = "Hackathon Coordinator role $label successfully!";
         $message_type = 'success';
     } else {
-        $message      = "Error updating coordinator role: " . $conn->error;
+        error_log('Coordinator toggle error: ' . $conn->error);
+        $message      = "Error updating coordinator role.";
         $message_type = 'error';
     }
     $update_stmt->close();
@@ -95,19 +97,28 @@
 
     // Handle role change
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['change_role'])) {
-    $teacher_id = $_POST['teacher_id'];
+    $teacher_id = (int) $_POST['teacher_id'];
     $new_status = $_POST['new_status'];
 
-    $update_sql  = "UPDATE teacher_register SET status = ? WHERE id = ?";
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("si", $new_status, $teacher_id);
-
-    if ($update_stmt->execute()) {
-        $message      = "Teacher role updated successfully to " . ucfirst($new_status) . "!";
-        $message_type = 'success';
-    } else {
-        $message      = "Error updating role: " . $conn->error;
+    $allowed_statuses = ['active', 'inactive', 'admin', 'teacher', 'counselor'];
+    if (! in_array($new_status, $allowed_statuses)) {
+        $message      = "Invalid status value.";
         $message_type = 'error';
+    } else {
+
+        $update_sql  = "UPDATE teacher_register SET status = ? WHERE id = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("si", $new_status, $teacher_id);
+
+        if ($update_stmt->execute()) {
+            $message      = "Teacher role updated successfully to " . ucfirst($new_status) . "!";
+            $message_type = 'success';
+        } else {
+            error_log('Role update error: ' . $conn->error);
+            $message      = "Error updating role.";
+            $message_type = 'error';
+        }
+        $update_stmt->close();
     }
     }
 
@@ -367,6 +378,7 @@
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1.5px solid #d0dae8;
             border-left: 4px solid #0c3878;
             transition: transform 0.3s ease;
         }
@@ -989,6 +1001,10 @@
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">emoji_events</span>
+                        <a href="hackathons.php">Hackathons</a>
+                    </li>
+                    <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">bar_chart</span>
                         <a href="reports.php">Reports</a>
                     </li>
@@ -999,7 +1015,7 @@
                     <?php if ($user_type === 'teacher' && $teacher_status === 'teacher'): ?>
                     <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">dashboard</span>
-                        <a href="../teacher/index.php">Teacher Dashboard</a>`
+                        <a href="../teacher/index.php">Teacher Dashboard</a>
                     </li>
                     <?php endif; ?>
                     <?php if ($user_type === 'teacher' && $teacher_status === 'counselor'): ?>
@@ -1024,7 +1040,7 @@
 
                 <!-- Alert Messages -->
                 <?php if (! empty($message)): ?>
-                    <div class="message<?php echo $message_type; ?>">
+                    <div class="message <?php echo htmlspecialchars($message_type, ENT_QUOTES, 'UTF-8'); ?>">
                         <?php echo htmlspecialchars($message); ?>
                     </div>
                 <?php endif; ?>
@@ -1095,9 +1111,16 @@
                     Teachers & Counselors
                 </h2>
 
-        <div class="teachers-grid">
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="teacherSearch" oninput="filterTeachers()"
+                        placeholder="🔍 Search by name, email, username or role..."
+                        style="width: 100%; padding: 13px 18px; border: 2px solid #d0dae8; border-radius: 10px; font-size: 15px; outline: none; box-sizing: border-box; transition: border-color 0.3s;"
+                        onfocus="this.style.borderColor='#0c3878'" onblur="this.style.borderColor='#d0dae8'">
+                </div>
+
+        <div class="teachers-grid" id="teachersGrid" id="teachersGrid">
             <?php while ($teacher = $teachers_result->fetch_assoc()): ?>
-                <div class="teacher-card<?php echo htmlspecialchars($teacher['status'], ENT_QUOTES, 'UTF-8'); ?>">
+                <div class="teacher-card <?php echo htmlspecialchars($teacher['status'], ENT_QUOTES, 'UTF-8'); ?>" data-search="<?php echo strtolower(htmlspecialchars($teacher['name'] . ' ' . $teacher['email'] . ' ' . $teacher['username'] . ' ' . $teacher['status'], ENT_QUOTES, 'UTF-8')); ?>">
                     <div class="teacher-header">
                         <div>
                             <div class="teacher-name">
@@ -1254,6 +1277,13 @@
             // Add your sidebar close functionality here
         }
 
+        function escapeHtml(text) {
+            if (text == null) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
         // Modal functions for viewing assigned students
         function viewStudents(counselorId, counselorName) {
             const modal = document.getElementById('studentsModal');
@@ -1278,11 +1308,17 @@
                         } else {
                             let html = '<ul class="student-list">';
                             data.students.forEach(student => {
+                                const safeRegno = document.createElement('span');
+                                safeRegno.textContent = student.regno;
+                                const safeRegnoHtml = safeRegno.innerHTML;
+                                const safeName = document.createElement('span');
+                                safeName.textContent = student.name || 'N/A';
+                                const safeNameHtml = safeName.innerHTML;
                                 html += `
                                     <li class="student-item">
                                         <div class="student-info">
-                                            <div class="student-regno">${student.regno}</div>
-                                            <div class="student-name">${student.name || 'N/A'}</div>
+                                            <div class="student-regno">${safeRegnoHtml}</div>
+                                            <div class="student-name">${safeNameHtml}</div>
                                         </div>
                                         <form method="POST" style="margin: 0;" onsubmit="return confirm('Remove this student assignment?');">
                                             <input type="hidden" name="assignment_id" value="${student.assignment_id}">
@@ -1381,15 +1417,15 @@
                 const isAssigned = student.is_assigned;
                 const isDisabled = isAssigned ? 'disabled' : '';
                 const itemClass = isAssigned ? 'checkbox-item disabled-item' : 'checkbox-item';
-                const counselorInfo = isAssigned ? ` • <strong style="color: #dc3545;">Already assigned to: ${student.counselor_name}</strong>` : '';
+                const counselorInfo = isAssigned ? ` • <strong style="color: #dc3545;">Already assigned to: ${escapeHtml(student.counselor_name)}</strong>` : '';
 
                 html += `
                     <li class="${itemClass}">
                         <label>
-                            <input type="checkbox" class="student-checkbox" value="${student.regno}" onchange="updateSelectedCount()" ${isDisabled}>
+                            <input type="checkbox" class="student-checkbox" value="${escapeHtml(student.regno)}" onchange="updateSelectedCount()" ${isDisabled}>
                             <div class="student-checkbox-info">
-                                <div class="student-checkbox-regno">${student.regno}</div>
-                                <div class="student-checkbox-details">${student.name} • ${student.department} • Semester ${student.semester}${counselorInfo}</div>
+                                <div class="student-checkbox-regno">${escapeHtml(student.regno)}</div>
+                                <div class="student-checkbox-details">${escapeHtml(student.name)} • ${escapeHtml(student.department)} • Semester ${escapeHtml(student.semester)}${counselorInfo}</div>
                             </div>
                         </label>
                     </li>
@@ -1474,6 +1510,28 @@
 
         function closeSelectionModal() {
             document.getElementById('studentSelectionModal').style.display = 'none';
+        }
+
+        function filterTeachers() {
+            const query = document.getElementById('teacherSearch').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.teacher-card');
+            let visible = 0;
+            cards.forEach(card => {
+                const text = (card.getAttribute('data-search') || card.textContent).toLowerCase();
+                const show = !query || text.includes(query);
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            // Show no-results message if needed
+            let msg = document.getElementById('noTeacherResults');
+            if (!msg) {
+                msg = document.createElement('p');
+                msg.id = 'noTeacherResults';
+                msg.style.cssText = 'text-align:center;color:#999;padding:30px;font-size:16px;display:none;grid-column:1/-1;';
+                msg.textContent = 'No teachers found matching your search.';
+                document.getElementById('teachersGrid').appendChild(msg);
+            }
+            msg.style.display = (visible === 0 && query) ? 'block' : 'none';
         }
 
         // Close modal when clicking outside

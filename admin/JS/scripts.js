@@ -519,10 +519,10 @@ function initEnhancedCategoryChart() {
     },
   };
 
-  categoryChart = new ApexCharts(
-    document.querySelector("#enhanced-category-chart"),
-    options,
-  );
+  const chartEl = document.querySelector("#enhanced-category-chart");
+  if (!chartEl) return;
+
+  categoryChart = new ApexCharts(chartEl, options);
   categoryChart.render();
 }
 
@@ -970,8 +970,9 @@ function createDistributionChart(chartType) {
           {
             name: "Success Rate (%)",
             data: (window.monthlyEvents || []).map((events, index) => {
-              const wins = window.monthlyWins[index] || 0;
-              const participations = window.monthlyParticipations[index] || 0;
+              const wins = (window.monthlyWins || [])[index] || 0;
+              const participations =
+                (window.monthlyParticipations || [])[index] || 0;
               return participations > 0
                 ? ((wins / participations) * 100).toFixed(1)
                 : 0;
@@ -1157,7 +1158,10 @@ function showMonthDetails(monthIndex) {
 }
 
 function hideMonthDetails() {
-  document.getElementById("month-details-panel").style.display = "none";
+  const panel = document.getElementById("month-details-panel");
+  if (panel) {
+    panel.style.display = "none";
+  }
   document
     .querySelectorAll(".month-btn")
     .forEach((btn) => btn.classList.remove("active"));

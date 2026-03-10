@@ -107,26 +107,32 @@
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <!-- Web App Manifest for Push Notifications -->
     <link rel="manifest" href="../manifest.json">
-    <!-- OneSignal Web Push Notifications -->
+    <!-- OneSignal Push Notifications (Median.co native + Web fallback) -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
     <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: <?php echo json_encode(getenv('ONESIGNAL_APP_ID') ?: ''); ?>,
-          allowLocalhostAsSecureOrigin: true,
-        });
-
-        // Set external user ID (student registration number)
-        const studentRegno = <?php echo json_encode($regno); ?>;
-        if (studentRegno) {
-          OneSignal.login(studentRegno);
-          console.log('OneSignal: Logged in as ' + studentRegno);
+      const studentRegno = <?php echo json_encode($regno); ?>;
+      // Median.co native app: set external user ID via native bridge
+      if (navigator.userAgent.indexOf('median') > -1 || navigator.userAgent.indexOf('gonative') > -1) {
+        if (studentRegno && window.median) {
+          median.onesignal.externalUserId.set(studentRegno);
+          median.onesignal.tags.setTags({"regno": studentRegno});
+          console.log('Median OneSignal: Set external ID ' + studentRegno);
         }
-
-        // Prompt for permission if not already granted
-        OneSignal.Notifications.requestPermission();
-      });
+      } else {
+        // Web browser fallback
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+          const appId = <?php echo json_encode(getenv('ONESIGNAL_APP_ID') ?: ''); ?>;
+          if (!appId) { console.warn('OneSignal: appId not configured'); return; }
+          await OneSignal.init({ appId: appId, allowLocalhostAsSecureOrigin: true });
+          if (studentRegno) {
+            OneSignal.login(studentRegno);
+            OneSignal.User.addTags({"regno": studentRegno});
+            console.log('OneSignal Web: Logged in as ' + studentRegno);
+          }
+          OneSignal.Notifications.requestPermission();
+        });
+      }
     </script>
     <!-- css link -->
     <link rel="stylesheet" href="student_dashboard.css" />
@@ -992,7 +998,7 @@
                     <div class="od-request-details">
                       <h4><?php echo htmlspecialchars($od_request['event_name']); ?></h4>
                       <p class="od-request-meta">
-                        <span class="od-status                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($od_request['status'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <span class="od-status <?php echo htmlspecialchars($od_request['status'], ENT_QUOTES, 'UTF-8'); ?>">
                           <?php echo ucfirst($od_request['status']); ?>
                         </span>
                         <span class="od-date"><?php echo date('M d, Y', strtotime($od_request['event_date'])); ?></span>
@@ -1025,7 +1031,7 @@
                       <span class="category-name"><?php echo htmlspecialchars($type['event_type']); ?></span>
                       <div class="category-progress">
                         <div class="progress-bar">
-                          <div class="progress-fill" style="width:                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
+                          <div class="progress-fill" style="width: <?php echo $total_events > 0 ? ($type['count'] / $total_events) * 100 : 0; ?>%"></div>
                         </div>
                       </div>
                     </div>

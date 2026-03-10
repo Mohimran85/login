@@ -277,7 +277,7 @@
     } else {
     // For PDFs, serve directly
     header('Content-Type: ' . $content_type);
-    header('Content-Disposition: inline; filename="' . $poster_file . '"');
+    header('Content-Disposition: inline; filename="' . rawurlencode($poster_file) . '"');
     readfile($poster_path);
 }
 ?>

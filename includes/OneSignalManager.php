@@ -12,7 +12,7 @@ class OneSignalManager
     public function __construct()
     {
         // Load from .env file
-        $this->appId      = $this->loadEnv("ONESIGNAL_APP_ID") ?: "29fbebb0-954f-41f3-8f31-c3f57f61740b";
+        $this->appId      = $this->loadEnv("ONESIGNAL_APP_ID") ?: '';
         $this->restApiKey = $this->loadEnv("ONESIGNAL_REST_API_KEY");
 
         // Log for debugging
@@ -71,31 +71,109 @@ class OneSignalManager
             "headings"          => ["en" => $title],
             "contents"          => ["en" => $message],
             "data"              => array_merge(["link" => $link], $data),
-            "chrome_icon"       => "asserts/images/logo.png",
-            "chrome_web_icon"   => "asserts/images/logo.png",
+            "chrome_web_icon"   => "assets/images/logo.png",
         ];
 
         return $this->makeRequest("notifications", $payload);
     }
 
     /**
-     * Send to specific students
+     * Send push notification to a single student
+     * Tries targeted via external_id first, falls back to broadcast if no subscriber found
+     */
+    public function sendToStudent($studentRegno, $title, $message, $link)
+    {
+        if (! $this->restApiKey) {
+            error_log("OneSignal API Key not configured");
+            return ["status" => "error", "message" => "API Key missing"];
+        }
+
+        // First try targeted via external_id
+        $payload = [
+            "app_id"          => $this->appId,
+            "include_aliases" => ["external_id" => [strval($studentRegno)]],
+            "target_channel"  => "push",
+            "headings"        => ["en" => $title],
+            "contents"        => ["en" => $message],
+            "data"            => [
+                "link"         => $link,
+                "type"         => "certificate_reminder",
+                "target_regno" => strval($studentRegno),
+            ],
+            "chrome_web_icon" => "assets/images/logo.png",
+        ];
+
+        $result = $this->makeRequest("notifications", $payload);
+
+        // If 0 recipients (external_id not linked yet), fallback to broadcast
+        $recipients = $result['response']['recipients'] ?? 0;
+        if ($recipients == 0) {
+            error_log("OneSignal: Targeted send failed for {$studentRegno}, falling back to broadcast");
+            $payload = [
+                "app_id"            => $this->appId,
+                "included_segments" => ["All"],
+                "headings"          => ["en" => $title],
+                "contents"          => ["en" => $message],
+                "data"              => [
+                    "link"         => $link,
+                    "type"         => "certificate_reminder",
+                    "target_regno" => strval($studentRegno),
+                ],
+                "chrome_web_icon"   => "assets/images/logo.png",
+            ];
+            $result = $this->makeRequest("notifications", $payload);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Send to specific students (targeted via "regno" tag with OR filters)
      */
     private function sendToStudents($studentRegnos, $title, $message, $link)
     {
         if (! $this->restApiKey) {
+            error_log("OneSignal API Key not configured");
             return ["status" => "error", "message" => "API Key missing"];
         }
 
+        // Target specific students by external_id (matching OneSignal.login(regno))
+        $externalIds = array_values(array_map('strval', (array) $studentRegnos));
+
         $payload = [
-            "app_id"                    => $this->appId,
-            "include_external_user_ids" => (array) $studentRegnos,
-            "headings"                  => ["en" => $title],
-            "contents"                  => ["en" => $message],
-            "data"                      => ["link" => $link],
+            "app_id"          => $this->appId,
+            "include_aliases" => ["external_id" => $externalIds],
+            "target_channel"  => "push",
+            "headings"        => ["en" => $title],
+            "contents"        => ["en" => $message],
+            "data"            => ["link" => $link],
+            "chrome_web_icon" => "assets/images/logo.png",
         ];
 
         return $this->makeRequest("notifications", $payload);
+    }
+
+    /**
+     * Send hackathon deadline/start reminders (broadcast to all)
+     */
+    public function notifyReminder($hackathonId, $title, $deadline, $reminderType)
+    {
+        $typeLabels = [
+            '1_day'           => '⏰ Last Day to Register',
+            '3_days'          => '📢 3 Days Left',
+            'starts_tomorrow' => '🚀 Starts Tomorrow',
+            'starts_today'    => '🔥 Starting Today',
+        ];
+
+        $notifTitle   = ($typeLabels[$reminderType] ?? '⏰ Reminder') . ": {$title}";
+        $notifMessage = "Deadline: " . date("M d, Y", strtotime($deadline));
+        $link         = "student/hackathons.php?id={$hackathonId}";
+
+        return $this->broadcastNotification($notifTitle, $notifMessage, $link, [
+            "hackathon_id"  => $hackathonId,
+            "type"          => "hackathon_reminder",
+            "reminder_type" => $reminderType,
+        ]);
     }
 
     /**
@@ -126,6 +204,7 @@ class OneSignalManager
             return ["status" => "error", "message" => $error];
         }
 
+        error_log("OneSignal HTTP {$httpCode}: " . $response);
         return ["status" => $httpCode, "response" => json_decode($response, true)];
     }
 

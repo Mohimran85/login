@@ -39,6 +39,7 @@
     if ($result->num_rows > 0) {
         $user_data = $result->fetch_assoc();
         $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        $stmt->close();
         break;
     }
     $stmt->close();
@@ -349,11 +350,6 @@
     $previous_year_participations[] = $prev_parts_count;
     $previous_year_wins[]           = $prev_wins_count;
 
-    // Debug logging for event counting logic (remove in production)
-    if ($student_events_count > 0 || $student_parts_count > 0 || $wins_count > 0) {
-        error_log("Month $i ($current_year): Unique Events=$student_events_count, Total Participations=$student_parts_count, Wins=$wins_count");
-    }
-
     // Store detailed data for analysis
     $monthly_data[] = [
         'month'             => $months[$i - 1],
@@ -637,7 +633,7 @@
               </div>
               <div class="comparison-data">
                 <div class="year-data current-year">
-                  <span class="year-label"><?php echo $current_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $current_year; ?></span>
                   <span class="year-value"><?php echo number_format($total_events); ?></span>
                 </div>
                 <div class="comparison-arrow">
@@ -645,13 +641,13 @@
                       $events_change     = $total_events - $compare_total_events;
                       $events_change_pct = $compare_total_events > 0 ? round(($events_change / $compare_total_events) * 100, 1) : 0;
                   ?>
-                  <span class="change-indicator<?php echo $events_change >= 0 ? 'positive' : 'negative'; ?>">
+                  <span class="change-indicator <?php echo $events_change >= 0 ? 'positive' : 'negative'; ?>">
                     <?php echo $events_change >= 0 ? '▲' : '▼'; ?>
                     <?php echo abs($events_change_pct); ?>%
                   </span>
                 </div>
                 <div class="year-data compare-year">
-                  <span class="year-label"><?php echo $compare_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $compare_year; ?></span>
                   <span class="year-value"><?php echo number_format($compare_total_events); ?></span>
                 </div>
               </div>
@@ -664,7 +660,7 @@
               </div>
               <div class="comparison-data">
                 <div class="year-data current-year">
-                  <span class="year-label"><?php echo $current_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $current_year; ?></span>
                   <span class="year-value"><?php echo number_format($total_participations); ?></span>
                 </div>
                 <div class="comparison-arrow">
@@ -672,13 +668,13 @@
                       $parts_change     = $total_participations - $compare_total_participations;
                       $parts_change_pct = $compare_total_participations > 0 ? round(($parts_change / $compare_total_participations) * 100, 1) : 0;
                   ?>
-                  <span class="change-indicator<?php echo $parts_change >= 0 ? 'positive' : 'negative'; ?>">
+                  <span class="change-indicator <?php echo $parts_change >= 0 ? 'positive' : 'negative'; ?>">
                     <?php echo $parts_change >= 0 ? '▲' : '▼'; ?>
                     <?php echo abs($parts_change_pct); ?>%
                   </span>
                 </div>
                 <div class="year-data compare-year">
-                  <span class="year-label"><?php echo $compare_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $compare_year; ?></span>
                   <span class="year-value"><?php echo number_format($compare_total_participations); ?></span>
                 </div>
               </div>
@@ -691,7 +687,7 @@
               </div>
               <div class="comparison-data">
                 <div class="year-data current-year">
-                  <span class="year-label"><?php echo $current_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $current_year; ?></span>
                   <span class="year-value"><?php echo count($category_analytics); ?></span>
                 </div>
                 <div class="comparison-arrow">
@@ -699,13 +695,13 @@
                       $categories_change     = count($category_analytics) - count($compare_category_analytics);
                       $categories_change_pct = count($compare_category_analytics) > 0 ? round(($categories_change / count($compare_category_analytics)) * 100, 1) : 0;
                   ?>
-                  <span class="change-indicator<?php echo $categories_change >= 0 ? 'positive' : 'negative'; ?>">
+                  <span class="change-indicator <?php echo $categories_change >= 0 ? 'positive' : 'negative'; ?>">
                     <?php echo $categories_change >= 0 ? '▲' : '▼'; ?>
                     <?php echo abs($categories_change_pct); ?>%
                   </span>
                 </div>
                 <div class="year-data compare-year">
-                  <span class="year-label"><?php echo $compare_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $compare_year; ?></span>
                   <span class="year-value"><?php echo count($compare_category_analytics); ?></span>
                 </div>
               </div>
@@ -924,7 +920,7 @@
                         <?php if (isset($category['is_competitive']) && ! $category['is_competitive']): ?>
                         <span class="success-rate" style="color: #6c757d;">N/A</span>
                         <?php else: ?>
-                        <span class="success-rate<?php echo $category['success_rate'] > 30 ? 'high' : ($category['success_rate'] > 20 ? 'medium' : 'low'); ?>">
+                        <span class="success-rate <?php echo $category['success_rate'] > 30 ? 'high' : ($category['success_rate'] > 20 ? 'medium' : 'low'); ?>">
                           <?php echo $category['success_rate']; ?>%
                         </span>
                         <?php endif; ?>
@@ -1080,7 +1076,7 @@
                   <span class="insight-emoji">📊</span>
                   <h4>Growth Pattern</h4>
                 </div>
-                <p><?php if ($total_year_events > 0): ?>Events show <strong>consistent growth</strong> with peak activity in<?php echo $peak_month; ?>. The success rate averages <strong><?php echo round(($total_year_wins / $total_year_participations) * 100, 1); ?>%</strong> across all months.<?php else: ?>No event data available for<?php echo $current_year; ?>. Start adding student events to see growth patterns and analytics.<?php endif; ?></p>
+                <p><?php if ($total_year_events > 0): ?>Events show <strong>consistent growth</strong> with peak activity in <?php echo $peak_month; ?>. The success rate averages <strong><?php echo $total_year_participations > 0 ? round(($total_year_wins / $total_year_participations) * 100, 1) : 0; ?>%</strong> across all months.<?php else: ?>No event data available for<?php echo $current_year; ?>. Start adding student events to see growth patterns and analytics.<?php endif; ?></p>
               </div>
 
               <div class="trend-insight-card">

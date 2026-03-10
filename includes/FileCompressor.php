@@ -51,6 +51,12 @@ class FileCompressor
             return false;
         }
 
+        // Preserve alpha channel for PNG/GIF
+        if ($mime_type === 'image/png' || $mime_type === 'image/gif') {
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+        }
+
         // Check if WebP is supported
         if (function_exists('imagewebp')) {
             // Convert to WebP for maximum compression

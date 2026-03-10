@@ -46,7 +46,7 @@ function validateFilePath($path, $baseDir)
 function sanitizeFilename($filename)
 {
     // Get extension
-    $ext  = pathinfo($filename, PATHINFO_EXTENSION);
+    $ext  = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     $name = pathinfo($filename, PATHINFO_FILENAME);
 
     // Remove dangerous characters
@@ -56,6 +56,12 @@ function sanitizeFilename($filename)
     // Ensure we have a name
     if (empty($name)) {
         $name = 'file_' . time();
+    }
+
+    // Validate extension against whitelist
+    $allowed_extensions = ['txt', 'pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'zip'];
+    if (empty($ext) || ! in_array($ext, $allowed_extensions)) {
+        $ext = 'txt';
     }
 
     return $name . '.' . $ext;
@@ -232,7 +238,7 @@ function is2faPending()
     }
 
     return isset($_SESSION['2fa_pending']) && $_SESSION['2fa_pending'] === true
-        && (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true);
+        && (! isset($_SESSION['2fa_verified']) || $_SESSION['2fa_verified'] !== true);
 }
 
 /**

@@ -96,6 +96,10 @@
                   <span class="material-symbols-outlined">school</span>
                   <a href="manage_counselors.php">Manage Counselors</a>
                 </li>
+                <li class="sidebar-list-item">
+                  <span class="material-symbols-outlined">emoji_events</span>
+                  <a href="hackathons.php">Hackathons</a>
+                </li>
                 <li class="sidebar-list-item active">
                   <span class="material-symbols-outlined">bar_chart</span>
                   <a href="reports.php">Reports</a>
@@ -336,6 +340,8 @@
                             // Certificate Download (BLOB version)
                             if (! empty($row['certificates'])) {
                                 echo "<td><a href='download_new.php?id=" . $row['id'] . "&type=certificate' target='_blank'>Download Certificate</a></td>";
+                            } else {
+                                echo "<td>-</td>";
                             }
 
                             echo "</tr>";

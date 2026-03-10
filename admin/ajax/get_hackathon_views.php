@@ -85,8 +85,9 @@ try {
     ]);
 
 } catch (Exception $e) {
+    error_log('get_hackathon_views error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
     echo json_encode([
         'success' => false,
-        'error'   => 'Error fetching view details: ' . $e->getMessage(),
+        'error'   => 'An internal error occurred',
     ]);
 }

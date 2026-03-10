@@ -22,7 +22,8 @@
 
     $stmt = $conn->prepare($student_query);
     if (! $stmt) {
-    die(json_encode(['success' => false, 'error' => 'Database error']));
+    error_log('Hackathons page DB error: ' . $conn->error);
+    die('An error occurred. Please try again later.');
     }
     $stmt->bind_param("s", $username);
     $stmt->execute();
@@ -94,23 +95,25 @@
     <!-- OneSignal Web Push Notifications -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"></script>
     <script>
-      window.OneSignalDeferred = window.OneSignalDeferred || [];
-      OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-          appId: <?php echo json_encode(getenv('ONESIGNAL_APP_ID') ?: ''); ?>,
-          allowLocalhostAsSecureOrigin: true,
-        });
-
-        // Set external user ID (student registration number)
-        const studentRegno = <?php echo json_encode($student_regno); ?>;
-        if (studentRegno) {
-          OneSignal.login(studentRegno);
-          console.log('OneSignal: Logged in as ' + studentRegno);
+      const studentRegno = <?php echo json_encode($student_regno); ?>;
+      if (navigator.userAgent.indexOf('median') > -1 || navigator.userAgent.indexOf('gonative') > -1) {
+        if (studentRegno && window.median) {
+          median.onesignal.externalUserId.set(studentRegno);
+          median.onesignal.tags.setTags({"regno": studentRegno});
+          console.log('Median OneSignal: Set external ID ' + studentRegno);
         }
-
-        // Prompt for permission if not already granted
-        OneSignal.Notifications.requestPermission();
-      });
+      } else {
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.init({ appId: <?php echo json_encode(getenv('ONESIGNAL_APP_ID') ?: ''); ?>, allowLocalhostAsSecureOrigin: true });
+          if (studentRegno) {
+            OneSignal.login(studentRegno);
+            OneSignal.User.addTags({"regno": studentRegno});
+            console.log('OneSignal Web: Logged in as ' + studentRegno);
+          }
+          OneSignal.Notifications.requestPermission();
+        });
+      }
     </script>
     <style>
         /* Main Content */
@@ -743,7 +746,7 @@
                         $is_deadline_close = $days_left <= 3 && $days_left >= 0;
                         $is_expired        = $deadline < $now;
                     ?>
-                    <div class="hackathon-card" onclick="window.location.href='hackathon_details.php?id=<?php echo $hackathon['id']; ?>'">
+                    <div class="hackathon-card" onclick="window.location.href='hackathon_details.php?id=<?php echo (int) $hackathon['id']; ?>'">
                         <div style="position: relative; width: 100%; height: 200px; background: #1a408c; overflow: hidden;">
                             <?php if ($hackathon['poster_url']): ?>
                                 <img src="<?php echo htmlspecialchars('../' . $hackathon['poster_url']); ?>"
@@ -755,7 +758,7 @@
                                 </div>
                             <?php endif; ?>
                             <span class="status-badge status-<?php echo htmlspecialchars($hackathon['status'], ENT_QUOTES, 'UTF-8'); ?>">
-                                <?php echo ucfirst($hackathon['status']); ?>
+                                <?php echo htmlspecialchars(ucfirst($hackathon['status'])); ?>
                             </span>
                         </div>
 

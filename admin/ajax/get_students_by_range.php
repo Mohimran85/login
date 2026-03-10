@@ -2,9 +2,13 @@
 session_start();
 header('Content-Type: application/json');
 
-// Check if user is logged in
+// Check if user is logged in and is admin
 if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     echo json_encode(['success' => false, 'error' => 'Not authenticated']);
+    exit();
+}
+if (! isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    echo json_encode(['success' => false, 'error' => 'Not authorized']);
     exit();
 }
 
@@ -28,7 +32,11 @@ if (empty($from_regno) || empty($to_regno)) {
 }
 
 // Validate range
-if ($from_regno > $to_regno) {
+if (! ctype_digit($from_regno) || ! ctype_digit($to_regno)) {
+    echo json_encode(['success' => false, 'error' => 'Registration numbers must be numeric']);
+    exit();
+}
+if ((int) $from_regno > (int) $to_regno) {
     echo json_encode(['success' => false, 'error' => 'From registration number must be less than or equal to To registration number']);
     exit();
 }

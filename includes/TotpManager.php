@@ -16,7 +16,8 @@ use RobThree\Auth\TwoFactorAuth;
 class TotpManager
 {
     private TwoFactorAuth $tfa;
-    private string $issuer = 'Sona Event Management';
+    private string $issuer       = 'Sona Event Management';
+    private const ALLOWED_TABLES = ['student_register', 'teacher_register'];
 
     public function __construct()
     {
@@ -28,6 +29,13 @@ class TotpManager
             period: 30,
             algorithm: Algorithm::Sha1
         );
+    }
+
+    private function validateTable(string $table): void
+    {
+        if (! in_array($table, self::ALLOWED_TABLES, true)) {
+            throw new \InvalidArgumentException('Invalid table name');
+        }
     }
 
     /**
@@ -191,6 +199,7 @@ class TotpManager
      */
     public function isEnabled(mysqli $conn, string $username, string $table): bool
     {
+        $this->validateTable($table);
         $sql  = "SELECT totp_enabled FROM $table WHERE username = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $username);
@@ -215,6 +224,7 @@ class TotpManager
      */
     public function getSecret(mysqli $conn, string $username, string $table): ?string
     {
+        $this->validateTable($table);
         $sql  = "SELECT totp_secret FROM $table WHERE username = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $username);
@@ -239,6 +249,7 @@ class TotpManager
      */
     public function getRecoveryCodes(mysqli $conn, string $username, string $table): ?string
     {
+        $this->validateTable($table);
         $sql  = "SELECT totp_recovery_codes FROM $table WHERE username = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $username);
@@ -265,6 +276,7 @@ class TotpManager
      */
     public function enable(mysqli $conn, string $username, string $table, string $secret, array $recoveryCodes): bool
     {
+        $this->validateTable($table);
         $encryptedSecret = $this->encryptSecret($secret);
         $hashedCodes     = $this->hashRecoveryCodes($recoveryCodes);
 
@@ -284,6 +296,7 @@ class TotpManager
      */
     public function disable(mysqli $conn, string $username, string $table): bool
     {
+        $this->validateTable($table);
         $sql  = "UPDATE $table SET totp_secret = NULL, totp_enabled = 0, totp_recovery_codes = NULL WHERE username = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $username);
@@ -301,6 +314,7 @@ class TotpManager
      */
     public function updateRecoveryCodes(mysqli $conn, string $username, string $table, string $codesJson): bool
     {
+        $this->validateTable($table);
         $sql  = "UPDATE $table SET totp_recovery_codes = ? WHERE username = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ss", $codesJson, $username);

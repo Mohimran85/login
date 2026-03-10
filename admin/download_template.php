@@ -25,8 +25,10 @@ foreach ($tables as $table) {
 
     if ($result->num_rows > 0) {
         $user_type = $table === 'student_register' ? 'student' : 'teacher';
+        $stmt->close();
         break;
     }
+
     $stmt->close();
 }
 
@@ -73,6 +75,7 @@ if ($type === 'students') {
         'department',
         'year_of_join',
         'degree',
+        'semester',
         'dob',
     ];
 
@@ -85,6 +88,7 @@ if ($type === 'students') {
             'Computer Science',
             '2024',
             'B.Tech',
+            '1',
             '2005-06-15',
         ],
         [
@@ -95,6 +99,7 @@ if ($type === 'students') {
             'Information Technology',
             '2024',
             'B.Tech',
+            '3',
             '2005-08-22',
         ],
     ];

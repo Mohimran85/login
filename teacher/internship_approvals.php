@@ -61,7 +61,8 @@
             $message      = "Internship " . ucfirst($new_status) . " successfully!";
             $message_type = 'success';
         } else {
-            $message      = "Error updating internship: " . $conn->error;
+            error_log('Internship update error: ' . $conn->error);
+            $message      = "Error updating internship. Please try again.";
             $message_type = 'error';
         }
         $update_stmt->close();

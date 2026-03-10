@@ -55,6 +55,7 @@ class DashboardManager {
 
     try {
       const response = await fetch("ajax/dashboard.php?action=dashboard_stats");
+      if (!response.ok) throw new Error("HTTP error " + response.status);
       const result = await response.json();
 
       if (result.success) {
@@ -87,8 +88,9 @@ class DashboardManager {
 
     try {
       const response = await fetch(
-        "ajax/dashboard.php?action=recent_activities"
+        "ajax/dashboard.php?action=recent_activities",
       );
+      if (!response.ok) throw new Error("HTTP error " + response.status);
       const result = await response.json();
 
       if (result.success) {
@@ -172,9 +174,9 @@ class DashboardManager {
       ".total-events": data.total_events,
       ".events-won": data.events_won,
       ".success-rate": data.success_rate + "%",
-      ".od-total": data.od_stats.total,
-      ".od-pending": data.od_stats.pending,
-      ".od-approved": data.od_stats.approved,
+      ".od-total": data.od_stats ? data.od_stats.total : 0,
+      ".od-pending": data.od_stats ? data.od_stats.pending : 0,
+      ".od-approved": data.od_stats ? data.od_stats.approved : 0,
     };
 
     Object.entries(statsElements).forEach(([selector, value]) => {
@@ -195,7 +197,7 @@ class DashboardManager {
     if (activities.length === 0) {
       container.innerHTML = this.getEmptyState(
         "No recent activities",
-        "event_busy"
+        "event_busy",
       );
       return;
     }
@@ -211,22 +213,22 @@ class DashboardManager {
                     <h4>${this.escapeHtml(activity.event_name)}</h4>
                     <p class="activity-meta">
                         <span class="event-type">${this.escapeHtml(
-                          activity.event_type
+                          activity.event_type,
                         )}</span>
-                        <span class="event-date">${
-                          activity.formatted_date
-                        }</span>
+                        <span class="event-date">${this.escapeHtml(
+                          activity.formatted_date,
+                        )}</span>
                         ${
                           activity.has_prize
                             ? `<span class="prize-badge">🏆${this.escapeHtml(
-                                activity.prize
+                                activity.prize,
                               )}</span>`
                             : ""
                         }
                     </p>
                 </div>
             </div>
-        `
+        `,
       )
       .join("");
 
@@ -243,7 +245,7 @@ class DashboardManager {
     if (breakdown.length === 0) {
       container.innerHTML = this.getEmptyState(
         "No event categories yet",
-        "category"
+        "category",
       );
       return;
     }
@@ -254,7 +256,7 @@ class DashboardManager {
             <div class="category-item" data-aos="fade-left">
                 <div class="category-info">
                     <span class="category-name">${this.escapeHtml(
-                      type.event_type
+                      type.event_type,
                     )}</span>
                     <div class="category-progress">
                         <div class="progress-bar">
@@ -266,7 +268,7 @@ class DashboardManager {
                 </div>
                 <span class="category-count">${type.count}</span>
             </div>
-        `
+        `,
       )
       .join("");
 
@@ -283,7 +285,7 @@ class DashboardManager {
     if (requests.length === 0) {
       container.innerHTML = this.getEmptyState(
         "No OD requests yet",
-        "description"
+        "description",
       );
       return;
     }
@@ -298,7 +300,7 @@ class DashboardManager {
                 <div class="od-request-details">
                     <h4>${this.escapeHtml(request.event_name)}</h4>
                     <p class="od-request-meta">
-                        <span class="od-status ${request.status_class}">
+                        <span class="od-status ${this.escapeHtml(request.status_class)}">
                             ${
                               request.status.charAt(0).toUpperCase() +
                               request.status.slice(1)
@@ -310,7 +312,7 @@ class DashboardManager {
                     </p>
                 </div>
             </div>
-        `
+        `,
       )
       .join("");
 
@@ -361,15 +363,22 @@ class DashboardManager {
     if (section) {
       const container = document.querySelector(`[data-section="${section}"]`);
       if (container) {
-        container.innerHTML = `
-                    <div class="error-state">
-                        <span class="material-symbols-outlined">error</span>
-                        <p>${message}</p>
-                        <button onclick="dashboardManager.retry('${section}')" class="retry-btn">
-                            Retry
-                        </button>
-                    </div>
-                `;
+        const errorDiv = document.createElement("div");
+        errorDiv.className = "error-state";
+        const icon = document.createElement("span");
+        icon.className = "material-symbols-outlined";
+        icon.textContent = "error";
+        const p = document.createElement("p");
+        p.textContent = message;
+        const btn = document.createElement("button");
+        btn.className = "retry-btn";
+        btn.textContent = "Retry";
+        btn.addEventListener("click", () => dashboardManager.retry(section));
+        errorDiv.appendChild(icon);
+        errorDiv.appendChild(p);
+        errorDiv.appendChild(btn);
+        container.innerHTML = "";
+        container.appendChild(errorDiv);
       }
     } else {
       // Show global error notification
@@ -404,12 +413,15 @@ class DashboardManager {
    */
   setupAutoRefresh() {
     // Refresh every 5 minutes
-    setInterval(() => {
-      if (!document.hidden) {
-        this.clearCache();
-        this.loadDashboardComponents();
-      }
-    }, 5 * 60 * 1000);
+    setInterval(
+      () => {
+        if (!document.hidden) {
+          this.clearCache();
+          this.loadDashboardComponents();
+        }
+      },
+      5 * 60 * 1000,
+    );
 
     // Refresh when tab becomes visible
     document.addEventListener("visibilitychange", () => {
@@ -508,8 +520,8 @@ class DashboardManager {
               type === "error"
                 ? "#f44336"
                 : type === "success"
-                ? "#4caf50"
-                : "#2196f3"
+                  ? "#4caf50"
+                  : "#2196f3"
             };
             color: white;
             border-radius: 8px;

@@ -48,11 +48,37 @@ $stmt->bind_param("ssss", $regno, $notif_title, $notif_message, $notif_link);
 
 if ($stmt->execute()) {
     $stmt->close();
+
+    // Send push notification via OneSignal
+    $push_status = 'not_sent';
+    $push_debug  = null;
+    try {
+        require_once __DIR__ . '/../includes/OneSignalManager.php';
+        $oneSignal   = new OneSignalManager();
+        $push_result = $oneSignal->sendToStudent($regno, $notif_title, $notif_message, $notif_link);
+        $push_debug  = $push_result;
+        error_log('OneSignal push result for ' . $regno . ': ' . json_encode($push_result));
+        // Check actual recipients count - HTTP 200 doesn't guarantee delivery
+        $recipients = $push_result['response']['recipients'] ?? 0;
+        if (isset($push_result['status']) && $push_result['status'] == 200 && $recipients > 0) {
+            $push_status = 'sent';
+        } else {
+            $push_status = 'failed';
+            if ($recipients == 0) {
+                error_log('OneSignal: 0 recipients for ' . $regno . ' - student may not have push subscription (needs to open app once)');
+            }
+        }
+    } catch (Exception $e) {
+        error_log('Push notification error for reminder: ' . $e->getMessage());
+        $push_debug = ['error' => $e->getMessage()];
+    }
+
     $conn->close();
-    echo json_encode(['success' => true, 'message' => 'Reminder sent to student ' . $regno]);
+    echo json_encode(['success' => true, 'message' => 'Reminder sent to student ' . $regno, 'push' => $push_status, 'push_debug' => $push_debug]);
 } else {
     $error = $stmt->error;
     $stmt->close();
     $conn->close();
-    echo json_encode(['success' => false, 'message' => 'Failed to insert notification: ' . $error]);
+    error_log('Notification insert error: ' . $error);
+    echo json_encode(['success' => false, 'message' => 'Failed to send reminder. Please try again.']);
 }

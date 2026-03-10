@@ -246,7 +246,7 @@
 
             // Create directory if it doesn't exist
             if (! is_dir($upload_dir)) {
-                mkdir($upload_dir, 0777, true);
+                mkdir($upload_dir, 0755, true);
             }
 
             $file_info      = pathinfo($_FILES['event_poster']['name']);
@@ -304,7 +304,8 @@
             $insert_stmt = $conn->prepare($insert_sql);
 
             if (! $insert_stmt) {
-                $validation_errors[] = "Database error: " . $conn->error;
+                error_log('OD request prepare error: ' . $conn->error);
+                $validation_errors[] = "A database error occurred. Please try again later.";
             } else {
                 $insert_stmt->bind_param("sissssssssss", $student_data['regno'], $counselor_info['teacher_id'], $event_name, $event_description, $event_state, $event_district, $event_date, $event_time, $event_days, $poster_filename, $reason, $group_members);
 
@@ -318,7 +319,8 @@
                     header("Location: od_request.php");
                     exit();
                 } else {
-                    $validation_errors[] = "Error submitting OD request: " . $conn->error;
+                    error_log('OD request execute error: ' . $conn->error);
+                    $validation_errors[] = "Error submitting OD request. Please try again later.";
                 }
                 $insert_stmt->close();
             }
@@ -1412,16 +1414,16 @@
 
                     <?php if ($od_requests_result && $od_requests_result->num_rows > 0): ?>
                         <?php while ($request = $od_requests_result->fetch_assoc()): ?>
-                        <div class="od-request-item<?php echo $request['status']; ?>">
+                        <div class="od-request-item <?php echo htmlspecialchars($request['status'], ENT_QUOTES, 'UTF-8'); ?>">
                             <div class="od-request-header">
                                 <div class="od-event-name"><?php echo htmlspecialchars($request['event_name']); ?></div>
-                                <span class="od-status                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $request['status']; ?>">
+                                <span class="od-status <?php echo htmlspecialchars($request['status'], ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php echo ucfirst($request['status']); ?>
                                 </span>
                             </div>
                             <div class="od-details">
-                                <strong>Date:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at<?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Date:</strong> <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at <?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
+                                <strong>Duration:</strong> <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
                                 <strong>Location:</strong>
                                 <?php
                                     // Handle backward compatibility for old records

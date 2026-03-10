@@ -20,6 +20,12 @@ $id               = intval($_GET['id']);
 $type             = $_GET['type'];                          // 'poster', 'certificate', 'teacher_poster', 'teacher_certificate'
 $participant_type = $_GET['participant_type'] ?? 'student'; // 'student' or 'teacher'
 
+// Validate participant_type
+$valid_participant_types = ['student', 'teacher'];
+if (! in_array($participant_type, $valid_participant_types)) {
+    $participant_type = 'student';
+}
+
 // Validate type parameter
 $valid_types = ['poster', 'certificate', 'teacher_poster', 'teacher_certificate'];
 if (! in_array($type, $valid_types)) {
@@ -150,7 +156,7 @@ if ($row = $result->fetch_assoc()) {
                 exit();
             } else {
                 ob_end_clean();
-                echo "<script>alert('File not found on server: " . htmlspecialchars($fileData) . "'); window.close();</script>";
+                echo "<script>alert('File not found on server: ' + " . json_encode(basename($fileData)) . "); window.close();</script>";
                 exit();
             }
         }

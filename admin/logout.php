@@ -6,6 +6,24 @@ header("Cache-Control: no-cache, no-store, must-revalidate, max-age=0");
 header("Pragma: no-cache");
 header("Expires: Thu, 01 Jan 1970 00:00:00 GMT");
 
+// Clear session token from DB (single-device enforcement)
+if (isset($_SESSION['username'], $_SESSION['role'])) {
+    try {
+        require_once __DIR__ . '/../includes/db_config.php';
+        $logout_conn = get_db_connection();
+        $tok_table   = ($_SESSION['role'] === 'student') ? 'student_register' : 'teacher_register';
+        $tok_stmt    = $logout_conn->prepare("UPDATE `$tok_table` SET session_token = NULL WHERE username = ?");
+        if ($tok_stmt) {
+            $tok_stmt->bind_param('s', $_SESSION['username']);
+            $tok_stmt->execute();
+            $tok_stmt->close();
+        }
+        $logout_conn->close();
+    } catch (Exception $e) {
+        // DB error — proceed with logout anyway
+    }
+}
+
 // Destroy all session data
 session_unset();
 session_destroy();
@@ -22,4 +40,3 @@ if (ini_get("session.use_cookies")) {
 // Redirect to login page
 header("Location: ../index.php?logout=success");
 exit();
-?>

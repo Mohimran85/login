@@ -141,7 +141,7 @@
             $app['department'],
             ucfirst($app['application_type']),
             $app['team_name'] ?? '-',
-            substr($app['project_description'], 0, 100) . '...',
+            (function () use ($app) {$d = $app['project_description'] ?? '';return mb_strlen($d) > 100 ? mb_substr($d, 0, 100) . '...' : $d;})(),
             ucfirst($app['status']),
             date('Y-m-d H:i:s', strtotime($app['applied_at'])),
         ]);
@@ -168,7 +168,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <!-- CSS -->
-    <link rel="stylesheet" href="../student/student_dashboard.css">
+    <link rel="stylesheet" href="./CSS/styles.css">
     <!-- Google Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <!-- Google Fonts -->
@@ -446,133 +446,111 @@
     <div class="grid-container">
         <!-- header -->
         <div class="header">
-            <div class="menu-icon" onclick="document.getElementById('sidebar').classList.toggle('active')">
+            <div class="menu-icon" onclick="openSidebar()">
                 <span class="material-symbols-outlined">menu</span>
             </div>
-            <div class="icon">
-                <img src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200" />
+            <div class="header-logo">
+                <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
             </div>
             <div class="header-title">
-                <p>Event Management System</p>
+                <p>Event Management Dashboard</p>
+            </div>
+            <div class="header-profile">
+                <div class="profile-info" onclick="window.location.href='profile.php'">
+                    <span class="material-symbols-outlined">account_circle</span>
+                    <div class="profile-details">
+                        <span class="profile-name"><?php echo htmlspecialchars($user_name); ?></span>
+                        <span class="profile-role"><?php
+                                                       if ($is_admin_user) {
+                                                           echo 'Admin';
+                                                       } elseif ($is_counselor_user) {
+                                                           echo 'Counselor';
+                                                       } elseif ($is_coordinator_user) {
+                                                           echo 'Coordinator';
+                                                       } else {
+                                                           echo 'Teacher';
+                                                       }
+
+                                                   ?></span>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title">
-                    <?php
-                        if ($is_admin_user) {
-                            echo 'Admin Portal';
-                        } elseif ($is_counselor_user) {
-                            echo 'Counselor Portal';
-                        } elseif ($is_coordinator_user) {
-                            echo 'Coordinator Portal';
-                        } else {
-                            echo 'Teacher Portal';
-                        }
-                    ?>
-                </div>
-                <div class="close-sidebar" onclick="document.getElementById('sidebar').classList.remove('active')">
-                    <span class="material-symbols-outlined">close</span>
-                </div>
-            </div>
+        <aside id="sidebar">
+            <div class="sidebar-title">
+                <div class="sidebar-band">
+                    <h2 style="color: white; padding: 10px"><?php
+                                                                if ($is_admin_user) {
+                                                                    echo 'Admin Panel';
+                                                                } elseif ($is_counselor_user) {
+                                                                    echo 'Counselor Panel';
+                                                                } elseif ($is_coordinator_user) {
+                                                                    echo 'Coordinator Panel';
+                                                                } else {
+                                                                    echo 'Teacher Panel';
+                                                                }
 
-            <div class="student-info">
-                <div class="student-name"><?php echo htmlspecialchars($user_name); ?></div>
-                <div class="student-regno">
-                    <?php
-                        if ($is_admin_user) {
-                            echo '(Admin)';
-                        } elseif ($is_counselor_user) {
-                            echo '(Counselor)';
-                        } else {
-                            echo '(Coordinator)';
-                        }
-
-                    ?>
+                                                            ?></h2>
+                    <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                 </div>
-            </div>
-
-            <nav>
-                <ul class="nav-menu">
-                    <li class="nav-item">
-                        <a href="index.php" class="nav-link">
-                            <span class="material-symbols-outlined">dashboard</span>
-                            Dashboard
-                        </a>
+                <ul class="sidebar-list">
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">dashboard</span>
+                        <a href="index.php">Home</a>
                     </li>
                     <?php if ($is_counselor_user && ! $is_admin_user): ?>
-                    <li class="nav-item">
-                        <a href="../teacher/assigned_students.php" class="nav-link">
-                            <span class="material-symbols-outlined">supervisor_account</span>
-                            My Assigned Students
-                        </a>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">supervisor_account</span>
+                        <a href="../teacher/assigned_students.php">My Assigned Students</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="../teacher/od_approvals.php" class="nav-link">
-                            <span class="material-symbols-outlined">approval</span>
-                            OD Approvals
-                        </a>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">approval</span>
+                        <a href="../teacher/od_approvals.php">OD Approvals</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="../teacher/internship_approvals.php" class="nav-link">
-                            <span class="material-symbols-outlined">school</span>
-                            Internship Approvals
-                        </a>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">school</span>
+                        <a href="../teacher/internship_approvals.php">Internship Approvals</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="../teacher/verify_events.php" class="nav-link">
-                            <span class="material-symbols-outlined">card_giftcard</span>
-                            Event Certificate Validation
-                        </a>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">card_giftcard</span>
+                        <a href="../teacher/verify_events.php">Event Certificate Validation</a>
                     </li>
                     <?php endif; ?>
                     <?php if ($is_admin_user): ?>
-                    <li class="nav-item">
-                        <a href="user_management.php" class="nav-link">
-                            <span class="material-symbols-outlined">manage_accounts</span>
-                            User Management
-                        </a>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">people</span>
+                        <a href="participants.php">Participants</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="manage_counselors.php" class="nav-link">
-                            <span class="material-symbols-outlined">school</span>
-                            Manage Counselors
-                        </a>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <a href="user_management.php">User Management</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="participants.php" class="nav-link">
-                            <span class="material-symbols-outlined">people</span>
-                            Participants
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="reports.php" class="nav-link">
-                            <span class="material-symbols-outlined">bar_chart</span>
-                            Reports
-                        </a>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">school</span>
+                        <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <?php endif; ?>
-                    <li class="nav-item">
-                        <a href="hackathons.php" class="nav-link active">
-                            <span class="material-symbols-outlined">workspace_premium</span>
-                            Hackathons
-                        </a>
+                    <li class="sidebar-list-item active">
+                        <span class="material-symbols-outlined">emoji_events</span>
+                        <a href="hackathons.php">Hackathons</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="profile.php" class="nav-link">
-                            <span class="material-symbols-outlined">person</span>
-                            Profile
-                        </a>
+                    <?php if ($is_admin_user): ?>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">bar_chart</span>
+                        <a href="reports.php">Reports</a>
                     </li>
-                    <li class="nav-item">
-                        <a href="logout.php" class="nav-link">
-                            <span class="material-symbols-outlined">logout</span>
-                            Logout
-                        </a>
+                    <?php endif; ?>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">account_circle</span>
+                        <a href="profile.php">Profile</a>
+                    </li>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">logout</span>
+                        <a href="logout.php">Logout</a>
                     </li>
                 </ul>
-            </nav>
+            </div>
         </aside>
         <!-- main container -->
         <div class="main">
@@ -879,5 +857,6 @@
             history.go(1);
         };
     </script>
+    <script src="./JS/scripts.js"></script>
 </body>
 </html>

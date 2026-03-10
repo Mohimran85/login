@@ -1,7 +1,8 @@
 <?php
 session_start();
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
 
 // Check if user is logged in
 if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -96,8 +97,11 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     // Create a temporary directory for storing files
-    $temp_dir = sys_get_temp_dir() . '/certificates_' . time();
-    mkdir($temp_dir, 0777, true);
+    $temp_dir = sys_get_temp_dir() . '/certificates_' . bin2hex(random_bytes(8));
+    if (! mkdir($temp_dir, 0700, true)) {
+        echo "Error: Could not create temporary directory";
+        exit();
+    }
 
     $file_count = 0;
 
