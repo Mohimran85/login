@@ -420,8 +420,8 @@ body {
     if (empty($error_messages)) {
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
         $sql             = "INSERT INTO student_register
-                (name, dob, username, regno, year_of_join, degree, department, semester, personal_email, password)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                (name, dob, username, regno, year_of_join, degree, department, semester, personal_email, password, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'student')";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param(
             "ssssssssss",

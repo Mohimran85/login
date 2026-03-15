@@ -169,11 +169,29 @@
     <script>
       const studentRegno = <?php echo json_encode($student_data['regno']); ?>;
       if (navigator.userAgent.indexOf('median') > -1 || navigator.userAgent.indexOf('gonative') > -1) {
-        if (studentRegno && window.median) {
-          median.onesignal.externalUserId.set(studentRegno);
-          median.onesignal.tags.setTags({"regno": studentRegno});
-          console.log('Median OneSignal: Set external ID ' + studentRegno);
+        function _savePlayerId(pid) {
+          if (!pid || !studentRegno) return;
+          fetch('../api/save_player_id.php', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({player_id: pid})
+          }).then(function(r){ return r.json(); })
+            .then(function(d){ console.log('save_player_id:', d); })
+            .catch(function(e){ console.warn('save_player_id error:', e); });
         }
+        function _linkMedianId() {
+          if (typeof median !== 'undefined' && median.onesignal) {
+            try {
+              median.onesignal.externalUserId.set({externalId: String(studentRegno)});
+              median.onesignal.tags.setTags({tags: {regno: String(studentRegno)}});
+              console.log('Median OneSignal: linked ' + studentRegno);
+            } catch(e) { console.warn('Median bridge:', e); }
+          }
+        }
+        _linkMedianId();
+        document.addEventListener('DOMContentLoaded', _linkMedianId);
+        window.addEventListener('load', _linkMedianId);
       } else {
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function(OneSignal) {

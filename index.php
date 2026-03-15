@@ -26,8 +26,13 @@
     $column_result = $conn->query($check_column);
 
     if ($column_result->num_rows == 0) {
-        $add_column = "ALTER TABLE $table_name ADD COLUMN status VARCHAR(20) DEFAULT 'active'";
+        $default_status = ($table_name === 'student_register') ? 'student' : 'active';
+        $add_column     = "ALTER TABLE $table_name ADD COLUMN status VARCHAR(20) DEFAULT '$default_status'";
         $conn->query($add_column);
+    }
+    // Fix any existing student_register rows incorrectly set to 'active'
+    if ($table_name === 'student_register') {
+        $conn->query("UPDATE student_register SET status = 'student' WHERE status = 'active'");
     }
     }
 

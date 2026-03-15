@@ -195,6 +195,25 @@
     }
 
     // Get top performing students (students with prizes)
+    // For counselors, show only their assigned students
+    if ($is_counselor && $counselor_id) {
+    $top_students_sql = "SELECT sr.name, sr.regno, sr.department,
+                               COUNT(ser.id) as total_events,
+                               SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prizes_won
+                        FROM student_register sr
+                        JOIN student_event_register ser ON sr.regno = ser.regno
+                        INNER JOIN counselor_assignments ca ON sr.regno = ca.student_regno
+                        WHERE ca.counselor_id = ? AND ca.status = 'active'
+                        GROUP BY sr.regno, sr.name, sr.department
+                        HAVING prizes_won > 0
+                        ORDER BY prizes_won DESC, total_events DESC
+                        LIMIT 5";
+    $top_students_stmt = $conn->prepare($top_students_sql);
+    $top_students_stmt->bind_param("i", $counselor_id);
+    $top_students_stmt->execute();
+    $top_students_result = $top_students_stmt->get_result();
+    $top_students_stmt->close();
+    } else {
     $top_students_sql = "SELECT sr.name, sr.regno, sr.department,
                                COUNT(ser.id) as total_events,
                                SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prizes_won
@@ -205,6 +224,7 @@
                         ORDER BY prizes_won DESC, total_events DESC
                         LIMIT 5";
     $top_students_result = $conn->query($top_students_sql);
+    }
 
     $stmt->close();
     if (isset($recent_stmt)) {

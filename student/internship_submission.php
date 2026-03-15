@@ -792,15 +792,21 @@
 
     .error-message.show {
       display: block;
+      font-size: 12px;
     }
+
+    /* Character counter */
+    .char-counter {
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 4px;
+      text-align: right;
+    }
+    .char-counter.near-limit { color: #f39c12; font-weight: 600; }
+    .char-counter.at-limit   { color: #dc3545; font-weight: 600; }
 
     input:invalid {
-      border-color: #ff6b6b;
-    }
-
-    input.is-invalid {
-      border-color: #dc3545 !important;
-      box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+      border-color: inherit;
     }
 
     /* Responsive Design */
@@ -1376,7 +1382,9 @@
                 placeholder="https://example.com"
                 value="<?php echo htmlspecialchars($form_data['company_website'] ?? ''); ?>"
                 required
+                oninput="validateWebsite(this, 'company_website_error')"
               />
+              <p class="form-field-helper error-message" id="company_website_error"></p>
             </div>
 
             <div class="item form-row-full">
@@ -1389,7 +1397,10 @@
                 value="<?php echo htmlspecialchars($form_data['company_address'] ?? ''); ?>"
                 required
                 maxlength="250"
+                oninput="validateAddress(this, 'company_address_error'); updateCharCount(this, 'company_address_counter', 250)"
               />
+              <p class="form-field-helper error-message" id="company_address_error"></p>
+              <p class="char-counter" id="company_address_counter">0 / 250 characters</p>
             </div>
 
             <div class="item">
@@ -1482,7 +1493,9 @@
                 name="start_date"
                 value="<?php echo htmlspecialchars($form_data['start_date'] ?? ''); ?>"
                 required
+                onchange="validateDates()"
               />
+              <p class="form-field-helper error-message" id="start_date_error"></p>
             </div>
 
             <div class="item">
@@ -1493,7 +1506,9 @@
                 name="end_date"
                 value="<?php echo htmlspecialchars($form_data['end_date'] ?? ''); ?>"
                 required
+                onchange="validateDates()"
               />
+              <p class="form-field-helper error-message" id="end_date_error"></p>
             </div>
 
             <div class="item">
@@ -1507,8 +1522,9 @@
                 min="0"
                 step="1"
                 required
+                oninput="validateStipend(this, 'stipend_error')"
               />
-              <p class="form-field-helper">Enter 0 if no stipend was provided</p>
+              <p class="form-field-helper error-message" id="stipend_error"></p>
             </div>
           </div>
         </div>
@@ -1570,8 +1586,10 @@
                 placeholder="Share your internship experience, key learnings, and accomplishments..."
                 required
                 maxlength="2000"
+                oninput="updateCharCount(this, 'brief_report_counter', 2000)"
               ><?php echo htmlspecialchars($form_data['brief_report'] ?? ''); ?></textarea>
-              <p class="form-field-helper">Maximum 2000 characters</p>
+              <p class="form-field-helper error-message" id="brief_report_error"></p>
+              <p class="char-counter" id="brief_report_counter">0 / 2000 characters (minimum 20)</p>
             </div>
           </div>
         </div>
@@ -1892,18 +1910,10 @@
       const errorElement = document.getElementById(errorElementId);
       const value = input.value.trim();
       const hasNumbers = /\d/.test(value);
-
       if (hasNumbers) {
-        input.classList.add('is-invalid');
-        if (errorElement) {
-          errorElement.textContent = '❌ Numbers are not allowed in this field';
-          errorElement.classList.add('show');
-        }
+        if (errorElement) { errorElement.textContent = '❌ Numbers are not allowed in this field'; errorElement.classList.add('show'); }
       } else {
-        input.classList.remove('is-invalid');
-        if (errorElement) {
-          errorElement.classList.remove('show');
-        }
+        if (errorElement) errorElement.classList.remove('show');
       }
     }
 
@@ -1912,18 +1922,82 @@
       const errorElement = document.getElementById(errorElementId);
       const value = input.value.trim();
       const validEmailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in)$/i;
-
       if (value && !validEmailPattern.test(value)) {
-        input.classList.add('is-invalid');
-        if (errorElement) {
-          errorElement.textContent = '❌ Email must be valid and end with .com or .in';
-          errorElement.classList.add('show');
-        }
+        if (errorElement) { errorElement.textContent = '❌ Email must be valid and end with .com or .in'; errorElement.classList.add('show'); }
       } else {
-        input.classList.remove('is-invalid');
-        if (errorElement) {
-          errorElement.classList.remove('show');
+        if (errorElement) errorElement.classList.remove('show');
+      }
+    }
+
+    // Validate website URL
+    function validateWebsite(input, errorId) {
+      const errorEl = document.getElementById(errorId);
+      const value = input.value.trim();
+      const urlPattern = /^https?:\/\/.+\..+/i;
+      if (value && !urlPattern.test(value)) {
+        if (errorEl) { errorEl.textContent = '❌ Must be a valid URL starting with https:// or http://'; errorEl.classList.add('show'); }
+      } else {
+        if (errorEl) errorEl.classList.remove('show');
+      }
+    }
+
+    // Validate address (alphanumeric, min 5 chars)
+    function validateAddress(input, errorId) {
+      const errorEl = document.getElementById(errorId);
+      const value = input.value.trim();
+      if (value.length > 0 && value.length < 5) {
+        if (errorEl) { errorEl.textContent = '❌ Address must be at least 5 characters'; errorEl.classList.add('show'); }
+      } else {
+        if (errorEl) errorEl.classList.remove('show');
+      }
+    }
+
+    // Validate stipend (non-negative whole number)
+    function validateStipend(input, errorId) {
+      const errorEl = document.getElementById(errorId);
+      const value = input.value;
+      if (value !== '' && (isNaN(value) || parseFloat(value) < 0 || !Number.isInteger(parseFloat(value)))) {
+        if (errorEl) { errorEl.textContent = '❌ Must be a non-negative whole number (e.g. 5000)'; errorEl.classList.add('show'); }
+      } else {
+        if (errorEl) errorEl.classList.remove('show');
+      }
+    }
+
+    // Validate date range (end >= start)
+    function validateDates() {
+      const startInput = document.getElementById('start_date');
+      const endInput   = document.getElementById('end_date');
+      const endErrorEl = document.getElementById('end_date_error');
+      const startVal   = startInput.value;
+      const endVal     = endInput.value;
+      if (startVal && endVal) {
+        if (new Date(startVal) > new Date(endVal)) {
+          if (endErrorEl) { endErrorEl.textContent = '❌ End date must be on or after the start date'; endErrorEl.classList.add('show'); }
+        } else {
+          if (endErrorEl) endErrorEl.classList.remove('show');
         }
+      }
+    }
+
+    // Live character counter
+    function updateCharCount(el, counterId, maxLen) {
+      const counterEl = document.getElementById(counterId);
+      if (!counterEl) return;
+      const len = el.value.length;
+      const minLen = (el.id === 'brief_report') ? 20 : 5;
+      counterEl.textContent = len + ' / ' + maxLen + ' characters' + (el.id === 'brief_report' ? ' (minimum 20)' : '');
+      counterEl.className = 'char-counter';
+      if (len >= maxLen)        counterEl.classList.add('at-limit');
+      else if (len > maxLen * 0.9) counterEl.classList.add('near-limit');
+      if (len >= minLen) {
+        const errEl = document.getElementById(el.id + '_error');
+        if (errEl) errEl.classList.remove('show');
+      } else if (len > 0) {
+        const errEl = document.getElementById(el.id + '_error');
+        if (errEl) { errEl.textContent = '❌ Minimum ' + minLen + ' characters required'; errEl.classList.add('show'); }
+      } else {
+        const errEl = document.getElementById(el.id + '_error');
+        if (errEl) errEl.classList.remove('show');
       }
     }
 
@@ -1932,60 +2006,75 @@
       let isValid = true;
       const errorMessages = [];
 
-      // Validate company name
-      const companyName = document.getElementById('company_name').value.trim();
-      if (/\d/.test(companyName)) {
-        isValid = false;
-        errorMessages.push('Company Name cannot contain numbers');
+      // Trigger all real-time validators so fields turn red before alert
+      validateNameField(document.getElementById('company_name'),    'company_name_error');
+      validateWebsite  (document.getElementById('company_website'), 'company_website_error');
+      validateAddress  (document.getElementById('company_address'), 'company_address_error');
+      validateNameField(document.getElementById('supervisor_name'), 'supervisor_name_error');
+      validateEmail    (document.getElementById('supervisor_email'),'supervisor_email_error');
+      validateNameField(document.getElementById('role_title'),      'role_title_error');
+      validateStipend  (document.getElementById('stipend_amount'),  'stipend_error');
+      validateDates();
+
+      // Company Name
+      if (/\d/.test(document.getElementById('company_name').value.trim())) {
+        isValid = false; errorMessages.push('Company Name cannot contain numbers');
       }
 
-      // Validate supervisor name
-      const supervisorName = document.getElementById('supervisor_name').value.trim();
-      if (/\d/.test(supervisorName)) {
-        isValid = false;
-        errorMessages.push('Supervisor Name cannot contain numbers');
+      // Company Website
+      const websiteVal = document.getElementById('company_website').value.trim();
+      if (websiteVal && !/^https?:\/\/.+\..+/i.test(websiteVal)) {
+        isValid = false; errorMessages.push('Company Website must be a valid URL (https://...)');
       }
 
-      // Validate role title
-      const roleTitle = document.getElementById('role_title').value.trim();
-      if (/\d/.test(roleTitle)) {
-        isValid = false;
-        errorMessages.push('Role/Title cannot contain numbers');
+      // Company Address min length
+      if (document.getElementById('company_address').value.trim().length < 5) {
+        isValid = false; errorMessages.push('Company Address must be at least 5 characters');
       }
 
-      // Validate email domain
+      // Supervisor Name
+      if (/\d/.test(document.getElementById('supervisor_name').value.trim())) {
+        isValid = false; errorMessages.push('Supervisor Name cannot contain numbers');
+      }
+
+      // Supervisor Email
       const supervisorEmail = document.getElementById('supervisor_email').value.trim();
-      const validEmailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in)$/i;
-      if (supervisorEmail && !validEmailPattern.test(supervisorEmail)) {
-        isValid = false;
-        errorMessages.push('Supervisor Email must end with .com or .in');
+      if (supervisorEmail && !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|in)$/i.test(supervisorEmail)) {
+        isValid = false; errorMessages.push('Supervisor Email must end with .com or .in');
       }
 
-      // Validate date range
+      // Role/Title
+      if (/\d/.test(document.getElementById('role_title').value.trim())) {
+        isValid = false; errorMessages.push('Role/Title cannot contain numbers');
+      }
+
+      // Stipend non-negative integer
+      const stipendVal = document.getElementById('stipend_amount').value;
+      if (stipendVal !== '' && (isNaN(stipendVal) || parseFloat(stipendVal) < 0 || !Number.isInteger(parseFloat(stipendVal)))) {
+        isValid = false; errorMessages.push('Stipend Amount must be a non-negative whole number');
+      }
+
+      // Date range
       const startDate = new Date(document.getElementById('start_date').value);
-      const endDate = new Date(document.getElementById('end_date').value);
-
-      if (startDate > endDate) {
-        isValid = false;
-        errorMessages.push('Start Date cannot be after End Date');
+      const endDate   = new Date(document.getElementById('end_date').value);
+      if (document.getElementById('start_date').value && document.getElementById('end_date').value && startDate > endDate) {
+        isValid = false; errorMessages.push('End Date must be on or after Start Date');
       }
 
-      // Validate certificate upload
+      // Certificate upload
       if (document.getElementById('internship_certificate').files.length === 0) {
-        isValid = false;
-        errorMessages.push('Please upload the Internship Certificate');
+        isValid = false; errorMessages.push('Please upload the Internship Certificate');
       }
 
-      // Validate brief report length
+      // Brief Report length
       const briefReport = document.getElementById('brief_report').value.trim();
       if (briefReport.length < 20 || briefReport.length > 2000) {
-        isValid = false;
-        errorMessages.push('Brief Report must be between 20 and 2000 characters');
+        isValid = false; errorMessages.push('Brief Report must be between 20 and 2000 characters');
       }
 
       if (!isValid) {
         e.preventDefault();
-        alert('Please fix the following errors:\n\n' + errorMessages.join('\n'));
+        alert('Please fix the following errors:\n\n' + errorMessages.map((m, i) => (i+1) + '. ' + m).join('\n'));
         return false;
       }
     });

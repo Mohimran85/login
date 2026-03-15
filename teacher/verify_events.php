@@ -133,7 +133,7 @@
                       ON odr.student_regno = ser.regno AND odr.event_name = ser.event_name
                   WHERE odr.status = 'approved'
                   AND odr.student_regno IN ($placeholders)
-                  AND DATE_ADD(odr.event_date, INTERVAL (COALESCE(odr.event_days, 1) + 2) DAY) < CURDATE()
+                  AND DATE_ADD(odr.event_date, INTERVAL (COALESCE(odr.event_days, 1) + 2) DAY) <= CURDATE()
                   AND (ser.id IS NULL OR ser.certificates IS NULL OR ser.certificates = '')";
 
         $params = $student_regnos;
@@ -495,12 +495,15 @@
         /* Category Badge */
         .badge {
             display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
             font-weight: 600;
-            color: white;
+            color: #1e4276;
+            background: #e8eef7;
+            border: 1px solid #c5d3e8;
             text-align: center;
+            white-space: nowrap;
         }
 
         /* Achievement Level */
@@ -705,6 +708,33 @@
 
         .btn-modal-confirm:hover {
             background: #c82333;
+        }
+
+        .btn-remind-all {
+            padding: 8px 18px;
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-remind-all:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4);
+        }
+
+        .btn-remind-all:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
 
         /* Empty State */
@@ -1043,7 +1073,15 @@
             <div class="table-container">
                 <div class="stats-bar">
                     <span><strong><?php echo $total_records; ?></strong> certificate(s) found</span>
-                    <span>Status: <strong><?php echo htmlspecialchars($status_filter); ?></strong></span>
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <span>Status: <strong><?php echo htmlspecialchars($status_filter); ?></strong></span>
+                        <?php if ($status_filter === 'Missing' && $total_records > 0): ?>
+                            <button class="btn-remind-all" id="remindAllBtn" onclick="sendReminderAll()">
+                                <span class="material-symbols-outlined" style="font-size:16px;">notifications_active</span>
+                                Remind All (<?php echo $total_records; ?>)
+                            </button>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
                 <?php if ($total_records > 0): ?>
@@ -1052,7 +1090,6 @@
                             <tr>
                                 <th>Student Info</th>
                                 <th>Event Details</th>
-                                <th>Category</th>
                                 <th>Achievement</th>
                                 <th>Certificate</th>
                                 <th>Actions</th>
@@ -1072,13 +1109,6 @@
                                         <div class="event-name"><?php echo htmlspecialchars($row['event_name']); ?></div>
                                         <div class="event-meta"><i class="fas fa-building"></i>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo htmlspecialchars($row['organizer']); ?></div>
                                         <div class="event-meta"><i class="fas fa-calendar"></i>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <?php echo date('M d, Y', strtotime($row['event_date'])); ?></div>
-                                    </td>
-
-                                    <!-- Category Badge -->
-                                    <td>
-                                        <span class="badge" style="background:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $category_colors[$row['category']] ?? '#6c757d'; ?>;">
-                                            <?php echo htmlspecialchars($row['category']); ?>
-                                        </span>
                                     </td>
 
                                     <!-- Achievement Level -->
@@ -1141,9 +1171,6 @@
                             <div class="event-card">
                                 <div class="card-header">
                                     <div class="card-student-name"><?php echo htmlspecialchars($row['student_name']); ?></div>
-                                    <span class="badge" style="background-color:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $category_colors[$row['category']] ?? '#6c757d'; ?>">
-                                        <?php echo htmlspecialchars($row['category']); ?>
-                                    </span>
                                 </div>
                                 <div class="card-row">
                                     <span class="card-label">Reg No:</span>
@@ -1406,6 +1433,52 @@
         function closeRejectModal() {
             document.getElementById('rejectModal').classList.remove('active');
             document.getElementById('rejectForm').reset();
+        }
+
+        // Collect all missing records for Remind All
+        <?php if ($status_filter === 'Missing' && $total_records > 0):
+                $all_missing = [];
+                $result->data_seek(0);
+                while ($r = $result->fetch_assoc()) {
+                    $all_missing[] = ['id' => $r['id'], 'regno' => $r['regno'], 'event_name' => $r['event_name']];
+                }
+                $result->data_seek(0);
+        ?>
+        const allMissingRecords = <?php echo json_encode($all_missing); ?>;
+        <?php endif; ?>
+
+        function sendReminderAll() {
+            if (typeof allMissingRecords === 'undefined' || allMissingRecords.length === 0) return;
+            if (!confirm('Send reminders to all ' + allMissingRecords.length + ' student(s) to upload their missing certificates?')) return;
+
+            const btn = document.getElementById('remindAllBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">hourglass_top</span> Sending...';
+
+            let completed = 0;
+            let successCount = 0;
+            let failCount = 0;
+
+            allMissingRecords.forEach(function(record) {
+                fetch('send_reminder.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'event_id=' + record.id + '&regno=' + encodeURIComponent(record.regno) + '&event_name=' + encodeURIComponent(record.event_name)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) successCount++; else failCount++;
+                })
+                .catch(() => { failCount++; })
+                .finally(() => {
+                    completed++;
+                    if (completed === allMissingRecords.length) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">notifications_active</span> Remind All (' + allMissingRecords.length + ')';
+                        alert('✅ Reminders sent: ' + successCount + ' successful, ' + failCount + ' failed.');
+                    }
+                });
+            });
         }
 
         function sendReminder(eventId, regno, eventName) {

@@ -81,14 +81,37 @@ class OneSignalManager
      * Send push notification to a single student
      * Tries targeted via external_id first, falls back to broadcast if no subscriber found
      */
-    public function sendToStudent($studentRegno, $title, $message, $link)
+    public function sendToStudent($studentRegno, $title, $message, $link, $playerIds = [])
     {
         if (! $this->restApiKey) {
             error_log("OneSignal API Key not configured");
             return ["status" => "error", "message" => "API Key missing"];
         }
 
-        // First try targeted via external_id
+        // Priority 1: target by stored OneSignal player ID (most reliable — direct device targeting)
+        if (! empty($playerIds)) {
+            $pidPayload = [
+                "app_id"             => $this->appId,
+                "include_player_ids" => array_values(array_map('strval', $playerIds)),
+                "headings"           => ["en" => $title],
+                "contents"           => ["en" => $message],
+                "data"               => [
+                    "link"         => $link,
+                    "type"         => "certificate_reminder",
+                    "target_regno" => strval($studentRegno),
+                ],
+                "chrome_web_icon"    => "assets/images/logo.png",
+            ];
+            $pidResult     = $this->makeRequest("notifications", $pidPayload);
+            $pidRecipients = $pidResult['response']['recipients'] ?? 0;
+            if ($pidRecipients > 0) {
+                error_log("OneSignal: Delivered via player_id for {$studentRegno}, recipients: {$pidRecipients}");
+                return $pidResult;
+            }
+            error_log("OneSignal: player_id send failed for {$studentRegno}, falling back to external_id");
+        }
+
+        // Priority 2: target by external_id
         $payload = [
             "app_id"          => $this->appId,
             "include_aliases" => ["external_id" => [strval($studentRegno)]],
@@ -105,23 +128,32 @@ class OneSignalManager
 
         $result = $this->makeRequest("notifications", $payload);
 
-        // If 0 recipients (external_id not linked yet), fallback to broadcast
         $recipients = $result['response']['recipients'] ?? 0;
         if ($recipients == 0) {
-            error_log("OneSignal: Targeted send failed for {$studentRegno}, falling back to broadcast");
-            $payload = [
-                "app_id"            => $this->appId,
-                "included_segments" => ["All"],
-                "headings"          => ["en" => $title],
-                "contents"          => ["en" => $message],
-                "data"              => [
+            error_log("OneSignal: external_id not linked for {$studentRegno}, trying tag filter fallback");
+
+            // Fallback: target by tag 'regno' (set via median.onesignal.tags.setTags)
+            $tagPayload = [
+                "app_id"          => $this->appId,
+                "filters"         => [
+                    ["field" => "tag", "key" => "regno", "relation" => "=", "value" => strval($studentRegno)],
+                ],
+                "headings"        => ["en" => $title],
+                "contents"        => ["en" => $message],
+                "data"            => [
                     "link"         => $link,
                     "type"         => "certificate_reminder",
                     "target_regno" => strval($studentRegno),
                 ],
-                "chrome_web_icon"   => "assets/images/logo.png",
+                "chrome_web_icon" => "assets/images/logo.png",
             ];
-            $result = $this->makeRequest("notifications", $payload);
+            $tagResult     = $this->makeRequest("notifications", $tagPayload);
+            $tagRecipients = $tagResult['response']['recipients'] ?? 0;
+            if ($tagRecipients > 0) {
+                error_log("OneSignal: Tag fallback delivered for {$studentRegno}, recipients: {$tagRecipients}");
+                return $tagResult;
+            }
+            error_log("OneSignal: Both methods failed for {$studentRegno} — student needs to open app once to link device");
         }
 
         return $result;
@@ -177,8 +209,26 @@ class OneSignalManager
     }
 
     /**
-     * Make API request to OneSignal
+     * Send hackathon start reminders to students who applied (targeted push)
      */
+    public function notifyAppliedReminder($hackathonId, $appliedStudents, $title, $reminderType, $startDate)
+    {
+        if (empty($appliedStudents)) {
+            return ["status" => "no_recipients"];
+        }
+
+        $typeLabels = [
+            'starts_tomorrow' => '🚀 Starts Tomorrow',
+            'starts_today'    => '🔥 Starting Today',
+        ];
+
+        $notifTitle   = ($typeLabels[$reminderType] ?? '⏰ Reminder') . ": {$title}";
+        $notifMessage = "The hackathon you registered for starts " . ($reminderType === 'starts_today' ? 'today' : 'tomorrow') . " (" . date("M d, Y", strtotime($startDate)) . ")!";
+        $link         = "student/hackathons.php?id={$hackathonId}";
+
+        return $this->sendToStudents($appliedStudents, $notifTitle, $notifMessage, $link);
+    }
+
     private function makeRequest($endpoint, $data)
     {
         $url = "{$this->apiBaseUrl}/{$endpoint}";

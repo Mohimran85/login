@@ -1623,6 +1623,22 @@ fd3s        .participations-title {
                                         </div>
                                     </div>
                                     <?php endif; ?>
+                                    <div class="info-row">
+                                        <div class="info-label">Status</div>
+                                        <div class="info-value">
+                                            <span class="verification-badge verification-<?php echo strtolower($participation['verification_status']); ?>">
+                                                <?php
+                                                    $status = $participation['verification_status'];
+                                                    $icon   = match ($status) {
+                                                        'Approved' => '✅',
+                                                        'Rejected' => '❌',
+                                                        default    => '⏳',
+                                                    };
+                                                    echo $icon . ' ' . htmlspecialchars($status);
+                                                ?>
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <?php if (! empty($participation['certificates']) || ! empty($participation['event_poster'])): ?>

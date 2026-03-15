@@ -54,8 +54,28 @@ if ($stmt->execute()) {
     $push_debug  = null;
     try {
         require_once __DIR__ . '/../includes/OneSignalManager.php';
-        $oneSignal   = new OneSignalManager();
-        $push_result = $oneSignal->sendToStudent($regno, $notif_title, $notif_message, $notif_link);
+        $oneSignal = new OneSignalManager();
+
+        // Look up any stored OneSignal player ID for this student (most reliable targeting)
+        $playerIds  = [];
+        $col_exists = $conn->query("SHOW COLUMNS FROM student_register LIKE 'onesignal_player_id'");
+        if (! $col_exists || $col_exists->num_rows === 0) {
+            // Column not yet created — create it now so future saves work
+            $conn->query("ALTER TABLE student_register ADD COLUMN onesignal_player_id VARCHAR(255) NULL DEFAULT NULL");
+        } else {
+            $pid_stmt = $conn->prepare(
+                "SELECT onesignal_player_id FROM student_register WHERE regno = ? AND onesignal_player_id IS NOT NULL AND onesignal_player_id != ''"
+            );
+            $pid_stmt->bind_param("s", $regno);
+            $pid_stmt->execute();
+            $pid_res = $pid_stmt->get_result();
+            if ($pid_row = $pid_res->fetch_assoc()) {
+                $playerIds[] = $pid_row['onesignal_player_id'];
+            }
+            $pid_stmt->close();
+        }
+
+        $push_result = $oneSignal->sendToStudent($regno, $notif_title, $notif_message, $notif_link, $playerIds);
         $push_debug  = $push_result;
         error_log('OneSignal push result for ' . $regno . ': ' . json_encode($push_result));
         // Check actual recipients count - HTTP 200 doesn't guarantee delivery

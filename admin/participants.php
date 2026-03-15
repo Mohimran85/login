@@ -404,9 +404,9 @@
       }
 
       .participants-table th {
-        background-color: #f8f9fa;
+        background-color: #0c3878;
         font-weight: 600;
-        color: #212529;
+        color: #ffffff;
         position: sticky;
         top: 0;
       }
@@ -423,7 +423,7 @@
 
       .download-btn {
         padding: 4px 8px;
-        background-color: #0c3878;
+        background-color: #1a6cc4;
         color: white;
         text-decoration: none;
         border-radius: 3px;
@@ -431,7 +431,7 @@
       }
 
       .download-btn:hover {
-        background-color: #0a2d5f;
+        background-color: #0c3878;
       }
 
       .no-files {
@@ -686,12 +686,7 @@
                   <small style="color: #666; font-size: 12px;">Minimum 2 characters required</small>
                 </div>
 
-                <div class="filter-group">
-                  <label for="participant_type">Participant Type:</label>
-                  <select name="participant_type" id="participant_type">
-                    <option value="student"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <?php echo($filter_participant_type === 'student') ? 'selected' : ''; ?>>Students Only</option>
-                  </select>
-                </div>
+                <input type="hidden" name="participant_type" value="student">
 
                 <div class="filter-group">
                   <label for="event_type">Event Type:</label>
@@ -1000,7 +995,6 @@
                   echo "<thead>";
                   echo "<tr>";
                   echo "<th>S.No</th>";
-                  echo "<th>Type</th>";
                   echo "<th>ID</th>";
                   echo "<th>Name</th>";
                   echo "<th>Year</th>";
@@ -1019,12 +1013,6 @@
                   while ($row = $result->fetch_assoc()) {
                       echo "<tr>";
                       echo "<td>" . $sno++ . "</td>";
-
-                      // Participant type badge
-                      $type_badge = ($row['participant_type'] === 'teacher') ?
-                      "<span style='background: #28a745; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px;'>👨‍🏫 Teacher</span>" :
-                      "<span style='background: #007bff; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px;'>👨‍🎓 Student</span>";
-                      echo "<td>" . $type_badge . "</td>";
 
                       echo "<td>" . htmlspecialchars($row['reg_id']) . "</td>";
                       echo "<td>" . htmlspecialchars($row['name'] ?? 'N/A') . "</td>";

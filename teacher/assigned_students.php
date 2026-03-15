@@ -88,6 +88,7 @@
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_all_semesters'])) {
     $semesters     = $_POST['semester'] ?? [];
     $updated_count = 0;
+    $unchanged_count = 0;
     $failed_count  = 0;
 
     foreach ($semesters as $regno => $new_semester) {
@@ -96,8 +97,12 @@
             $update_stmt = $conn->prepare($update_sql);
             $update_stmt->bind_param("ss", $new_semester, $regno);
 
-            if ($update_stmt->execute() && $update_stmt->affected_rows > 0) {
+            if ($update_stmt->execute()) {
+                if ($update_stmt->affected_rows > 0) {
                 $updated_count++;
+                } else {
+                $unchanged_count++;
+                }
             } else {
                 $failed_count++;
             }
@@ -107,6 +112,8 @@
 
     if ($updated_count > 0) {
         $_SESSION['success_message'] = "Successfully updated semester for $updated_count student(s)!";
+    } elseif ($failed_count === 0 && $unchanged_count > 0) {
+        $_SESSION['success_message'] = "No semester changes were detected.";
     }
     if ($failed_count > 0) {
         $_SESSION['error_message'] = "Failed to update $failed_count student(s).";
@@ -1179,7 +1186,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select">
+                                            <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select desktop-semester-select">
                                                 <?php for ($s = 1; $s <= 8; $s++): ?>
                                                     <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
                                                         Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
@@ -1231,7 +1238,7 @@
                                     <div class="info-row">
                                         <span class="info-label">Semester:</span>
                                         <span class="info-value">
-                                            <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select" style="font-size: 12px; padding: 4px 8px;">
+                                            <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select mobile-semester-select" style="font-size: 12px; padding: 4px 8px;">
                                                 <?php for ($s = 1; $s <= 8; $s++): ?>
                                                     <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
                                                         <?php echo $s; ?>
@@ -1358,6 +1365,22 @@
             const selectedSemester = document.getElementById('bulkSemester').value;
             return confirm('Are you sure you want to update ALL assigned students to Semester ' + selectedSemester + '?');
         }
+
+        // Only submit semester fields from the currently visible layout (desktop/mobile).
+        function syncSemesterInputState() {
+            const isMobileView = window.matchMedia('(max-width: 768px)').matches;
+
+            document.querySelectorAll('.desktop-semester-select').forEach((select) => {
+                select.disabled = isMobileView;
+            });
+
+            document.querySelectorAll('.mobile-semester-select').forEach((select) => {
+                select.disabled = !isMobileView;
+            });
+        }
+
+        syncSemesterInputState();
+        window.addEventListener('resize', syncSemesterInputState);
     </script>
 </body>
 </html>

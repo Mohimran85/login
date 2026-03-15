@@ -118,10 +118,15 @@
 
     <div class="main">
         <div class="main-card">
+            <div class="main-card-header">
+                <span class="material-symbols-outlined" style="font-size:20px;padding:0;">filter_alt</span>
+                Report Filters
+            </div>
+            <div class="main-card-body">
             <form class="form" action="" method="POST">
                 <div class="card">
                     <div class="inner-card">
-                        <label for="year">Academic Year:</label>
+                        <label for="year">Academic Year</label>
                         <select name="year" id="year">
                             <option value="">Select Academic Year</option>
                             <?php
@@ -140,7 +145,7 @@
 
                 <div class="card">
                     <div class="inner-card">
-                        <label for="department">Department:</label>
+                        <label for="department">Department</label>
                         <select name="department" id="department">
                             <option value="">Select Department</option>
                             <option value="Information Technology">Information Technology</option>
@@ -153,7 +158,7 @@
 
                 <div class="card">
                     <div class="inner-card">
-                        <label for="semester">Semester:</label>
+                        <label for="semester">Semester</label>
                         <select name="semester" id="semester">
                             <option value="">Select Semester</option>
                             <option value="1">Semester 1</option>
@@ -170,7 +175,7 @@
 
                 <div class="card">
                     <div class="inner-card">
-                        <label for="event_type">Event Type:</label>
+                        <label for="event_type">Event Type</label>
                         <select name="event_type" id="event_type">
                             <option value="">Select Event Type</option>
                             <option value="Workshop">Workshop</option>
@@ -183,7 +188,7 @@
 
                 <div class="card">
                     <div class="inner-card">
-                        <label for="location">Location:</label>
+                        <label for="location">Location</label>
                         <select name="location" id="location">
                             <option value="">Select Location</option>
                             <option value="tamilnadu">Tamil Nadu</option>
@@ -198,10 +203,14 @@
                     </div>
                 </div>
             </form>
+            </div>
         </div>
 
         <div class="report">
-            <p class="main_report_heading">Report</p>
+            <p class="main_report_heading" style="font-size:17px; font-weight:700; color:#0c3878; padding:10px 0 15px 0; border-bottom:2px solid #e0e9f5; margin-bottom:10px;">
+                <span class="material-symbols-outlined" style="font-size:20px; vertical-align:middle; margin-right:6px; padding:0;">table_chart</span>
+                Report Results
+            </p>
             <?php
                 if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     // Reuse existing $conn from above
@@ -399,7 +408,7 @@
                             echo "<input type='hidden' name='location' value='" . htmlspecialchars($location) . "'>";
                         }
 
-                        echo "<button type='submit' style='background-color: #28a745; border-color: #28a745;'>Download All Certificates</button>";
+                        echo "<button type='submit' style='background:linear-gradient(135deg,#1a7a35 0%,#28a745 100%);'>Download All Certificates</button>";
                         echo "</form>";
 
                         echo "</div>";

@@ -263,9 +263,17 @@
     $personal_email = $row['personal_email'];
     $regno          = $row['regno'];
     $department     = $row['department'];
-    $year_of_join   = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
     $degree         = ! empty($row['degree']) ? $row['degree'] : '';
     $semester       = ! empty($row['semester']) ? $row['semester'] : '1';
+    // Parse year_of_join: accept year-only (e.g. "2023") or full date
+    $yoj_raw = ! empty($row['year_of_join']) ? trim($row['year_of_join']) : '';
+    if (preg_match('/^\d{4}$/', $yoj_raw)) {
+        $year_of_join = $yoj_raw . '-01-01';
+    } elseif (! empty($yoj_raw) && strtotime($yoj_raw) !== false) {
+        $year_of_join = date('Y-m-d', strtotime($yoj_raw));
+    } else {
+        $year_of_join = date('Y-m-d');
+    }
 
     // Parse DOB - handle various date formats
     $dob = null;
@@ -355,12 +363,20 @@
     $check_stmt->close();
 
     // Prepare data with defaults
-    $name               = $row['name'];
-    $username           = $row['username'];
-    $email              = $row['email'];
-    $faculty_id         = $row['faculty_id'];
-    $department         = $row['department'];
-    $year_of_join       = ! empty($row['year_of_join']) ? $row['year_of_join'] : date('Y');
+    $name       = $row['name'];
+    $username   = $row['username'];
+    $email      = $row['email'];
+    $faculty_id = $row['faculty_id'];
+    $department = $row['department'];
+    // Parse year_of_join: accept year-only (e.g. "2023") or full date
+    $yoj_raw = ! empty($row['year_of_join']) ? trim($row['year_of_join']) : '';
+    if (preg_match('/^\d{4}$/', $yoj_raw)) {
+        $year_of_join = $yoj_raw . '-01-01';
+    } elseif (! empty($yoj_raw) && strtotime($yoj_raw) !== false) {
+        $year_of_join = date('Y-m-d', strtotime($yoj_raw));
+    } else {
+        $year_of_join = date('Y-m-d');
+    }
     $generated_password = bin2hex(random_bytes(8)); // 16 character random password
     $password           = password_hash($generated_password, PASSWORD_DEFAULT);
     $status             = 'teacher'; // Default status

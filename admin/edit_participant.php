@@ -124,7 +124,7 @@
             // Update participant record
             $update_sql = "UPDATE student_event_register SET
                           regno = ?, current_year = ?, semester = ?, department = ?,
-                          event_type = ?, event_name = ?, attended_date = ?, organisation = ?,
+                          event_type = ?, event_name = ?, start_date = ?, organisation = ?,
                           prize = ?, prize_amount = ?, event_poster = ?, certificates = ?
                           WHERE id = ?";
 
@@ -401,7 +401,7 @@
                 <span class="material-symbols-outlined">menu</span>
             </div>
             <div class="header-logo">
-                <img class="logo" src="./assets/sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
+                <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
             </div>
             <div class="header-title">
                 <p>Event Management Dashboard</p>
@@ -435,6 +435,10 @@
                     <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">manage_accounts</span>
                         <a href="user_management.php">User Management</a>
+                    </li>
+                    <li class="sidebar-list-item">
+                        <span class="material-symbols-outlined">school</span>
+                        <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">emoji_events</span>
@@ -559,7 +563,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="attended_date">Event Date *</label>
-                                    <input type="date" id="attended_date" name="attended_date" value="<?php echo htmlspecialchars($participant['attended_date'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                    <input type="date" id="attended_date" name="attended_date" value="<?php echo htmlspecialchars($participant['start_date'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required>
                                 </div>
                             </div>
                             <div class="form-group">
