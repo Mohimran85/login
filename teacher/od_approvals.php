@@ -58,22 +58,28 @@
 
     // Handle OD request approval/rejection
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_od_status'])) {
-    $od_id             = $_POST['od_id'];
+    $od_id             = (int) $_POST['od_id'];
     $new_status        = $_POST['new_status'];
-    $counselor_remarks = trim($_POST['counselor_remarks']);
+    $counselor_remarks = trim($_POST['counselor_remarks'] ?? '');
 
-    $update_sql  = "UPDATE od_requests SET status = ?, counselor_remarks = ?, response_date = CURRENT_TIMESTAMP WHERE id = ? AND counselor_id = ?";
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("ssii", $new_status, $counselor_remarks, $od_id, $counselor_id);
-
-    if ($update_stmt->execute()) {
-        $message      = "OD request " . ucfirst($new_status) . " successfully!";
-        $message_type = 'success';
-    } else {
-        $message      = "Error updating OD request: " . $conn->error;
+    // Rejection reason is mandatory
+    if ($new_status === 'rejected' && empty($counselor_remarks)) {
+        $message      = "A reason is required when rejecting an OD request. Please explain why it is being rejected.";
         $message_type = 'error';
+    } else {
+        $update_sql  = "UPDATE od_requests SET status = ?, counselor_remarks = ?, response_date = CURRENT_TIMESTAMP WHERE id = ? AND counselor_id = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("ssii", $new_status, $counselor_remarks, $od_id, $counselor_id);
+
+        if ($update_stmt->execute()) {
+            $message      = "OD request " . ucfirst($new_status) . " successfully!";
+            $message_type = 'success';
+        } else {
+            $message      = "Error updating OD request: " . $conn->error;
+            $message_type = 'error';
+        }
+        $update_stmt->close();
     }
-    $update_stmt->close();
     }
 
     // Get OD requests only from assigned students
@@ -1755,7 +1761,7 @@
                     <li class="nav-item">
                         <a href="internship_approvals.php" class="nav-link">
                             <span class="material-symbols-outlined">school</span>
-                            Internship Approvals
+                            Internship Validations
                         </a>
                     </li>
                     <li class="nav-item">
@@ -2171,7 +2177,56 @@
                             </div>
                         </div>
 
-                        <!-- Section 4: Event Poster (if available) -->
+                        <!-- Section 4.5: Offer Letter (if available) -->
+                          <?php if (! empty($request['offer_letter'])): ?>
+                          <div class="section-card offer-letter-section">
+                              <div class="section-header">
+                                  <span class="material-symbols-outlined">description</span>
+                                  <h4>Offer Letter</h4>
+                              </div>
+                              <div class="description-box" style="border-left-color: #ffc107;">
+                                  <?php
+                                      $offer_letter_path    = '../student/uploads/offer_letters/' . $request['offer_letter'];
+                                      $file_extension = strtolower(pathinfo($request['offer_letter'], PATHINFO_EXTENSION));
+                                  ?>
+
+                                  <div style="display: flex; flex-direction: column; gap: 15px;">
+                                      <?php if (in_array($file_extension, ['jpg', 'jpeg', 'png', 'webp']) && file_exists($offer_letter_path)): ?>
+                                      <div style="text-align: center;">
+                                          <img src="<?php echo htmlspecialchars($offer_letter_path); ?>"
+                                               alt="Offer Letter"
+                                               style="width: 100%; max-width: 300px; height: auto; border-radius: 12px; border: 3px solid #e9ecef; cursor: pointer; transition: transform 0.3s ease;"
+                                               onclick="openPosterModal('<?php echo htmlspecialchars($offer_letter_path); ?>')"
+                                               onmouseover="this.style.transform='scale(1.02)'"
+                                               onmouseout="this.style.transform='scale(1)'">
+                                      </div>
+                                      <?php endif; ?>
+
+                                      <div style="display: flex; flex-direction: column; gap: 10px;">
+                                          <a href="<?php echo htmlspecialchars($offer_letter_path); ?>"
+                                             target="_blank"
+                                             style="color: white; background: #0c3878; text-decoration: none; font-weight: 500; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.3s ease;">
+                                              <span class="material-symbols-outlined">visibility</span>
+                                              View Offer Letter
+                                          </a>
+                                          <a href="<?php echo htmlspecialchars($offer_letter_path); ?>"
+                                             download
+                                             style="color: white; background: #28a745; text-decoration: none; font-weight: 500; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.3s ease;">
+                                              <span class="material-symbols-outlined">download</span>
+                                              Download Document
+                                          </a>
+                                          <div style="text-align: center; font-size: 12px; color: #6c757d; padding: 8px; background: #f8f9fa; border-radius: 6px;">
+                                              <strong>File:</strong> <?php echo htmlspecialchars(basename($request['offer_letter'])); ?><br>
+                                              <strong>Type:</strong> <?php echo strtoupper($file_extension); ?> &bull;
+                                              <strong>Size:</strong> <?php echo file_exists($offer_letter_path) ? round(filesize($offer_letter_path) / 1024, 1) . ' KB' : 'Unknown'; ?>
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                          <?php endif; ?>
+
+                          <!-- Section 4: Event Poster (if available) -->
                         <?php if (! empty($request['event_poster'])): ?>
                         <div class="section-card poster-section">
                             <div class="section-header">
@@ -2252,28 +2307,19 @@
                                 <h4>Review & Approval Decision</h4>
                             </div>
                             <div class="approval-form">
-                                <form method="POST" action="">
+                                <form method="POST" action="" id="od-form-<?php echo $request['id']; ?>">
                                     <input type="hidden" name="od_id" value="<?php echo $request['id']; ?>">
-
-                                    <div class="form-grid">
-                                        <div class="form-group">
-                                            <label class="form-label">Remarks (Optional)</label>
-                                            <textarea name="counselor_remarks" class="form-textarea"
-                                                      placeholder="Add your remarks or feedback..." rows="3"></textarea>
-                                        </div>
-
-                                        <div class="action-buttons">
-                                            <button type="submit" name="update_od_status" value="approved"
-                                                    onclick="this.form.new_status.value='approved'" class="btn btn-approve">
-                                                <span class="material-symbols-outlined">check_circle</span>
-                                                Approve
-                                            </button>
-                                            <button type="submit" name="update_od_status" value="rejected"
-                                                    onclick="this.form.new_status.value='rejected'" class="btn btn-reject">
-                                                <span class="material-symbols-outlined">cancel</span>
-                                                Reject
-                                            </button>
-                                        </div>
+                                    <div class="action-buttons">
+                                        <button type="submit" name="update_od_status" value="approved"
+                                                onclick="this.form.new_status.value='approved'" class="btn btn-approve">
+                                            <span class="material-symbols-outlined">check_circle</span>
+                                            Approve
+                                        </button>
+                                        <button type="button" class="btn btn-reject"
+                                                onclick="openRejectModal(<?php echo $request['id']; ?>)">
+                                            <span class="material-symbols-outlined">cancel</span>
+                                            Reject
+                                        </button>
                                     </div>
                                     <input type="hidden" name="new_status" value="">
                                 </form>
@@ -2401,6 +2447,62 @@
                     }
                 });
             }
+        });
+
+        // Reject modal functions
+        let _rejectTargetId = null;
+
+        function openRejectModal(requestId) {
+            _rejectTargetId = requestId;
+            document.getElementById('rejectReasonInput').value = '';
+            document.getElementById('rejectReasonInput').style.border = '2px solid #e9ecef';
+            document.getElementById('rejectReasonError').style.display = 'none';
+            document.getElementById('rejectModal').style.display = 'flex';
+            setTimeout(() => document.getElementById('rejectReasonInput').focus(), 100);
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+            _rejectTargetId = null;
+        }
+
+        function confirmReject() {
+            const reason = document.getElementById('rejectReasonInput').value.trim();
+            if (!reason) {
+                document.getElementById('rejectReasonInput').style.border = '2px solid #dc3545';
+                document.getElementById('rejectReasonError').style.display = 'block';
+                return;
+            }
+            const form = document.getElementById('od-form-' + _rejectTargetId);
+
+            // Inject counselor_remarks
+            let hiddenRemarks = form.querySelector('input[name="counselor_remarks"]');
+            if (!hiddenRemarks) {
+                hiddenRemarks = document.createElement('input');
+                hiddenRemarks.type = 'hidden';
+                hiddenRemarks.name = 'counselor_remarks';
+                form.appendChild(hiddenRemarks);
+            }
+            hiddenRemarks.value = reason;
+
+            // Set new_status
+            form.querySelector('input[name="new_status"]').value = 'rejected';
+
+            // Inject update_od_status — required by PHP handler (form.submit() does not include button values)
+            let hiddenAction = form.querySelector('input[name="update_od_status"]');
+            if (!hiddenAction) {
+                hiddenAction = document.createElement('input');
+                hiddenAction.type = 'hidden';
+                hiddenAction.name = 'update_od_status';
+                form.appendChild(hiddenAction);
+            }
+            hiddenAction.value = 'rejected';
+
+            form.submit();
+        }
+
+        document.getElementById('rejectModal').addEventListener('click', function(e) {
+            if (e.target === this) closeRejectModal();
         });
 
         // Filter Functions
@@ -2592,5 +2694,35 @@
         // Close database connection
         $conn->close();
     ?>
+    <!-- Rejection Reason Modal (Counselor) -->
+    <div id="rejectModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:14px; padding:30px; width:90%; max-width:480px; box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+            <h3 style="margin:0 0 8px; color:#dc3545; display:flex; align-items:center; gap:8px; font-size:20px;">
+                <span class="material-symbols-outlined">cancel</span>
+                Reason for Rejection
+            </h3>
+            <p style="color:#6c757d; font-size:14px; margin:0 0 16px;">
+                Please explain why this OD request is being rejected. The student will see this reason.
+            </p>
+            <textarea id="rejectReasonInput" rows="4"
+                style="width:100%; padding:10px 12px; border:2px solid #e9ecef; border-radius:8px; font-size:14px; font-family:inherit; resize:vertical; outline:none; transition:border-color 0.2s;"
+                placeholder="e.g. Insufficient documentation, event dates conflict with exams..."></textarea>
+            <div id="rejectReasonError" style="color:#dc3545; font-size:13px; margin-top:6px; display:none;">
+                ✗ Please enter a reason before rejecting.
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px; justify-content:flex-end;">
+                <button onclick="closeRejectModal()"
+                        style="padding:10px 20px; border:1px solid #dee2e6; border-radius:8px; background:#fff; cursor:pointer; font-size:14px; font-family:inherit;">
+                    Cancel
+                </button>
+                <button onclick="confirmReject()"
+                        style="padding:10px 20px; background:linear-gradient(135deg,#dc3545,#e74c3c); color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; font-family:inherit; display:inline-flex; align-items:center; gap:6px;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">cancel</span>
+                    Confirm Reject
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

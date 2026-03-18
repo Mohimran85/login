@@ -176,7 +176,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0c3878">
     <meta name="color-scheme" content="light only">
-    <title>Internship Approvals - Teacher Dashboard</title>
+    <title>Internship Validations - Teacher Dashboard</title>
     <link rel="icon" type="image/png" sizes="32x32" href="../assets/images/favicon_io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
@@ -1102,7 +1102,7 @@
                 <li class="nav-item">
                     <a href="internship_approvals.php" class="nav-link active">
                         <span class="material-symbols-outlined">school</span>
-                        Internship Approvals
+                        Internship Validations
                     </a>
                 </li>
                 <li class="nav-item">
@@ -1168,7 +1168,7 @@
         <!-- Main Content -->
         <div class="main">
             <div class="page-header">
-                <h1>Internship Approvals</h1>
+                <h1>Internship Validations</h1>
                 <p>Review and approve internship submissions from assigned students</p>
             </div>
 

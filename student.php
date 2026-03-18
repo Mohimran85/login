@@ -379,14 +379,22 @@ body {
     $year_of_join   = $_POST["batch"];
     $degree         = $_POST["degree"];
     $department     = $_POST["department"];
-    $semester       = $_POST["semester"];
     $personal_email = trim($_POST["personal_email"]);
     $password       = $_POST["password"];
     $re_password    = $_POST["re-password"];
 
+    // Auto-calculate semester from year_of_join
+    // Sem 1: Jul-Dec of join year, 6 months each, 8 semesters total
+    $join_yr      = (int) $year_of_join;
+    $now          = new DateTime();
+    $reg_yr       = (int) $now->format('Y');
+    $reg_mo       = (int) $now->format('n');
+    $months_since = ($reg_yr - $join_yr) * 12 + ($reg_mo - 7);
+    $semester     = ($months_since < 0) ? 1 : min(max((int) floor($months_since / 6) + 1, 1), 8);
+
     // Validation
     if (empty($name) || empty($dob) || empty($username) || empty($regno) || empty($year_of_join) ||
-        empty($degree) || empty($department) || empty($semester) || empty($personal_email) || empty($password) || empty($re_password)) {
+        empty($degree) || empty($department) || empty($personal_email) || empty($password) || empty($re_password)) {
         $error_messages[] = "Please fill all required fields.";
     }
     if ($password !== $re_password) {
@@ -540,18 +548,8 @@ body {
                      </select>
                   </div>
                   <div class="item div5">
-                     <label for="semester">Semester</label>
-                     <select name="semester" id="semester" required>
-                        <option value="" disabled                                                                                                                                                                                                                                                                                                                                                                                                         <?php echo ! isset($_POST['semester']) ? 'selected' : ''; ?>>Select Semester</option>
-                        <option value="1"                                                                                                                                                                                                                                                                                                                                                 <?php echo(isset($_POST['semester']) && $_POST['semester'] == '1') ? 'selected' : ''; ?>>Semester 1</option>
-                        <option value="2"                                                                                                                                                                                                                                                                                                                                                 <?php echo(isset($_POST['semester']) && $_POST['semester'] == '2') ? 'selected' : ''; ?>>Semester 2</option>
-                        <option value="3"                                                                                                                                                                                                                                                                                                                                                 <?php echo(isset($_POST['semester']) && $_POST['semester'] == '3') ? 'selected' : ''; ?>>Semester 3</option>
-                        <option value="4"                                                                                                                                                                                                                                                                                                                                                 <?php echo(isset($_POST['semester']) && $_POST['semester'] == '4') ? 'selected' : ''; ?>>Semester 4</option>
-                        <option value="5"                                                                                                                                                                                                                                                                                                                                                 <?php echo(isset($_POST['semester']) && $_POST['semester'] == '5') ? 'selected' : ''; ?>>Semester 5</option>
-                        <option value="6"                                                                                                                                                                                                                                                                                                                                                 <?php echo(isset($_POST['semester']) && $_POST['semester'] == '6') ? 'selected' : ''; ?>>Semester 6</option>
-                        <option value="7"                                                                                                                                                                                                                                                                                                                                                 <?php echo(isset($_POST['semester']) && $_POST['semester'] == '7') ? 'selected' : ''; ?>>Semester 7</option>
-                        <option value="8"                                                                                                                                                                                                                                                                                                                                                 <?php echo(isset($_POST['semester']) && $_POST['semester'] == '8') ? 'selected' : ''; ?>>Semester 8</option>
-                     </select>
+                     <label for="semester">Semester (Auto-calculated)</label>
+                     <input type="text" id="semester" name="semester_display" placeholder="Select batch year first" readonly style="background:#f5f5f5; cursor:default;" />
                   </div>
                   <div class="item div7">
                      <label for="email">Personal Email:</label>
@@ -613,6 +611,26 @@ body {
                `;
             }
          }
+
+         // Auto-calculate semester from batch year
+         function updateSemesterDisplay() {
+            const joinYear = parseInt(document.getElementById('year_of_join').value);
+            const semField = document.getElementById('semester');
+            if (!joinYear) { semField.value = ''; return; }
+            const now = new Date();
+            const curYr = now.getFullYear();
+            const curMo = now.getMonth() + 1; // 1-based
+            const monthsSince = (curYr - joinYear) * 12 + (curMo - 7);
+            const sem = monthsSince < 0 ? 1 : Math.min(Math.max(Math.floor(monthsSince / 6) + 1, 1), 8);
+            semField.value = 'Semester ' + sem;
+         }
+         document.addEventListener('DOMContentLoaded', function () {
+            const batchSelect = document.getElementById('year_of_join');
+            if (batchSelect) {
+               batchSelect.addEventListener('change', updateSemesterDisplay);
+               updateSemesterDisplay();
+            }
+         });
       </script>
    </body>
 </html>

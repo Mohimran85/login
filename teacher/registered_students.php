@@ -55,7 +55,7 @@
     }
 
     // Pagination settings
-    $records_per_page = 15;
+    $records_per_page = 10;
     $page             = isset($_GET['page']) ? (int) $_GET['page'] : 1;
     $offset           = ($page - 1) * $records_per_page;
 
@@ -192,6 +192,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     <style>
+        /* Global Reset */
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        /* Fix for Grid Layout to prevent blowout */
+        .main {
+            min-width: 0;
+            width: 100%;
+            overflow-x: hidden; /* Ensure main container doesn't scroll */
+        }
+
         /* Core Styles */
         .header {
             grid-area: header;
@@ -374,29 +391,108 @@
             border-color: #2d5aa0;
         }
 
-        /* Desktop Card Design */
+        /* Excel-like Table Design */
         .desktop-table {
-            display: none;
+            display: block;
+            width: 100%;
+            overflow-x: auto; /* Enables horizontal scroll */
+            -webkit-overflow-scrolling: touch;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            scrollbar-width: thin;
+            scrollbar-color: #2d5aa0 #f1f3f4;
+            margin-bottom: 20px;
+        }
+
+        .desktop-table::-webkit-scrollbar {
+            height: 12px; /* Slightly thicker for better visibility */
+        }
+
+        .desktop-table::-webkit-scrollbar-track {
+            background: #f1f3f4;
+            border-radius: 6px;
+        }
+
+        .desktop-table::-webkit-scrollbar-thumb {
+            background-color: #2d5aa0;
+            border-radius: 6px;
+            border: 2px solid #f1f3f4; /* Adds padding around thumb */
         }
 
         .mobile-card-table {
-            display: block;
+            display: none;
         }
 
-        .student-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-            transition: all 0.3s ease;
+        .excel-table {
+            width: 100%;
+            min-width: 1200px; /* Minimum width to force scroll on smaller screens */
+            border-collapse: separate; /* Changed for border-radius */
+            border-spacing: 0;
+            font-size: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #fff;
         }
 
-        .student-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        .excel-table th, .excel-table td {
+            border: 1px solid #d1d1d1;
+            padding: 12px 15px; /* Increased padding */
+            white-space: normal;
+            vertical-align: top;
+            word-wrap: break-word;
         }
+
+        /* Prevent specific columns from wrapping (Year, Start Date, End Date) */
+        .excel-table th:nth-child(5),
+        .excel-table td:nth-child(5),
+        .excel-table th:nth-child(8),
+        .excel-table td:nth-child(8),
+        .excel-table th:nth-child(9),
+        .excel-table td:nth-child(9) {
+            white-space: nowrap;
+        }
+
+        .excel-table th {
+            background: linear-gradient(135deg, #2d5aa0 0%, #2d5aa0 100%);
+            color: white;
+            font-weight: 600;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .excel-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .excel-table tr:hover {
+            background-color: #e6f7ff;
+            cursor: default;
+        }
+
+        .excel-table td {
+            color: #333;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* Mobile Responsive Design */
+        @media (max-width: 900px) {
+            .desktop-table {
+                display: none;
+            }
+            .mobile-card-table {
+                display: block;
+            }
+        }
+
 
         .student-card h4 {
             margin: 0 0 15px 0;
@@ -842,7 +938,7 @@
                     <li class="nav-item">
                         <a href="internship_approvals.php" class="nav-link">
                             <span class="material-symbols-outlined">school</span>
-                            Internship Approvals
+                            Internship Validations
                         </a>
                     </li>
                     <li class="nav-item">
@@ -1003,39 +1099,43 @@
                 </div>
 
                 <div class="table-responsive desktop-table">
-                    <table>
+                    <table class="excel-table">
                         <thead>
                             <tr>
-                                <th>Student Info</th>
-                                <th>Event Details</th>
-                                <th>Date</th>
+                                <th>S.No</th>
+                                <th>Name</th>
+                                <th>Reg. No</th>
+                                <th>Dept</th>
+                                <th>Year</th>
+                                <th>Event Name</th>
+                                <th>Type</th>
+                                <th>Start Date</th>
+                                <th>End Date</th>
+                                <th>Days</th>
+                                <th>Organization</th>
+                                <th>State</th>
                                 <th>Prize</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (! empty($students_data)): ?>
-                                <?php foreach ($students_data as $student): ?>
+                                <?php
+                                    $sno = $offset + 1;
+                                    foreach ($students_data as $student):
+                                ?>
                                     <tr>
-                                        <td>
-                                            <strong><?php echo htmlspecialchars($student['name']); ?></strong><br>
-                                            <small style="color: #666;">
-                                                <?php echo htmlspecialchars($student['regno']); ?><br>
-                                                <?php echo htmlspecialchars($student['department']); ?> - Joined<?php echo htmlspecialchars($student['year_of_join']); ?>
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <strong><?php echo htmlspecialchars($student['event_name']); ?></strong><br>
-                                            <small style="color: #666;"><?php echo htmlspecialchars($student['event_type']); ?></small>
-                                        </td>
-                                        <td>
-                                            <?php
-                                                if ($student['start_date'] === $student['end_date']) {
-                                                    echo date('M d, Y', strtotime($student['start_date'])) . ' (' . $student['no_of_days'] . ' day)';
-                                                } else {
-                                                    echo date('M d', strtotime($student['start_date'])) . ' - ' . date('M d, Y', strtotime($student['end_date'])) . ' (' . $student['no_of_days'] . ' days)';
-                                                }
-                                            ?>
-                                        </td>
+                                        <td><?php echo $sno++; ?></td>
+                                        <td><?php echo htmlspecialchars($student['name']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['regno']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['department']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['current_year']) . ' - ' . htmlspecialchars($student['semester']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['event_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['event_type']); ?></td>
+                                        <td><?php echo date('d-m-Y', strtotime($student['start_date'])); ?></td>
+                                        <td><?php echo date('d-m-Y', strtotime($student['end_date'])); ?></td>
+                                        <td><?php echo htmlspecialchars($student['no_of_days']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['college']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['position']); ?></td>
                                         <td>
                                             <?php
                                                 $prize       = $student['prize'];
@@ -1050,7 +1150,7 @@
                                                     default: $badge_class = 'prize-participation';
                                                 }
                                             ?>
-                                            <span class="prize-badge<?php echo $badge_class; ?>">
+                                            <span class="status-badge <?php echo $badge_class; ?>">
                                                 <?php echo htmlspecialchars($prize); ?>
                                             </span>
                                         </td>
@@ -1058,7 +1158,7 @@
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 40px;">
+                                    <td colspan="13" style="text-align: center; padding: 40px;">
                                         <span class="material-symbols-outlined" style="font-size: 48px; color: #ccc;">group_off</span>
                                         <p style="color: #666; margin: 10px 0;">No students found matching your criteria</p>
                                     </td>

@@ -339,13 +339,13 @@ fd3s        .participations-title {
         }
 
         .prize-second {
-            background: linear-gradient(135deg, #454545ff 0%, #5b5b5bff 100%);
+            background: linear-gradient(135deg, rgb(143, 143, 143) 0%, rgb(143, 143, 143) 100%);
             color: #0066cc;
             border: 2px solid #0066cc;
         }
 
         .prize-third {
-            background: linear-gradient(135deg, #a77700ff 0%, #f7b31fff 100%);
+            background: linear-gradient(135deg, rgb(196, 141, 1) 0%, #f7b31fff 100%);
             color: #004499;
         }
 

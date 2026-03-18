@@ -848,7 +848,7 @@
             <li class="nav-item">
               <a href="internship_approvals.php" class="nav-link">
                 <span class="material-symbols-outlined">school</span>
-                Internship Approvals
+                Internship Validations
               </a>
             </li>
             <li class="nav-item">

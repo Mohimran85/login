@@ -510,7 +510,7 @@
                     </li>
                     <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">school</span>
-                        <a href="../teacher/internship_approvals.php">Internship Approvals</a>
+                        <a href="../teacher/internship_approvals.php">Internship Validations</a>
                     </li>
                     <li class="sidebar-list-item">
                         <span class="material-symbols-outlined">card_giftcard</span>

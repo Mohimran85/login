@@ -498,7 +498,7 @@
             <li class="nav-item">
               <a href="internship_approvals.php" class="nav-link">
                 <span class="material-symbols-outlined">school</span>
-                Internship Approvals
+                Internship Validations
               </a>
             </li>
             <li class="nav-item">
@@ -531,279 +531,368 @@
 
       <!-- main container -->
       <div class="main">
-        <form class="filter-form" action="" method="POST">
+        <h1 class="main-title">Event Reports</h1>
+
+        <form method="GET" action="" class="filter-form">
             <div class="filter-group">
-                <label for="year">Academic Year:</label>
-                <select name="year" id="year">
+                <label for="academic_year">Academic Year:</label>
+                <select name="academic_year" id="academic_year">
                     <option value="">Select Academic Year</option>
                     <?php
-                        $current_year = date('Y');
-                        for ($i = 0; $i < 10; $i++) {
-                            $start_year    = $current_year - $i;
-                            $end_year      = $start_year + 1;
-                            $academic_year = $start_year . '-' . $end_year;
-                            echo "<option value='$academic_year'>$academic_year</option>";
+                        $current_year = date("Y");
+                        for ($i = $current_year; $i >= $current_year - 5; $i--) {
+                            $academic_year_option = $i . '-' . ($i + 1);
+                            $selected             = ($academic_year_option == $academic_year) ? 'selected' : '';
+                            echo "<option value=\"$academic_year_option\" $selected>$academic_year_option</option>";
                         }
                     ?>
-                </select>
-            </div>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="start_month">Start Month:</label>
+                    <select name="start_month" id="start_month">
+                        <option value="">Select Start Month</option>
+                        <?php
+                            for ($m = 1; $m <= 12; $m++) {
+                                $month_name = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
+                                $selected   = ($m == $start_month) ? 'selected' : '';
+                                echo "<option value=\"$m\" $selected>$month_name</option>";
+                            }
+                        ?>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="end_month">End Month:</label>
+                    <select name="end_month" id="end_month">
+                        <option value="">Select End Month</option>
+                        <?php
+                            for ($m = 1; $m <= 12; $m++) {
+                                $month_name = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
+                                $selected   = ($m == $end_month) ? 'selected' : '';
+                                echo "<option value=\"$m\" $selected>$month_name</option>";
+                            }
+                        ?>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="department">Department:</label>
+                    <select name="department" id="department">
+                        <option value="">Select Department</option>
+                        <option value="Information Technology" <?php if ($department == 'Information Technology') {
+                                                                       echo 'selected';
+                                                               }
+                                                               ?>>Information Technology</option>
+                        <option value="CSE" <?php if ($department == 'CSE') {
+                                                    echo 'selected';
+                                            }
+                                            ?>>CSE</option>
+                        <option value="AIML" <?php if ($department == 'AIML') {
+                                                     echo 'selected';
+                                             }
+                                             ?>>AIML</option>
+                        <option value="AIDS" <?php if ($department == 'AIDS') {
+                                                     echo 'selected';
+                                             }
+                                             ?>>AIDS</option>
+                    </select>
+                </div>
 
-            <div class="filter-group">
-                <label for="department">Department:</label>
-                <select name="department" id="department">
-                    <option value="">Select Department</option>
-                    <option value="Information Technology">Information Technology</option>
-                    <option value="CSE">CSE</option>
-                    <option value="AIML">AIML</option>
-                    <option value="AIDS">AIDS</option>
-                </select>
-            </div>
+                <div class="filter-group">
+                    <label for="semester">Semester:</label>
+                    <select name="semester" id="semester">
+                        <option value="">Select Semester</option>
+                        <?php
+                            for ($i = 1; $i <= 8; $i++) {
+                                $selected = ($i == $semester) ? 'selected' : '';
+                                echo "<option value='$i' $selected>Semester $i</option>";
+                            }
+                        ?>
+                    </select>
+                </div>
 
-            <div class="filter-group">
-                <label for="semester">Semester:</label>
-                <select name="semester" id="semester">
-                    <option value="">Select Semester</option>
-                    <option value="1">Semester 1</option>
-                    <option value="2">Semester 2</option>
-                    <option value="3">Semester 3</option>
-                    <option value="4">Semester 4</option>
-                    <option value="5">Semester 5</option>
-                    <option value="6">Semester 6</option>
-                    <option value="7">Semester 7</option>
-                    <option value="8">Semester 8</option>
-                </select>
-            </div>
+                <div class="filter-group">
+                    <label for="event_type">Event Type:</label>
+                    <select name="event_type" id="event_type">
+                        <option value="">Select Event Type</option>
+                        <option value="Workshop" <?php if ($event_type == 'Workshop') {
+                                                         echo 'selected';
+                                                 }
+                                                 ?>>Workshop</option>
+                        <option value="Seminar" <?php if ($event_type == 'Seminar') {
+                                                        echo 'selected';
+                                                }
+                                                ?>>Seminar</option>
+                        <option value="Competition" <?php if ($event_type == 'Competition') {
+                                                            echo 'selected';
+                                                    }
+                                                    ?>>Competition</option>
+                        <option value="Hackathon" <?php if ($event_type == 'Hackathon') {
+                                                          echo 'selected';
+                                                  }
+                                                  ?>>Hackathon</option>
+                    </select>
+                </div>
 
-            <div class="filter-group">
-                <label for="event_type">Event Type:</label>
-                <select name="event_type" id="event_type">
-                    <option value="">Select Event Type</option>
-                    <option value="Workshop">Workshop</option>
-                    <option value="Seminar">Seminar</option>
-                    <option value="Competition">Competition</option>
-                    <option value="Hackathon">Hackathon</option>
-                </select>
-            </div>
+                <div class="filter-group">
+                    <label for="location">Location:</label>
+                    <select name="location" id="location">
+                        <option value="">Select Location</option>
+                        <option value="tamilnadu" <?php if ($location == 'tamilnadu') {
+                                                          echo 'selected';
+                                                  }
+                                                  ?>>Tamil Nadu</option>
+                        <option value="outside" <?php if ($location == 'outside') {
+                                                        echo 'selected';
+                                                }
+                                                ?>>Outside Tamil Nadu</option>
+                    </select>
+                </div>
 
-            <div class="filter-group">
-                <label for="location">Location:</label>
-                <select name="location" id="location">
-                    <option value="">Select Location</option>
-                    <option value="tamilnadu">Tamil Nadu</option>
-                    <option value="outside">Outside Tamil Nadu</option>
-                </select>
-            </div>
+                <div class="filter-submit">
+                    <input type="submit" name="submit" value="Submit" />
+                </div>
+            </form>
 
-            <div class="filter-submit">
-                <input type="submit" name="submit" value="Submit" />
-            </div>
-        </form>
+            <div class="report-section">
+                <p class="report-heading">Report</p>
+                <?php
+                    // Set filter variables from GET request
+                    $academic_year = $_GET['academic_year'] ?? '';
+                    $start_month   = $_GET['start_month'] ?? '';
+                    $end_month     = $_GET['end_month'] ?? '';
+                    $department    = $_GET['department'] ?? '';
+                    $semester      = $_GET['semester'] ?? '';
+                    $event_type    = $_GET['event_type'] ?? '';
+                    $location      = $_GET['location'] ?? '';
 
-        <div class="report-section">
-            <p class="report-heading">Report</p>
-            <?php
-                if ($_SERVER["REQUEST_METHOD"] == "POST") {
+                    if (isset($_GET['submit'])) {
 
-                    $year       = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
-                    $department = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
-                    $semester   = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
-                    $event_type = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
-                    $location   = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
+                        $year            = ! empty($academic_year) ? $academic_year : null;
+                        $start_month_val = ! empty($start_month) ? (int) $start_month : null;
+                        $end_month_val   = ! empty($end_month) ? (int) $end_month : null;
+                        $department_val  = ! empty($department) ? $department : null;
+                        $semester_val    = ! empty($semester) ? $semester : null;
+                        $event_type_val  = ! empty($event_type) ? $event_type : null;
+                        $location_val    = ! empty($location) ? $location : null;
 
-                    // Build dynamic WHERE clause - scoped to counselor's assigned students
-                    $where_conditions = [
-                        "e.verification_status = 'Approved'",
-                        "ca.counselor_id = ?",
-                        "ca.status = 'active'",
-                    ];
-                    $bind_types  = "i";
-                    $bind_values = [$counselor_id];
+                        // Build dynamic WHERE clause - scoped to counselor's assigned students
+                        $where_conditions = [
+                            "e.verification_status = 'Approved'",
+                            "ca.counselor_id = ?",
+                            "ca.status = 'active'",
+                        ];
+                        $bind_types  = "i";
+                        $bind_values = [$counselor_id];
 
-                    // Add year filter if selected
-                    if ($year !== null) {
-                        $year_patterns = [$year];
-                        if (strpos($year, '-') !== false) {
-                            $year_parts = explode('-', $year);
-                            if (count($year_parts) == 2) {
-                                $short_year      = $year_parts[0] . '-' . substr($year_parts[1], -2);
-                                $year_patterns[] = $short_year;
+                        // Add academic year filter if selected
+                        if ($year !== null) {
+                            $year_patterns = [$year];
+                            if (strpos($year, '-') !== false) {
+                                $year_parts = explode('-', $year);
+                                if (count($year_parts) == 2) {
+                                    $short_year      = $year_parts[0] . '-' . substr($year_parts[1], -2);
+                                    $year_patterns[] = $short_year;
+                                }
+                            }
+                            $year_conditions    = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
+                            $where_conditions[] = "($year_conditions)";
+                            foreach ($year_patterns as $pattern) {
+                                $bind_types    .= 's';
+                                $bind_values[]  = $pattern;
                             }
                         }
-                        $year_conditions    = implode(' OR ', array_fill(0, count($year_patterns), 'e.current_year = ?'));
-                        $where_conditions[] = "($year_conditions)";
-                        foreach ($year_patterns as $pattern) {
-                            $bind_types    .= 's';
-                            $bind_values[]  = $pattern;
+
+                        // Add month range filter
+                        if ($start_month_val && $end_month_val) {
+                            $where_conditions[]  = "MONTH(e.start_date) >= ? AND MONTH(e.start_date) <= ?";
+                            $bind_types         .= 'ii';
+                            $bind_values[]       = $start_month_val;
+                            $bind_values[]       = $end_month_val;
+                        } elseif ($start_month_val) {
+                            $where_conditions[]  = "MONTH(e.start_date) = ?";
+                            $bind_types         .= 'i';
+                            $bind_values[]       = $start_month_val;
                         }
-                    }
 
-                    // Add department filter if selected
-                    if ($department !== null) {
-                        $where_conditions[]  = "e.department = ?";
-                        $bind_types         .= 's';
-                        $bind_values[]       = $department;
-                    }
-
-                    // Add semester filter if selected
-                    if ($semester !== null) {
-                        $where_conditions[]  = "e.semester = ?";
-                        $bind_types         .= 's';
-                        $bind_values[]       = $semester;
-                    }
-
-                    // Add event type filter if selected
-                    if ($event_type !== null) {
-                        $where_conditions[]  = "e.event_type = ?";
-                        $bind_types         .= 's';
-                        $bind_values[]       = $event_type;
-                    }
-
-                    // Add location filter if selected
-                    if ($location !== null) {
-                        if ($location === 'tamilnadu') {
-                            $where_conditions[] = "(LOWER(e.state) = 'tamil nadu' OR LOWER(e.state) = 'tamilnadu')";
-                        } else {
-                            $where_conditions[] = "(LOWER(e.state) != 'tamil nadu' AND LOWER(e.state) != 'tamilnadu' AND e.state IS NOT NULL AND e.state != '')";
+                        // Add department filter if selected
+                        if ($department_val !== null) {
+                            $where_conditions[]  = "e.department = ?";
+                            $bind_types         .= 's';
+                            $bind_values[]       = $department_val;
                         }
-                    }
 
-                    // Build final SQL query with counselor JOIN
-                    $where_clause = implode(' AND ', $where_conditions);
-                    $sql          = "SELECT e.id, e.regno, s.name, e.current_year, e.semester, e.department,
-                                 e.state, e.district, e.event_type, e.event_name, e.start_date, e.end_date, e.no_of_days,
-                                 e.organisation, e.prize, e.prize_amount, e.event_poster, e.certificates
+                        // Add semester filter if selected
+                        if ($semester_val !== null) {
+                            $where_conditions[]  = "e.semester = ?";
+                            $bind_types         .= 's';
+                            $bind_values[]       = $semester_val;
+                        }
+
+                        // Add event type filter if selected
+                        if ($event_type_val !== null) {
+                            $where_conditions[]  = "e.event_type = ?";
+                            $bind_types         .= 's';
+                            $bind_values[]       = $event_type_val;
+                        }
+
+                        // Add location filter if selected
+                        if ($location_val !== null) {
+                            if ($location_val === 'tamilnadu') {
+                                $where_conditions[] = "(LOWER(e.state) = 'tamil nadu' OR LOWER(e.state) = 'tamilnadu')";
+                            } else {
+                                $where_conditions[] = "(LOWER(e.state) != 'tamil nadu' AND LOWER(e.state) != 'tamilnadu' AND e.state IS NOT NULL AND e.state != '')";
+                            }
+                        }
+
+                        // Build final SQL query with counselor JOIN
+                        $where_clause = implode(' AND ', $where_conditions);
+                        $sql          = "SELECT e.id, e.regno, s.name, e.current_year, e.semester, e.department,
+                                     e.state, e.district, e.event_type, e.event_name, e.start_date, e.end_date, e.no_of_days,
+                                     e.organisation, e.prize, e.prize_amount, e.event_poster, e.certificates
                            FROM student_event_register e
                            JOIN student_register s ON e.regno = s.regno
                            INNER JOIN counselor_assignments ca ON e.regno = ca.student_regno
                            WHERE $where_clause";
 
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param($bind_types, ...$bind_values);
-                    $stmt->execute();
-                    $result = $stmt->get_result();
+                        $stmt = $conn->prepare($sql);
+                        $stmt->bind_param($bind_types, ...$bind_values);
+                        $stmt->execute();
+                        $result = $stmt->get_result();
 
-                    if ($result->num_rows > 0) {
-                        echo "<p class='scroll-hint'><span class='material-symbols-outlined'>swipe_left</span> Scroll left / right to view all columns</p>";
-                        echo "<div class='table-wrapper'>";
-                        echo "<table class='report-table'>";
-                        echo "<thead>";
-                        echo "<tr>";
-                        echo "<th>S.No</th>";
-                        echo "<th>Reg No</th>";
-                        echo "<th>Name</th>";
-                        echo "<th>Academic Year</th>";
-                        echo "<th>Semester</th>";
-                        echo "<th>Department</th>";
-                        echo "<th>State</th>";
-                        echo "<th>District</th>";
-                        echo "<th>Event Type</th>";
-                        echo "<th>Event Name</th>";
-                        echo "<th>Start Date</th>";
-                        echo "<th>End Date</th>";
-                        echo "<th>No of Days</th>";
-                        echo "<th>Organisation</th>";
-                        echo "<th>Prize</th>";
-                        echo "<th>Prize Amount</th>";
-                        echo "<th>Event Poster</th>";
-                        echo "<th>Certificates</th>";
-                        echo "</tr>";
-                        echo "</thead>";
-                        echo "<tbody>";
-
-                        $sno = 1;
-                        while ($row = $result->fetch_assoc()) {
+                        if ($result->num_rows > 0) {
+                            echo "<p class='scroll-hint'><span class='material-symbols-outlined'>swipe_left</span> Scroll left / right to view all columns</p>";
+                            echo "<div class='table-wrapper'>";
+                            echo "<table class='report-table'>";
+                            echo "<thead>";
                             echo "<tr>";
-                            echo "<td>" . $sno++ . "</td>";
-                            echo "<td>" . htmlspecialchars($row['regno']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['current_year']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['semester']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['department']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['state']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['district']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['event_type']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['event_name']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['start_date']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['end_date']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['no_of_days']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['organisation']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['prize']) . "</td>";
-                            echo "<td>" . htmlspecialchars($row['prize_amount']) . "</td>";
-
-                            // Event Poster Download
-                            if (! empty($row['event_poster'])) {
-                                echo "<td><a href='../admin/download.php?id=" . $row['id'] . "&type=poster' target='_blank'>Download Poster</a></td>";
-                            } else {
-                                echo "<td><span style='color:gray;'>No Poster</span></td>";
-                            }
-
-                            // Certificate Download
-                            if (! empty($row['certificates'])) {
-                                echo "<td><a href='../admin/download_new.php?id=" . $row['id'] . "&type=certificate' target='_blank'>Download Certificate</a></td>";
-                            } else {
-                                echo "<td><span style='color:gray;'>No Certificate</span></td>";
-                            }
-
+                            echo "<th>S.No</th>";
+                            echo "<th>Reg No</th>";
+                            echo "<th>Name</th>";
+                            echo "<th>Academic Year</th>";
+                            echo "<th>Semester</th>";
+                            echo "<th>Department</th>";
+                            echo "<th>State</th>";
+                            echo "<th>District</th>";
+                            echo "<th>Event Type</th>";
+                            echo "<th>Event Name</th>";
+                            echo "<th>Start Date</th>";
+                            echo "<th>End Date</th>";
+                            echo "<th>No of Days</th>";
+                            echo "<th>Organisation</th>";
+                            echo "<th>Prize</th>";
+                            echo "<th>Prize Amount</th>";
+                            echo "<th>Event Poster</th>";
+                            echo "<th>Certificates</th>";
                             echo "</tr>";
+                            echo "</thead>";
+                            echo "<tbody>";
+
+                            $sno = 1;
+                            while ($row = $result->fetch_assoc()) {
+                                echo "<tr>";
+                                echo "<td>" . $sno++ . "</td>";
+                                echo "<td>" . htmlspecialchars($row['regno']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['current_year']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['semester']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['department']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['state']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['district']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['event_type']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['event_name']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['start_date']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['end_date']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['no_of_days']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['organisation']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['prize']) . "</td>";
+                                echo "<td>" . htmlspecialchars($row['prize_amount']) . "</td>";
+
+                                // Event Poster Download
+                                if (! empty($row['event_poster'])) {
+                                    echo "<td><a href='../admin/download.php?id=" . $row['id'] . "&type=poster' target='_blank'>Download Poster</a></td>";
+                                } else {
+                                    echo "<td><span style='color:gray;'>No Poster</span></td>";
+                                }
+
+                                // Certificate Download
+                                if (! empty($row['certificates'])) {
+                                    echo "<td><a href='../admin/download_new.php?id=" . $row['id'] . "&type=certificate' target='_blank'>Download Certificate</a></td>";
+                                } else {
+                                    echo "<td><span style='color:gray;'>No Certificate</span></td>";
+                                }
+
+                                echo "</tr>";
+                            }
+
+                            echo "</tbody>";
+                            echo "</table>";
+                            echo "</div>";
+
+                            echo "<div class='export-buttons'>";
+
+                            // Excel export button
+                            echo "<form method='POST' action='export_excel_counselor.php' target='_blank' style='margin: 0;'>";
+                            if ($year !== null) {
+                                echo "<input type='hidden' name='year' value='" . htmlspecialchars($year) . "'>";
+                            }
+                            if ($start_month_val) {
+                                echo "<input type='hidden' name='start_month' value='" . htmlspecialchars($start_month_val) . "'>";
+                            }
+                            if ($end_month_val) {
+                                echo "<input type='hidden' name='end_month' value='" . htmlspecialchars($end_month_val) . "'>";
+                            }
+                            if ($department_val !== null) {
+                                echo "<input type='hidden' name='department' value='" . htmlspecialchars($department_val) . "'>";
+                            }
+                            if ($semester_val !== null) {
+                                echo "<input type='hidden' name='semester' value='" . htmlspecialchars($semester_val) . "'>";
+                            }
+                            if ($event_type_val !== null) {
+                                echo "<input type='hidden' name='event_type' value='" . htmlspecialchars($event_type_val) . "'>";
+                            }
+                            if ($location_val !== null) {
+                                echo "<input type='hidden' name='location' value='" . htmlspecialchars($location_val) . "'>";
+                            }
+                            echo "<button type='submit' class='btn-excel'>Download as Excel</button>";
+                            echo "</form>";
+
+                            // Download all certificates button
+                            echo "<form method='POST' action='download_certificates_counselor.php' target='_blank' style='margin: 0;'>";
+                            if ($year !== null) {
+                                echo "<input type='hidden' name='year' value='" . htmlspecialchars($year) . "'>";
+                            }
+                            if ($start_month_val) {
+                                echo "<input type='hidden' name='start_month' value='" . htmlspecialchars($start_month_val) . "'>";
+                            }
+                            if ($end_month_val) {
+                                echo "<input type='hidden' name='end_month' value='" . htmlspecialchars($end_month_val) . "'>";
+                            }
+                            if ($department_val !== null) {
+                                echo "<input type='hidden' name='department' value='" . htmlspecialchars($department_val) . "'>";
+                            }
+                            if ($semester_val !== null) {
+                                echo "<input type='hidden' name='semester' value='" . htmlspecialchars($semester_val) . "'>";
+                            }
+                            if ($event_type_val !== null) {
+                                echo "<input type='hidden' name='event_type' value='" . htmlspecialchars($event_type_val) . "'>";
+                            }
+                            if ($location_val !== null) {
+                                echo "<input type='hidden' name='location' value='" . htmlspecialchars($location_val) . "'>";
+                            }
+                            echo "<button type='submit' class='btn-certificates'>Download All Certificates</button>";
+                            echo "</form>";
+
+                            echo "</div>";
+
+                        } else {
+                            echo "<p class='no-records'>No records found for your assigned students.</p>";
                         }
 
-                        echo "</tbody>";
-                        echo "</table>";
-                        echo "</div>";
-
-                        echo "<div class='export-buttons'>";
-
-                        // Excel export button
-                        echo "<form method='POST' action='export_excel_counselor.php' target='_blank' style='margin: 0;'>";
-                        if ($year !== null) {
-                            echo "<input type='hidden' name='year' value='" . htmlspecialchars($year) . "'>";
-                        }
-                        if ($department !== null) {
-                            echo "<input type='hidden' name='department' value='" . htmlspecialchars($department) . "'>";
-                        }
-                        if ($semester !== null) {
-                            echo "<input type='hidden' name='semester' value='" . htmlspecialchars($semester) . "'>";
-                        }
-                        if ($event_type !== null) {
-                            echo "<input type='hidden' name='event_type' value='" . htmlspecialchars($event_type) . "'>";
-                        }
-                        if ($location !== null) {
-                            echo "<input type='hidden' name='location' value='" . htmlspecialchars($location) . "'>";
-                        }
-                        echo "<button type='submit' class='btn-excel'>Download as Excel</button>";
-                        echo "</form>";
-
-                        // Download all certificates button
-                        echo "<form method='POST' action='download_certificates_counselor.php' target='_blank' style='margin: 0;'>";
-                        if ($year !== null) {
-                            echo "<input type='hidden' name='year' value='" . htmlspecialchars($year) . "'>";
-                        }
-                        if ($department !== null) {
-                            echo "<input type='hidden' name='department' value='" . htmlspecialchars($department) . "'>";
-                        }
-                        if ($semester !== null) {
-                            echo "<input type='hidden' name='semester' value='" . htmlspecialchars($semester) . "'>";
-                        }
-                        if ($event_type !== null) {
-                            echo "<input type='hidden' name='event_type' value='" . htmlspecialchars($event_type) . "'>";
-                        }
-                        if ($location !== null) {
-                            echo "<input type='hidden' name='location' value='" . htmlspecialchars($location) . "'>";
-                        }
-                        echo "<button type='submit' class='btn-certificates'>Download All Certificates</button>";
-                        echo "</form>";
-
-                        echo "</div>";
-
-                    } else {
-                        echo "<p class='no-records'>No records found for your assigned students.</p>";
+                        $stmt->close();
+                        $conn->close();
                     }
-
-                    $stmt->close();
-                    $conn->close();
-                }
-            ?>
-        </div>
+                ?>
+            </div>
       </div>
     </div>
 

@@ -475,7 +475,7 @@
                         // ============================================================
                     } elseif ($old_status !== $status) {
                         error_log("SCENARIO 2: Status changed from '{$old_status}' to '{$status}'");
-
+    
                         // Push notification for status change
                         $oneSignal->notifyStatusChange($hackathon_id, $applied_regnos, $title, $old_status, $status, $poster_url);
 
@@ -1099,7 +1099,7 @@
                     <li class="nav-item">
                         <a href="internship_approvals.php" class="nav-link">
                             <span class="material-symbols-outlined">school</span>
-                            Internship Approvals
+                            Internship Validations
                         </a>
                     </li>
                     <li class="nav-item">

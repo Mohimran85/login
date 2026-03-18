@@ -325,14 +325,16 @@ $html_content = '
             classes for the specified duration.
         </p>
 
-        ' . $group_html . '
+        $group_html
 
         <p>
             ' . (empty($group_members_details) ? 'The student is' : 'The students are') . ' permitted to attend <strong>' . htmlspecialchars($od_data['event_name']) . '</strong>,
-            scheduled on <strong>' . date('l, F d, Y', strtotime($od_data['event_date'])) . '</strong>
-            at <strong>' . date('h:i A', strtotime($od_data['event_time'])) . '</strong>,
+            ' . ($od_data['event_type'] === 'Internship' ?
+    'scheduled from <strong>' . date('l, F d, Y', strtotime($od_data['internship_start_date'])) . '</strong> to <strong>' . date('l, F d, Y', strtotime($od_data['internship_end_date'])) . '</strong>' :
+    'scheduled on <strong>' . date('l, F d, Y', strtotime($od_data['event_date'])) . '</strong>
+            at <strong>' . date('h:i A', strtotime($od_data['event_time'])) . '</strong>') . ',
             to be held at <strong>' . htmlspecialchars($od_data['event_state']) . ', ' . htmlspecialchars($od_data['event_district']) . '</strong>
-            for a duration of <strong>' . (isset($od_data['event_days']) ? htmlspecialchars($od_data['event_days']) . ' day(s)' : 'one day') . '</strong>.
+            for a duration of <strong>' . ($od_data['event_type'] === 'Internship' ? htmlspecialchars($od_data['event_days'] ?? 'Internship duration') : (preg_match('/[a-zA-Z]/', $od_data['event_days']) ? htmlspecialchars($od_data['event_days']) : htmlspecialchars($od_data['event_days']) . ' day(s)')) . '</strong>.
             ' . htmlspecialchars($od_data['event_description']) . '
             The purpose of this OD request is: ' . htmlspecialchars($od_data['reason']) . '.
         </p>

@@ -372,6 +372,12 @@
                         <td class="label">Event Name</td>
                         <td class="value"><strong><?php echo htmlspecialchars($od_data['event_name']); ?></strong></td>
                     </tr>
+                    <?php if ($od_data['event_type'] === 'Internship'): ?>
+                    <tr>
+                        <td class="label">Internship Dates</td>
+                        <td class="value"><?php echo date('M d, Y', strtotime($od_data['internship_start_date'])) . ' to ' . date('M d, Y', strtotime($od_data['internship_end_date'])); ?></td>
+                    </tr>
+                    <?php else: ?>
                     <tr>
                         <td class="label">Event Date</td>
                         <td class="value"><?php echo date('l, F d, Y', strtotime($od_data['event_date'])); ?></td>
@@ -380,9 +386,19 @@
                         <td class="label">Event Time</td>
                         <td class="value"><?php echo date('h:i A', strtotime($od_data['event_time'])); ?></td>
                     </tr>
+                    <?php endif; ?>
                     <tr>
                         <td class="label">Duration</td>
-                        <td class="value"><?php echo isset($od_data['event_days']) ? htmlspecialchars($od_data['event_days']) . ' day(s)' : '1 day'; ?></td>
+                        <td class="value">
+                            <?php
+                                if ($od_data['event_type'] === 'Internship') {
+                                    echo htmlspecialchars($od_data['event_days'] ?? 'Internship Duration');
+                                } else {
+                                    $hasLetters = preg_match('/[a-zA-Z]/', $od_data['event_days']);
+                                    echo htmlspecialchars($od_data['event_days']) . ($hasLetters ? '' : ' day(s)');
+                                }
+                            ?>
+                        </td>
                     </tr>
                     <tr>
                         <td class="label">Venue / Location</td>

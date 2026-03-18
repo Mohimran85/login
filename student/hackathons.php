@@ -49,7 +49,11 @@
 
     // Build WHERE clause - show upcoming, ongoing, and completed hackathons (not drafts or cancelled)
     $where_conditions = ["hp.status IN ('upcoming', 'ongoing', 'completed')"];
-    $params           = [];
+
+    // Hide hackathons that have been closed for more than 3 days (registration deadline passed + 3 days)
+    $where_conditions[] = "DATEDIFF(NOW(), hp.registration_deadline) <= 3";
+
+    $params = [];
 
     if (! empty($filter_status) && $filter_status !== 'all') {
     $where_conditions[0] = "hp.status = ?";

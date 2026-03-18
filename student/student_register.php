@@ -18,7 +18,7 @@
     $conn_user = get_db_connection();
 
     $username  = $_SESSION['username'];
-    $user_sql  = "SELECT name, regno, semester, department FROM student_register WHERE username=?";
+    $user_sql  = "SELECT name, regno, year_of_join, department FROM student_register WHERE username=?";
     $user_stmt = $conn_user->prepare($user_sql);
     $user_stmt->bind_param("s", $username);
     $user_stmt->execute();
@@ -27,6 +27,23 @@
     if ($user_result->num_rows > 0) {
         $student_data    = $user_result->fetch_assoc();
         $logged_in_regno = $student_data['regno'];
+
+        // Auto-calculate current semester from year_of_join
+        // Sem 1: Jul-Dec of join year, Sem 2: Jan-Jun next year, etc. (6 months each, 8 total)
+        $join_year     = (int) $student_data['year_of_join'];
+        $now           = new DateTime();
+        $cur_yr        = (int) $now->format('Y');
+        $cur_mo        = (int) $now->format('n');
+        $months_since  = ($cur_yr - $join_year) * 12 + ($cur_mo - 7);
+        $calc_semester = ($months_since < 0) ? 1 : min(max((int) floor($months_since / 6) + 1, 1), 8);
+        $student_data['semester'] = $calc_semester;
+
+        // Auto-calculate current academic year (Jul-Dec = YYYY-(YY+1), Jan-Jun = (YYYY-1)-YY)
+        if ($cur_mo >= 7) {
+            $student_data['academic_year'] = $cur_yr . '-' . substr($cur_yr + 1, -2);
+        } else {
+            $student_data['academic_year'] = ($cur_yr - 1) . '-' . substr($cur_yr, -2);
+        }
     }
 
     $user_stmt->close();
@@ -1348,19 +1365,10 @@
           </div>
           <div class="item">
             <label for="year">Academic Year:<span class="required-asterisk">*</span></label>
-            <select id="year" name="year" required>
-              <option value="" disabled selected>Select Academic Year</option>
-              <?php
-                  // Generate last 10 academic years starting from current year
-                  $current_year = date('Y');
-                  for ($i = 0; $i < 10; $i++) {
-                      $start_year    = $current_year - $i;
-                      $end_year      = substr($start_year + 1, -2); // Get last 2 digits
-                      $academic_year = $start_year . '-' . $end_year;
-                      echo "<option value='$academic_year'>$academic_year</option>";
-                  }
-              ?>
-            </select>
+            <input type="text" id="year" name="year"
+                   value="<?php echo isset($student_data['academic_year']) ? htmlspecialchars($student_data['academic_year']) : ''; ?>"
+                   placeholder="Auto-calculated from batch year"
+                   readonly required>
           </div>
           <div class="item">
             <label for="department">Department:<span class="required-asterisk">*</span></label>

@@ -48,82 +48,6 @@
     exit();
     }
 
-    // Handle bulk semester update for all assigned students
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_bulk_semester'])) {
-    $bulk_semester = $_POST['bulk_semester'];
-
-    if (! empty($bulk_semester)) {
-        // Get all students assigned to this counselor
-        $get_students_sql = "SELECT student_regno FROM counselor_assignments
-                                WHERE counselor_id = ? AND status = 'active'";
-        $get_students_stmt = $conn->prepare($get_students_sql);
-        $get_students_stmt->bind_param("i", $counselor_id);
-        $get_students_stmt->execute();
-        $students_result = $get_students_stmt->get_result();
-
-        $updated_count = 0;
-        while ($student = $students_result->fetch_assoc()) {
-            $update_sql  = "UPDATE student_register SET semester = ? WHERE regno = ?";
-            $update_stmt = $conn->prepare($update_sql);
-            $update_stmt->bind_param("ss", $bulk_semester, $student['student_regno']);
-
-            if ($update_stmt->execute() && $update_stmt->affected_rows > 0) {
-                $updated_count++;
-            }
-            $update_stmt->close();
-        }
-        $get_students_stmt->close();
-
-        $_SESSION['success_message'] = "Successfully updated semester to $bulk_semester for $updated_count student(s)!";
-    } else {
-        $_SESSION['error_message'] = "Please select a semester.";
-    }
-
-    // Redirect to avoid form resubmission
-    header("Location: assigned_students.php");
-    exit();
-    }
-
-    // Handle individual semester updates
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_all_semesters'])) {
-    $semesters     = $_POST['semester'] ?? [];
-    $updated_count = 0;
-    $unchanged_count = 0;
-    $failed_count  = 0;
-
-    foreach ($semesters as $regno => $new_semester) {
-        if (! empty($new_semester)) {
-            $update_sql  = "UPDATE student_register SET semester = ? WHERE regno = ?";
-            $update_stmt = $conn->prepare($update_sql);
-            $update_stmt->bind_param("ss", $new_semester, $regno);
-
-            if ($update_stmt->execute()) {
-                if ($update_stmt->affected_rows > 0) {
-                $updated_count++;
-                } else {
-                $unchanged_count++;
-                }
-            } else {
-                $failed_count++;
-            }
-            $update_stmt->close();
-        }
-    }
-
-    if ($updated_count > 0) {
-        $_SESSION['success_message'] = "Successfully updated semester for $updated_count student(s)!";
-    } elseif ($failed_count === 0 && $unchanged_count > 0) {
-        $_SESSION['success_message'] = "No semester changes were detected.";
-    }
-    if ($failed_count > 0) {
-        $_SESSION['error_message'] = "Failed to update $failed_count student(s).";
-    }
-
-    // Redirect to avoid form resubmission
-    header("Location: assigned_students.php");
-    exit();
-    }
-
     // Pagination settings
     $records_per_page = 15;
     $page             = isset($_GET['page']) ? (int) $_GET['page'] : 1;
@@ -149,9 +73,9 @@
     }
 
     if (! empty($semester_filter)) {
-    $where_conditions[]  = "sr.semester = ?";
-    $params[]            = $semester_filter;
-    $types              .= 's';
+    $where_conditions[]  = "GREATEST(LEAST(FLOOR(((YEAR(CURDATE()) - sr.year_of_join) * 12 + (MONTH(CURDATE()) - 7)) / 6) + 1, 8), 1) = ?";
+    $params[]            = (int) $semester_filter;
+    $types              .= 'i';
     }
 
     if (! empty($event_category_filter)) {
@@ -186,7 +110,7 @@
     $total_pages = ceil($total_records / $records_per_page);
 
     // Get assigned students with pagination
-    $students_sql = "SELECT sr.name, sr.regno, sr.department, sr.year_of_join, sr.semester,
+    $students_sql = "SELECT sr.name, sr.regno, sr.department, sr.year_of_join,
                            sr.personal_email as email, sr.dob, ca.assigned_date,
                            COUNT(DISTINCT ser.id) as total_events,
                            SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prizes_won
@@ -194,13 +118,13 @@
                     JOIN student_register sr ON ca.student_regno = sr.regno
                     LEFT JOIN student_event_register ser ON sr.regno = ser.regno
                     $where_clause
-                    GROUP BY sr.regno, sr.name, sr.department, sr.year_of_join, sr.semester,
+                    GROUP BY sr.regno, sr.name, sr.department, sr.year_of_join,
                              sr.personal_email, sr.dob, ca.assigned_date
                     ORDER BY sr.name ASC
                     LIMIT ? OFFSET ?";
 
-    $params[] = $records_per_page;
-    $params[] = $offset;
+    $params[]  = $records_per_page;
+    $params[]  = $offset;
     $types    .= 'ii';
 
     $students_stmt = $conn->prepare($students_sql);
@@ -213,6 +137,18 @@
     while ($row = $students_result->fetch_assoc()) {
     $students_data[] = $row;
     }
+
+    // Auto-calculate semester from year_of_join for each student
+    // Sem 1: Jul-Dec of join year, Sem 2: Jan-Jun next year, 6 months each, 8 total
+    $now_calc = new DateTime();
+    $cur_yr   = (int) $now_calc->format('Y');
+    $cur_mo   = (int) $now_calc->format('n');
+    foreach ($students_data as &$stu) {
+    $join_yr         = (int) $stu['year_of_join'];
+    $months_since    = ($cur_yr - $join_yr) * 12 + ($cur_mo - 7);
+    $stu['semester'] = ($months_since < 0) ? 1 : min(max((int) floor($months_since / 6) + 1, 1), 8);
+    }
+    unset($stu);
 
     // Get available event categories for filter dropdown
     $event_categories_sql = "SELECT DISTINCT ser.event_type
@@ -562,28 +498,6 @@
             font-size: 20px;
         }
 
-        /* Semester Update Styles */
-        .semester-update {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .semester-select {
-            padding: 6px 10px;
-            border: 2px solid #e9ecef;
-            border-radius: 6px;
-            font-size: 13px;
-            font-family: 'Poppins', sans-serif;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .semester-select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
         .update-btn {
             padding: 6px 12px;
             background: var(--primary-color);
@@ -795,19 +709,6 @@
                 border: 1px solid rgba(255,255,255,0.3);
             }
 
-            /* Semester update in mobile */
-            .semester-update {
-                flex-direction: column;
-                align-items: flex-end;
-                gap: 6px;
-            }
-
-            .semester-select {
-                width: 100%;
-                max-width: 120px;
-                font-size: 13px;
-            }
-
             .update-btn {
                 width: 100%;
                 max-width: 120px;
@@ -904,6 +805,126 @@
                 }
             }
         }
+
+        /* Clickable badge */
+        .event-badge-clickable {
+            cursor: pointer;
+            transition: opacity 0.2s ease, transform 0.15s ease;
+        }
+        .event-badge-clickable:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        /* Event Modal */
+        .event-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+        }
+        .event-modal-overlay.active {
+            display: flex;
+        }
+        .event-modal {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 680px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+        }
+        .event-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px 16px;
+            border-bottom: 2px solid #e9ecef;
+            flex-shrink: 0;
+        }
+        .event-modal-header h3 {
+            margin: 0;
+            color: #1e4276;
+            font-size: 17px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .event-modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .event-modal-close:hover {
+            background: #f1f3f5;
+            color: #212529;
+        }
+        .event-modal-body {
+            overflow-y: auto;
+            padding: 20px 24px;
+            flex: 1;
+        }
+        .event-list-item {
+            padding: 14px 16px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .event-list-item:last-child {
+            margin-bottom: 0;
+        }
+        .event-item-name {
+            font-weight: 600;
+            color: #212529;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        .event-item-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        .event-item-meta .meta-chip {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .event-item-meta .material-symbols-outlined {
+            font-size: 14px;
+        }
+        .event-modal-loading, .event-modal-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+        }
+        .event-modal-loading .material-symbols-outlined,
+        .event-modal-empty .material-symbols-outlined {
+            font-size: 48px;
+            opacity: 0.4;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .badge-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -983,7 +1004,7 @@
                     <li class="nav-item">
                         <a href="internship_approvals.php" class="nav-link">
                             <span class="material-symbols-outlined">school</span>
-                            Internship Approvals
+                            Internship Validations
                         </a>
                     </li>
                     <li class="nav-item">
@@ -1069,11 +1090,11 @@
                     <div class="stat-number"><?php echo $stats['total_students'] ?? 0; ?></div>
                     <div class="stat-label">Assigned Students</div>
                 </div>
-                <div class="stat-card success">
+                <div class="stat-card success" id="statTotalEvents" style="cursor:pointer;" title="Click to view all event participations">
                     <div class="stat-number"><?php echo $stats['total_events'] ?? 0; ?></div>
                     <div class="stat-label">Total Event Participations</div>
                 </div>
-                <div class="stat-card warning">
+                <div class="stat-card warning" id="statPrizesWon" style="cursor:pointer;" title="Click to view all prize winners">
                     <div class="stat-number"><?php echo $stats['prize_winners'] ?? 0; ?></div>
                     <div class="stat-label">Prizes Won</div>
                 </div>
@@ -1086,18 +1107,6 @@
                         <span class="material-symbols-outlined">filter_alt</span>
                         <h2>Filter Students</h2>
                     </div>
-                    <form method="POST" style="display: flex; gap: 10px; align-items: center;" onsubmit="return confirmBulkUpdate()">
-                        <select id="bulkSemester" name="bulk_semester" class="filter-select" required>
-                            <option value="">Select Semester</option>
-                            <?php for ($i = 1; $i <= 8; $i++): ?>
-                                <option value="<?php echo $i; ?>">Semester<?php echo $i; ?></option>
-                            <?php endfor; ?>
-                        </select>
-                        <button type="submit" name="update_bulk_semester" class="btn btn-primary">
-                            <span class="material-symbols-outlined">save</span>
-                            Update All
-                        </button>
-                    </form>
                 </div>
 
                 <form method="GET" action="">
@@ -1155,7 +1164,6 @@
                 </div>
 
                 <?php if (count($students_data) > 0): ?>
-                    <form method="POST" id="semesterUpdateForm" onsubmit="return confirm('Are you sure you want to update all modified semesters?');">
                     <!-- Desktop Table View -->
                     <div class="table-container">
                         <table>
@@ -1186,23 +1194,27 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select desktop-semester-select">
-                                                <?php for ($s = 1; $s <= 8; $s++): ?>
-                                                    <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
-                                                        Semester                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo $s; ?>
-                                                    </option>
-                                                <?php endfor; ?>
-                                            </select>
+                                            <span class="badge badge-info">
+                                                Sem <?php echo htmlspecialchars($student['semester']); ?>
+                                            </span>
                                         </td>
                                         <td><?php echo htmlspecialchars($student['year_of_join']); ?></td>
                                         <td>
-                                            <span class="badge badge-info">
+                                            <span class="badge badge-info event-badge-clickable"
+                                                  data-regno="<?php echo htmlspecialchars($student['regno']); ?>"
+                                                  data-name="<?php echo htmlspecialchars($student['name']); ?>"
+                                                  data-filter="all"
+                                                  title="Click to view events">
                                                 <?php echo $student['total_events'] ?? 0; ?> Events
                                             </span>
                                         </td>
                                         <td>
                                             <?php if (($student['prizes_won'] ?? 0) > 0): ?>
-                                                <span class="badge badge-success">
+                                                <span class="badge badge-success event-badge-clickable"
+                                                      data-regno="<?php echo htmlspecialchars($student['regno']); ?>"
+                                                      data-name="<?php echo htmlspecialchars($student['name']); ?>"
+                                                      data-filter="prizes"
+                                                      title="Click to view prizes">
                                                     <?php echo $student['prizes_won']; ?> Prizes
                                                 </span>
                                             <?php else: ?>
@@ -1238,14 +1250,8 @@
                                     <div class="info-row">
                                         <span class="info-label">Semester:</span>
                                         <span class="info-value">
-                                            <select name="semester[<?php echo htmlspecialchars($student['regno']); ?>]" class="semester-select mobile-semester-select" style="font-size: 12px; padding: 4px 8px;">
-                                                <?php for ($s = 1; $s <= 8; $s++): ?>
-                                                    <option value="<?php echo $s; ?>"<?php echo($student['semester'] ?? '') == $s ? 'selected' : ''; ?>>
-                                                        <?php echo $s; ?>
-                                                    </option>
-                                                <?php endfor; ?>
-                                            </select>
-                                        </span>
+                                                Sem <?php echo htmlspecialchars($student['semester']); ?>
+                                            </span>
                                     </div>
                                     <div class="info-row">
                                         <span class="info-label">Year of Join:</span>
@@ -1254,14 +1260,26 @@
                                     <div class="info-row">
                                         <span class="info-label">Events:</span>
                                         <span class="info-value">
-                                            <span class="badge badge-info"><?php echo $student['total_events'] ?? 0; ?></span>
+                                            <span class="badge badge-info event-badge-clickable"
+                                                  data-regno="<?php echo htmlspecialchars($student['regno']); ?>"
+                                                  data-name="<?php echo htmlspecialchars($student['name']); ?>"
+                                                  data-filter="all"
+                                                  title="Click to view events">
+                                                <?php echo $student['total_events'] ?? 0; ?>
+                                            </span>
                                         </span>
                                     </div>
                                     <div class="info-row">
                                         <span class="info-label">Prizes:</span>
                                         <span class="info-value">
                                             <?php if (($student['prizes_won'] ?? 0) > 0): ?>
-                                                <span class="badge badge-success"><?php echo $student['prizes_won']; ?></span>
+                                                <span class="badge badge-success event-badge-clickable"
+                                                      data-regno="<?php echo htmlspecialchars($student['regno']); ?>"
+                                                      data-name="<?php echo htmlspecialchars($student['name']); ?>"
+                                                      data-filter="prizes"
+                                                      title="Click to view prizes">
+                                                    <?php echo $student['prizes_won']; ?>
+                                                </span>
                                             <?php else: ?>
                                                 <span class="badge badge-warning">None</span>
                                             <?php endif; ?>
@@ -1286,14 +1304,6 @@
                             </div>
                         <?php endforeach; ?>
                     </div>
-
-                    <div style="margin-top: 20px; text-align: center;">
-                        <button type="submit" name="update_all_semesters" class="btn btn-primary">
-                            <span class="material-symbols-outlined">save</span>
-                            Update Semesters
-                        </button>
-                    </div>
-                    </form>
 
                     <!-- Pagination -->
                     <?php if ($total_pages > 1): ?>
@@ -1339,6 +1349,27 @@
         </div>
     </div>
 
+    <!-- Events Modal -->
+    <div class="event-modal-overlay" id="eventModalOverlay">
+        <div class="event-modal">
+            <div class="event-modal-header">
+                <h3 id="eventModalTitle">
+                    <span class="material-symbols-outlined">event</span>
+                    Events Attended
+                </h3>
+                <button class="event-modal-close" id="eventModalClose">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="event-modal-body" id="eventModalBody">
+                <div class="event-modal-loading">
+                    <span class="material-symbols-outlined">hourglass_empty</span>
+                    <p>Loading events...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Sidebar Toggle
         const menuIcon = document.querySelector('.menu-icon');
@@ -1360,30 +1391,144 @@
             }
         });
 
-        // Confirm bulk semester update
-        function confirmBulkUpdate() {
-            const selectedSemester = document.getElementById('bulkSemester').value;
-            return confirm('Are you sure you want to update ALL assigned students to Semester ' + selectedSemester + '?');
+        // Event Modal
+        const eventModalOverlay = document.getElementById('eventModalOverlay');
+        const eventModalClose   = document.getElementById('eventModalClose');
+        const eventModalTitle   = document.getElementById('eventModalTitle');
+        const eventModalBody    = document.getElementById('eventModalBody');
+
+        function openEventModal(regno, studentName, filter) {
+            const isPrizes = filter === 'prizes';
+            eventModalTitle.innerHTML = '<span class="material-symbols-outlined">' + (isPrizes ? 'emoji_events' : 'event') + '</span>'
+                + (isPrizes ? 'Prizes Won' : 'Events Attended') + ' &mdash; ' + studentName;
+            eventModalBody.innerHTML = '<div class="event-modal-loading"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div>';
+            eventModalOverlay.classList.add('active');
+
+            fetch('get_student_events.php?regno=' + encodeURIComponent(regno) + '&filter=' + encodeURIComponent(filter))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) {
+                        eventModalBody.innerHTML = '<div class="event-modal-empty"><span class="material-symbols-outlined">error</span><p>' + data.error + '</p></div>';
+                        return;
+                    }
+                    if (!data.events.length) {
+                        eventModalBody.innerHTML = '<div class="event-modal-empty"><span class="material-symbols-outlined">event_busy</span><p>No events found.</p></div>';
+                        return;
+                    }
+                    var html = '';
+                    data.events.forEach(function(ev) {
+                        var prizeBadge = '';
+                        if (ev.prize) {
+                            var pc = ev.prize === 'First' ? 'badge-success' : (ev.prize === 'Second' ? 'badge-info' : 'badge-warning');
+                            prizeBadge = '<span class="badge ' + pc + '">' + ev.prize + ' Prize</span>';
+                        }
+                        var sc = ev.verification_status === 'Verified' ? 'badge-success'
+                               : (ev.verification_status === 'Rejected' ? 'badge-danger' : 'badge-warning');
+                        html += '<div class="event-list-item">'
+                            + '<div class="event-item-name">' + ev.event_name + '</div>'
+                            + '<div class="event-item-meta">';
+                        if (ev.organisation) {
+                            html += '<span class="meta-chip"><span class="material-symbols-outlined">business</span>' + ev.organisation + '</span>';
+                        }
+                        if (ev.start_date) {
+                            html += '<span class="meta-chip"><span class="material-symbols-outlined">calendar_today</span>' + ev.start_date + '</span>';
+                        }
+                        if (ev.event_type) {
+                            html += '<span class="badge badge-info">' + ev.event_type + '</span>';
+                        }
+                        if (prizeBadge) html += prizeBadge;
+                        html += '<span class="badge ' + sc + '">' + ev.verification_status + '</span>';
+                        html += '</div></div>';
+                    });
+                    eventModalBody.innerHTML = html;
+                })
+                .catch(function() {
+                    eventModalBody.innerHTML = '<div class="event-modal-empty"><span class="material-symbols-outlined">error</span><p>Failed to load events.</p></div>';
+                });
         }
 
-        // Only submit semester fields from the currently visible layout (desktop/mobile).
-        function syncSemesterInputState() {
-            const isMobileView = window.matchMedia('(max-width: 768px)').matches;
-
-            document.querySelectorAll('.desktop-semester-select').forEach((select) => {
-                select.disabled = isMobileView;
+        document.querySelectorAll('.event-badge-clickable').forEach(function(badge) {
+            badge.addEventListener('click', function() {
+                openEventModal(this.dataset.regno, this.dataset.name, this.dataset.filter || 'all');
             });
+        });
 
-            document.querySelectorAll('.mobile-semester-select').forEach((select) => {
-                select.disabled = !isMobileView;
-            });
+        eventModalClose.addEventListener('click', function() {
+            eventModalOverlay.classList.remove('active');
+        });
+
+        eventModalOverlay.addEventListener('click', function(e) {
+            if (e.target === eventModalOverlay) {
+                eventModalOverlay.classList.remove('active');
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') eventModalOverlay.classList.remove('active');
+        });
+
+        function openAllEventsModal(filter) {
+            const isPrizes = filter === 'prizes';
+            eventModalTitle.innerHTML = '<span class="material-symbols-outlined">' + (isPrizes ? 'emoji_events' : 'event') + '</span>'
+                + (isPrizes ? 'All Prizes Won' : 'All Event Participations');
+            eventModalBody.innerHTML = '<div class="event-modal-loading"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div>';
+            eventModalOverlay.classList.add('active');
+
+            fetch('get_all_events.php?filter=' + encodeURIComponent(filter))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) {
+                        eventModalBody.innerHTML = '<div class="event-modal-empty"><span class="material-symbols-outlined">error</span><p>' + data.error + '</p></div>';
+                        return;
+                    }
+                    if (!data.events.length) {
+                        eventModalBody.innerHTML = '<div class="event-modal-empty"><span class="material-symbols-outlined">event_busy</span><p>No events found.</p></div>';
+                        return;
+                    }
+                    var html = '';
+                    data.events.forEach(function(ev) {
+                        var prizeBadge = '';
+                        if (ev.prize) {
+                            var pc = ev.prize === 'First' ? 'badge-success' : (ev.prize === 'Second' ? 'badge-info' : 'badge-warning');
+                            prizeBadge = '<span class="badge ' + pc + '">' + ev.prize + ' Prize</span>';
+                        }
+                        var sc = ev.verification_status === 'Verified' ? 'badge-success'
+                               : (ev.verification_status === 'Rejected' ? 'badge-danger' : 'badge-warning');
+                        html += '<div class="event-list-item">'
+                            + '<div class="event-item-name">' + ev.event_name + '</div>'
+                            + '<div class="event-item-meta">';
+                        html += '<span class="meta-chip"><span class="material-symbols-outlined">person</span>' + ev.student_name + ' (' + ev.regno + ')</span>';
+                        if (ev.organisation) {
+                            html += '<span class="meta-chip"><span class="material-symbols-outlined">business</span>' + ev.organisation + '</span>';
+                        }
+                        if (ev.start_date) {
+                            html += '<span class="meta-chip"><span class="material-symbols-outlined">calendar_today</span>' + ev.start_date + '</span>';
+                        }
+                        if (ev.event_type) {
+                            html += '<span class="badge badge-info">' + ev.event_type + '</span>';
+                        }
+                        if (prizeBadge) html += prizeBadge;
+                        html += '<span class="badge ' + sc + '">' + ev.verification_status + '</span>';
+                        html += '</div></div>';
+                    });
+                    eventModalBody.innerHTML = html;
+                })
+                .catch(function() {
+                    eventModalBody.innerHTML = '<div class="event-modal-empty"><span class="material-symbols-outlined">error</span><p>Failed to load events.</p></div>';
+                });
         }
 
-        syncSemesterInputState();
-        window.addEventListener('resize', syncSemesterInputState);
+        document.getElementById('statTotalEvents').addEventListener('click', function() {
+            openAllEventsModal('all');
+        });
+
+        document.getElementById('statPrizesWon').addEventListener('click', function() {
+            openAllEventsModal('prizes');
+        });
     </script>
 </body>
 </html>
+
 
 <?php
     $conn->close();

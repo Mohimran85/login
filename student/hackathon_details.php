@@ -50,10 +50,13 @@
     FROM hackathon_posts hp
     LEFT JOIN teacher_register tr ON hp.created_by = tr.id
     LEFT JOIN hackathon_applications ha ON hp.id = ha.hackathon_id
-    WHERE hp.id = ? AND hp.status IN ('upcoming', 'ongoing')
+    WHERE hp.id = ? AND (
+        (hp.status IN ('upcoming', 'ongoing', 'completed') AND DATEDIFF(NOW(), hp.registration_deadline) <= 3)
+        OR EXISTS (SELECT 1 FROM hackathon_applications WHERE hackathon_id = hp.id AND student_regno = ?)
+    )
     GROUP BY hp.id";
 
-    $hackathons = $db->executeQuery($hackathon_sql, [$student_regno, $hackathon_id]);
+    $hackathons = $db->executeQuery($hackathon_sql, [$student_regno, $hackathon_id, $student_regno]);
 
     if (empty($hackathons)) {
     $_SESSION['error_message'] = "Hackathon not found or not available.";

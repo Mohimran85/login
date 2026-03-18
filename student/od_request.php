@@ -26,6 +26,43 @@
     if ($check_column && $check_column->num_rows == 0) {
         $conn->query("ALTER TABLE od_requests ADD COLUMN event_district VARCHAR(100) DEFAULT ''");
     }
+
+    // Check if event_type column exists, if not add it
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'event_type'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN event_type VARCHAR(100) DEFAULT '' AFTER event_name");
+    }
+
+    // Internship support columns
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'company_name'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN company_name VARCHAR(255) NULL AFTER event_type");
+    }
+
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'internship_role'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN internship_role VARCHAR(255) NULL AFTER company_name");
+    }
+
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'internship_start_date'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN internship_start_date DATE NULL AFTER internship_role");
+    }
+
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'internship_end_date'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN internship_end_date DATE NULL AFTER internship_start_date");
+    }
+
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'offer_letter'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN offer_letter VARCHAR(255) NULL AFTER event_poster");
+    }
+
+    $check_column = $conn->query("SHOW COLUMNS FROM od_requests LIKE 'internship_mode'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE od_requests ADD COLUMN internship_mode VARCHAR(20) NULL AFTER internship_role");
+    }
     } catch (Exception $e) {
     // Silently continue if migration fails
     }
@@ -94,6 +131,12 @@
                 student_regno VARCHAR(50) NOT NULL,
                 counselor_id INT NOT NULL,
                 event_name VARCHAR(255) NOT NULL,
+            event_type VARCHAR(100) NOT NULL,
+                company_name VARCHAR(255) NULL,
+                internship_role VARCHAR(255) NULL,
+                internship_mode VARCHAR(20) NULL,
+                internship_start_date DATE NULL,
+                internship_end_date DATE NULL,
                 event_description TEXT NOT NULL,
                 event_state VARCHAR(100) NOT NULL,
                 event_district VARCHAR(100) NOT NULL,
@@ -101,6 +144,7 @@
                 event_time TIME NOT NULL,
                 event_days VARCHAR(20) NOT NULL,
                 event_poster VARCHAR(255) NULL,
+                offer_letter VARCHAR(255) NULL,
                 reason TEXT NOT NULL,
                 group_members TEXT NULL,
                 request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -118,32 +162,83 @@
         }
 
         // Get and trim input data
-        $event_name        = isset($_POST['event_name']) ? trim($_POST['event_name']) : '';
-        $event_description = isset($_POST['event_description']) ? trim($_POST['event_description']) : '';
-        $event_state       = isset($_POST['event_state']) ? trim($_POST['event_state']) : '';
-        $event_district    = isset($_POST['event_district']) ? trim($_POST['event_district']) : '';
-        $event_date        = isset($_POST['event_date']) ? $_POST['event_date'] : '';
-        $event_time        = isset($_POST['event_time']) ? $_POST['event_time'] : '';
-        $event_days        = isset($_POST['event_days']) ? trim($_POST['event_days']) : '';
-        $reason            = isset($_POST['reason']) ? trim($_POST['reason']) : '';
+        $event_name          = isset($_POST['event_name']) ? trim($_POST['event_name']) : '';
+        $event_type          = isset($_POST['event_type']) ? trim($_POST['event_type']) : '';
+        $company_name        = isset($_POST['company_name']) ? trim($_POST['company_name']) : '';
+        $internship_role     = isset($_POST['internship_role']) ? trim($_POST['internship_role']) : '';
+        $internship_mode     = isset($_POST['internship_mode']) ? trim($_POST['internship_mode']) : '';
+        $internship_start    = isset($_POST['internship_start_date']) ? trim($_POST['internship_start_date']) : '';
+        $internship_end      = isset($_POST['internship_end_date']) ? trim($_POST['internship_end_date']) : '';
+        $event_description   = isset($_POST['event_description']) ? trim($_POST['event_description']) : '';
+        $event_state         = isset($_POST['event_state']) ? trim($_POST['event_state']) : '';
+        $event_district      = isset($_POST['event_district']) ? trim($_POST['event_district']) : '';
+        $event_date          = isset($_POST['event_date']) ? $_POST['event_date'] : '';
+        $event_time          = isset($_POST['event_time']) ? $_POST['event_time'] : '';
+        $event_days          = isset($_POST['event_days']) ? trim($_POST['event_days']) : '';
+        $internship_duration = isset($_POST['internship_duration']) ? trim($_POST['internship_duration']) : '';
+        $reason              = isset($_POST['reason']) ? trim($_POST['reason']) : '';
+
+        $allowed_event_types      = ['Workshop', 'Symposium', 'Conference', 'Webinar', 'Competition', 'Seminar', 'Hackathon', 'Training', 'Cultural Event', 'Sports Event', 'Technical Event', 'Internship', 'Other'];
+        $allowed_internship_modes = ['Remote', 'Onsite', 'Hybrid'];
 
         // FIELD VALIDATION
+        $is_internship = ($event_type === 'Internship');
 
         // Validate Event Name
-        if (empty($event_name)) {
+        if (! $is_internship && empty($event_name)) {
             $validation_errors[] = "Event Name is required.";
-        } elseif (strlen($event_name) < 3) {
+        } elseif (! $is_internship && strlen($event_name) < 3) {
             $validation_errors[] = "Event Name must be at least 3 characters long.";
-        } elseif (strlen($event_name) > 255) {
+        } elseif (! $is_internship && strlen($event_name) > 255) {
             $validation_errors[] = "Event Name cannot exceed 255 characters.";
-        } elseif (! preg_match('/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i', $event_name)) {
+        } elseif (! $is_internship && ! preg_match('/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i', $event_name)) {
             $validation_errors[] = "Event Name contains invalid characters. Only letters, numbers, spaces, hyphens, dots, commas, ampersands, and parentheses are allowed.";
         }
 
+        // Validate Event Type
+        if (empty($event_type)) {
+            $validation_errors[] = "Event Type is required.";
+        } elseif (! in_array($event_type, $allowed_event_types, true)) {
+            $validation_errors[] = "Please select a valid Event Type.";
+        }
+
+        // Internship-specific validation
+        if ($is_internship) {
+            if (empty($company_name)) {
+                $validation_errors[] = "Company/Organization Name is required for Internship.";
+            } elseif (strlen($company_name) < 3 || strlen($company_name) > 255) {
+                $validation_errors[] = "Company/Organization Name must be between 3 and 255 characters.";
+            }
+
+            if (empty($internship_role)) {
+                $validation_errors[] = "Internship Role is required.";
+            } elseif (strlen($internship_role) < 2 || strlen($internship_role) > 255) {
+                $validation_errors[] = "Internship Role must be between 2 and 255 characters.";
+            }
+
+            if (empty($internship_mode)) {
+                $validation_errors[] = "Internship Type is required.";
+            } elseif (! in_array($internship_mode, $allowed_internship_modes, true)) {
+                $validation_errors[] = "Please select a valid Internship Type.";
+            }
+
+            if (empty($internship_start) || empty($internship_end)) {
+                $validation_errors[] = "Internship Start Date and End Date are required.";
+            } else {
+                $internship_start_time = strtotime($internship_start);
+                $internship_end_time   = strtotime($internship_end);
+                if ($internship_start_time === false || $internship_end_time === false) {
+                    $validation_errors[] = "Invalid internship date format.";
+                } elseif ($internship_end_time < $internship_start_time) {
+                    $validation_errors[] = "Internship End Date must be same or after Start Date.";
+                }
+            }
+        }
+
         // Validate Event Date
-        if (empty($event_date)) {
+        if (! $is_internship && empty($event_date)) {
             $validation_errors[] = "Event Date is required.";
-        } else {
+        } elseif (! $is_internship) {
             $event_date_time = strtotime($event_date);
             $today           = strtotime(date('Y-m-d'));
 
@@ -157,9 +252,9 @@
         }
 
         // Validate Event Time
-        if (empty($event_time)) {
+        if (! $is_internship && empty($event_time)) {
             $validation_errors[] = "Event Time is required.";
-        } else {
+        } elseif (! $is_internship) {
             if (! preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/', $event_time)) {
                 $validation_errors[] = "Invalid Event Time format. Please use HH:MM format.";
             }
@@ -179,20 +274,31 @@
             $validation_errors[] = "Please select a valid Event District.";
         }
 
-        // Validate Number of Days
-        if (empty($event_days)) {
-            $validation_errors[] = "Number of Days/Hours is required.";
+        // Validate Number of Days / Duration
+        if ($is_internship) {
+            if (empty($internship_duration)) {
+                $validation_errors[] = "Internship Duration is required.";
+            } else {
+                $valid_durations = ['1 Month', '2 Months', '3 Months', '4 Months', '5 Months', '6 Months', 'Other'];
+                if (! in_array($internship_duration, $valid_durations)) {
+                    $validation_errors[] = "Invalid selection for Internship Duration.";
+                }
+            }
         } else {
-            $valid_days = ['1 hour', '2 hours', '3 hours', '4 hours', '5 hours', '6 hours', '7 hours', '1', '2', '3', '4', '5', '6', '7', 'other'];
-            if (! in_array($event_days, $valid_days)) {
-                $validation_errors[] = "Invalid selection for Number of Days/Hours.";
+            if (empty($event_days)) {
+                $validation_errors[] = "Number of Days/Hours is required.";
+            } else {
+                $valid_days = ['1 hour', '2 hours', '3 hours', '4 hours', '5 hours', '6 hours', '7 hours', '1', '2', '3', '4', '5', '6', '7', 'other'];
+                if (! in_array($event_days, $valid_days)) {
+                    $validation_errors[] = "Invalid selection for Number of Days/Hours.";
+                }
             }
         }
 
         // Validate Event Description
-        if (empty($event_description)) {
+        if (! $is_internship && empty($event_description)) {
             $validation_errors[] = "Event Description is required.";
-        } else {
+        } elseif (! $is_internship) {
             $desc_word_count = str_word_count($event_description);
 
             if ($desc_word_count < 5) {
@@ -220,7 +326,7 @@
         }
 
         // Validate Group Members if any exist
-        if (isset($_POST['group_members']) && is_array($_POST['group_members'])) {
+        if (! $is_internship && isset($_POST['group_members']) && is_array($_POST['group_members'])) {
             $valid_group_members = [];
 
             foreach ($_POST['group_members'] as $member) {
@@ -292,22 +398,77 @@
             $validation_errors[] = "Error uploading poster file. Please try again.";
         }
 
+        // Handle offer letter upload (required for internship)
+        $offer_letter_filename = null;
+        if ($is_internship) {
+            if (! isset($_FILES['offer_letter']) || $_FILES['offer_letter']['error'] === UPLOAD_ERR_NO_FILE) {
+                $validation_errors[] = "Offer Letter is required for Internship OD request.";
+            } elseif (isset($_FILES['offer_letter']) && $_FILES['offer_letter']['error'] === UPLOAD_ERR_OK) {
+                $offer_dir = 'uploads/offer_letters/';
+                if (! is_dir($offer_dir)) {
+                    mkdir($offer_dir, 0755, true);
+                }
+
+                $file_info      = pathinfo($_FILES['offer_letter']['name']);
+                $file_extension = strtolower($file_info['extension'] ?? '');
+                $allowed_types  = ['jpg', 'jpeg', 'png', 'pdf'];
+
+                if (! in_array($file_extension, $allowed_types, true)) {
+                    $validation_errors[] = "Invalid offer letter file type. Upload JPG, PNG, or PDF only.";
+                } elseif ($_FILES['offer_letter']['size'] > 5 * 1024 * 1024) {
+                    $validation_errors[] = "Offer letter file size must be less than 5MB.";
+                } elseif ($_FILES['offer_letter']['size'] === 0) {
+                    $validation_errors[] = "Offer letter file is empty. Please upload a valid file.";
+                } else {
+                    $base_filename      = $offer_dir . 'offer_' . $student_data['regno'] . '_' . time();
+                    $compression_result = FileCompressor::compressUploadedFile(
+                        $_FILES['offer_letter']['tmp_name'],
+                        $base_filename,
+                        $file_extension,
+                        90
+                    );
+
+                    if ($compression_result['success']) {
+                        $offer_letter_filename = basename($compression_result['path']);
+                    } else {
+                        $validation_errors[] = "Error processing offer letter file. Please try again.";
+                    }
+                }
+            } else {
+                $validation_errors[] = "Error uploading offer letter file. Please try again.";
+            }
+        }
+
         // If no validation errors, proceed with database insertion
         if (empty($validation_errors)) {
             // Handle group members
             $group_members = '';
-            if (isset($valid_group_members) && ! empty($valid_group_members)) {
+            if (! $is_internship && isset($valid_group_members) && ! empty($valid_group_members)) {
                 $group_members = implode(',', $valid_group_members);
             }
 
-            $insert_sql  = "INSERT INTO od_requests (student_regno, counselor_id, event_name, event_description, event_state, event_district, event_date, event_time, event_days, event_poster, reason, group_members) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            if ($is_internship && empty($event_name)) {
+                $event_name = 'Internship - ' . $company_name;
+            }
+
+            if ($is_internship) {
+                // $event_state and $event_district are now collected from the form
+                $event_date        = $internship_start;
+                $event_time        = '09:00';
+                $event_days        = $internship_duration; // Store the months here
+                $event_description = 'Internship OD Request';
+                $poster_filename   = null;
+                $group_members     = '';
+            }
+
+            $insert_sql  = "INSERT INTO od_requests (student_regno, counselor_id, event_name, event_type, company_name, internship_role, internship_mode, internship_start_date, internship_end_date, event_description, event_state, event_district, event_date, event_time, event_days, event_poster, offer_letter, reason, group_members) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $insert_stmt = $conn->prepare($insert_sql);
 
             if (! $insert_stmt) {
                 error_log('OD request prepare error: ' . $conn->error);
                 $validation_errors[] = "A database error occurred. Please try again later.";
             } else {
-                $insert_stmt->bind_param("sissssssssss", $student_data['regno'], $counselor_info['teacher_id'], $event_name, $event_description, $event_state, $event_district, $event_date, $event_time, $event_days, $poster_filename, $reason, $group_members);
+                $insert_stmt->bind_param("sisssssssssssssssss", $student_data['regno'], $counselor_info['teacher_id'], $event_name, $event_type, $company_name, $internship_role, $internship_mode, $internship_start, $internship_end, $event_description, $event_state, $event_district, $event_date, $event_time, $event_days, $poster_filename, $offer_letter_filename, $reason, $group_members);
 
                 if ($insert_stmt->execute()) {
                     $_SESSION['od_success'] = true;
@@ -1235,13 +1396,77 @@
                     <form id="odRequestForm" method="POST" action="od_request.php" enctype="multipart/form-data" novalidate>
                         <input type="hidden" name="submit_od_request" value="1">
                         <div class="form-grid">
-                            <div class="form-group">
+                            <div class="form-group normal-only">
                                 <label class="form-label">Event Name *</label>
                                 <input type="text"
                                        name="event_name"
                                        class="form-input"
                                        maxlength="255"
                                        placeholder="Enter event name (3-255 characters)">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Event Type *</label>
+                                <select name="event_type" class="form-select">
+                                    <option value="" disabled selected>Select Event Type</option>
+                                    <option value="Workshop">Workshop</option>
+                                    <option value="Symposium">Symposium</option>
+                                    <option value="Conference">Conference</option>
+                                    <option value="Webinar">Webinar</option>
+                                    <option value="Competition">Competition</option>
+                                    <option value="Seminar">Seminar</option>
+                                    <option value="Hackathon">Hackathon</option>
+                                    <option value="Training">Training</option>
+                                    <option value="Cultural Event">Cultural Event</option>
+                                    <option value="Sports Event">Sports Event</option>
+                                    <option value="Technical Event">Technical Event</option>
+                                    <option value="Internship">Internship</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group internship-only" style="display: none;">
+                                <label class="form-label">Company / Organization Name *</label>
+                                <input type="text" name="company_name" class="form-input" maxlength="255" placeholder="Enter company or organization name">
+                            </div>
+
+                            <div class="form-group internship-only" style="display: none;">
+                                <label class="form-label">Internship Role *</label>
+                                <input type="text" name="internship_role" class="form-input" maxlength="255" placeholder="Example: Software Intern">
+                            </div>
+
+                            <div class="form-group internship-only" style="display: none;">
+                                <label class="form-label">Internship Type *</label>
+                                <select name="internship_mode" class="form-select">
+                                    <option value="" disabled selected>Select Internship Type</option>
+                                    <option value="Remote">Remote</option>
+                                    <option value="Onsite">Onsite</option>
+                                    <option value="Hybrid">Hybrid</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group internship-only" style="display: none;">
+                                <label class="form-label">Internship Start Date *</label>
+                                <input type="date" name="internship_start_date" class="form-input">
+                            </div>
+
+                            <div class="form-group internship-only" style="display: none;">
+                                <label class="form-label">Internship End Date *</label>
+                                <input type="date" name="internship_end_date" class="form-input">
+                            </div>
+
+                            <div class="form-group internship-only" style="display: none;">
+                                <label class="form-label">Internship Duration *</label>
+                                <select name="internship_duration" class="form-select">
+                                    <option value="" disabled selected>Select duration</option>
+                                    <option value="1 Month">1 Month</option>
+                                    <option value="2 Months">2 Months</option>
+                                    <option value="3 Months">3 Months</option>
+                                    <option value="4 Months">4 Months</option>
+                                    <option value="5 Months">5 Months</option>
+                                    <option value="6 Months">6 Months</option>
+                                    <option value="Other">More than 6 Months</option>
+                                </select>
                             </div>
 
                             <div class="form-group">
@@ -1287,7 +1512,7 @@
                                 <small style="display: block; margin-top: 5px; color: #666; font-size: 0.85rem;">Please select a state first</small>
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group normal-only">
                                 <label class="form-label">Event Date *</label>
                                 <input type="date"
                                        name="event_date"
@@ -1298,7 +1523,7 @@
                                 <small style="display: block; margin-top: 5px; color: #666; font-size: 0.85rem;">Select a future date (max 1 year from today)</small>
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group normal-only">
                                 <label class="form-label">Event Time *</label>
                                 <input type="time"
                                        name="event_time"
@@ -1306,7 +1531,7 @@
                                        title="Enter time in HH:MM format (00:00 - 23:59)">
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group normal-only">
                                 <label class="form-label">Number of Days *</label>
                                 <select name="event_days" class="form-select">
                                     <option value="">Select number of days</option>
@@ -1328,7 +1553,7 @@
                                 </select>
                             </div>
 
-                            <div class="form-group full-width">
+                            <div class="form-group full-width normal-only">
                                 <label class="form-label">
                                     Event Description *
                                     <span style="font-size: 13px; color: #6b7280;">(5-50 words)</span>
@@ -1344,7 +1569,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group full-width">
+                            <div class="form-group full-width normal-only">
                                 <label class="form-label">
                                     Group Members (Optional - For Group OD)
                                     <span class="material-symbols-outlined" style="font-size: 16px; vertical-align: middle; color: #17a2b8;">group</span>
@@ -1361,7 +1586,7 @@
                                 </small>
                             </div>
 
-                            <div class="form-group full-width">
+                            <div class="form-group full-width normal-only">
                                 <label class="form-label">Event Poster</label>
                                 <input type="file"
                                        name="event_poster"
@@ -1370,6 +1595,18 @@
                                        title="Select JPG, PNG, or PDF file (Max 5MB)">
                                 <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">
                                     Upload event poster/flyer (JPG, PNG, PDF - Max 5MB). This helps your counselor understand the event better.
+                                </small>
+                            </div>
+
+                            <div class="form-group full-width internship-only" style="display: none;">
+                                <label class="form-label">Offer Letter *</label>
+                                <input type="file"
+                                       name="offer_letter"
+                                       class="form-input"
+                                       accept="image/jpeg,image/png,application/pdf"
+                                       title="Upload internship offer letter (JPG, PNG, PDF - Max 5MB)">
+                                <small style="color: #6c757d; font-size: 12px; margin-top: 5px; display: block;">
+                                    Upload company offer letter for OD approval (JPG, PNG, PDF - Max 5MB).
                                 </small>
                             </div>
 
@@ -1422,8 +1659,29 @@
                                 </span>
                             </div>
                             <div class="od-details">
+                                <strong>Event Type:</strong> <?php echo htmlspecialchars($request['event_type'] ?? 'Not specified'); ?><br>
+                                <?php if (! empty($request['event_type']) && $request['event_type'] === 'Internship'): ?>
+                                <strong>Company:</strong> <?php echo htmlspecialchars($request['company_name'] ?? 'Not specified'); ?><br>
+                                <strong>Role:</strong> <?php echo htmlspecialchars($request['internship_role'] ?? 'Not specified'); ?><br>
+                                <strong>Internship Type:</strong> <?php echo htmlspecialchars($request['internship_mode'] ?? 'Not specified'); ?><br>
+                                <strong>Duration:</strong> <?php echo htmlspecialchars($request['event_days'] ?? 'Not specified'); ?><br>
+                                <strong>Location:</strong> <?php echo htmlspecialchars($request['event_state'] . ', ' . $request['event_district']); ?><br>
+                                <strong>Internship Period:</strong>
+                                <?php
+                                    if (! empty($request['internship_start_date']) && ! empty($request['internship_end_date'])) {
+                                        echo date('M d, Y', strtotime($request['internship_start_date'])) . ' - ' . date('M d, Y', strtotime($request['internship_end_date']));
+                                    } else {
+                                        echo 'Not specified';
+                                }
+                                ?><br>
+                                <?php if (! empty($request['offer_letter'])): ?>
+                                <strong>Offer Letter:</strong>
+                                <a href="uploads/offer_letters/<?php echo urlencode($request['offer_letter']); ?>" target="_blank" style="color:#0c3878; text-decoration:none; margin-left:6px;">View</a><br>
+                                <?php endif; ?>
+                                <?php endif; ?>
+                                <?php if (($request['event_type'] ?? '') !== 'Internship'): ?>
                                 <strong>Date:</strong> <?php echo date('M d, Y', strtotime($request['event_date'])); ?> at <?php echo date('h:i A', strtotime($request['event_time'])); ?><br>
-                                <strong>Duration:</strong> <?php echo isset($request['event_days']) ? htmlspecialchars($request['event_days']) . ' day(s)' : 'Not specified'; ?><br>
+                                <strong>Duration:</strong> <?php echo isset($request['event_days']) ? (preg_match('/[a-zA-Z]/', $request['event_days']) ? htmlspecialchars($request['event_days']) : htmlspecialchars($request['event_days']) . ' day(s)') : 'Not specified'; ?><br>
                                 <strong>Location:</strong>
                                 <?php
                                     // Handle backward compatibility for old records
@@ -1435,8 +1693,9 @@
                                         echo 'Location not specified';
                                 }
                                 ?><br>
+                                <?php endif; ?>
 
-                                <?php if (! empty($request['group_members'])): ?>
+                                <?php if (($request['event_type'] ?? '') !== 'Internship' && ! empty($request['group_members'])): ?>
                                 <?php
                                     $group_regnos    = array_filter(array_map('trim', explode(',', $request['group_members'])));
                                     $is_group_member = in_array($student_data['regno'], $group_regnos);
@@ -1489,29 +1748,37 @@
                                 </div>
                                 <?php endif; ?>
                                 <strong>Requested:</strong><?php echo date('M d, Y h:i A', strtotime($request['request_date'])); ?><br>
-                                <?php if ($request['status'] !== 'pending' && $request['counselor_remarks']): ?>
+                                <?php if ($request['status'] === 'rejected' && $request['counselor_remarks']): ?>
+                                <button onclick="showRejectionReason(<?php echo $request['id']; ?>)"
+                                        style="margin-top:8px; padding:6px 14px; background:#fff; color:#dc3545; border:2px solid #dc3545; border-radius:20px; cursor:pointer; font-size:13px; font-weight:600; display:inline-flex; align-items:center; gap:5px; font-family:inherit;">
+                                    <span class="material-symbols-outlined" style="font-size:15px;">help</span>
+                                    Why Rejected?
+                                </button>
+                                <span id="reject-reason-<?php echo $request['id']; ?>" style="display:none;"><?php echo htmlspecialchars($request['counselor_remarks']); ?></span>
+                                <?php elseif ($request['status'] !== 'pending' && $request['counselor_remarks']): ?>
                                 <strong>Counselor Remarks:</strong><?php echo htmlspecialchars($request['counselor_remarks']); ?><br>
                                 <?php endif; ?>
                                 <?php if ($request['status'] === 'approved'): ?>
                                 <?php
-                                    // Extract event type from event name or description (smart detection)
-                                    $event_name_lower = strtolower($request['event_name']);
-                                    $event_type       = 'Conference'; // default
-
-                                    if (strpos($event_name_lower, 'workshop') !== false) {
-                                        $event_type = 'Workshop';
-                                    } elseif (strpos($event_name_lower, 'seminar') !== false) {
-                                        $event_type = 'Seminar';
-                                    } elseif (strpos($event_name_lower, 'webinar') !== false) {
-                                        $event_type = 'Webinar';
-                                    } elseif (strpos($event_name_lower, 'competition') !== false) {
-                                        $event_type = 'Competition';
-                                    } elseif (strpos($event_name_lower, 'hackathon') !== false) {
-                                        $event_type = 'Hackathon';
-                                    } elseif (strpos($event_name_lower, 'training') !== false) {
-                                        $event_type = 'Training';
-                                    } elseif (strpos($event_name_lower, 'symposium') !== false) {
-                                        $event_type = 'Symposium';
+                                    // Use stored event type for new records; fallback for old records
+                                    $event_type = ! empty($request['event_type']) ? $request['event_type'] : 'Conference';
+                                    if (empty($request['event_type'])) {
+                                        $event_name_lower = strtolower($request['event_name']);
+                                        if (strpos($event_name_lower, 'workshop') !== false) {
+                                            $event_type = 'Workshop';
+                                        } elseif (strpos($event_name_lower, 'seminar') !== false) {
+                                            $event_type = 'Seminar';
+                                        } elseif (strpos($event_name_lower, 'webinar') !== false) {
+                                            $event_type = 'Webinar';
+                                        } elseif (strpos($event_name_lower, 'competition') !== false) {
+                                            $event_type = 'Competition';
+                                        } elseif (strpos($event_name_lower, 'hackathon') !== false) {
+                                            $event_type = 'Hackathon';
+                                        } elseif (strpos($event_name_lower, 'training') !== false) {
+                                            $event_type = 'Training';
+                                        } elseif (strpos($event_name_lower, 'symposium') !== false) {
+                                            $event_type = 'Symposium';
+                                        }
                                     }
 
                                     // Prepare URL parameters for auto-fill (with backward compatibility)
@@ -1540,10 +1807,12 @@
                                     $register_url = 'student_register.php?' . http_build_query($url_params);
                                 ?>
                                 <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                    <?php if (($request['event_type'] ?? '') !== 'Internship'): ?>
                                     <a href="<?php echo htmlspecialchars($register_url); ?>" class="btn btn-primary" style="font-size: 12px; padding: 8px 15px;">
                                         <span class="material-symbols-outlined" style="font-size: 16px;">add_circle</span>
                                         Register for Event
                                     </a>
+                                    <?php endif; ?>
                                     <a href="download_od_letter.php?od_id=<?php echo $request['id']; ?>" class="btn btn-secondary" style="font-size: 12px; padding: 8px 15px;">
                                         <span class="material-symbols-outlined" style="font-size: 16px;">download</span>
                                         Download OD Letter
@@ -1582,32 +1851,70 @@
         // Form validation function
         function validateODRequestForm(form) {
             const errors = [];
+            const allowedEventTypes = ['Workshop', 'Symposium', 'Conference', 'Webinar', 'Competition', 'Seminar', 'Hackathon', 'Training', 'Cultural Event', 'Sports Event', 'Technical Event', 'Internship', 'Other'];
 
             // Get form values
             const eventName = document.querySelector('input[name="event_name"]').value.trim();
+            const eventType = document.querySelector('select[name="event_type"]').value;
+            const companyName = document.querySelector('input[name="company_name"]') ? document.querySelector('input[name="company_name"]').value.trim() : '';
+            const internshipRole = document.querySelector('input[name="internship_role"]') ? document.querySelector('input[name="internship_role"]').value.trim() : '';
+            const internshipMode = document.querySelector('select[name="internship_mode"]') ? document.querySelector('select[name="internship_mode"]').value : '';
+            const internshipStartDate = document.querySelector('input[name="internship_start_date"]') ? document.querySelector('input[name="internship_start_date"]').value : '';
+            const internshipEndDate = document.querySelector('input[name="internship_end_date"]') ? document.querySelector('input[name="internship_end_date"]').value : '';
             const eventDescription = document.querySelector('textarea[name="event_description"]').value.trim();
             const eventState = document.querySelector('select[name="event_state"]').value;
             const eventDistrict = document.querySelector('select[name="event_district"]').value;
             const eventDate = document.querySelector('input[name="event_date"]').value;
             const eventTime = document.querySelector('input[name="event_time"]').value;
             const eventDays = document.querySelector('select[name="event_days"]').value;
+            const internshipDuration = document.querySelector('select[name="internship_duration"]').value;
             const reason = document.querySelector('textarea[name="reason"]').value.trim();
 
             // Validate Event Name
-            if (!eventName) {
+            if (eventType !== 'Internship' && !eventName) {
                 errors.push("✗ Event Name is required");
-            } else if (eventName.length < 3) {
+            } else if (eventType !== 'Internship' && eventName.length < 3) {
                 errors.push("✗ Event Name must be at least 3 characters long");
-            } else if (eventName.length > 255) {
+            } else if (eventType !== 'Internship' && eventName.length > 255) {
                 errors.push("✗ Event Name cannot exceed 255 characters");
-            } else if (!/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i.test(eventName)) {
+            } else if (eventType !== 'Internship' && !/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i.test(eventName)) {
                 errors.push("✗ Event Name contains invalid characters");
             }
 
+            // Validate Event Type
+            if (!eventType) {
+                errors.push("✗ Event Type is required");
+            } else if (!allowedEventTypes.includes(eventType)) {
+                errors.push("✗ Please select a valid Event Type");
+            }
+
+            // Internship specific validation
+            if (eventType === 'Internship') {
+                if (!companyName) {
+                    errors.push("✗ Company / Organization Name is required for Internship");
+                }
+                if (!internshipRole) {
+                    errors.push("✗ Internship Role is required");
+                }
+                if (!internshipMode || !['Remote', 'Onsite', 'Hybrid'].includes(internshipMode)) {
+                    errors.push("✗ Internship Type is required");
+                }
+                if (!internshipStartDate || !internshipEndDate) {
+                    errors.push("✗ Internship Start Date and End Date are required");
+                } else if (new Date(internshipEndDate) < new Date(internshipStartDate)) {
+                    errors.push("✗ Internship End Date must be same or after Start Date");
+                }
+
+                const offerLetterInput = document.querySelector('input[name="offer_letter"]');
+                if (!offerLetterInput || offerLetterInput.files.length === 0) {
+                    errors.push("✗ Offer Letter is required for Internship");
+                }
+            }
+
             // Validate Event Date
-            if (!eventDate) {
+            if (eventType !== 'Internship' && !eventDate) {
                 errors.push("✗ Event Date is required");
-            } else {
+            } else if (eventType !== 'Internship') {
                 const selectedDate = new Date(eventDate);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -1620,9 +1927,9 @@
             }
 
             // Validate Event Time
-            if (!eventTime) {
+            if (eventType !== 'Internship' && !eventTime) {
                 errors.push("✗ Event Time is required");
-            } else if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(eventTime)) {
+            } else if (eventType !== 'Internship' && !/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(eventTime)) {
                 errors.push("✗ Invalid Event Time format");
             }
 
@@ -1635,14 +1942,20 @@
             }
 
             // Validate Event Days
-            if (!eventDays) {
-                errors.push("✗ Number of Days/Hours is required");
+            if (eventType === 'Internship') {
+                if (!internshipDuration) {
+                    errors.push("✗ Internship Duration is required");
+                }
+            } else {
+                if (!eventDays) {
+                    errors.push("✗ Number of Days/Hours is required");
+                }
             }
 
             // Validate Event Description
-            if (!eventDescription) {
+            if (eventType !== 'Internship' && !eventDescription) {
                 errors.push("✗ Event Description is required");
-            } else {
+            } else if (eventType !== 'Internship') {
                 const descWordCount = eventDescription.trim().split(/\s+/).filter(w => w.length > 0).length;
                 if (descWordCount < 5) {
                     errors.push(`✗ Event Description must have at least 5 words (Current: ${descWordCount})`);
@@ -1664,17 +1977,19 @@
             }
 
             // Validate Group Members
-            const groupMemberInputs = document.querySelectorAll('input[name="group_members[]"]');
-            groupMemberInputs.forEach((input, index) => {
-                const value = input.value.trim();
-                if (value) {
-                    if (!/^[A-Za-z0-9]+$/.test(value)) {
-                        errors.push(`✗ Group member ${index + 1}: Invalid registration number format`);
-                    } else if (value.length < 3 || value.length > 50) {
-                        errors.push(`✗ Group member ${index + 1}: Registration number length must be between 3 and 50 characters`);
+            if (eventType !== 'Internship') {
+                const groupMemberInputs = document.querySelectorAll('input[name="group_members[]"]');
+                groupMemberInputs.forEach((input, index) => {
+                    const value = input.value.trim();
+                    if (value) {
+                        if (!/^[A-Za-z0-9]+$/.test(value)) {
+                            errors.push(`✗ Group member ${index + 1}: Invalid registration number format`);
+                        } else if (value.length < 3 || value.length > 50) {
+                            errors.push(`✗ Group member ${index + 1}: Registration number length must be between 3 and 50 characters`);
+                        }
                     }
-                }
-            });
+                });
+            }
 
             // Validate Event Poster
             const posterInput = document.querySelector('input[name="event_poster"]');
@@ -1692,7 +2007,56 @@
                 }
             }
 
+            const offerLetterInput = document.querySelector('input[name="offer_letter"]');
+            if (offerLetterInput && offerLetterInput.files.length > 0) {
+                const file = offerLetterInput.files[0];
+                const allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+
+                if (!allowedExtensions.includes(fileExtension)) {
+                    errors.push("✗ Offer letter file type not allowed. Use JPG, PNG, or PDF only");
+                } else if (file.size > 5 * 1024 * 1024) {
+                    errors.push(`✗ Offer letter file size exceeds 5MB (Current: ${(file.size / (1024 * 1024)).toFixed(2)} MB)`);
+                } else if (file.size === 0) {
+                    errors.push("✗ Offer letter file is empty or corrupted");
+                }
+            }
+
             return errors;
+        }
+
+        function toggleInternshipFields() {
+            const eventTypeSelect = document.querySelector('select[name="event_type"]');
+            if (!eventTypeSelect) return;
+
+            const isInternship = eventTypeSelect.value === 'Internship';
+            const internshipFields = document.querySelectorAll('.internship-only');
+            const normalFields = document.querySelectorAll('.normal-only');
+
+            internshipFields.forEach((field) => {
+                field.style.display = isInternship ? '' : 'none';
+                const inputs = field.querySelectorAll('input, select, textarea');
+                inputs.forEach((input) => {
+                    if (input.name === 'offer_letter' || input.name === 'company_name' || input.name === 'internship_role' || input.name === 'internship_mode' || input.name === 'internship_start_date' || input.name === 'internship_end_date' || input.name === 'internship_duration') {
+                        input.required = isInternship;
+                    }
+                });
+            });
+
+            normalFields.forEach((field) => {
+                field.style.display = isInternship ? 'none' : '';
+                const inputs = field.querySelectorAll('input, select, textarea, button');
+                inputs.forEach((input) => {
+                    input.disabled = isInternship;
+                });
+            });
+
+            if (isInternship) {
+                const groupMembersContainer = document.getElementById('groupMembersContainer');
+                if (groupMembersContainer) {
+                    groupMembersContainer.innerHTML = '';
+                }
+            }
         }
 
         // State-District mapping
@@ -1731,6 +2095,7 @@
             const headerMenuIcon = document.querySelector('.header .menu-icon');
             const closeSidebarBtn = document.querySelector('.close-sidebar');
             const sidebar = document.getElementById('sidebar');
+            const eventTypeSelect = document.querySelector('select[name="event_type"]');
 
             if (headerMenuIcon) {
                 headerMenuIcon.addEventListener('click', toggleSidebar);
@@ -1738,6 +2103,11 @@
 
             if (closeSidebarBtn) {
                 closeSidebarBtn.addEventListener('click', toggleSidebar);
+            }
+
+            if (eventTypeSelect) {
+                eventTypeSelect.addEventListener('change', toggleInternshipFields);
+                toggleInternshipFields();
             }
 
             // ============================================================================
@@ -2179,5 +2549,45 @@
         }
     </script>
     <!-- Push Notifications Manager for Median.co -->
+
+    <!-- Rejection Reason Modal (Student View) -->
+    <div id="rejectionReasonModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:14px; padding:28px; width:90%; max-width:460px; box-shadow:0 12px 40px rgba(0,0,0,0.25);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3 style="margin:0; color:#dc3545; display:flex; align-items:center; gap:8px; font-size:18px;">
+                    <span class="material-symbols-outlined">cancel</span>
+                    Reason for Rejection
+                </h3>
+                <button onclick="closeRejectionReasonModal()"
+                        style="background:none; border:none; cursor:pointer; font-size:24px; color:#6c757d; line-height:1; padding:0;">&times;</button>
+            </div>
+            <div id="rejectionReasonText"
+                 style="background:#fff5f5; border-left:4px solid #dc3545; border-radius:6px; padding:14px 16px; color:#721c24; font-size:15px; line-height:1.6; white-space:pre-wrap;">
+            </div>
+            <div style="margin-top:20px; text-align:right;">
+                <button onclick="closeRejectionReasonModal()"
+                        style="padding:10px 24px; background:#dc3545; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; font-family:inherit;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showRejectionReason(requestId) {
+            const reasonEl = document.getElementById('reject-reason-' + requestId);
+            const text = reasonEl ? reasonEl.textContent.trim() : 'No reason provided.';
+            document.getElementById('rejectionReasonText').textContent = text;
+            document.getElementById('rejectionReasonModal').style.display = 'flex';
+        }
+
+        function closeRejectionReasonModal() {
+            document.getElementById('rejectionReasonModal').style.display = 'none';
+        }
+
+        document.getElementById('rejectionReasonModal').addEventListener('click', function(e) {
+            if (e.target === this) closeRejectionReasonModal();
+        });
+    </script>
 </body>
 </html>

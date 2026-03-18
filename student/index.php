@@ -1,6 +1,5 @@
 <?php
     session_start();
-
     // Include optimized systems
     require_once '../includes/DatabaseManager.php';
     require_once '../includes/CacheManager.php';
@@ -71,6 +70,20 @@
     'recent_od_requests' => $recent_od_data,
     'internship_count'   => $internship_count,
     ];
+
+    // Get recent winners for ticker
+    $winners_sql = "SELECT s.name, s.semester, se.event_name, se.prize
+                    FROM student_event_register se
+                    JOIN student_register s ON se.regno = s.regno
+                    WHERE se.verification_status = 'Approved'
+                    AND (
+                        se.prize LIKE '%1st%' OR se.prize LIKE '%First%' OR se.prize LIKE '%first%'
+                        OR se.prize LIKE '%2nd%' OR se.prize LIKE '%Second%' OR se.prize LIKE '%second%'
+                        OR se.prize LIKE '%3rd%' OR se.prize LIKE '%Third%' OR se.prize LIKE '%third%'
+                    )
+                    ORDER BY se.start_date DESC
+                    LIMIT 10";
+    $recent_winners = $db->executeQuery($winners_sql, [], '');
 
     // Extract data for backward compatibility
     $total_events     = $dashboard_data['stats']['total_events'] ?? 0;
@@ -753,6 +766,77 @@
           z-index: 1004;
         }
       }
+
+      /* News Ticker CSS */
+      .news-ticker-container {
+        display: flex;
+        align-items: center;
+        background: #ffffff;
+        border-radius: 15px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        padding: 15px 20px;
+        overflow: hidden;
+        height: 60px;
+        border: 1px solid rgba(0,0,0,0.05);
+      }
+
+      .news-ticker-label {
+        background: #e7f1ff;
+        color: #1a408c;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        margin-right: 20px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .news-ticker-wrapper {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+        height: 100%;
+        mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+        -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+      }
+
+      .ticker-content {
+        display: flex;
+        align-items: center;
+        position: absolute;
+        white-space: nowrap;
+        animation: ticker 4s linear infinite;
+        height: 100%;
+        width: fit-content;
+      }
+
+      .ticker-content:hover {
+        animation-play-state: paused;
+      }
+
+      .ticker-item {
+        color: #444;
+        font-size: 15px;
+        font-weight: 500;
+        padding-right: 50px;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .ticker-item::before {
+        content: "🏆";
+        margin-right: 8px;
+        font-size: 16px;
+      }
+
+      @keyframes ticker {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-25%); }
+      }
     </style>
   </head>
   <body>
@@ -873,6 +957,57 @@
           <h1>Welcome back,<?php echo htmlspecialchars(explode(' ', $student_data['name'])[0], ENT_QUOTES, 'UTF-8'); ?>!</h1>
           <p>Track your event participations and achievements</p>
         </div>
+
+        <!-- News Ticker -->
+        <?php if (! empty($recent_winners)): ?>
+        <div class="news-ticker-container">
+            <div class="news-ticker-label">Latest News</div>
+            <div class="news-ticker-wrapper">
+                <div class="ticker-content">
+                    <?php
+                        // Function to render ticker items (reused for duplication)
+                        $renderTickerItems = function ($winners) {
+                            foreach ($winners as $winner) {
+                                $sem  = (int) ($winner['semester'] ?? 1);
+                                $year = ceil($sem / 2);
+                                $year = max(1, min(4, $year)); // Limit to 1-4 years
+
+                                $year_suffix = match ($year) {
+                                    1       => 'st',
+                                    2       => 'nd',
+                                    3       => 'rd',
+                                    default => 'th'
+                                };
+                                $year_text = $year . $year_suffix;
+
+                                $prize       = trim($winner['prize']);
+                                $prize_lower = strtolower($prize);
+                                // Standardize prize display
+                                if (in_array($prize_lower, ['first', '1st', 'first prize'])) {
+                                    $prize = '1st';
+                                } elseif (in_array($prize_lower, ['second', '2nd', 'second prize'])) {
+                                    $prize = '2nd';
+                                } elseif (in_array($prize_lower, ['third', '3rd', 'third prize'])) {
+                                    $prize = '3rd';
+                                } else {
+                                    $prize = ucfirst($prize_lower);
+                                }
+
+                                $ticker_text = htmlspecialchars($winner['name']) . " of " . $year_text . " year has won " . htmlspecialchars($prize) . " prize in " . htmlspecialchars($winner['event_name']);
+                                echo '<div class="ticker-item">' . $ticker_text . '</div>';
+                            }
+                        };
+
+                        // Render items 4 times for seamless loop (covers wide screens)
+                        $renderTickerItems($recent_winners);
+                        $renderTickerItems($recent_winners);
+                        $renderTickerItems($recent_winners);
+                        $renderTickerItems($recent_winners);
+                    ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- cards  -->
         <div class="main-card">
