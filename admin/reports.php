@@ -145,6 +145,38 @@
 
                 <div class="card">
                     <div class="inner-card">
+                        <label for="start_month">Start Month</label>
+                        <select name="start_month" id="start_month">
+                            <option value="">Select Start Month</option>
+                            <?php
+                                for ($m = 1; $m <= 12; $m++) {
+                                    $month_name = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
+                                    $selected   = (isset($start_month) && $m == $start_month) ? 'selected' : '';
+                                    echo "<option value=\"$m\" $selected>$month_name</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="inner-card">
+                        <label for="end_month">End Month</label>
+                        <select name="end_month" id="end_month">
+                            <option value="">Select End Month</option>
+                            <?php
+                                for ($m = 1; $m <= 12; $m++) {
+                                    $month_name = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
+                                    $selected   = (isset($end_month) && $m == $end_month) ? 'selected' : '';
+                                    echo "<option value=\"$m\" $selected>$month_name</option>";
+                                }
+                            ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="inner-card">
                         <label for="department">Department</label>
                         <select name="department" id="department">
                             <option value="">Select Department</option>
@@ -178,11 +210,28 @@
                         <label for="event_type">Event Type</label>
                         <select name="event_type" id="event_type">
                             <option value="">Select Event Type</option>
-                            <option value="Workshop">Workshop</option>
-                            <option value="Seminar">Seminar</option>
-                            <option value="Competition">Competition</option>
-                            <option value="Hackathon">Hackathon</option>
-                        </select>
+                        <?php
+                            // Fetch distinct event types from database
+                            $event_types_query  = "SELECT DISTINCT event_type FROM student_event_register WHERE event_type IS NOT NULL AND event_type != '' ORDER BY event_type";
+                            $event_types_result = $conn->query($event_types_query);
+
+                            if ($event_types_result && $event_types_result->num_rows > 0) {
+                                while ($row = $event_types_result->fetch_assoc()) {
+                                    $type     = $row['event_type'];
+                                    $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
+                                    echo "<option value=\"" . htmlspecialchars($type) . "\" $selected>" . htmlspecialchars($type) . "</option>";
+                                }
+                            } else {
+                                // Fallback to extended default options
+                                $default_types = ['Workshop', 'Seminar', 'Competition', 'Hackathon', 'Conference', 'Symposium', 'Webinar', 'Guest Lecture', 'Paper Presentation', 'Project Presentation'];
+                                sort($default_types);
+                                foreach ($default_types as $type) {
+                                    $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
+                                    echo "<option value=\"$type\" $selected>$type</option>";
+                                }
+                            }
+                        ?>
+                    </select>
                     </div>
                 </div>
 
@@ -215,11 +264,13 @@
                 if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     // Reuse existing $conn from above
 
-                    $year       = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
-                    $department = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
-                    $semester   = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
-                    $event_type = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
-                    $location   = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
+                    $year        = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
+                    $department  = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
+                    $semester    = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
+                    $event_type  = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
+                    $location    = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
+                    $start_month = isset($_POST['start_month']) && $_POST['start_month'] !== '' ? $_POST['start_month'] : null;
+                    $end_month   = isset($_POST['end_month']) && $_POST['end_month'] !== '' ? $_POST['end_month'] : null;
 
                     // Build dynamic WHERE clause
                     $where_conditions = ["e.verification_status = 'Approved'"];
@@ -272,6 +323,14 @@
                         } else {
                             $where_conditions[] = "(LOWER(e.state) != 'tamil nadu' AND LOWER(e.state) != 'tamilnadu' AND e.state IS NOT NULL AND e.state != '')";
                         }
+                    }
+
+                    // Add month range filter if selected
+                    if ($start_month !== null && $end_month !== null) {
+                        $where_conditions[]  = "e.start_date BETWEEN ? AND ?";
+                        $bind_types         .= 's';
+                        $bind_values[]       = $start_month;
+                        $bind_values[]       = $end_month;
                     }
 
                     // Build final SQL query

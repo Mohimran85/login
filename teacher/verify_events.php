@@ -16,6 +16,16 @@
     require_once __DIR__ . '/../includes/db_config.php';
     $conn = get_db_connection();
 
+    // Migration: Ensure OD blocking override column exists
+    try {
+    $check_column = $conn->query("SHOW COLUMNS FROM student_register LIKE 'od_block_override'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE student_register ADD COLUMN od_block_override TINYINT(1) DEFAULT 0");
+    }
+    } catch (Exception $e) {
+    // Silently continue if migration fails
+    }
+
     // Get teacher data and role
     $teacher_data   = null;
     $teacher_status = 'teacher';
@@ -98,12 +108,35 @@
     }
     }
 
+    // Handle toggle OD access action
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'toggle_od_access') {
+    $student_regno = trim($_POST['student_regno']);
+    $new_status    = intval($_POST['new_status']);
+
+    $update_stmt = $conn->prepare("UPDATE student_register SET od_block_override = ? WHERE regno = ?");
+    $update_stmt->bind_param("is", $new_status, $student_regno);
+    if ($update_stmt->execute()) {
+        $action_text = $new_status === 1 ? 'enabled' : 'disabled';
+        $update_stmt->close();
+        $conn->close();
+        header("Location: verify_events.php?success=od_" . $action_text . "&category=" . urlencode($event_category) . "&status=Missing");
+        exit();
+    } else {
+        $error_message = "❌ Error toggling OD access.";
+        $update_stmt->close();
+    }
+    }
+
     // Check for success messages from redirects
     if (isset($_GET['success'])) {
     if ($_GET['success'] === 'approved') {
         $success_message = "✅ Event registration approved successfully!";
     } elseif ($_GET['success'] === 'rejected') {
         $success_message = "✅ Event registration rejected successfully!";
+    } elseif ($_GET['success'] === 'od_enabled') {
+        $success_message = "✅ OD requests have been enabled for the student.";
+    } elseif ($_GET['success'] === 'od_disabled') {
+        $success_message = "✅ OD requests have been disabled for the student.";
     }
     }
 
@@ -118,6 +151,7 @@
                          odr.id,
                          sr.name AS student_name,
                          odr.student_regno as regno,
+                         sr.od_block_override,
                          odr.event_name,
                          odr.event_location as organizer,
                          odr.event_date as event_date,
@@ -1147,9 +1181,27 @@
                                                     <span class="material-symbols-outlined">info</span> Details
                                                 </button>
                                             <?php elseif ($status_filter === 'Missing'): ?>
-                                                <button class="btn btn-view" onclick="sendReminder(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['regno']); ?>', '<?php echo htmlspecialchars(addslashes($row['event_name'])); ?>')" style="background-color: #f39c12;">
-                                                    <span class="material-symbols-outlined">notifications</span> Remind
-                                                </button>
+                                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                                    <form action="verify_events.php" method="POST" style="margin:0;">
+                                                        <input type="hidden" name="action" value="toggle_od_access">
+                                                        <input type="hidden" name="student_regno" value="<?php echo htmlspecialchars($row['regno']); ?>">
+                                                        <input type="hidden" name="category" value="<?php echo htmlspecialchars($event_category); ?>">
+                                                        <?php if (isset($row['od_block_override']) && $row['od_block_override'] == 1): ?>
+                                                            <input type="hidden" name="new_status" value="0">
+                                                            <button type="submit" class="btn" style="background-color: #dc3545; color: white; padding: 6px 12px; font-size: 13px; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center;" onclick="return confirm('Revoke OD request permission for <?php echo htmlspecialchars($row['regno']); ?>? They will be blocked until they upload certificates.');">
+                                                                <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">block</span> Disable OD
+                                                            </button>
+                                                        <?php else: ?>
+                                                            <input type="hidden" name="new_status" value="1">
+                                                            <button type="submit" class="btn" style="background-color: #28a745; color: white; padding: 6px 12px; font-size: 13px; font-weight: 500; border-radius: 6px; border: none; cursor: pointer; display: inline-flex; align-items: center;" onclick="return confirm('Allow <?php echo htmlspecialchars($row['regno']); ?> to submit new OD requests despite missing certificates?');">
+                                                                <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">check_circle</span> Enable OD
+                                                            </button>
+                                                        <?php endif; ?>
+                                                    </form>
+                                                    <button class="btn btn-view" onclick="sendReminder(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['regno']); ?>', '<?php echo htmlspecialchars(addslashes($row['event_name'])); ?>')" style="background-color: #f39c12; color: white; padding: 6px 12px; font-size: 13px; font-weight: 500; border-radius: 6px; border: none; align-items: center; display: inline-flex;">
+                                                        <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">notifications</span> Remind
+                                                    </button>
+                                                </div>
                                             <?php else: ?>
                                                 <span style="color:#6c757d; font-size: 12px;">
                                                     <i class="fas fa-lock"></i>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo htmlspecialchars($status_filter); ?>
@@ -1199,21 +1251,42 @@
                                     </span>
                                 </div>
                                 <div class="card-actions">
-                                    <div class="action-buttons">
-                                        <button class="btn btn-view" onclick="openEventDetailsModal(<?php echo htmlspecialchars(json_encode($row)); ?>)">
+                                    <div class="action-buttons" style="flex-wrap: wrap; gap: 8px;">
+                                        <button class="btn btn-view" onclick="openEventDetailsModal(<?php echo htmlspecialchars(json_encode($row)); ?>)" style="flex: 1;">
                                             <span class="material-symbols-outlined">visibility</span> View
                                         </button>
                                         <?php if ($row['status'] === 'Pending'): ?>
-                                            <form method="POST" style="display: inline; width: 100%;">
+                                            <form method="POST" style="display: inline; flex: 1;">
                                                 <input type="hidden" name="event_id" value="<?php echo $row['id']; ?>">
                                                 <input type="hidden" name="action" value="approve">
-                                                <button type="submit" class="btn btn-approve">
+                                                <button type="submit" class="btn btn-approve" style="width: 100%;">
                                                     <span class="material-symbols-outlined">check_circle</span> Approve
                                                 </button>
                                             </form>
-                                            <button class="btn btn-reject" onclick="openRejectModal(<?php echo $row['id']; ?>)">
+                                            <button class="btn btn-reject" onclick="openRejectModal(<?php echo $row['id']; ?>)" style="flex: 1;">
                                                 <span class="material-symbols-outlined">cancel</span> Reject
                                             </button>
+                                        <?php elseif ($row['status'] === 'Missing'): ?>
+                                            <button class="btn btn-view" onclick="sendReminder(<?php echo $row['id']; ?>, '<?php echo htmlspecialchars($row['regno']); ?>', '<?php echo htmlspecialchars(addslashes($row['event_name'])); ?>')" style="background-color: #f39c12; color: white; display: inline-flex; align-items: center; justify-content: center; flex: 1; border: none; border-radius: 6px;">
+                                                <span class="material-symbols-outlined" style="margin-right: 5px;">notifications</span> Remind
+                                            </button>
+
+                                            <form action="verify_events.php" method="POST" style="flex: 1; display: flex; margin: 0;">
+                                                <input type="hidden" name="action" value="toggle_od_access">
+                                                <input type="hidden" name="student_regno" value="<?php echo htmlspecialchars($row['regno']); ?>">
+                                                <input type="hidden" name="category" value="<?php echo htmlspecialchars($event_category); ?>">
+                                                <?php if (isset($row['od_block_override']) && $row['od_block_override'] == 1): ?>
+                                                    <input type="hidden" name="new_status" value="0">
+                                                    <button type="submit" class="btn" style="background-color: #dc3545; color: white; padding: 6px 12px; font-size: 13px; font-weight: 500; border-radius: 6px; border: none; width: 100%; display: inline-flex; align-items: center; justify-content: center;" onclick="return confirm('Revoke OD request permission?');">
+                                                        <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">block</span> Disable OD
+                                                    </button>
+                                                <?php else: ?>
+                                                    <input type="hidden" name="new_status" value="1">
+                                                    <button type="submit" class="btn" style="background-color: #28a745; color: white; padding: 6px 12px; font-size: 13px; font-weight: 500; border-radius: 6px; border: none; width: 100%; display: inline-flex; align-items: center; justify-content: center;" onclick="return confirm('Allow submitting new OD requests?');">
+                                                        <span class="material-symbols-outlined" style="font-size: 16px; margin-right: 4px;">check_circle</span> Enable OD
+                                                    </button>
+                                                <?php endif; ?>
+                                            </form>
                                         <?php endif; ?>
                                     </div>
                                 </div>

@@ -32,11 +32,13 @@ $counselor_id = $stmt->get_result()->fetch_assoc()['id'];
 $stmt->close();
 
 // Get filter parameters from POST
-$year       = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
-$department = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
-$semester   = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
-$event_type = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
-$location   = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
+$year        = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
+$start_month = isset($_POST['start_month']) && $_POST['start_month'] !== '' ? (int) $_POST['start_month'] : null;
+$end_month   = isset($_POST['end_month']) && $_POST['end_month'] !== '' ? (int) $_POST['end_month'] : null;
+$department  = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
+$semester    = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
+$event_type  = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
+$location    = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
 
 header("Content-Type: application/vnd.ms-excel");
 header("Content-Disposition: attachment; filename=counselor_reports_" . date('Y-m-d') . ".xls");
@@ -68,6 +70,18 @@ if ($year !== null) {
         $bind_types    .= 's';
         $bind_values[]  = $pattern;
     }
+}
+
+// Add month range filter
+if ($start_month && $end_month) {
+    $where_conditions[]  = "MONTH(e.start_date) >= ? AND MONTH(e.start_date) <= ?";
+    $bind_types         .= 'ii';
+    $bind_values[]       = $start_month;
+    $bind_values[]       = $end_month;
+} elseif ($start_month) {
+    $where_conditions[]  = "MONTH(e.start_date) = ?";
+    $bind_types         .= 'i';
+    $bind_values[]       = $start_month;
 }
 
 // Add department filter if selected

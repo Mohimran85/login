@@ -542,7 +542,7 @@
                         $current_year = date("Y");
                         for ($i = $current_year; $i >= $current_year - 5; $i--) {
                             $academic_year_option = $i . '-' . ($i + 1);
-                            $selected             = ($academic_year_option == $academic_year) ? 'selected' : '';
+                            $selected             = (isset($academic_year) && $academic_year_option == $academic_year) ? 'selected' : '';
                             echo "<option value=\"$academic_year_option\" $selected>$academic_year_option</option>";
                         }
                     ?>
@@ -555,7 +555,7 @@
                         <?php
                             for ($m = 1; $m <= 12; $m++) {
                                 $month_name = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
-                                $selected   = ($m == $start_month) ? 'selected' : '';
+                                $selected   = (isset($start_month) && $m == $start_month) ? 'selected' : '';
                                 echo "<option value=\"$m\" $selected>$month_name</option>";
                             }
                         ?>
@@ -568,7 +568,7 @@
                         <?php
                             for ($m = 1; $m <= 12; $m++) {
                                 $month_name = date('F', mktime(0, 0, 0, $m, 1, date('Y')));
-                                $selected   = ($m == $end_month) ? 'selected' : '';
+                                $selected   = (isset($end_month) && $m == $end_month) ? 'selected' : '';
                                 echo "<option value=\"$m\" $selected>$month_name</option>";
                             }
                         ?>
@@ -578,19 +578,19 @@
                     <label for="department">Department:</label>
                     <select name="department" id="department">
                         <option value="">Select Department</option>
-                        <option value="Information Technology" <?php if ($department == 'Information Technology') {
+                        <option value="Information Technology" <?php if (isset($department) && $department == 'Information Technology') {
                                                                        echo 'selected';
                                                                }
                                                                ?>>Information Technology</option>
-                        <option value="CSE" <?php if ($department == 'CSE') {
+                        <option value="CSE" <?php if (isset($department) && $department == 'CSE') {
                                                     echo 'selected';
                                             }
                                             ?>>CSE</option>
-                        <option value="AIML" <?php if ($department == 'AIML') {
+                        <option value="AIML" <?php if (isset($department) && $department == 'AIML') {
                                                      echo 'selected';
                                              }
                                              ?>>AIML</option>
-                        <option value="AIDS" <?php if ($department == 'AIDS') {
+                        <option value="AIDS" <?php if (isset($department) && $department == 'AIDS') {
                                                      echo 'selected';
                                              }
                                              ?>>AIDS</option>
@@ -603,7 +603,7 @@
                         <option value="">Select Semester</option>
                         <?php
                             for ($i = 1; $i <= 8; $i++) {
-                                $selected = ($i == $semester) ? 'selected' : '';
+                                $selected = (isset($semester) && $i == $semester) ? 'selected' : '';
                                 echo "<option value='$i' $selected>Semester $i</option>";
                             }
                         ?>
@@ -614,22 +614,32 @@
                     <label for="event_type">Event Type:</label>
                     <select name="event_type" id="event_type">
                         <option value="">Select Event Type</option>
-                        <option value="Workshop" <?php if ($event_type == 'Workshop') {
-                                                         echo 'selected';
-                                                 }
-                                                 ?>>Workshop</option>
-                        <option value="Seminar" <?php if ($event_type == 'Seminar') {
-                                                        echo 'selected';
-                                                }
-                                                ?>>Seminar</option>
-                        <option value="Competition" <?php if ($event_type == 'Competition') {
-                                                            echo 'selected';
-                                                    }
-                                                    ?>>Competition</option>
-                        <option value="Hackathon" <?php if ($event_type == 'Hackathon') {
-                                                          echo 'selected';
-                                                  }
-                                                  ?>>Hackathon</option>
+                        <?php
+                            // Fetch distinct event types from database
+                            $event_types_query  = "SELECT DISTINCT event_type FROM student_event_register WHERE event_type IS NOT NULL AND event_type != '' ORDER BY event_type";
+                            $event_types_result = $conn->query($event_types_query);
+
+                            if ($event_types_result && $event_types_result->num_rows > 0) {
+                                while ($row = $event_types_result->fetch_assoc()) {
+                                    $type     = $row['event_type'];
+                                    $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
+                                    echo "<option value=\"" . htmlspecialchars($type) . "\" $selected>" . htmlspecialchars($type) . "</option>";
+                                }
+                            } else {
+                                // Fallback to extended default options if query fails or no types found
+                                // Added 'Conference', 'Symposium', 'Webinar', 'Guest Lecture' based on common event types
+                                $default_types = ['Workshop', 'Seminar', 'Competition', 'Hackathon', 'Conference', 'Symposium', 'Webinar', 'Guest Lecture', 'Paper Presentation', 'Project Presentation'];
+                                sort($default_types); // Sort alphabetically
+                                foreach ($default_types as $type) {
+                                    $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
+                                    echo "<option value=\"$type\" $selected>$type</option>";
+                                }
+                                // Debug info (hidden)
+                                if (! $event_types_result) {
+                                    echo "<!-- DB Error: " . htmlspecialchars($conn->error) . " -->";
+                                }
+                            }
+                        ?>
                     </select>
                 </div>
 
@@ -637,11 +647,11 @@
                     <label for="location">Location:</label>
                     <select name="location" id="location">
                         <option value="">Select Location</option>
-                        <option value="tamilnadu" <?php if ($location == 'tamilnadu') {
+                        <option value="tamilnadu" <?php if (isset($location) && $location == 'tamilnadu') {
                                                           echo 'selected';
                                                   }
                                                   ?>>Tamil Nadu</option>
-                        <option value="outside" <?php if ($location == 'outside') {
+                        <option value="outside" <?php if (isset($location) && $location == 'outside') {
                                                         echo 'selected';
                                                 }
                                                 ?>>Outside Tamil Nadu</option>

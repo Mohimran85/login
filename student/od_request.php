@@ -63,6 +63,12 @@
     if ($check_column && $check_column->num_rows == 0) {
         $conn->query("ALTER TABLE od_requests ADD COLUMN internship_mode VARCHAR(20) NULL AFTER internship_role");
     }
+
+    // OD Blocking override column
+    $check_column = $conn->query("SHOW COLUMNS FROM student_register LIKE 'od_block_override'");
+    if ($check_column && $check_column->num_rows == 0) {
+        $conn->query("ALTER TABLE student_register ADD COLUMN od_block_override TINYINT(1) DEFAULT 0");
+    }
     } catch (Exception $e) {
     // Silently continue if migration fails
     }
@@ -103,6 +109,33 @@
     }
     $counselor_stmt->close();
 
+    // Check for missing certificates using same logic as counselor verification
+    $missing_certs_sql = "SELECT odr.event_name, odr.event_date
+          FROM od_requests odr
+          LEFT JOIN student_event_register ser
+              ON odr.student_regno = ser.regno AND odr.event_name = ser.event_name
+          WHERE odr.status = 'approved'
+          AND odr.student_regno = ?
+          AND DATE_ADD(odr.event_date, INTERVAL (COALESCE(odr.event_days, 1) + 2) DAY) <= CURDATE()
+          AND (ser.id IS NULL OR ser.certificates IS NULL OR ser.certificates = '')
+          ORDER BY odr.event_date DESC";
+
+    $missing_stmt = $conn->prepare($missing_certs_sql);
+    $missing_stmt->bind_param("s", $student_data['regno']);
+    $missing_stmt->execute();
+    $missing_result_set = $missing_stmt->get_result();
+
+    $missing_events = [];
+    while ($row = $missing_result_set->fetch_assoc()) {
+    $missing_events[] = $row;
+    }
+    $missing_stmt->close();
+
+    $missing_count     = count($missing_events);
+    $has_missing_certs = ($missing_count > 0);
+    $od_override       = isset($student_data['od_block_override']) && $student_data['od_block_override'] == 1;
+    $is_od_blocked     = ($has_missing_certs && ! $od_override);
+
     $student_state    = isset($student_data['state']) ? trim($student_data['state']) : '';
     $student_district = isset($student_data['district']) ? trim($student_data['district']) : '';
     $student_location = trim($student_state . ($student_state && $student_district ? ', ' : '') . $student_district);
@@ -123,6 +156,9 @@
 
     if (! $counselor_info) {
         $message      = "You don't have an assigned class counselor. Please contact the administration.";
+        $message_type = 'error';
+    } elseif ($is_od_blocked) {
+        $message      = "OD requests are blocked because you have missing certificates from previous events. Please upload them or contact your counselor.";
         $message_type = 'error';
     } else {
         // Create OD requests table if not exists
@@ -1369,6 +1405,33 @@
                         Request OD for Event Participation
                     </div>
 
+                    <!-- OD Block Check -->
+                    <?php if ($is_od_blocked): ?>
+                    <div class="empty-state" style="padding: 30px 20px; background: #fff8f8; border: 1px solid #ffdcd6; border-radius: 12px; text-align: center; margin-top: 15px;">
+                        <span class="material-symbols-outlined" style="color: #ef5350; font-size: 48px; margin-bottom: 15px; display: block;">security_update_warning</span>
+                        <h3 style="color: #d32f2f; margin: 0 0 10px 0; font-size: 1.2rem;">OD Requests Disabled</h3>
+                        <p style="color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px;">You currently have <strong><?php echo $missing_count; ?> overdue missing certificate(s)</strong>.</p>
+
+                        <div style="background: white; border: 1px solid #ffdcd6; border-radius: 8px; text-align: left; padding: 15px; margin-bottom: 20px; display: inline-block; max-width: 100%;">
+                            <h4 style="margin: 0 0 10px 0; color: #d32f2f; font-size: 0.9rem;">Missing Events:</h4>
+                            <ul style="margin: 0; padding-left: 20px; color: #555; font-size: 0.9rem; line-height: 1.6;">
+                                <?php foreach (array_slice($missing_events, 0, 3) as $missing_event): ?>
+                                    <li><strong><?php echo htmlspecialchars($missing_event['event_name']); ?></strong> (<?php echo date('M d, Y', strtotime($missing_event['event_date'])); ?>)</li>
+                                <?php endforeach; ?>
+                                <?php if ($missing_count > 3): ?>
+                                    <li><em>...and <?php echo($missing_count - 3); ?> more</em></li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
+
+                        <p style="color: #555; font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;">To submit new OD requests, please upload certificates for your past events via the dashboard, or contact your counselor for permission.</p>
+                        <a href="index.php" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; justify-content: center; text-decoration: none;">
+                            <span class="material-symbols-outlined">dashboard</span>
+                            Go To Dashboard
+                        </a>
+                    </div>
+                    <?php else: ?>
+
                     <!-- Counselor Information -->
                     <?php if ($counselor_info): ?>
                     <div class="counselor-info">
@@ -1639,7 +1702,8 @@
                             </a>
                         </div>
                     </form>
-                    <?php endif; ?>
+                    <?php endif; // counselor_info endif ?>
+                    <?php endif; // is_od_blocked endif ?>
                 </div>
 
                 <!-- OD Request Status -->

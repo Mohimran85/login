@@ -13,7 +13,7 @@
  *
  * @param int $timeout Inactivity timeout in seconds (default: 1800 = 30 minutes)
  */
-function checkSessionTimeout($timeout = 1800)
+function checkSessionTimeout($timeout = 600)
 {
     if (session_status() !== PHP_SESSION_ACTIVE) {
         return;

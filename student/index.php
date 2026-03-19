@@ -809,13 +809,14 @@
         align-items: center;
         position: absolute;
         white-space: nowrap;
-        animation: ticker 4s linear infinite;
         height: 100%;
-        width: fit-content;
+        width: max-content; /* Force width completely based on child un-wrapped widths */
+        will-change: transform;
+        max-width: none !important; /* Override global max-width: 100% so it doesn't squish */
       }
 
       .ticker-content:hover {
-        animation-play-state: paused;
+        animation-play-state: paused !important; /* Pause on hover */
       }
 
       .ticker-item {
@@ -825,6 +826,9 @@
         padding-right: 50px;
         display: inline-flex;
         align-items: center;
+        flex: 0 0 auto; /* Stop entirely from compressing */
+        white-space: nowrap;
+        max-width: none !important; /* Override global max-width: 100% */
       }
 
       .ticker-item::before {
@@ -833,11 +837,70 @@
         font-size: 16px;
       }
 
-      @keyframes ticker {
+      @keyframes ticker-loop-dynamic {
         0% { transform: translateX(0); }
-        100% { transform: translateX(-25%); }
+        100% { transform: translateX(var(--ticker-width)); }
+      }
+
+      @media (max-width: 768px) {
+        .news-ticker-container {
+            padding: 10px 15px;
+            height: 50px;
+        }
+        .news-ticker-label {
+            display: none; /* Hide label on mobile to give more space */
+        }
+        .ticker-item {
+            font-size: 14px;
+            padding-right: 30px;
+            flex: 0 0 auto; /* Ensure it stays completely uncompressed */
+            white-space: nowrap;
+        }
       }
     </style>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        // Run after all resources (fonts, etc.) are loaded to get accurate widths
+        window.addEventListener('load', () => {
+            const tickerContent = document.querySelector('.ticker-content');
+            if (!tickerContent) return;
+
+            const items = Array.from(tickerContent.querySelectorAll('.ticker-item'));
+            if (items.length === 0) return;
+
+            // PHP duplicates items once, so the original amount is half
+            const originalItemCount = items.length / 2;
+            let originalWidth = 0;
+
+            for (let i = 0; i < originalItemCount; i++) {
+                originalWidth += items[i].getBoundingClientRect().width;
+            }
+
+            if (originalWidth === 0) return; // Prevent division by zero
+
+            const wrapperWidth = document.querySelector('.news-ticker-wrapper').offsetWidth;
+
+            // To loop seamlessly, the total width of all items must be at least (originalWidth + wrapperWidth).
+            // Currently it is originalWidth * 2. If the screen is very wide or items are few, we need more clones.
+            let requiredWidth = originalWidth + wrapperWidth;
+            let currentWidth = originalWidth * 2;
+
+            while (currentWidth < requiredWidth + 100) { // +100px buffer to be safe
+                for (let i = 0; i < originalItemCount; i++) {
+                    tickerContent.appendChild(items[i].cloneNode(true));
+                }
+                currentWidth += originalWidth;
+            }
+
+            const speed = 40; // pixels per second for a smooth reading speed
+            const duration = originalWidth / speed;
+
+            // Use the exact pixel width for the seamless loop to avoid percentage issues
+            tickerContent.style.setProperty('--ticker-width', '-' + originalWidth + 'px');
+            tickerContent.style.animation = `ticker-loop-dynamic ${duration}s linear infinite`;
+        });
+      });
+    </script>
   </head>
   <body>
     <!-- <button class="mobile-menu-btn" onclick="toggleSidebar()">
@@ -998,11 +1061,13 @@
                             }
                         };
 
-                        // Render items 4 times for seamless loop (covers wide screens)
+                        // Render the items
                         $renderTickerItems($recent_winners);
-                        $renderTickerItems($recent_winners);
-                        $renderTickerItems($recent_winners);
-                        $renderTickerItems($recent_winners);
+
+                        // Duplicate items for seamless looping if there are winners
+                        if (! empty($recent_winners)) {
+                            $renderTickerItems($recent_winners);
+                        }
                     ?>
                 </div>
             </div>

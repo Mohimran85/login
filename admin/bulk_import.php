@@ -666,7 +666,7 @@
                         <a href="index.php">Home</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">people</span>
+                        <sp an class="material-symbols-outlined">people</sp>
                         <a href="participants.php">Participants</a>
                     </li>
                     <li class="sidebar-list-item">
