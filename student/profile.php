@@ -1,5 +1,6 @@
 <?php
     session_start();
+    require_once __DIR__ . '/../includes/env_loader.php';
 
     // Check if user is logged in as a student
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
@@ -189,6 +190,10 @@
             } catch(e) { console.warn('Median bridge:', e); }
           }
         }
+        window.gonative_onesignal_info = function(info) {
+            var pid = info && (info.oneSignalUserId || info.player_id);
+            if (pid) _savePlayerId(pid);
+          };
         _linkMedianId();
         document.addEventListener('DOMContentLoaded', _linkMedianId);
         window.addEventListener('load', _linkMedianId);

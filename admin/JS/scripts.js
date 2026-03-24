@@ -466,7 +466,14 @@ function initEnhancedCategoryChart() {
     tooltip: {
       enabled: true,
       custom: function ({ series, seriesIndex, dataPointIndex, w }) {
-        const category = window.categoryAnalytics[dataPointIndex];
+        const pointLabel =
+          (w.globals.labels && w.globals.labels[dataPointIndex]) ||
+          (w.config.xaxis &&
+          w.config.xaxis.categories &&
+          w.config.xaxis.categories[dataPointIndex]);
+        const category =
+          window.categoryAnalytics.find((cat) => cat.name === pointLabel) ||
+          window.categoryAnalytics[dataPointIndex];
         if (!category) return "";
 
         return `
@@ -532,7 +539,7 @@ function prepareChartData(view) {
     return { series: [], categories: [], yAxisTitle: "" };
   }
 
-  const categories = window.categoryAnalytics.map((cat) => cat.name);
+  let categories = window.categoryAnalytics.map((cat) => cat.name);
   let series = [];
   let yAxisTitle = "";
 
@@ -562,6 +569,7 @@ function prepareChartData(view) {
       const competitiveCategories = window.categoryAnalytics.filter(
         (cat) => cat.is_competitive,
       );
+      categories = competitiveCategories.map((cat) => cat.name);
       series = [
         {
           name: "Success Rate (%)",

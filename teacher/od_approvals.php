@@ -1955,7 +1955,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td data-label="Register No" style="padding: 15px; color: #495057; font-family: 'Courier New', monospace;">
+                                    <td data-label="Register No" style="padding: 15px; color: #1e293b; font-family: 'Poppins', sans-serif; font-weight: 600;">
                                         <span><?php echo htmlspecialchars($request['student_regno']); ?></span>
                                     </td>
                                     <td data-label="Event Name" style="padding: 15px; color: #495057;">
@@ -2186,8 +2186,8 @@
                               </div>
                               <div class="description-box" style="border-left-color: #ffc107;">
                                   <?php
-                                      $offer_letter_path    = '../student/uploads/offer_letters/' . $request['offer_letter'];
-                                      $file_extension = strtolower(pathinfo($request['offer_letter'], PATHINFO_EXTENSION));
+                                      $offer_letter_path = '../student/uploads/offer_letters/' . $request['offer_letter'];
+                                      $file_extension    = strtolower(pathinfo($request['offer_letter'], PATHINFO_EXTENSION));
                                   ?>
 
                                   <div style="display: flex; flex-direction: column; gap: 15px;">

@@ -161,8 +161,8 @@
         while ($row = $compare_category_result->fetch_assoc()) {
             $category = $row['event_type'];
             // Non-competitive events don't have success rates
-            $nonCompetitiveEvents                  = ['Workshop', 'Seminar', 'Webinar', 'Training', 'Symposium'];
-            $isCompetitive                         = ! in_array($category, $nonCompetitiveEvents);
+            $nonCompetitiveEvents                  = ['workshop', 'seminar', 'webinar', 'training', 'symposium', 'conference'];
+            $isCompetitive                         = ! in_array(strtolower(trim($category)), $nonCompetitiveEvents, true);
             $compare_category_analytics[$category] = [
                 'name'                 => $category,
                 'total_participations' => (int) $row['participations'],
@@ -205,8 +205,8 @@
     while ($row = $student_category_result->fetch_assoc()) {
         $category = $row['event_type'];
         // Non-competitive events don't have success rates
-        $nonCompetitiveEvents          = ['Workshop', 'Seminar', 'Webinar', 'Training', 'Symposium'];
-        $isCompetitive                 = ! in_array($category, $nonCompetitiveEvents);
+        $nonCompetitiveEvents          = ['workshop', 'seminar', 'webinar', 'training', 'symposium', 'conference'];
+        $isCompetitive                 = ! in_array(strtolower(trim($category)), $nonCompetitiveEvents, true);
         $category_analytics[$category] = [
             'name'                 => $category,
             'total_participations' => (int) $row['participations'],
@@ -219,7 +219,7 @@
             'latest_event'         => $row['latest_event_date'],
             'category_type'        => 'student_only',
             'activity_months'      => 0,
-            'has_success_metrics'  => true,
+            'has_success_metrics'  => $isCompetitive,
             'is_competitive'       => $isCompetitive,
         ];
     }
@@ -523,35 +523,35 @@
             <span class="material-symbols-outlined"  onclick="closeSidebar()">close</span>
           </div>
           <ul class="sidebar-list">
-            <li class="sidebar-list-item active">
+            <li class="sidebar-list-item active" onclick="window.location.href='index.php'">
               <span class="material-symbols-outlined">dashboard</span>
               <a href="index.php">Home</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
               <span class="material-symbols-outlined">people</span>
               <a href="participants.php">Participants</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
               <span class="material-symbols-outlined">manage_accounts</span>
               <a href="user_management.php">User Management</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
               <span class="material-symbols-outlined">school</span>
               <a href="manage_counselors.php">Manage Counselors</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
               <span class="material-symbols-outlined">emoji_events</span>
               <a href="hackathons.php">Hackathons</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
               <span class="material-symbols-outlined">bar_chart</span>
               <a href="reports.php">Reports</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
               <span class="material-symbols-outlined">account_circle</span>
               <a href="profile.php">Profile</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
               <span class="material-symbols-outlined">logout</span>
               <a href="logout.php">Logout</a>
             </li>

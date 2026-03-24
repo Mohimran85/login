@@ -16,11 +16,13 @@ $is_report_export = isset($_POST['year']) || isset($_POST['department']) || isse
 
 if ($is_report_export) {
     // Handle reports export
-    $year       = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
-    $department = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
-    $semester   = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
-    $event_type = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
-    $location   = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
+    $year        = isset($_POST['year']) && $_POST['year'] !== '' ? $_POST['year'] : null;
+    $department  = isset($_POST['department']) && $_POST['department'] !== '' ? $_POST['department'] : null;
+    $semester    = isset($_POST['semester']) && $_POST['semester'] !== '' ? $_POST['semester'] : null;
+    $event_type  = isset($_POST['event_type']) && $_POST['event_type'] !== '' ? $_POST['event_type'] : null;
+    $location    = isset($_POST['location']) && $_POST['location'] !== '' ? $_POST['location'] : null;
+    $start_month = isset($_POST['start_month']) && $_POST['start_month'] !== '' ? $_POST['start_month'] : null;
+    $end_month   = isset($_POST['end_month']) && $_POST['end_month'] !== '' ? $_POST['end_month'] : null;
 
     header("Content-Type: application/vnd.ms-excel");
     header("Content-Disposition: attachment; filename=reports_" . date('Y-m-d') . ".xls");
@@ -78,6 +80,22 @@ if ($is_report_export) {
         } else {
             $where_conditions[] = "(LOWER(e.state) != 'tamil nadu' AND LOWER(e.state) != 'tamilnadu' AND e.state IS NOT NULL AND e.state != '')";
         }
+    }
+
+    // Add month filter if selected
+    if ($start_month !== null && $end_month !== null) {
+        $where_conditions[]  = "MONTH(e.start_date) BETWEEN ? AND ?";
+        $bind_types         .= 'ii';
+        $bind_values[]       = $start_month;
+        $bind_values[]       = $end_month;
+    } elseif ($start_month !== null) {
+        $where_conditions[]  = "MONTH(e.start_date) = ?";
+        $bind_types         .= 'i';
+        $bind_values[]       = $start_month;
+    } elseif ($end_month !== null) {
+        $where_conditions[]  = "MONTH(e.start_date) = ?";
+        $bind_types         .= 'i';
+        $bind_values[]       = $end_month;
     }
 
     // Build final SQL query

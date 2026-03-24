@@ -1,6 +1,6 @@
 <?php
     session_start();
-    // Include optimized systems
+    require_once __DIR__ . '/../includes/env_loader.php';
     require_once '../includes/DatabaseManager.php';
     require_once '../includes/CacheManager.php';
 
@@ -96,6 +96,19 @@
     'rejected_od'       => $dashboard_data['stats']['rejected_od'] ?? 0,
     ];
 
+    // Detailed lists for modals
+    $all_participated_sql    = "SELECT event_name, event_type, start_date, no_of_days FROM student_event_register WHERE regno = ? AND verification_status = 'Approved' ORDER BY start_date DESC";
+    $all_participated_events = $db->executeQuery($all_participated_sql, [$regno], 's');
+
+    $won_events_sql  = "SELECT event_name, event_type, start_date, prize FROM student_event_register WHERE regno = ? AND verification_status = 'Approved' AND prize IN ('First', 'Second', 'Third') ORDER BY start_date DESC";
+    $won_events_list = $db->executeQuery($won_events_sql, [$regno], 's');
+
+    $internships_list_sql = "SELECT company_name, role_title, start_date, end_date FROM internship_submissions WHERE regno = ? ORDER BY start_date DESC";
+    $internships_list     = $db->executeQuery($internships_list_sql, [$regno], 's');
+
+    $od_requests_list_sql = "SELECT event_name, event_date as start_date, DATE_ADD(event_date, INTERVAL COALESCE(event_days, 1) DAY) as end_date, event_days as no_of_days, status, counselor_remarks as rejection_reason FROM od_requests WHERE student_regno = ? ORDER BY request_date DESC";
+    $od_requests_list     = $db->executeQuery($od_requests_list_sql, [$regno], 's');
+
     // Convert arrays to objects for compatibility with existing code
     $recent_events       = (object) ['num_rows' => count($dashboard_data['recent_events'])];
     $recent_events->data = $dashboard_data['recent_events'];
@@ -129,7 +142,8 @@
         function _savePlayerId(pid) {
           if (!pid || !studentRegno) return;
           console.log('Median OneSignal: saving player_id ' + pid);
-          fetch('../api/save_player_id.php', {
+          const apiUrl = '../api/save_player_id.php?t=' + new Date().getTime();
+          fetch(apiUrl, {
             method: 'POST',
             credentials: 'include',
             headers: {'Content-Type': 'application/json'},
@@ -138,7 +152,11 @@
             .then(function(d){ console.log('save_player_id result:', d); })
             .catch(function(e){ console.warn('save_player_id error:', e); });
         }
-        function _linkMedianId() {
+        window.gonative_onesignal_info = function(info) {
+            var pid = info && (info.oneSignalUserId || info.player_id);
+            if (pid) _savePlayerId(pid);
+          };
+          function _linkMedianId() {
           if (typeof median !== 'undefined' && median.onesignal) {
             try {
               median.onesignal.externalUserId.set({externalId: String(studentRegno)});
@@ -165,6 +183,18 @@
           OneSignal.Notifications.requestPermission();
         });
       }
+    </script>
+    <!-- Register Service Worker for Push Notifications -->
+    <script>
+        // Register Service Worker for Push Notifications
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/event_management_system/login/sw.js')
+                .then(function(registration) {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                }).catch(function(error) {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
     </script>
     <!-- css link -->
     <link rel="stylesheet" href="student_dashboard.css" />
@@ -857,6 +887,111 @@
             white-space: nowrap;
         }
       }
+
+      /* Modal Styles */
+      .stat-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      .stat-modal-overlay.show {
+        display: flex;
+        opacity: 1;
+      }
+      .stat-modal {
+        background: white;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+      }
+      .stat-modal-overlay.show .stat-modal {
+        transform: translateY(0);
+      }
+      .stat-modal-header {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .stat-modal-header h3 {
+        margin: 0;
+        color: #1a408c;
+        font-size: 20px;
+      }
+      .stat-modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+      }
+      .stat-modal-close:hover {
+        color: #dc3545;
+      }
+      .stat-modal-body {
+        padding: 20px;
+        overflow-y: auto;
+      }
+      .stat-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .stat-list-item {
+        padding: 15px;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        background: #fafcfd;
+      }
+      .stat-list-item:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      }
+      .stat-list-item h4 {
+        margin: 0 0 5px 0;
+        color: #2c3e50;
+        font-size: 16px;
+      }
+      .stat-list-item-meta {
+        font-size: 13px;
+        color: #666;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+      .stat-empty {
+        text-align: center;
+        color: #999;
+        font-size: 15px;
+        padding: 30px 0;
+      }
+      .modal-card {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      .modal-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      }
     </style>
     <script>
       document.addEventListener("DOMContentLoaded", function() {
@@ -1076,7 +1211,7 @@
 
         <!-- cards  -->
         <div class="main-card">
-          <div class="card">
+          <div class="card modal-card" onclick="openStatModal('modal-participated')">
             <div class="card-inner">
               <h3>Total Events Participated</h3>
               <span class="material-symbols-outlined">school</span>
@@ -1084,7 +1219,7 @@
             <h1><?php echo $total_events; ?></h1>
           </div>
 
-          <div class="card">
+          <div class="card modal-card" onclick="openStatModal('modal-won')">
             <div class="card-inner">
               <h3>Total Events Won</h3>
               <span class="material-symbols-outlined">emoji_events</span>
@@ -1100,7 +1235,7 @@
             <h1><?php echo $total_events > 0 ? round(($events_won / $total_events) * 100, 1) : 0; ?>%</h1>
           </div>
 
-          <div class="card">
+          <div class="card modal-card" onclick="openStatModal('modal-internships')">
             <div class="card-inner">
               <h3>Internships Completed</h3>
               <span class="material-symbols-outlined">work</span>
@@ -1108,7 +1243,7 @@
             <h1><?php echo $internship_count; ?></h1>
           </div>
 
-          <div class="card">
+          <div class="card modal-card" onclick="openStatModal('modal-od')">
             <div class="card-inner">
               <h3>OD Requests</h3>
               <span class="material-symbols-outlined">request_page</span>
@@ -1272,11 +1407,165 @@
       </div>
     </div>
 
+    <!-- Modals -->
+    <!-- Participated Events Modal -->
+    <div id="modal-participated" class="stat-modal-overlay" onclick="closeStatModal(event, 'modal-participated')">
+      <div class="stat-modal" onclick="event.stopPropagation()">
+        <div class="stat-modal-header">
+          <h3>Events Participated</h3>
+          <button class="stat-modal-close" onclick="closeStatModal(null, 'modal-participated')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="stat-modal-body">
+          <?php if (! empty($all_participated_events)): ?>
+            <div class="stat-list">
+              <?php foreach ($all_participated_events as $event): ?>
+                <div class="stat-list-item">
+                  <h4><?php echo htmlspecialchars($event['event_name']); ?></h4>
+                  <div class="stat-list-item-meta">
+                    <span><strong>Type:</strong> <?php echo htmlspecialchars($event['event_type']); ?></span>
+                    <span><strong>Date:</strong> <?php echo date('M d, Y', strtotime($event['start_date'])); ?></span>
+                    <span><strong>Duration:</strong> <?php echo $event['no_of_days']; ?> day(s)</span>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <div class="stat-empty">No events participated yet.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+
+    <!-- Won Events Modal -->
+    <div id="modal-won" class="stat-modal-overlay" onclick="closeStatModal(event, 'modal-won')">
+      <div class="stat-modal" onclick="event.stopPropagation()">
+        <div class="stat-modal-header">
+          <h3>Events Won</h3>
+          <button class="stat-modal-close" onclick="closeStatModal(null, 'modal-won')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="stat-modal-body">
+          <?php if (! empty($won_events_list)): ?>
+            <div class="stat-list">
+              <?php foreach ($won_events_list as $event): ?>
+                <div class="stat-list-item">
+                  <h4><?php echo htmlspecialchars($event['event_name']); ?></h4>
+                  <div class="stat-list-item-meta">
+                    <span><strong>Type:</strong> <?php echo htmlspecialchars($event['event_type']); ?></span>
+                    <span><strong>Prize:</strong> <span class="prize-badge">🏆 <?php echo htmlspecialchars($event['prize']); ?></span></span>
+                    <span><strong>Date:</strong> <?php echo date('M d, Y', strtotime($event['start_date'])); ?></span>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <div class="stat-empty">No events won yet.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+
+    <!-- Internships Modal -->
+    <div id="modal-internships" class="stat-modal-overlay" onclick="closeStatModal(event, 'modal-internships')">
+      <div class="stat-modal" onclick="event.stopPropagation()">
+        <div class="stat-modal-header">
+          <h3>Internships Completed</h3>
+          <button class="stat-modal-close" onclick="closeStatModal(null, 'modal-internships')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="stat-modal-body">
+          <?php if (! empty($internships_list)): ?>
+            <div class="stat-list">
+              <?php foreach ($internships_list as $internship): ?>
+                <div class="stat-list-item">
+                  <h4><?php echo htmlspecialchars($internship['company_name']); ?></h4>
+                  <div class="stat-list-item-meta">
+                    <span><strong>Role:</strong> <?php echo htmlspecialchars($internship['role_title']); ?></span>
+                    <span><strong>From:</strong> <?php echo date('M d, Y', strtotime($internship['start_date'])); ?></span>
+                    <span><strong>To:</strong> <?php echo date('M d, Y', strtotime($internship['end_date'])); ?></span>
+                  </div>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <div class="stat-empty">No internships submitted yet.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+
+    <!-- OD Requests Modal -->
+    <div id="modal-od" class="stat-modal-overlay" onclick="closeStatModal(event, 'modal-od')">
+      <div class="stat-modal" onclick="event.stopPropagation()">
+        <div class="stat-modal-header">
+          <h3>OD Requests</h3>
+          <button class="stat-modal-close" onclick="closeStatModal(null, 'modal-od')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div class="stat-modal-body">
+          <?php if (! empty($od_requests_list)): ?>
+            <div class="stat-list">
+              <?php foreach ($od_requests_list as $od): ?>
+                <div class="stat-list-item">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <h4><?php echo htmlspecialchars($od['event_name']); ?></h4>
+                    <?php
+                        // Status badge logic
+                        // Status style
+                        $statusStyle = "padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase;";
+                        if ($od['status'] == 'Approved' || $od['status'] == 'approved') {
+                            $statusStyle .= "background: #d4edda; color: #155724;";
+                        } else if ($od['status'] == 'Rejected' || $od['status'] == 'rejected') {
+                            $statusStyle .= "background: #f8d7da; color: #721c24;";
+                        } else {
+                            $statusStyle .= "background: #fff3cd; color: #856404;";
+                        }
+
+                    ?>
+                    <span style="<?php echo $statusStyle; ?>"><?php echo htmlspecialchars($od['status']); ?></span>
+                  </div>
+                  <div class="stat-list-item-meta">
+                    <span><strong>From:</strong> <?php echo date('M d, Y', strtotime($od['start_date'])); ?></span>
+                    <span><strong>To:</strong> <?php echo date('M d, Y', strtotime($od['end_date'])); ?></span>
+                    <span><strong>Duration:</strong> <?php echo $od['no_of_days']; ?> day(s)</span>
+                  </div>
+                  <?php if (($od['status'] == 'Rejected' || $od['status'] == 'rejected') && ! empty($od['rejection_reason'])): ?>
+                    <div style="margin-top: 5px; font-size: 13px; color: #dc3545;">
+                        <strong>Reason:</strong> <?php echo htmlspecialchars($od['rejection_reason']); ?>
+                    </div>
+                  <?php endif; ?>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php else: ?>
+            <div class="stat-empty">No OD requests found.</div>
+          <?php endif; ?>
+        </div>
+      </div>
+    </div>
+
     <!-- Include optimized dashboard manager -->
     <script src="js/dashboard-manager.js"></script>
 
     <!-- Scripts -->
     <script>
+        // Modal functions
+        function openStatModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeStatModal(event, modalId) {
+            if (event && event.target.id !== modalId) return; // Only close if clicking overlay or close button
+            document.getElementById(modalId).classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
         // Mobile menu toggle function
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');

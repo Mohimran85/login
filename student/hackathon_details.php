@@ -1,5 +1,6 @@
 <?php
     session_start();
+    require_once __DIR__ . '/../includes/env_loader.php';
     require_once __DIR__ . '/../includes/security.php';
     require_once __DIR__ . '/../includes/DatabaseManager.php';
 
@@ -144,6 +145,10 @@
             } catch(e) { console.warn('Median bridge:', e); }
           }
         }
+        window.gonative_onesignal_info = function(info) {
+            var pid = info && (info.oneSignalUserId || info.player_id);
+            if (pid) _savePlayerId(pid);
+          };
         _linkMedianId();
         document.addEventListener('DOMContentLoaded', _linkMedianId);
         window.addEventListener('load', _linkMedianId);

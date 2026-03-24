@@ -649,11 +649,17 @@
                     <div class="profile-details">
                         <span class="profile-name"><?php echo htmlspecialchars($user_name); ?></span>
                         <span class="profile-role"><?php
-                            if ($is_admin_user) echo 'Admin';
-                            elseif ($is_counselor_user) echo 'Counselor';
-                            elseif ($is_coordinator_user) echo 'Coordinator';
-                            else echo 'Teacher';
-                        ?></span>
+                                                       if ($is_admin_user) {
+                                                           echo 'Admin';
+                                                       } elseif ($is_counselor_user) {
+                                                           echo 'Counselor';
+                                                       } elseif ($is_coordinator_user) {
+                                                           echo 'Coordinator';
+                                                       } else {
+                                                           echo 'Teacher';
+                                                       }
+
+                                                   ?></span>
                     </div>
                 </div>
             </div>
@@ -664,65 +670,71 @@
             <div class="sidebar-title">
                 <div class="sidebar-band">
                     <h2 style="color: white; padding: 10px"><?php
-                        if ($is_admin_user) echo 'Admin Panel';
-                        elseif ($is_counselor_user) echo 'Counselor Panel';
-                        elseif ($is_coordinator_user) echo 'Coordinator Panel';
-                        else echo 'Teacher Panel';
-                    ?></h2>
+                                                                if ($is_admin_user) {
+                                                                    echo 'Admin Panel';
+                                                                } elseif ($is_counselor_user) {
+                                                                    echo 'Counselor Panel';
+                                                                } elseif ($is_coordinator_user) {
+                                                                    echo 'Coordinator Panel';
+                                                                } else {
+                                                                    echo 'Teacher Panel';
+                                                                }
+
+                                                            ?></h2>
                     <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                 </div>
                 <ul class="sidebar-list">
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='index.php'">
                         <span class="material-symbols-outlined">dashboard</span>
                         <a href="index.php">Home</a>
                     </li>
-                    <?php if ($is_counselor_user && !$is_admin_user): ?>
-                    <li class="sidebar-list-item">
+                    <?php if ($is_counselor_user && ! $is_admin_user): ?>
+                    <li class="sidebar-list-item" onclick="window.location.href='../teacher/assigned_students.php'">
                         <span class="material-symbols-outlined">supervisor_account</span>
                         <a href="../teacher/assigned_students.php">My Assigned Students</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='../teacher/od_approvals.php'">
                         <span class="material-symbols-outlined">approval</span>
                         <a href="../teacher/od_approvals.php">OD Approvals</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='../teacher/internship_approvals.php'">
                         <span class="material-symbols-outlined">school</span>
                         <a href="../teacher/internship_approvals.php">Internship Validations</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='../teacher/verify_events.php'">
                         <span class="material-symbols-outlined">card_giftcard</span>
                         <a href="../teacher/verify_events.php">Event Certificate Validation</a>
                     </li>
                     <?php endif; ?>
                     <?php if ($is_admin_user): ?>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
                         <span class="material-symbols-outlined">people</span>
                         <a href="participants.php">Participants</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
                         <span class="material-symbols-outlined">manage_accounts</span>
                         <a href="user_management.php">User Management</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
                         <span class="material-symbols-outlined">school</span>
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <?php endif; ?>
-                    <li class="sidebar-list-item active">
+                    <li class="sidebar-list-item active" onclick="window.location.href='hackathons.php'">
                         <span class="material-symbols-outlined">emoji_events</span>
                         <a href="hackathons.php">Hackathons</a>
                     </li>
                     <?php if ($is_admin_user): ?>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
                         <span class="material-symbols-outlined">bar_chart</span>
                         <a href="reports.php">Reports</a>
                     </li>
                     <?php endif; ?>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
                         <span class="material-symbols-outlined">account_circle</span>
                         <a href="profile.php">Profile</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
                         <span class="material-symbols-outlined">logout</span>
                         <a href="logout.php">Logout</a>
                     </li>

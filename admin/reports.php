@@ -80,35 +80,35 @@
                 <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
             </div>
             <ul class="sidebar-list">
-                <li class="sidebar-list-item">
+                <li class="sidebar-list-item" onclick="window.location.href='index.php'">
                   <span class="material-symbols-outlined">dashboard</span>
                   <a href="index.php">Home</a>
                 </li>
-                <li class="sidebar-list-item">
+                <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
                   <span class="material-symbols-outlined">people</span>
                   <a href="participants.php">Participants</a>
                 </li>
-                <li class="sidebar-list-item">
+                <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
                   <span class="material-symbols-outlined">manage_accounts</span>
                   <a href="user_management.php">User Management</a>
                 </li>
-                <li class="sidebar-list-item">
+                <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
                   <span class="material-symbols-outlined">school</span>
                   <a href="manage_counselors.php">Manage Counselors</a>
                 </li>
-                <li class="sidebar-list-item">
+                <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
                   <span class="material-symbols-outlined">emoji_events</span>
                   <a href="hackathons.php">Hackathons</a>
                 </li>
-                <li class="sidebar-list-item active">
+                <li class="sidebar-list-item active" onclick="window.location.href='reports.php'">
                   <span class="material-symbols-outlined">bar_chart</span>
                   <a href="reports.php">Reports</a>
                 </li>
-                <li class="sidebar-list-item">
+                <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
                   <span class="material-symbols-outlined">account_circle</span>
                   <a href="profile.php">Profile</a>
                 </li>
-                <li class="sidebar-list-item">
+                <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
                   <span class="material-symbols-outlined">logout</span>
                   <a href="logout.php">Logout</a>
                 </li>
@@ -215,20 +215,27 @@
                             $event_types_query  = "SELECT DISTINCT event_type FROM student_event_register WHERE event_type IS NOT NULL AND event_type != '' ORDER BY event_type";
                             $event_types_result = $conn->query($event_types_query);
 
+                            $db_types = [];
                             if ($event_types_result && $event_types_result->num_rows > 0) {
                                 while ($row = $event_types_result->fetch_assoc()) {
-                                    $type     = $row['event_type'];
-                                    $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
-                                    echo "<option value=\"" . htmlspecialchars($type) . "\" $selected>" . htmlspecialchars($type) . "</option>";
+                                    $db_types[] = $row['event_type'];
                                 }
-                            } else {
-                                // Fallback to extended default options
-                                $default_types = ['Workshop', 'Seminar', 'Competition', 'Hackathon', 'Conference', 'Symposium', 'Webinar', 'Guest Lecture', 'Paper Presentation', 'Project Presentation'];
-                                sort($default_types);
-                                foreach ($default_types as $type) {
-                                    $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
-                                    echo "<option value=\"$type\" $selected>$type</option>";
-                                }
+                            }
+
+                            // Default options from requirements
+                            $default_types = [
+                                'Workshop', 'Symposium', 'Conference', 'Webinar', 'Competition',
+                                'Seminar', 'Hackathon', 'Training', 'Cultural Event',
+                                'Sports Event', 'Technical Event', 'Other',
+                            ];
+
+                            // Merge and unique to ensure we consistently show the dropdown list
+                            $all_types = array_unique(array_merge($db_types, $default_types));
+                            sort($all_types);
+
+                            foreach ($all_types as $type) {
+                                $selected = (isset($_POST['event_type']) && $_POST['event_type'] == $type) ? 'selected' : '';
+                                echo "<option value=\"" . htmlspecialchars($type) . "\" $selected>" . htmlspecialchars($type) . "</option>";
                             }
                         ?>
                     </select>
@@ -325,11 +332,19 @@
                         }
                     }
 
-                    // Add month range filter if selected
+                    // Add month filter if selected
                     if ($start_month !== null && $end_month !== null) {
-                        $where_conditions[]  = "e.start_date BETWEEN ? AND ?";
-                        $bind_types         .= 's';
+                        $where_conditions[]  = "MONTH(e.start_date) BETWEEN ? AND ?";
+                        $bind_types         .= 'ii';
                         $bind_values[]       = $start_month;
+                        $bind_values[]       = $end_month;
+                    } elseif ($start_month !== null) {
+                        $where_conditions[]  = "MONTH(e.start_date) = ?";
+                        $bind_types         .= 'i';
+                        $bind_values[]       = $start_month;
+                    } elseif ($end_month !== null) {
+                        $where_conditions[]  = "MONTH(e.start_date) = ?";
+                        $bind_types         .= 'i';
                         $bind_values[]       = $end_month;
                     }
 
@@ -442,6 +457,14 @@
                             echo "<input type='hidden' name='location' value='" . htmlspecialchars($location) . "'>";
                         }
 
+                        if ($start_month !== null) {
+                            echo "<input type='hidden' name='start_month' value='" . htmlspecialchars($start_month) . "'>";
+                        }
+
+                        if ($end_month !== null) {
+                            echo "<input type='hidden' name='end_month' value='" . htmlspecialchars($end_month) . "'>";
+                        }
+
                         echo "<button type='submit'>Download as Excel</button>";
                         echo "</form>";
 
@@ -465,6 +488,14 @@
 
                         if ($location !== null) {
                             echo "<input type='hidden' name='location' value='" . htmlspecialchars($location) . "'>";
+                        }
+
+                        if ($start_month !== null) {
+                            echo "<input type='hidden' name='start_month' value='" . htmlspecialchars($start_month) . "'>";
+                        }
+
+                        if ($end_month !== null) {
+                            echo "<input type='hidden' name='end_month' value='" . htmlspecialchars($end_month) . "'>";
                         }
 
                         echo "<button type='submit' style='background:linear-gradient(135deg,#1a7a35 0%,#28a745 100%);'>Download All Certificates</button>";

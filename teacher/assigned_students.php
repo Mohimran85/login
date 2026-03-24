@@ -86,6 +86,135 @@
 
     $where_clause = 'WHERE ' . implode(' AND ', $where_conditions);
 
+    // Export to Excel logic
+    if (isset($_GET['export']) && $_GET['export'] === 'excel') {
+    if (ob_get_level()) {ob_end_clean();}
+
+    $export_type = $_GET['type'] ?? 'students'; // 'students', 'events', 'prizes'
+
+    if ($export_type === 'events' || $export_type === 'prizes') {
+        $filename_prefix = $export_type === 'prizes' ? 'prizes_won_' : 'event_participations_';
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=" . $filename_prefix . date('Ymd_His') . ".xls");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        $events_sql = "SELECT sr.name as student_name, sr.regno, sr.department,
+                              ser.event_name, ser.organisation, ser.start_date, ser.event_type,
+                              COALESCE(ser.prize, '') as prize,
+                              COALESCE(ser.verification_status, 'Pending') as verification_status
+                       FROM student_event_register ser
+                       JOIN student_register sr ON ser.regno = sr.regno
+                       JOIN counselor_assignments ca ON sr.regno = ca.student_regno
+                       WHERE ca.counselor_id = ? AND ca.status = 'active'";
+
+        if ($export_type === 'prizes') {
+            $events_sql .= " AND ser.prize IN ('First', 'Second', 'Third')";
+        }
+
+        $events_sql .= " ORDER BY sr.name ASC, ser.start_date DESC";
+
+        $exp_stmt = $conn->prepare($events_sql);
+        $exp_stmt->bind_param("i", $counselor_id);
+        $exp_stmt->execute();
+        $exp_res = $exp_stmt->get_result();
+
+        echo "<table border='1'>";
+        echo "<tr>";
+        echo "<th>S.No</th>";
+        echo "<th>Student Name</th>";
+        echo "<th>Register Number</th>";
+        echo "<th>Department</th>";
+        echo "<th>Event Name</th>";
+        echo "<th>Event Type</th>";
+        echo "<th>Organisation</th>";
+        echo "<th>Date</th>";
+        echo "<th>Prize</th>";
+        echo "<th>Status</th>";
+        echo "</tr>";
+
+        $sno = 1;
+        while ($row = $exp_res->fetch_assoc()) {
+            echo "<tr>";
+            echo "<td>" . $sno++ . "</td>";
+            echo "<td>" . htmlspecialchars($row['student_name']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['regno']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['department']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['event_name']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['event_type']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['organisation']) . "</td>";
+            echo "<td>" . htmlspecialchars(date('M d, Y', strtotime($row['start_date']))) . "</td>";
+            echo "<td>" . htmlspecialchars($row['prize'] ?: 'No Prize') . "</td>";
+            echo "<td>" . htmlspecialchars($row['verification_status']) . "</td>";
+            echo "</tr>";
+        }
+        echo "</table>";
+        exit();
+    } else {
+        header("Content-Type: application/vnd.ms-excel");
+        header("Content-Disposition: attachment; filename=assigned_students_" . date('Ymd_His') . ".xls");
+        header("Pragma: no-cache");
+        header("Expires: 0");
+
+        $export_sql = "SELECT sr.name, sr.regno, sr.department, sr.year_of_join,
+                                sr.personal_email as email, sr.dob, ca.assigned_date,
+                                COUNT(DISTINCT ser.id) as total_events,
+                                SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prizes_won
+                        FROM counselor_assignments ca
+                        JOIN student_register sr ON ca.student_regno = sr.regno
+                        LEFT JOIN student_event_register ser ON sr.regno = ser.regno
+                        $where_clause
+                        GROUP BY sr.regno, sr.name, sr.department, sr.year_of_join,
+                                sr.personal_email, sr.dob, ca.assigned_date
+                        ORDER BY sr.name ASC";
+
+        $exp_stmt = $conn->prepare($export_sql);
+        if (! empty($types)) {
+            $exp_stmt->bind_param($types, ...$params);
+        }
+        $exp_stmt->execute();
+        $exp_res = $exp_stmt->get_result();
+
+        echo "<table border='1'>";
+        echo "<tr>";
+        echo "<th>S.No</th>";
+        echo "<th>Student Name</th>";
+        echo "<th>Register Number</th>";
+        echo "<th>Department</th>";
+        echo "<th>Semester</th>";
+        echo "<th>Email</th>";
+        echo "<th>Total Events</th>";
+        echo "<th>Prizes Won</th>";
+        echo "<th>Assigned Date</th>";
+        echo "</tr>";
+
+        $now_calc = new DateTime();
+        $cur_yr   = (int) $now_calc->format('Y');
+        $cur_mo   = (int) $now_calc->format('n');
+
+        $sno = 1;
+        while ($row = $exp_res->fetch_assoc()) {
+            $join_yr      = (int) $row['year_of_join'];
+            $months_since = ($cur_yr - $join_yr) * 12 + ($cur_mo - 7);
+            $semester     = ($months_since < 0) ? 1 : min(max((int) floor($months_since / 6) + 1, 1), 8);
+
+            echo "<tr>";
+            echo "<td>" . $sno++ . "</td>";
+            echo "<td>" . htmlspecialchars($row['name']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['regno']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['department']) . "</td>";
+            echo "<td>Sem " . $semester . "</td>";
+            echo "<td>" . htmlspecialchars($row['email']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['total_events']) . "</td>";
+            echo "<td>" . htmlspecialchars($row['prizes_won'] ?? 0) . "</td>";
+            echo "<td>" . htmlspecialchars(date('M d, Y', strtotime($row['assigned_date']))) . "</td>";
+            echo "</tr>";
+        }
+        echo "</table>";
+        exit();
+    }
+    }
+
     // Get total records for pagination
     // Include LEFT JOIN if event category filter is applied
     if (! empty($event_category_filter)) {
@@ -110,7 +239,7 @@
     $total_pages = ceil($total_records / $records_per_page);
 
     // Get assigned students with pagination
-    $students_sql = "SELECT sr.name, sr.regno, sr.department, sr.year_of_join,
+    $students_sql  = "SELECT sr.name, sr.regno, sr.department, sr.year_of_join,
                            sr.personal_email as email, sr.dob, ca.assigned_date,
                            COUNT(DISTINCT ser.id) as total_events,
                            SUM(CASE WHEN ser.prize IN ('First', 'Second', 'Third') THEN 1 ELSE 0 END) as prizes_won
@@ -123,14 +252,14 @@
                     ORDER BY sr.name ASC
                     LIMIT ? OFFSET ?";
 
-    $params[]  = $records_per_page;
-    $params[]  = $offset;
+    $params[] = $records_per_page;
+    $params[] = $offset;
     $types    .= 'ii';
 
-    $students_stmt = $conn->prepare($students_sql);
+    $students_stmt  = $conn->prepare($students_sql);
     $students_stmt->bind_param($types, ...$params);
     $students_stmt->execute();
-    $students_result = $students_stmt->get_result();
+    $students_result  = $students_stmt->get_result();
 
     // Store all results in an array
     $students_data = [];
@@ -1102,11 +1231,24 @@
 
             <!-- Filters Section -->
             <div class="filters-section">
-                <div class="section-header" style="justify-content: space-between; align-items: center;">
+                <div class="section-header" style="justify-content: space-between; align-items: center; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span class="material-symbols-outlined">filter_alt</span>
                         <h2>Filter Students</h2>
                     </div>
+                    <?php
+                        $export_params = $_GET;
+                        if (isset($export_params['page'])) {
+                            unset($export_params['page']);
+                        }
+
+                        $export_params['export'] = 'excel';
+                        $export_url              = '?' . http_build_query($export_params);
+                    ?>
+                    <a href="<?php echo htmlspecialchars($export_url); ?>" class="btn" style="background-color: #28a745; color: white;">
+                        <span class="material-symbols-outlined">download</span>
+                        Export to Excel
+                    </a>
                 </div>
 
                 <form method="GET" action="">
@@ -1357,9 +1499,14 @@
                     <span class="material-symbols-outlined">event</span>
                     Events Attended
                 </h3>
-                <button class="event-modal-close" id="eventModalClose">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <a href="#" id="eventModalExportBtn" class="btn" style="background-color: #28a745; color: white; padding: 6px 12px; font-size: 13px; display: none;">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">download</span> Export
+                    </a>
+                    <button class="event-modal-close" id="eventModalClose">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
             </div>
             <div class="event-modal-body" id="eventModalBody">
                 <div class="event-modal-loading">
@@ -1392,12 +1539,14 @@
         });
 
         // Event Modal
-        const eventModalOverlay = document.getElementById('eventModalOverlay');
-        const eventModalClose   = document.getElementById('eventModalClose');
-        const eventModalTitle   = document.getElementById('eventModalTitle');
-        const eventModalBody    = document.getElementById('eventModalBody');
+        const eventModalOverlay   = document.getElementById('eventModalOverlay');
+        const eventModalClose     = document.getElementById('eventModalClose');
+        const eventModalTitle     = document.getElementById('eventModalTitle');
+        const eventModalBody      = document.getElementById('eventModalBody');
+        const eventModalExportBtn = document.getElementById('eventModalExportBtn');
 
         function openEventModal(regno, studentName, filter) {
+            eventModalExportBtn.style.display = 'none'; // Hide export for single student view
             const isPrizes = filter === 'prizes';
             eventModalTitle.innerHTML = '<span class="material-symbols-outlined">' + (isPrizes ? 'emoji_events' : 'event') + '</span>'
                 + (isPrizes ? 'Prizes Won' : 'Events Attended') + ' &mdash; ' + studentName;
@@ -1469,6 +1618,11 @@
 
         function openAllEventsModal(filter) {
             const isPrizes = filter === 'prizes';
+
+            // Set up export button
+            eventModalExportBtn.style.display = 'inline-flex';
+            eventModalExportBtn.href = '?export=excel&type=' + (isPrizes ? 'prizes' : 'events');
+
             eventModalTitle.innerHTML = '<span class="material-symbols-outlined">' + (isPrizes ? 'emoji_events' : 'event') + '</span>'
                 + (isPrizes ? 'All Prizes Won' : 'All Event Participations');
             eventModalBody.innerHTML = '<div class="event-modal-loading"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div>';

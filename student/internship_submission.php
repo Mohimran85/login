@@ -1292,8 +1292,8 @@
             My Participations
           </a>
         </li>
-        <li class="nav-item active">
-          <a href="internship_submission.php" class="nav-link">
+        <li class="nav-item">
+          <a href="internship_submission.php" class="nav-link active">
             <span class="material-symbols-outlined">work</span>
             Internship Submission
           </a>

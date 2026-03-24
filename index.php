@@ -1,6 +1,7 @@
 <?php
     // Check if user is already logged in
     session_start();
+    require_once __DIR__ . '/includes/env_loader.php';
     if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     // Redirect based on user role
     if (isset($_SESSION['role']) && $_SESSION['role'] === 'student') {
@@ -582,5 +583,46 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script>
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  OneSignalDeferred.push(function(OneSignal) {
+    OneSignal.init({
+      appId: "<?php echo getenv('ONESIGNAL_APP_ID') ?: ''; ?>",
+      allowLocalhostAsSecureOrigin: true,
+    });
+  });
+</script>
+
+<?php if (isset($_GET['logout']) || isset($_GET['timeout']) || isset($_GET['concurrent'])): ?>
+<!-- Clear OneSignal registration upon explicit or forced logout -->
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+    // For Median.co native app
+    if (navigator.userAgent.indexOf('median') > -1 || navigator.userAgent.indexOf('gonative') > -1) {
+        if (typeof median !== 'undefined' && median.onesignal) {
+            try {
+                median.onesignal.externalUserId.remove();
+                median.onesignal.tags.setTags({tags: {}});
+            } catch(e) {}
+        }
+    } else {
+        // For Web fallback
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+            const appId = "<?php echo getenv('ONESIGNAL_APP_ID') ?: ''; ?>";
+            if (appId) {
+                // No need to re-init, just ensure SDK is loaded before logging out
+                if (typeof OneSignal.logout === 'function') {
+                    OneSignal.logout();
+                }
+            }
+        });
+    }
+});
+</script>
+<?php endif; ?>
+
 </body>
 </html>

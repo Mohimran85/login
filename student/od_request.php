@@ -110,7 +110,7 @@
     $counselor_stmt->close();
 
     // Check for missing certificates using same logic as counselor verification
-    $missing_certs_sql = "SELECT odr.event_name, odr.event_date
+    $missing_certs_sql = "SELECT odr.event_name, odr.event_date, odr.event_type, odr.event_state, odr.event_district, odr.event_days, odr.company_name
           FROM od_requests odr
           LEFT JOIN student_event_register ser
               ON odr.student_regno = ser.regno AND odr.event_name = ser.event_name
@@ -1416,7 +1416,16 @@
                             <h4 style="margin: 0 0 10px 0; color: #d32f2f; font-size: 0.9rem;">Missing Events:</h4>
                             <ul style="margin: 0; padding-left: 20px; color: #555; font-size: 0.9rem; line-height: 1.6;">
                                 <?php foreach (array_slice($missing_events, 0, 3) as $missing_event): ?>
-                                    <li><strong><?php echo htmlspecialchars($missing_event['event_name']); ?></strong> (<?php echo date('M d, Y', strtotime($missing_event['event_date'])); ?>)</li>
+                                    <li>
+                                        <strong>
+                                            <a href="student_register.php?event=<?php echo urlencode($missing_event['event_name']); ?>&type=<?php echo urlencode($missing_event['event_type']); ?>&date=<?php echo urlencode($missing_event['event_date']); ?>&state=<?php echo urlencode($missing_event['event_state']); ?>&district=<?php echo urlencode($missing_event['event_district']); ?>&days=<?php echo urlencode($missing_event['event_days']); ?>&org=<?php echo urlencode($missing_event['company_name']); ?>"
+                                               style="color: #d32f2f; text-decoration: underline; cursor: pointer;"
+                                               title="Click to register this event and upload certificate">
+                                                <?php echo htmlspecialchars($missing_event['event_name']); ?>
+                                            </a>
+                                        </strong>
+                                        (<?php echo date('M d, Y', strtotime($missing_event['event_date'])); ?>)
+                                    </li>
                                 <?php endforeach; ?>
                                 <?php if ($missing_count > 3): ?>
                                     <li><em>...and <?php echo($missing_count - 3); ?> more</em></li>

@@ -224,35 +224,35 @@
             <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
           </div>
           <ul class="sidebar-list">
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='index.php'">
               <span class="material-symbols-outlined">dashboard</span>
               <a href="index.php">Home</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
               <span class="material-symbols-outlined">people</span>
               <a href="participants.php">Participants</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
               <span class="material-symbols-outlined">manage_accounts</span>
               <a href="user_management.php">User Management</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
               <span class="material-symbols-outlined">school</span>
               <a href="manage_counselors.php">Manage Counselors</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
               <span class="material-symbols-outlined">emoji_events</span>
               <a href="hackathons.php">Hackathons</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
               <span class="material-symbols-outlined">bar_chart</span>
               <a href="reports.php">Reports</a>
             </li>
-            <li class="sidebar-list-item active">
+            <li class="sidebar-list-item active" onclick="window.location.href='profile.php'">
               <span class="material-symbols-outlined">account_circle</span>
               <a href="profile.php">Profile</a>
             </li>
-            <li class="sidebar-list-item">
+            <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
               <span class="material-symbols-outlined">logout</span>
               <a href="logout.php">Logout</a>
             </li>

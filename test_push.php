@@ -1,0 +1,1 @@
+<?php session_start(); require_once 'includes/db_config.php'; require_once 'includes/OneSignalManager.php'; $osm = new OneSignalManager(); $res = $osm->notifyNewHackathon(1, 'Test', '2026-12-31', 'Test', null); print_r($res); ?>

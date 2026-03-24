@@ -30,12 +30,12 @@
 
         // Auto-calculate current semester from year_of_join
         // Sem 1: Jul-Dec of join year, Sem 2: Jan-Jun next year, etc. (6 months each, 8 total)
-        $join_year     = (int) $student_data['year_of_join'];
-        $now           = new DateTime();
-        $cur_yr        = (int) $now->format('Y');
-        $cur_mo        = (int) $now->format('n');
-        $months_since  = ($cur_yr - $join_year) * 12 + ($cur_mo - 7);
-        $calc_semester = ($months_since < 0) ? 1 : min(max((int) floor($months_since / 6) + 1, 1), 8);
+        $join_year                = (int) $student_data['year_of_join'];
+        $now                      = new DateTime();
+        $cur_yr                   = (int) $now->format('Y');
+        $cur_mo                   = (int) $now->format('n');
+        $months_since             = ($cur_yr - $join_year) * 12 + ($cur_mo - 7);
+        $calc_semester            = ($months_since < 0) ? 1 : min(max((int) floor($months_since / 6) + 1, 1), 8);
         $student_data['semester'] = $calc_semester;
 
         // Auto-calculate current academic year (Jul-Dec = YYYY-(YY+1), Jan-Jun = (YYYY-1)-YY)
@@ -1521,7 +1521,7 @@
             <label for="organisation">Organisation By:<span class="required-asterisk">*</span></label>
             <input type="text" id="organisation" name="organisation"
                    placeholder="Enter the Organisation Name"
-                   value=""
+                   value="<?php echo htmlspecialchars($auto_organisation); ?>"
                    maxlength="80" required />
             <div class="character-count">
               <span id="organisationCount">0</span>/80 characters

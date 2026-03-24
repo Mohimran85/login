@@ -12,7 +12,13 @@ if (isset($_SESSION['username'], $_SESSION['role'])) {
         require_once __DIR__ . '/../includes/db_config.php';
         $logout_conn = get_db_connection();
         $tok_table   = ($_SESSION['role'] === 'student') ? 'student_register' : 'teacher_register';
-        $tok_stmt    = $logout_conn->prepare("UPDATE `$tok_table` SET session_token = NULL WHERE username = ?");
+
+        if ($_SESSION['role'] === 'student') {
+            $tok_stmt = $logout_conn->prepare("UPDATE `$tok_table` SET session_token = NULL, onesignal_player_id = NULL WHERE username = ?");
+        } else {
+            $tok_stmt = $logout_conn->prepare("UPDATE `$tok_table` SET session_token = NULL WHERE username = ?");
+        }
+
         if ($tok_stmt) {
             $tok_stmt->bind_param('s', $_SESSION['username']);
             $tok_stmt->execute();

@@ -1,0 +1,1 @@
+<?php session_start(); $_SESSION['logged_in'] = true; $_SESSION['username'] = 'testing'; $_SERVER['REQUEST_METHOD'] = 'POST'; $_POST = ['action' => 'edit_user', 'user_id' => 1, 'table_name' => 'student_register', 'name' => 'Test', 'username' => 'test_user', 'email' => 'test@example.com', 'department' => 'IT', 'identifier' => '12345']; include_once 'admin/user_management.php'; ?>

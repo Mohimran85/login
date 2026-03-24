@@ -429,15 +429,15 @@
             border-collapse: separate; /* Changed for border-radius */
             border-spacing: 0;
             font-size: 15px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-color: #fff;
         }
 
         .excel-table th, .excel-table td {
             border: 1px solid #d1d1d1;
-            padding: 12px 15px; /* Increased padding */
+            padding: 16px 20px; /* Increased padding */
             white-space: normal;
-            vertical-align: top;
+            vertical-align: middle;
             word-wrap: break-word;
         }
 
@@ -471,7 +471,8 @@
         }
 
         .excel-table td {
-            color: #333;
+            color: #1e293b;
+            font-weight: 500;
         }
 
         .status-badge {
@@ -1106,7 +1107,7 @@
                                 <th>Name</th>
                                 <th>Reg. No</th>
                                 <th>Dept</th>
-                                <th>Year</th>
+                                <th>Year - Sem</th>
                                 <th>Event Name</th>
                                 <th>Type</th>
                                 <th>Start Date</th>

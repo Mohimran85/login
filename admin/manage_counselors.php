@@ -123,11 +123,40 @@
     }
 
     // Get all teachers with their student assignment counts
-    $teachers_sql = "SELECT t.id, t.name, t.email, t.username, t.status, COALESCE(t.is_hackathon_coordinator, 0) as is_hackathon_coordinator,
+    // Modified to include department
+    $teachers_sql = "SELECT t.id, t.name, t.email, t.department, t.username, t.status, COALESCE(t.is_hackathon_coordinator, 0) as is_hackathon_coordinator,
                      (SELECT COUNT(*) FROM counselor_assignments ca WHERE ca.counselor_id = t.id AND ca.status = 'active') as student_count
                  FROM teacher_register t
                  ORDER BY FIELD(t.status, 'admin', 'counselor', 'active', 'inactive'), t.name";
     $teachers_result = $conn->query($teachers_sql);
+
+    // Fetch all teachers for grid display AND modal data
+    $all_teachers = [];
+    if ($teachers_result) {
+    while ($row = $teachers_result->fetch_assoc()) {
+        $all_teachers[] = $row;
+    }
+    }
+
+    // Get details for assigned students for modal
+    $assignments_sql = "SELECT ca.student_regno, t.name as counselor_name, TO_CHAR(ca.assigned_date, 'YYYY-MM-DD') as assigned_date
+                       FROM counselor_assignments ca
+                       LEFT JOIN teacher_register t ON ca.counselor_id = t.id
+                       WHERE ca.status = 'active' ORDER BY ca.assigned_date DESC LIMIT 500";
+
+    // For MySQL (TO_CHAR is Postgres/Oracle), use DATE_FORMAT or just select directly
+    $assignments_sql = "SELECT ca.student_regno, t.name as counselor_name, ca.assigned_date
+                       FROM counselor_assignments ca
+                       LEFT JOIN teacher_register t ON ca.counselor_id = t.id
+                       WHERE ca.status = 'active' ORDER BY ca.assigned_date DESC LIMIT 500";
+
+    $assignments_result = $conn->query($assignments_sql);
+    $all_assignments    = [];
+    if ($assignments_result) {
+    while ($row = $assignments_result->fetch_assoc()) {
+        $all_assignments[] = $row;
+    }
+    }
 
     // Handle student assignment by selected students array
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['assign_students'])) {
@@ -984,47 +1013,47 @@
                     <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                 </div>
                 <ul class="sidebar-list">
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='index.php'">
                         <span class="material-symbols-outlined">dashboard</span>
                         <a href="index.php">Home</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
                         <span class="material-symbols-outlined">people</span>
                         <a href="participants.php">Participants</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
                         <span class="material-symbols-outlined">manage_accounts</span>
                         <a href="user_management.php">User Management</a>
                     </li>
-                    <li class="sidebar-list-item active">
+                    <li class="sidebar-list-item active" onclick="window.location.href='manage_counselors.php'">
                         <span class="material-symbols-outlined">school</span>
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
                         <span class="material-symbols-outlined">emoji_events</span>
                         <a href="hackathons.php">Hackathons</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
                         <span class="material-symbols-outlined">bar_chart</span>
                         <a href="reports.php">Reports</a>
                     </li>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
                         <span class="material-symbols-outlined">account_circle</span>
                         <a href="profile.php">Profile</a>
                     </li>
                     <?php if ($user_type === 'teacher' && $teacher_status === 'teacher'): ?>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='../teacher/index.php'">
                         <span class="material-symbols-outlined">dashboard</span>
                         <a href="../teacher/index.php">Teacher Dashboard</a>
                     </li>
                     <?php endif; ?>
                     <?php if ($user_type === 'teacher' && $teacher_status === 'counselor'): ?>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='../teacher/assigned_students.php'">
                         <span class="material-symbols-outlined">supervisor_account</span>
                         <a href="../teacher/assigned_students.php">Counselor Dashboard</a>
                     </li>
                     <?php endif; ?>
-                    <li class="sidebar-list-item">
+                    <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
                         <span class="material-symbols-outlined">logout</span>
                         <a href="logout.php">Logout</a>
                     </li>
@@ -1046,24 +1075,38 @@
                 <?php endif; ?>
 
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card hover-card" onclick="openStatPopup('teachers')">
                 <div class="stat-number"><?php echo $stats['total_teachers']; ?></div>
                 <div class="stat-label">Total Teachers</div>
+                <div style="font-size: 11px; color: #666; margin-top: 5px;">Tap for details</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card hover-card" style="border-left-color: #28a745;" onclick="openStatPopup('counselors')">
                 <div class="stat-number"><?php echo $stats['total_counselors']; ?></div>
                 <div class="stat-label">Active Counselors</div>
+                <div style="font-size: 11px; color: #666; margin-top: 5px;">Tap for details</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card hover-card" style="border-left-color: #17a2b8;" onclick="openStatPopup('assigned')">
                 <div class="stat-number"><?php echo $stats['total_assigned']; ?></div>
                 <div class="stat-label">Students Assigned</div>
+                <div style="font-size: 11px; color: #666; margin-top: 5px;">Tap for details</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card hover-card" style="border-left-color: #ffc107;" onclick="openStatPopup('coordinators')">
                 <div class="stat-number"><?php echo $stats['total_coordinators']; ?></div>
                 <div class="stat-label">Hackathon Coordinators</div>
+                <div style="font-size: 11px; color: #666; margin-top: 5px;">Tap for details</div>
             </div>
-
         </div>
+
+        <style>
+            .hover-card {
+                cursor: pointer;
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+            .hover-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            }
+        </style>
 
         <!-- Student Assignment Section -->
         <div class="info-box">
@@ -1118,8 +1161,8 @@
                         onfocus="this.style.borderColor='#0c3878'" onblur="this.style.borderColor='#d0dae8'">
                 </div>
 
-        <div class="teachers-grid" id="teachersGrid" id="teachersGrid">
-            <?php while ($teacher = $teachers_result->fetch_assoc()): ?>
+        <div class="teachers-grid" id="teachersGrid">
+            <?php foreach ($all_teachers as $teacher): ?>
                 <div class="teacher-card <?php echo htmlspecialchars($teacher['status'], ENT_QUOTES, 'UTF-8'); ?>" data-search="<?php echo strtolower(htmlspecialchars($teacher['name'] . ' ' . $teacher['email'] . ' ' . $teacher['username'] . ' ' . $teacher['status'], ENT_QUOTES, 'UTF-8')); ?>">
                     <div class="teacher-header">
                         <div>
@@ -1210,7 +1253,7 @@
                         <?php endif; ?>
                     </div>
                 </div>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         </div>
 
                 <div style="text-align: center; margin-top: 30px;">
@@ -1266,6 +1309,106 @@
             </div>
         </div>
     </div>
+
+
+    <!-- Modal for statistics details -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+             <!-- Close button at the top -->
+             <div class="modal-header">
+                <h2 id="statsModalTitle">Details</h2>
+                <span class="close" onclick="closeStatPopup()">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <div id="statsModalContent" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Content will be injected via JS -->
+                </div>
+            </div>
+             <!-- Modal Footer matching style -->
+            <div style="padding: 15px 30px; text-align: right; border-top: 1px solid #eee; background-color: #f8f9fa; border-radius: 0 0 12px 12px;">
+                <button type="button" class="btn btn-primary" onclick="closeStatPopup()" style="width: auto; padding: 10px 20px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pass PHP data to JS -->
+    <script>
+        const allTeachers = <?php echo json_encode($all_teachers ?? []); ?>;
+        const allAssignments = <?php echo json_encode($all_assignments ?? []); ?>;
+    </script>
+
+    <script>
+        // Stats Modal Functions
+        function openStatPopup(type) {
+            const modal = document.getElementById('statsModal');
+            const title = document.getElementById('statsModalTitle');
+            const content = document.getElementById('statsModalContent');
+
+            let html = '';
+
+            if (type === 'teachers') {
+                title.textContent = 'All Teachers';
+                if (allTeachers.length > 0) {
+                    html = '<table style="width:100%; border-collapse: collapse;"><thead><tr style="background:#f8f9fa;"><th style="padding:10px; text-align:left;">Name</th><th style="padding:10px; text-align:left;">Department</th></tr></thead><tbody>';
+                    allTeachers.forEach(t => {
+                        html += `<tr style="border-bottom:1px solid #f1f1f1;"><td style="padding:10px;">${escapeHtml(t.name)}</td><td style="padding:10px; color:#666;">${escapeHtml(t.department || '-')}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                } else {
+                    html = '<p style="text-align:center; padding:20px;">No teachers found.</p>';
+                }
+            }
+            else if (type === 'counselors') {
+                title.textContent = 'Active Counselors';
+                const counselors = allTeachers.filter(t => t.status === 'counselor');
+                if (counselors.length > 0) {
+                     html = '<table style="width:100%; border-collapse: collapse;"><thead><tr style="background:#f8f9fa;"><th style="padding:10px; text-align:left;">Name</th><th style="padding:10px; text-align:left;">Students Assigned</th></tr></thead><tbody>';
+                    counselors.forEach(t => {
+                        html += `<tr style="border-bottom:1px solid #f1f1f1;"><td style="padding:10px;">${escapeHtml(t.name)}</td><td style="padding:10px; color:#666; font-weight:bold;">${t.student_count || 0}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                } else {
+                    html = '<p style="text-align:center; padding:20px;">No active counselors found.</p>';
+                }
+            }
+            else if (type === 'assigned') {
+                title.textContent = 'Assigned Students';
+                if (allAssignments.length > 0) {
+                     html = '<table style="width:100%; border-collapse: collapse;"><thead><tr style="background:#f8f9fa;"><th style="padding:10px; text-align:left;">Student RegNo</th><th style="padding:10px; text-align:left;">Assigned To</th><th style="padding:10px; text-align:left;">Date</th></tr></thead><tbody>';
+                    allAssignments.forEach(a => {
+                        html += `<tr style="border-bottom:1px solid #f1f1f1;"><td style="padding:10px; font-family:monospace;">${escapeHtml(a.student_regno)}</td><td style="padding:10px;">${escapeHtml(a.counselor_name)}</td><td style="padding:10px; color:#666; font-size:12px;">${escapeHtml(a.assigned_date)}</td></tr>`;
+                    });
+                    html += '</tbody></table>';
+                    if (allAssignments.length >= 500) {
+                        html += '<p style="text-align:center; font-size:12px; color:#666; padding:10px;">Showing last 500 assignments</p>';
+                    }
+                } else {
+                    html = '<p style="text-align:center; padding:20px;">No students assigned yet.</p>';
+                }
+            }
+            else if (type === 'coordinators') {
+                title.textContent = 'Hackathon Coordinators';
+                const coordinators = allTeachers.filter(t => t.is_hackathon_coordinator == 1);
+                if (coordinators.length > 0) {
+                     html = '<ul style="list-style:none; padding:0;">';
+                    coordinators.forEach(t => {
+                        html += `<li style="padding:12px; border-bottom:1px solid #f1f1f1; display:flex; align-items:center; gap:10px;"><span class="material-symbols-outlined" style="color:#ffc107;">stars</span> ${escapeHtml(t.name)} <span style="color:#666; font-size:12px;">(${escapeHtml(t.department || 'N/A')})</span></li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html = '<p style="text-align:center; padding:20px;">No hackathon coordinators assigned.</p>';
+                }
+            }
+
+            content.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function closeStatPopup() {
+            document.getElementById('statsModal').style.display = 'none';
+        }
+    </script>
 
     <script>
         // Sidebar functionality
