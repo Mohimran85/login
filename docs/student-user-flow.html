@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student User Flow - Event Management System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 36px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 18px;
+        }
+        .flow-section {
+            margin-bottom: 50px;
+        }
+        .flow-header {
+            font-size: 24px;
+            color: #2196F3;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #2196F3;
+        }
+        .flow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .flow-box {
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .flow-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.2);
+        }
+        .flow-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: white;
+        }
+        .flow-box p {
+            margin: 5px 0;
+            font-size: 13px;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.6;
+        }
+        .start { background: linear-gradient(135deg, #4CAF50, #45a049); }
+        .auth { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .action { background: linear-gradient(135deg, #00BCD4, #0097A7); }
+        .process { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+        .decision { background: linear-gradient(135deg, #FF9800, #F57C00); }
+        .end { background: linear-gradient(135deg, #f44336, #d32f2f); }
+
+        .journey {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .step {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            position: relative;
+        }
+        .step-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .step-label {
+            font-size: 12px;
+            color: #333;
+            font-weight: 500;
+        }
+        .arrow-right {
+            flex: 0.3;
+            text-align: center;
+            font-size: 30px;
+            color: #ccc;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .feature-card {
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid;
+        }
+        .feature-card h3 {
+            margin: 0 0 15px 0;
+            font-size: 18px;
+        }
+        .feature-card ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .feature-card li {
+            margin: 8px 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .security-card {
+            background: #E3F2FD;
+            border-color: #2196F3;
+        }
+        .security-card h3 { color: #1976D2; }
+
+        .document-card {
+            background: #F3E5F5;
+            border-color: #9C27B0;
+        }
+        .document-card h3 { color: #7B1FA2; }
+
+        .ux-card {
+            background: #E8F5E9;
+            border-color: #4CAF50;
+        }
+        .ux-card h3 { color: #388E3C; }
+
+        .integration {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .integration-box {
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid;
+        }
+        .integration-box h3 {
+            margin: 0 0 15px 0;
+        }
+        .integration-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .integration-box li {
+            margin: 8px 0;
+            font-size: 13px;
+        }
+        .counselor-int {
+            background: #FFF3E0;
+            border-color: #FF9800;
+        }
+        .counselor-int h3 { color: #E65100; }
+
+        .admin-int {
+            background: #E8EAF6;
+            border-color: #3F51B5;
+        }
+        .admin-int h3 { color: #1A237E; }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Student User Flow</h1>
+        <p class="subtitle">Event Management System - Sona College of Technology</p>
+
+        <div class="flow-section">
+            <h2 class="flow-header">📝 Registration & Authentication</h2>
+            <div class="flow-grid">
+                <div class="flow-box start">
+                    <h3>🚀 Start</h3>
+                    <p>Student visits the system</p>
+                    <p>Landing page with login/register options</p>
+                </div>
+                <div class="flow-box auth">
+                    <h3>📋 Registration</h3>
+                    <p>• Enter personal details</p>
+                    <p>• Academic information</p>
+                    <p>• Contact details</p>
+                    <p>• Create password</p>
+                </div>
+                <div class="flow-box process">
+                    <h3>🔐 Setup 2FA</h3>
+                    <p>• Scan QR code</p>
+                    <p>• Configure TOTP app</p>
+                    <p>• Save backup codes</p>
+                    <p>• Verify setup</p>
+                </div>
+                <div class="flow-box auth">
+                    <h3>🔑 Login</h3>
+                    <p>• Enter username/email</p>
+                    <p>• Enter password</p>
+                    <p>• Verify 2FA code</p>
+                    <p>• Access granted</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2 class="flow-header">🎯 Main Student Actions</h2>
+            <div class="flow-grid">
+                <div class="flow-box action">
+                    <h3>1️⃣ Browse Events</h3>
+                    <p>• View all hackathons & events</p>
+                    <p>• See event posters</p>
+                    <p>• Check dates & locations</p>
+                    <p>• Read descriptions & prizes</p>
+                </div>
+                <div class="flow-box action">
+                    <h3>2️⃣ Apply for Events</h3>
+                    <p>• Fill application form</p>
+                    <p>• Add team members</p>
+                    <p>• Provide justification</p>
+                    <p>• Submit application</p>
+                </div>
+                <div class="flow-box action">
+                    <h3>3️⃣ Request OD Letter</h3>
+                    <p>• Fill event details</p>
+                    <p>• Upload event poster</p>
+                    <p>• Specify duration</p>
+                    <p>• Submit for approval</p>
+                </div>
+                <div class="flow-box action">
+                    <h3>4️⃣ Submit Internship</h3>
+                    <p>• Upload offer letter</p>
+                    <p>• Upload completion cert</p>
+                    <p>• Add other documents</p>
+                    <p>• Submit for review</p>
+                </div>
+                <div class="flow-box action">
+                    <h3>5️⃣ Track Applications</h3>
+                    <p>• View application status</p>
+                    <p>• Check OD request status</p>
+                    <p>• Monitor approvals</p>
+                    <p>• Read counselor remarks</p>
+                </div>
+                <div class="flow-box action">
+                    <h3>6️⃣ View Participations</h3>
+                    <p>• See past events</p>
+                    <p>• View achievements</p>
+                    <p>• Download certificates</p>
+                    <p>• Track event history</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2 class="flow-header">📄 Document Management</h2>
+            <div class="flow-grid">
+                <div class="flow-box process">
+                    <h3>📥 Download OD Letter</h3>
+                    <p>• Wait for counselor approval</p>
+                    <p>• Receive notification</p>
+                    <p>• Download PDF with signature</p>
+                    <p>• Verify authenticity code</p>
+                </div>
+                <div class="flow-box process">
+                    <h3>🏆 Download Certificates</h3>
+                    <p>• Access participations page</p>
+                    <p>• Select events</p>
+                    <p>• Download individual PDFs</p>
+                    <p>• Bulk download as ZIP</p>
+                </div>
+                <div class="flow-box process">
+                    <h3>📤 Upload Documents</h3>
+                    <p>• Event posters (JPG/PNG/PDF)</p>
+                    <p>• Max 5MB per file</p>
+                    <p>• Secure file validation</p>
+                    <p>• Automatic thumbnail preview</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2 class="flow-header">🛤️ Typical Student Journey</h2>
+            <div class="journey">
+                <div class="step">
+                    <div class="step-circle" style="background: linear-gradient(135deg, #4CAF50, #45a049);">1</div>
+                    <div class="step-label">Register &<br>Setup 2FA</div>
+                </div>
+                <div class="arrow-right">→</div>
+                <div class="step">
+                    <div class="step-circle" style="background: linear-gradient(135deg, #2196F3, #1976D2);">2</div>
+                    <div class="step-label">Login with<br>Credentials</div>
+                </div>
+                <div class="arrow-right">→</div>
+                <div class="step">
+                    <div class="step-circle" style="background: linear-gradient(135deg, #FF9800, #F57C00);">3</div>
+                    <div class="step-label">Browse<br>Events</div>
+                </div>
+                <div class="arrow-right">→</div>
+                <div class="step">
+                    <div class="step-circle" style="background: linear-gradient(135deg, #9C27B0, #7B1FA2);">4</div>
+                    <div class="step-label">Apply for<br>Hackathon</div>
+                </div>
+                <div class="arrow-right">→</div>
+                <div class="step">
+                    <div class="step-circle" style="background: linear-gradient(135deg, #00BCD4, #0097A7);">5</div>
+                    <div class="step-label">Request<br>OD Letter</div>
+                </div>
+                <div class="arrow-right">→</div>
+                <div class="step">
+                    <div class="step-circle" style="background: linear-gradient(135deg, #E91E63, #C2185B);">6</div>
+                    <div class="step-label">Download<br>Documents</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2 class="flow-header">✨ Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card security-card">
+                    <h3>🔒 Security Features</h3>
+                    <ul>
+                        <li>Two-Factor Authentication (2FA)</li>
+                        <li>Session Timeout Management</li>
+                        <li>CSRF Protection</li>
+                        <li>Secure Password Recovery</li>
+                        <li>Single Device Login</li>
+                        <li>Digital Signature Verification</li>
+                    </ul>
+                </div>
+                <div class="feature-card document-card">
+                    <h3>📄 Document Management</h3>
+                    <ul>
+                        <li>Professional PDF Generation</li>
+                        <li>OD Letters with Signatures</li>
+                        <li>Certificate Downloads (PDF/ZIP)</li>
+                        <li>Event Poster Uploads</li>
+                        <li>QR Code Generation</li>
+                        <li>Verification Codes</li>
+                    </ul>
+                </div>
+                <div class="feature-card ux-card">
+                    <h3>🎨 User Experience</h3>
+                    <ul>
+                        <li>Progressive Web App (PWA)</li>
+                        <li>Push Notifications (OneSignal)</li>
+                        <li>Mobile Responsive Design</li>
+                        <li>Material Design UI</li>
+                        <li>Real-time Status Updates</li>
+                        <li>Offline Capability</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-section">
+            <h2 class="flow-header">🔗 System Integration</h2>
+            <div class="integration">
+                <div class="integration-box counselor-int">
+                    <h3>👨‍🏫 Student ↔ Counselor</h3>
+                    <ul>
+                        <li>OD Request Approval Workflow</li>
+                        <li>Internship Approval Process</li>
+                        <li>Event Participation Verification</li>
+                        <li>Student Progress Monitoring</li>
+                        <li>Communication & Reminders</li>
+                    </ul>
+                </div>
+                <div class="integration-box admin-int">
+                    <h3>👨‍💼 Student ↔ Admin</h3>
+                    <ul>
+                        <li>Event & Hackathon Management</li>
+                        <li>Application Review & Tracking</li>
+                        <li>Reports & Analytics Generation</li>
+                        <li>User Account Management</li>
+                        <li>System-wide Notifications</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>Event Management System - Sona College of Technology</strong></p>
+            <p>Student User Flow Diagram v1.0 | March 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

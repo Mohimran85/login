@@ -1,0 +1,232 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 2400" style="background-color: white;">
+  <defs>
+    <style>
+      .box { fill: #2196F3; stroke: #1976D2; stroke-width: 2; }
+      .start-end { fill: #4CAF50; stroke: #388E3C; stroke-width: 2; rx: 25; }
+      .decision { fill: #FF9800; stroke: #F57C00; stroke-width: 2; }
+      .process { fill: #9C27B0; stroke: #7B1FA2; stroke-width: 2; }
+      .action { fill: #00BCD4; stroke: #0097A7; stroke-width: 2; }
+      .text { fill: white; font-family: Arial, sans-serif; font-size: 14px; text-anchor: middle; }
+      .title { fill: #333; font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; text-anchor: middle; }
+      .subtitle { fill: #666; font-family: Arial, sans-serif; font-size: 16px; text-anchor: middle; }
+      .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .label { fill: #333; font-family: Arial, sans-serif; font-size: 12px; text-anchor: middle; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#333" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="40" class="title">Student User Flow</text>
+  <text x="600" y="65" class="subtitle">Event Management System</text>
+
+  <!-- Start -->
+  <rect x="500" y="100" width="200" height="50" class="start-end" />
+  <text x="600" y="130" class="text">Student Visits System</text>
+  <path d="M 600 150 L 600 180" class="arrow" />
+
+  <!-- Registration/Login Decision -->
+  <polygon points="600,180 700,230 600,280 500,230" class="decision" />
+  <text x="600" y="235" class="text">Registered?</text>
+
+  <!-- Registration Path (Left) -->
+  <path d="M 500 230 L 350 230" class="arrow" />
+  <text x="420" y="225" class="label">No</text>
+  <rect x="250" y="205" width="200" height="80" class="box" />
+  <text x="350" y="230" class="text" style="font-size: 12px;">Student Registration</text>
+  <text x="350" y="248" class="text" style="font-size: 11px;">• Personal Details</text>
+  <text x="350" y="263" class="text" style="font-size: 11px;">• Academic Info</text>
+  <text x="350" y="278" class="text" style="font-size: 11px;">• Contact Details</text>
+  <path d="M 350 285 L 350 320" class="arrow" />
+
+  <rect x="250" y="320" width="200" height="60" class="process" />
+  <text x="350" y="345" class="text">Setup 2FA</text>
+  <text x="350" y="363" class="text" style="font-size: 11px;">TOTP Authentication</text>
+  <path d="M 350 380 L 350 440 L 600 440" class="arrow" />
+
+  <!-- Login Path (Right) -->
+  <path d="M 700 230 L 850 230" class="arrow" />
+  <text x="780" y="225" class="label">Yes</text>
+  <rect x="750" y="205" width="200" height="70" class="box" />
+  <text x="850" y="230" class="text">Login Page</text>
+  <text x="850" y="248" class="text" style="font-size: 11px;">• Username/Email</text>
+  <text x="850" y="263" class="text" style="font-size: 11px;">• Password</text>
+  <path d="M 850 275 L 850 310" class="arrow" />
+
+  <rect x="750" y="310" width="200" height="60" class="process" />
+  <text x="850" y="335" class="text">Verify 2FA</text>
+  <text x="850" y="353" class="text" style="font-size: 11px;">Enter TOTP Code</text>
+  <path d="M 850 370 L 850 440 L 600 440" class="arrow" />
+
+  <!-- Dashboard -->
+  <rect x="475" y="440" width="250" height="60" class="box" style="fill: #1976D2;" />
+  <text x="600" y="470" class="text" style="font-size: 16px; font-weight: bold;">STUDENT DASHBOARD</text>
+  <path d="M 600 500 L 600 530" class="arrow" />
+
+  <!-- Main Menu Options -->
+  <text x="600" y="550" class="subtitle" style="font-size: 14px;">Main Actions</text>
+
+  <!-- Column 1: Browse Events -->
+  <rect x="50" y="580" width="180" height="70" class="action" />
+  <text x="140" y="605" class="text" style="font-size: 12px;">1. Browse Events</text>
+  <text x="140" y="620" class="text" style="font-size: 12px;">& Hackathons</text>
+  <path d="M 140 650 L 140 680" class="arrow" />
+  <rect x="50" y="680" width="180" height="60" class="box" />
+  <text x="140" y="705" class="text" style="font-size: 11px;">View Details & Apply</text>
+  <text x="140" y="720" class="text" style="font-size: 10px;">Posters, Dates, Prizes</text>
+
+  <!-- Column 2: OD Request -->
+  <rect x="260" y="580" width="180" height="70" class="action" />
+  <text x="350" y="605" class="text" style="font-size: 12px;">2. Request</text>
+  <text x="350" y="620" class="text" style="font-size: 12px;">OD Letter</text>
+  <path d="M 350 650 L 350 680" class="arrow" />
+  <rect x="260" y="680" width="180" height="60" class="process" />
+  <text x="350" y="705" class="text" style="font-size: 11px;">Fill Form & Upload</text>
+  <text x="350" y="720" class="text" style="font-size: 10px;">Submit for Approval</text>
+  <path d="M 350 740 L 350 770" class="arrow" />
+  <rect x="260" y="770" width="180" height="50" class="process" />
+  <text x="350" y="795" class="text" style="font-size: 11px;">Download PDF</text>
+  <text x="350" y="808" class="text" style="font-size: 9px;">with Digital Signature</text>
+
+  <!-- Column 3: My Applications -->
+  <rect x="470" y="580" width="180" height="70" class="action" />
+  <text x="560" y="605" class="text" style="font-size: 12px;">3. My Applications</text>
+  <text x="560" y="620" class="text" style="font-size: 12px;">& Status</text>
+  <path d="M 560 650 L 560 680" class="arrow" />
+  <rect x="470" y="680" width="180" height="60" class="box" />
+  <text x="560" y="705" class="text" style="font-size: 11px;">Track Applications</text>
+  <text x="560" y="720" class="text" style="font-size: 10px;">Pending/Approved/Rejected</text>
+
+  <!-- Column 4: Internship -->
+  <rect x="680" y="580" width="180" height="70" class="action" />
+  <text x="770" y="605" class="text" style="font-size: 12px;">4. Submit</text>
+  <text x="770" y="620" class="text" style="font-size: 12px;">Internship</text>
+  <path d="M 770 650 L 770 680" class="arrow" />
+  <rect x="680" y="680" width="180" height="60" class="box" />
+  <text x="770" y="705" class="text" style="font-size: 11px;">Upload Documents</text>
+  <text x="770" y="720" class="text" style="font-size: 10px;">Offer Letter, Certificate</text>
+
+  <!-- Column 5: Participations -->
+  <rect x="890" y="580" width="180" height="70" class="action" />
+  <text x="980" y="605" class="text" style="font-size: 12px;">5. My</text>
+  <text x="980" y="620" class="text" style="font-size: 12px;">Participations</text>
+  <path d="M 980 650 L 980 680" class="arrow" />
+  <rect x="890" y="680" width="180" height="60" class="process" />
+  <text x="980" y="705" class="text" style="font-size: 11px;">Download Certificates</text>
+  <text x="980" y="720" class="text" style="font-size: 10px;">Past Events & Achievements</text>
+
+  <!-- Profile & Logout Section -->
+  <rect x="260" y="880" width="180" height="60" class="action" />
+  <text x="350" y="905" class="text" style="font-size: 12px;">6. Manage Profile</text>
+  <text x="350" y="920" class="text" style="font-size: 10px;">Edit Info, Change Password</text>
+
+  <rect x="760" y="880" width="180" height="60" class="action" />
+  <text x="850" y="905" class="text" style="font-size: 12px;">7. Logout</text>
+  <text x="850" y="920" class="text" style="font-size: 10px;">End Session</text>
+
+  <!-- Key Features Section -->
+  <text x="600" y="1000" class="subtitle" style="font-size: 18px; font-weight: bold;">Key Features</text>
+
+  <rect x="50" y="1020" width="280" height="180" style="fill: #E3F2FD; stroke: #2196F3; stroke-width: 2;" />
+  <text x="190" y="1045" style="fill: #1976D2; font-family: Arial; font-size: 14px; font-weight: bold; text-anchor: middle;">Security Features</text>
+  <text x="70" y="1070" style="fill: #333; font-family: Arial; font-size: 12px;">• Two-Factor Authentication (2FA)</text>
+  <text x="70" y="1090" style="fill: #333; font-family: Arial; font-size: 12px;">• Session Timeout Management</text>
+  <text x="70" y="1110" style="fill: #333; font-family: Arial; font-size: 12px;">• CSRF Protection</text>
+  <text x="70" y="1130" style="fill: #333; font-family: Arial; font-size: 12px;">• Secure Password Recovery</text>
+  <text x="70" y="1150" style="fill: #333; font-family: Arial; font-size: 12px;">• Single Device Login</text>
+  <text x="70" y="1170" style="fill: #333; font-family: Arial; font-size: 12px;">• Digital Signature Verification</text>
+
+  <rect x="360" y="1020" width="280" height="180" style="fill: #F3E5F5; stroke: #9C27B0; stroke-width: 2;" />
+  <text x="500" y="1045" style="fill: #7B1FA2; font-family: Arial; font-size: 14px; font-weight: bold; text-anchor: middle;">Document Management</text>
+  <text x="380" y="1070" style="fill: #333; font-family: Arial; font-size: 12px;">• Professional PDF Generation</text>
+  <text x="380" y="1090" style="fill: #333; font-family: Arial; font-size: 12px;">• OD Letters with Signatures</text>
+  <text x="380" y="1110" style="fill: #333; font-family: Arial; font-size: 12px;">• Certificate Downloads (PDF/ZIP)</text>
+  <text x="380" y="1130" style="fill: #333; font-family: Arial; font-size: 12px;">• Event Poster Uploads</text>
+  <text x="380" y="1150" style="fill: #333; font-family: Arial; font-size: 12px;">• QR Code Generation</text>
+  <text x="380" y="1170" style="fill: #333; font-family: Arial; font-size: 12px;">• Verification Codes</text>
+
+  <rect x="670" y="1020" width="280" height="180" style="fill: #E8F5E9; stroke: #4CAF50; stroke-width: 2;" />
+  <text x="810" y="1045" style="fill: #388E3C; font-family: Arial; font-size: 14px; font-weight: bold; text-anchor: middle;">User Experience</text>
+  <text x="690" y="1070" style="fill: #333; font-family: Arial; font-size: 12px;">• Progressive Web App (PWA)</text>
+  <text x="690" y="1090" style="fill: #333; font-family: Arial; font-size: 12px;">• Push Notifications (OneSignal)</text>
+  <text x="690" y="1110" style="fill: #333; font-family: Arial; font-size: 12px;">• Mobile Responsive Design</text>
+  <text x="690" y="1130" style="fill: #333; font-family: Arial; font-size: 12px;">• Material Design UI</text>
+  <text x="690" y="1150" style="fill: #333; font-family: Arial; font-size: 12px;">• Real-time Status Updates</text>
+  <text x="690" y="1170" style="fill: #333; font-family: Arial; font-size: 12px;">• Offline Capability</text>
+
+  <!-- Process Flow Steps -->
+  <text x="600" y="1250" class="subtitle" style="font-size: 18px; font-weight: bold;">Typical Student Journey</text>
+
+  <g transform="translate(100, 1280)">
+    <circle cx="0" cy="0" r="30" style="fill: #4CAF50; stroke: #388E3C; stroke-width: 2;" />
+    <text x="0" y="5" style="fill: white; font-family: Arial; font-size: 16px; font-weight: bold; text-anchor: middle;">1</text>
+    <text x="0" y="50" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Register &</text>
+    <text x="0" y="65" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Setup 2FA</text>
+  </g>
+
+  <path d="M 130 1280 L 230 1280" style="stroke: #333; stroke-width: 3; stroke-dasharray: 5,5;" />
+
+  <g transform="translate(260, 1280)">
+    <circle cx="0" cy="0" r="30" style="fill: #2196F3; stroke: #1976D2; stroke-width: 2;" />
+    <text x="0" y="5" style="fill: white; font-family: Arial; font-size: 16px; font-weight: bold; text-anchor: middle;">2</text>
+    <text x="0" y="50" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Login with</text>
+    <text x="0" y="65" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Credentials</text>
+  </g>
+
+  <path d="M 290 1280 L 390 1280" style="stroke: #333; stroke-width: 3; stroke-dasharray: 5,5;" />
+
+  <g transform="translate(420, 1280)">
+    <circle cx="0" cy="0" r="30" style="fill: #FF9800; stroke: #F57C00; stroke-width: 2;" />
+    <text x="0" y="5" style="fill: white; font-family: Arial; font-size: 16px; font-weight: bold; text-anchor: middle;">3</text>
+    <text x="0" y="50" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Browse</text>
+    <text x="0" y="65" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Events</text>
+  </g>
+
+  <path d="M 450 1280 L 550 1280" style="stroke: #333; stroke-width: 3; stroke-dasharray: 5,5;" />
+
+  <g transform="translate(580, 1280)">
+    <circle cx="0" cy="0" r="30" style="fill: #9C27B0; stroke: #7B1FA2; stroke-width: 2;" />
+    <text x="0" y="5" style="fill: white; font-family: Arial; font-size: 16px; font-weight: bold; text-anchor: middle;">4</text>
+    <text x="0" y="50" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Apply for</text>
+    <text x="0" y="65" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Hackathon</text>
+  </g>
+
+  <path d="M 610 1280 L 710 1280" style="stroke: #333; stroke-width: 3; stroke-dasharray: 5,5;" />
+
+  <g transform="translate(740, 1280)">
+    <circle cx="0" cy="0" r="30" style="fill: #00BCD4; stroke: #0097A7; stroke-width: 2;" />
+    <text x="0" y="5" style="fill: white; font-family: Arial; font-size: 16px; font-weight: bold; text-anchor: middle;">5</text>
+    <text x="0" y="50" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Request</text>
+    <text x="0" y="65" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">OD Letter</text>
+  </g>
+
+  <path d="M 770 1280 L 870 1280" style="stroke: #333; stroke-width: 3; stroke-dasharray: 5,5;" />
+
+  <g transform="translate(900, 1280)">
+    <circle cx="0" cy="0" r="30" style="fill: #E91E63; stroke: #C2185B; stroke-width: 2;" />
+    <text x="0" y="5" style="fill: white; font-family: Arial; font-size: 16px; font-weight: bold; text-anchor: middle;">6</text>
+    <text x="0" y="50" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Download</text>
+    <text x="0" y="65" style="fill: #333; font-family: Arial; font-size: 12px; text-anchor: middle;">Documents</text>
+  </g>
+
+  <!-- Integration Points -->
+  <text x="600" y="1400" class="subtitle" style="font-size: 18px; font-weight: bold;">System Integration</text>
+
+  <rect x="200" y="1430" width="350" height="100" style="fill: #FFF3E0; stroke: #FF9800; stroke-width: 2; rx: 10;" />
+  <text x="375" y="1455" style="fill: #E65100; font-family: Arial; font-size: 14px; font-weight: bold; text-anchor: middle;">Student ↔ Counselor Interaction</text>
+  <text x="220" y="1480" style="fill: #333; font-family: Arial; font-size: 11px;">• OD Request Approval Workflow</text>
+  <text x="220" y="1497" style="fill: #333; font-family: Arial; font-size: 11px;">• Internship Approval Process</text>
+  <text x="220" y="1514" style="fill: #333; font-family: Arial; font-size: 11px;">• Event Participation Verification</text>
+
+  <rect x="650" y="1430" width="350" height="100" style="fill: #E8EAF6; stroke: #3F51B5; stroke-width: 2; rx: 10;" />
+  <text x="825" y="1455" style="fill: #1A237E; font-family: Arial; font-size: 14px; font-weight: bold; text-anchor: middle;">Student ↔ Admin Interaction</text>
+  <text x="670" y="1480" style="fill: #333; font-family: Arial; font-size: 11px;">• Event & Hackathon Management</text>
+  <text x="670" y="1497" style="fill: #333; font-family: Arial; font-size: 11px;">• Application Review & Tracking</text>
+  <text x="670" y="1514" style="fill: #333; font-family: Arial; font-size: 11px;">• Reports & Analytics Generation</text>
+
+  <!-- Footer -->
+  <line x1="50" y1="1570" x2="1150" y2="1570" style="stroke: #ccc; stroke-width: 2;" />
+  <text x="600" y="1600" style="fill: #666; font-family: Arial; font-size: 12px; text-anchor: middle;">Event Management System - Sona College of Technology</text>
+  <text x="600" y="1620" style="fill: #999; font-family: Arial; font-size: 11px; text-anchor: middle;">Student User Flow Diagram v1.0 | March 2026</text>
+</svg>

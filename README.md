@@ -41,3 +41,18 @@ This is a comprehensive, role-based web application designed to streamline the m
 ## Project Structure
 
 The application is organized into role-specific directories (`/admin`, `/student`, `/teacher`) with a shared core logic in the `/includes` directory. This modular structure separates concerns and improves maintainability. The `/sql` directory contains database migration scripts, which is crucial for tracking and managing database schema changes over time.
+
+## Documentation
+
+### Student User Flow
+For a comprehensive visual guide to the student user journey, see:
+- **[Student User Flow Documentation](docs/student-user-flow.md)** - Detailed flowchart and process documentation
+- **[Student User Flow Diagram (SVG)](docs/student-user-flow.svg)** - Visual flow diagram
+- **[Student User Flow (Interactive HTML)](docs/student-user-flow.html)** - Interactive visualization
+
+These resources provide detailed insights into:
+- Registration and authentication process
+- Event browsing and application workflow
+- OD letter request and approval process
+- Document management and downloads
+- System integration points with counselors and administrators
