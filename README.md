@@ -10,7 +10,7 @@ This is a comprehensive, role-based web application designed to streamline the m
 *   **Two-Factor Authentication (2FA):** Enhanced security using Time-based One-Time Passwords (TOTP) for user accounts.
 *   **Session Management:** Implements session timeouts and other security measures to protect user accounts.
 
-### Administrator Panel
+### Administrator Panels
 *   **User Management:** Admins can add, edit, and manage user accounts. Includes a bulk import feature for creating multiple user accounts at once.
 *   **Hackathon & Event Management:** Full CRUD (Create, Read, Update, Delete) functionality for hackathons and other events.
 *   **Participant Oversight:** View and manage all event participants and their application statuses.
