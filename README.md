@@ -40,4 +40,4 @@ This is a comprehensive, role-based web application designed to streamline the m
 
 ## Project Structure
 
-The application is organized into role-specific directories (`/admin`, `/student`, `/teacher`) with a shared core logic in the `/includes` directory. This modular structure separates concerns and improves maintainability. The `/sql` directory contains database migration scripts, which is crucial for tracking and managing database schema changes over time.
+The application is organized into role-specific directories (`/admin`, `/student`, `/teacher`) with a shared core logic in the `/includes` directory. This modular structure separates concerns and improves maintainability. The `/sql` directory contains database migration scripts, which is crucial for tracking and managing database schema changes over times.
