@@ -1,6 +1,11 @@
 <?php
     session_start();
 
+    // Prevent caching to avoid stale dashboard data right after login
+    header("Cache-Control: no-cache, no-store, must-revalidate");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+
     // Check if user is logged in as a teacher
     if (! isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
     header("Location: ../index.php");
@@ -269,6 +274,7 @@
         .main {
             padding: 20px;
             min-height: calc(100vh - 80px);
+          background-color: hsl(65, 85%, 98%);
         }
         .header {
   grid-area: header;

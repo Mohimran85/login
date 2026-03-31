@@ -45,7 +45,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
-    <link rel="stylesheet" href="./CSS/report.css" />
+    <link rel="stylesheet" href="./CSS/report.css?v=<?php echo @filemtime(__DIR__ . '/CSS/report.css') ?: time(); ?>" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet"/>
 </head>
@@ -54,7 +54,7 @@
 
     <div class="header">
         <div class="menu-icon" onclick="openSidebar()">
-            <span class="material-symbols-outlined">menu</span>
+            <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
         </div>
         <div class="header-logo">
             <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200"/>
@@ -64,7 +64,7 @@
         </div>
         <div class="header-profile">
           <div class="profile-info" onclick="navigateToProfile()">
-            <span class="material-symbols-outlined">account_circle</span>
+            <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
             <div class="profile-details">
               <span class="profile-name"><?php echo htmlspecialchars($user_data['name'] ?? 'User'); ?></span>
               <span class="profile-role"><?php echo ucfirst($user_type); ?></span>
@@ -77,39 +77,38 @@
         <div class="sidebar-title">
             <div class="sidebar-band">
                 <h2 style="color: white; padding: 10px">Admin Panel</h2>
-                <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
             </div>
             <ul class="sidebar-list">
                 <li class="sidebar-list-item" onclick="window.location.href='index.php'">
-                  <span class="material-symbols-outlined">dashboard</span>
+                  <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                   <a href="index.php">Home</a>
                 </li>
                 <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
-                  <span class="material-symbols-outlined">people</span>
+                  <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                   <a href="participants.php">Participants</a>
                 </li>
                 <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
-                  <span class="material-symbols-outlined">manage_accounts</span>
+                  <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                   <a href="user_management.php">User Management</a>
                 </li>
                 <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
-                  <span class="material-symbols-outlined">school</span>
+                  <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                   <a href="manage_counselors.php">Manage Counselors</a>
                 </li>
                 <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
-                  <span class="material-symbols-outlined">emoji_events</span>
+                  <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                   <a href="hackathons.php">Hackathons</a>
                 </li>
                 <li class="sidebar-list-item active" onclick="window.location.href='reports.php'">
-                  <span class="material-symbols-outlined">bar_chart</span>
+                  <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
                   <a href="reports.php">Reports</a>
                 </li>
                 <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
-                  <span class="material-symbols-outlined">account_circle</span>
+                  <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                   <a href="profile.php">Profile</a>
                 </li>
                 <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
-                  <span class="material-symbols-outlined">logout</span>
+                  <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
                   <a href="logout.php">Logout</a>
                 </li>
             </ul>
@@ -119,7 +118,7 @@
     <div class="main">
         <div class="main-card">
             <div class="main-card-header">
-                <span class="material-symbols-outlined" style="font-size:20px;padding:0;">filter_alt</span>
+                <img src="../assets/images/iconsax/status-up.svg" alt="filter alt" class="iconsax-icon" style="font-size:20px;padding:0;" />
                 Report Filters
             </div>
             <div class="main-card-body">
@@ -226,7 +225,7 @@
                             $default_types = [
                                 'Workshop', 'Symposium', 'Conference', 'Webinar', 'Competition',
                                 'Seminar', 'Hackathon', 'Training', 'Cultural Event',
-                                'Sports Event', 'Technical Event', 'Other',
+                                'Sports Event', 'Technical Event', 'Non technical', 'Other',
                             ];
 
                             // Merge and unique to ensure we consistently show the dropdown list
@@ -264,7 +263,7 @@
 
         <div class="report">
             <p class="main_report_heading" style="font-size:17px; font-weight:700; color:#0c3878; padding:10px 0 15px 0; border-bottom:2px solid #e0e9f5; margin-bottom:10px;">
-                <span class="material-symbols-outlined" style="font-size:20px; vertical-align:middle; margin-right:6px; padding:0;">table_chart</span>
+                <img src="../assets/images/iconsax/chart-21.svg" alt="table chart" class="iconsax-icon" style="font-size:20px; vertical-align:middle; margin-right:6px; padding:0;" />
                 Report Results
             </p>
             <?php

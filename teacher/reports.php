@@ -73,6 +73,7 @@
         .main {
             padding: 20px;
             min-height: calc(100vh - 80px);
+            background-color: hsl(65, 85%, 98%);
             overflow-x: hidden;
             max-width: 100%;
         }
@@ -615,29 +616,54 @@
                     <select name="event_type" id="event_type">
                         <option value="">Select Event Type</option>
                         <?php
-                            // Fetch distinct event types from database
+                            // Always include curated defaults, then merge with DB values.
+                            $default_types = [
+                                'Workshop',
+                                'Symposium',
+                                'Conference',
+                                'Webinar',
+                                'Competition',
+                                'Seminar',
+                                'Hackathon',
+                                'Training',
+                                'Cultural Event',
+                                'Sports Event',
+                                'Technical Event',
+                                'Non technical',
+                                'Guest Lecture',
+                                'Paper Presentation',
+                                'Project Presentation',
+                            ];
+
+                            $event_type_map = [];
+                            foreach ($default_types as $default_type) {
+                                $event_type_map[$default_type] = true;
+                            }
+
+                            // Fetch distinct event types from database and merge.
                             $event_types_query  = "SELECT DISTINCT event_type FROM student_event_register WHERE event_type IS NOT NULL AND event_type != '' ORDER BY event_type";
                             $event_types_result = $conn->query($event_types_query);
 
-                            if ($event_types_result && $event_types_result->num_rows > 0) {
+                            if ($event_types_result) {
                                 while ($row = $event_types_result->fetch_assoc()) {
-                                    $type     = $row['event_type'];
-                                    $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
-                                    echo "<option value=\"" . htmlspecialchars($type) . "\" $selected>" . htmlspecialchars($type) . "</option>";
+                                    $type = trim($row['event_type']);
+                                    if ($type !== '') {
+                                        $event_type_map[$type] = true;
+                                    }
                                 }
-                            } else {
-                                // Fallback to extended default options if query fails or no types found
-                                // Added 'Conference', 'Symposium', 'Webinar', 'Guest Lecture' based on common event types
-                                $default_types = ['Workshop', 'Seminar', 'Competition', 'Hackathon', 'Conference', 'Symposium', 'Webinar', 'Guest Lecture', 'Paper Presentation', 'Project Presentation'];
-                                sort($default_types); // Sort alphabetically
-                                foreach ($default_types as $type) {
-                                    $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
-                                    echo "<option value=\"$type\" $selected>$type</option>";
-                                }
-                                // Debug info (hidden)
-                                if (! $event_types_result) {
-                                    echo "<!-- DB Error: " . htmlspecialchars($conn->error) . " -->";
-                                }
+                            }
+
+                            $all_event_types = array_keys($event_type_map);
+                            natcasesort($all_event_types);
+
+                            foreach ($all_event_types as $type) {
+                                $selected = (isset($event_type) && $event_type == $type) ? 'selected' : '';
+                                echo "<option value=\"" . htmlspecialchars($type) . "\" $selected>" . htmlspecialchars($type) . "</option>";
+                            }
+
+                            // Debug info (hidden)
+                            if (! $event_types_result) {
+                                echo "<!-- DB Error: " . htmlspecialchars($conn->error) . " -->";
                             }
                         ?>
                     </select>

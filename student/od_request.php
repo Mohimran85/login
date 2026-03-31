@@ -116,6 +116,7 @@
               ON odr.student_regno = ser.regno AND odr.event_name = ser.event_name
           WHERE odr.status = 'approved'
           AND odr.student_regno = ?
+          AND odr.event_type != 'Other'
           AND DATE_ADD(odr.event_date, INTERVAL (COALESCE(odr.event_days, 1) + 2) DAY) <= CURDATE()
           AND (ser.id IS NULL OR ser.certificates IS NULL OR ser.certificates = '')
           ORDER BY odr.event_date DESC";
@@ -214,20 +215,20 @@
         $internship_duration = isset($_POST['internship_duration']) ? trim($_POST['internship_duration']) : '';
         $reason              = isset($_POST['reason']) ? trim($_POST['reason']) : '';
 
-        $allowed_event_types      = ['Workshop', 'Symposium', 'Conference', 'Webinar', 'Competition', 'Seminar', 'Hackathon', 'Training', 'Cultural Event', 'Sports Event', 'Technical Event', 'Internship', 'Other'];
+        $allowed_event_types      = ['Workshop', 'Symposium', 'Conference', 'Webinar', 'Competition', 'Seminar', 'Hackathon', 'Training', 'Cultural Event', 'Sports Event', 'Technical Event', 'Non technical', 'Internship', 'Other'];
         $allowed_internship_modes = ['Remote', 'Onsite', 'Hybrid'];
 
         // FIELD VALIDATION
         $is_internship = ($event_type === 'Internship');
 
         // Validate Event Name
-        if (! $is_internship && empty($event_name)) {
+        if (! $is_internship && $event_type !== 'Other' && empty($event_name)) {
             $validation_errors[] = "Event Name is required.";
-        } elseif (! $is_internship && strlen($event_name) < 3) {
+        } elseif (! $is_internship && $event_type !== 'Other' && strlen($event_name) < 3) {
             $validation_errors[] = "Event Name must be at least 3 characters long.";
-        } elseif (! $is_internship && strlen($event_name) > 255) {
+        } elseif (! $is_internship && $event_type !== 'Other' && strlen($event_name) > 255) {
             $validation_errors[] = "Event Name cannot exceed 255 characters.";
-        } elseif (! $is_internship && ! preg_match('/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i', $event_name)) {
+        } elseif (! $is_internship && $event_type !== 'Other' && ! preg_match('/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i', $event_name)) {
             $validation_errors[] = "Event Name contains invalid characters. Only letters, numbers, spaces, hyphens, dots, commas, ampersands, and parentheses are allowed.";
         }
 
@@ -297,16 +298,16 @@
         }
 
         // Validate Event State
-        if (empty($event_state)) {
+        if ($event_type !== 'Other' && empty($event_state)) {
             $validation_errors[] = "Event State is required.";
-        } elseif (strlen($event_state) < 3 || strlen($event_state) > 100) {
+        } elseif ($event_type !== 'Other' && (strlen($event_state) < 3 || strlen($event_state) > 100)) {
             $validation_errors[] = "Please select a valid Event State.";
         }
 
         // Validate Event District
-        if (empty($event_district)) {
+        if ($event_type !== 'Other' && empty($event_district)) {
             $validation_errors[] = "Event District is required.";
-        } elseif (strlen($event_district) < 2 || strlen($event_district) > 100) {
+        } elseif ($event_type !== 'Other' && (strlen($event_district) < 2 || strlen($event_district) > 100)) {
             $validation_errors[] = "Please select a valid Event District.";
         }
 
@@ -1379,6 +1380,25 @@
 
         <!-- Main Content -->
         <div class="main">
+            <?php if (! $counselor_info): ?>
+                <!-- Page Disabled - No Class Counselor -->
+                <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh; padding: 40px 20px;">
+                    <div style="text-align: center; max-width: 500px; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+                        <span class="material-symbols-outlined" style="font-size: 72px; color: #dc3545; margin-bottom: 20px; display: block;">lock</span>
+                        <h2 style="color: #dc3545; margin: 0 0 15px 0; font-size: 28px; font-weight: 600;">Page Disabled</h2>
+                        <p style="color: #666; margin: 0 0 20px 0; font-size: 16px; line-height: 1.6;">
+                            This page is currently disabled because no Class Counselor has been assigned to you yet.
+                        </p>
+                        <p style="color: #856404; background: #fff3cd; padding: 15px; border-radius: 8px; margin: 0 0 25px 0; font-size: 14px; line-height: 1.6; border: 1px solid #ffeaa7;">
+                            <strong>⚠️ Important:</strong> Please contact your department administrator to get a Class Counselor assigned before accessing this feature.
+                        </p>
+                        <a href="index.php" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 30px; background: #0c3878; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.3s ease;">
+                            <span class="material-symbols-outlined" style="font-size: 20px;">arrow_back</span>
+                            Go to Dashboard
+                        </a>
+                    </div>
+                </div>
+            <?php else: ?>
             <?php if ($message): ?>
                 <div class="message <?php echo htmlspecialchars($message_type); ?>">
                     <span class="material-symbols-outlined">
@@ -1468,7 +1488,7 @@
                     <form id="odRequestForm" method="POST" action="od_request.php" enctype="multipart/form-data" novalidate>
                         <input type="hidden" name="submit_od_request" value="1">
                         <div class="form-grid">
-                            <div class="form-group normal-only">
+                            <div class="form-group normal-only" id="eventNameGroup">
                                 <label class="form-label">Event Name *</label>
                                 <input type="text"
                                        name="event_name"
@@ -1492,6 +1512,7 @@
                                     <option value="Cultural Event">Cultural Event</option>
                                     <option value="Sports Event">Sports Event</option>
                                     <option value="Technical Event">Technical Event</option>
+                                    <option value="Non technical">Non technical</option>
                                     <option value="Internship">Internship</option>
                                     <option value="Other">Other</option>
                                 </select>
@@ -1541,8 +1562,8 @@
                                 </select>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Event State *</label>
+                            <div class="form-group" id="eventStateGroup">
+                                <label class="form-label" id="eventStateLabel">Event State *</label>
                                 <select id="eventState" name="event_state" class="form-select">
                                     <option value="" disabled selected>Select State</option>
                                     <option value="Andhra Pradesh">Andhra Pradesh</option>
@@ -1576,8 +1597,8 @@
                                 </select>
                             </div>
 
-                            <div class="form-group">
-                                <label class="form-label">Event District *</label>
+                            <div class="form-group" id="eventDistrictGroup">
+                                <label class="form-label" id="eventDistrictLabel">Event District *</label>
                                 <select id="eventDistrict" name="event_district" class="form-select">
                                     <option value="" selected>Select District (choose state first)</option>
                                 </select>
@@ -1802,13 +1823,17 @@
                                             <img src="<?php echo htmlspecialchars($poster_path); ?>"
                                                  alt="Event Poster Thumbnail"
                                                  style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid #e9ecef; cursor: pointer;"
-                                                 onclick="window.open('view_poster.php?poster=<?php echo urlencode($request['event_poster']); ?>', '_blank')">
+                                                 class="poster-preview-trigger"
+                                                 data-poster-url="<?php echo htmlspecialchars($poster_path, ENT_QUOTES, 'UTF-8'); ?>"
+                                                 data-view-url="view_poster.php?poster=<?php echo urlencode($request['event_poster']); ?>">
                                         </div>
                                         <?php endif; ?>
 
                                         <div style="display: flex; flex-direction: column; gap: 5px;">
                                             <a href="view_poster.php?poster=<?php echo urlencode($request['event_poster']); ?>"
                                                target="_blank"
+                                               class="poster-view-link"
+                                               data-poster-url="<?php echo htmlspecialchars($poster_path, ENT_QUOTES, 'UTF-8'); ?>"
                                                style="color: #0c3878; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 5px;">
                                                 <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
                                                 View Poster
@@ -1880,7 +1905,7 @@
                                     $register_url = 'student_register.php?' . http_build_query($url_params);
                                 ?>
                                 <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap;">
-                                    <?php if (($request['event_type'] ?? '') !== 'Internship'): ?>
+                                    <?php if (($request['event_type'] ?? '') !== 'Internship' && ($request['event_type'] ?? '') !== 'Other'): ?>
                                     <a href="<?php echo htmlspecialchars($register_url); ?>" class="btn btn-primary" style="font-size: 12px; padding: 8px 15px;">
                                         <span class="material-symbols-outlined" style="font-size: 16px;">add_circle</span>
                                         Register for Event
@@ -1903,6 +1928,7 @@
                     <?php endif; ?>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -1921,10 +1947,83 @@
             }
         }
 
+        function isPhoneResolution() {
+            return window.innerWidth <= 768 || window.screen.width <= 768;
+        }
+
+        function getFileNameFromUrl(url, fallbackName) {
+            try {
+                const cleanUrl = (url || '').split('?')[0].split('#')[0];
+                const fileName = cleanUrl.substring(cleanUrl.lastIndexOf('/') + 1);
+                return fileName ? decodeURIComponent(fileName) : fallbackName;
+            } catch (e) {
+                return fallbackName;
+            }
+        }
+
+        function downloadFileWithoutPageLoad(url, fallbackName) {
+            return fetch(url, { credentials: 'same-origin' })
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error('File download failed');
+                    }
+
+                    return response.blob();
+                })
+                .then((blob) => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+
+                    link.href = blobUrl;
+                    link.download = getFileNameFromUrl(url, fallbackName);
+                    link.style.display = 'none';
+
+                    document.body.appendChild(link);
+                    link.click();
+
+                    setTimeout(() => {
+                        URL.revokeObjectURL(blobUrl);
+                        link.remove();
+                    }, 1000);
+                })
+                .catch(() => {
+                    // Fallback for restrictive app webviews that block blob downloads.
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = url;
+                    document.body.appendChild(iframe);
+
+                    setTimeout(() => {
+                        iframe.remove();
+                    }, 10000);
+                });
+        }
+
+        function handlePosterClick(event) {
+            const posterUrl = this.getAttribute('data-poster-url');
+            const viewUrl = this.getAttribute('data-view-url') || this.getAttribute('href');
+
+            if (!isPhoneResolution()) {
+                if (this.classList.contains('poster-preview-trigger') && viewUrl) {
+                    window.open(viewUrl, '_blank');
+                    event.preventDefault();
+                }
+                return;
+            }
+
+            event.preventDefault();
+
+            if (!posterUrl) {
+                return;
+            }
+
+            downloadFileWithoutPageLoad(posterUrl, 'event_poster');
+        }
+
         // Form validation function
         function validateODRequestForm(form) {
             const errors = [];
-            const allowedEventTypes = ['Workshop', 'Symposium', 'Conference', 'Webinar', 'Competition', 'Seminar', 'Hackathon', 'Training', 'Cultural Event', 'Sports Event', 'Technical Event', 'Internship', 'Other'];
+            const allowedEventTypes = ['Workshop', 'Symposium', 'Conference', 'Webinar', 'Competition', 'Seminar', 'Hackathon', 'Training', 'Cultural Event', 'Sports Event', 'Technical Event', 'Non technical', 'Internship', 'Other'];
 
             // Get form values
             const eventName = document.querySelector('input[name="event_name"]').value.trim();
@@ -1944,13 +2043,13 @@
             const reason = document.querySelector('textarea[name="reason"]').value.trim();
 
             // Validate Event Name
-            if (eventType !== 'Internship' && !eventName) {
+            if (eventType !== 'Internship' && eventType !== 'Other' && !eventName) {
                 errors.push("✗ Event Name is required");
-            } else if (eventType !== 'Internship' && eventName.length < 3) {
+            } else if (eventType !== 'Internship' && eventType !== 'Other' && eventName.length < 3) {
                 errors.push("✗ Event Name must be at least 3 characters long");
-            } else if (eventType !== 'Internship' && eventName.length > 255) {
+            } else if (eventType !== 'Internship' && eventType !== 'Other' && eventName.length > 255) {
                 errors.push("✗ Event Name cannot exceed 255 characters");
-            } else if (eventType !== 'Internship' && !/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i.test(eventName)) {
+            } else if (eventType !== 'Internship' && eventType !== 'Other' && !/^[a-zA-Z0-9\s\-\.\,\&\'()]+$/i.test(eventName)) {
                 errors.push("✗ Event Name contains invalid characters");
             }
 
@@ -2007,10 +2106,10 @@
             }
 
             // Validate State and District
-            if (!eventState) {
+            if (eventType !== 'Other' && !eventState) {
                 errors.push("✗ Event State is required");
             }
-            if (!eventDistrict) {
+            if (eventType !== 'Other' && !eventDistrict) {
                 errors.push("✗ Event District is required");
             }
 
@@ -2103,8 +2202,22 @@
             if (!eventTypeSelect) return;
 
             const isInternship = eventTypeSelect.value === 'Internship';
+            const isOther = eventTypeSelect.value === 'Other';
             const internshipFields = document.querySelectorAll('.internship-only');
             const normalFields = document.querySelectorAll('.normal-only');
+            const eventNameGroup = document.getElementById('eventNameGroup');
+            const eventStateGroup = document.getElementById('eventStateGroup');
+            const eventDistrictGroup = document.getElementById('eventDistrictGroup');
+            const eventStateLabel = document.getElementById('eventStateLabel');
+            const eventDistrictLabel = document.getElementById('eventDistrictLabel');
+
+            if (eventStateLabel) {
+                eventStateLabel.textContent = isInternship ? 'State *' : 'Event State *';
+            }
+
+            if (eventDistrictLabel) {
+                eventDistrictLabel.textContent = isInternship ? 'District *' : 'Event District *';
+            }
 
             internshipFields.forEach((field) => {
                 field.style.display = isInternship ? '' : 'none';
@@ -2123,6 +2236,46 @@
                     input.disabled = isInternship;
                 });
             });
+
+            if (eventNameGroup) {
+                const eventNameInputs = eventNameGroup.querySelectorAll('input, select, textarea');
+                eventNameGroup.style.display = (isInternship || isOther) ? 'none' : '';
+                eventNameInputs.forEach((input) => {
+                    input.disabled = isInternship || isOther;
+                    if (isInternship || isOther) {
+                        input.value = '';
+                    }
+                });
+            }
+
+            if (eventStateGroup) {
+                const stateInputs = eventStateGroup.querySelectorAll('input, select, textarea');
+                const stateSelect = document.getElementById('eventState');
+                eventStateGroup.style.display = isOther ? 'none' : '';
+                stateInputs.forEach((input) => {
+                    if (isOther) {
+                        input.disabled = true;
+                        input.value = '';
+                    } else if (stateSelect && input === stateSelect) {
+                        input.disabled = false;
+                    }
+                });
+            }
+
+            if (eventDistrictGroup) {
+                const districtInputs = eventDistrictGroup.querySelectorAll('input, select, textarea');
+                const stateSelect = document.getElementById('eventState');
+                const districtSelect = document.getElementById('eventDistrict');
+                eventDistrictGroup.style.display = isOther ? 'none' : '';
+                districtInputs.forEach((input) => {
+                    if (isOther) {
+                        input.disabled = true;
+                        input.value = '';
+                    } else if (districtSelect && input === districtSelect) {
+                        input.disabled = !stateSelect || !stateSelect.value;
+                    }
+                });
+            }
 
             if (isInternship) {
                 const groupMembersContainer = document.getElementById('groupMembersContainer');
@@ -2169,6 +2322,7 @@
             const closeSidebarBtn = document.querySelector('.close-sidebar');
             const sidebar = document.getElementById('sidebar');
             const eventTypeSelect = document.querySelector('select[name="event_type"]');
+            const posterTriggers = document.querySelectorAll('.poster-view-link, .poster-preview-trigger');
 
             if (headerMenuIcon) {
                 headerMenuIcon.addEventListener('click', toggleSidebar);
@@ -2182,6 +2336,10 @@
                 eventTypeSelect.addEventListener('change', toggleInternshipFields);
                 toggleInternshipFields();
             }
+
+            posterTriggers.forEach((trigger) => {
+                trigger.addEventListener('click', handlePosterClick);
+            });
 
             // ============================================================================
             // NOTIFICATION SYSTEM

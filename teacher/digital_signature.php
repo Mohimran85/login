@@ -214,6 +214,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        .main {
+            background-color: hsl(65, 85%, 98%);
+        }
+
         .signature-container {
             background: white;
             border-radius: 15px;

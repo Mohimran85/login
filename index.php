@@ -136,7 +136,8 @@
 
                 // Redirect based on user role and status
                 if ($_SESSION['role'] === 'student') {
-                    header("Location: student/index.php");
+                    session_write_close();
+                    header("Location: student/index.php?fresh=" . time());
                 } else {
                     // For teachers, check their role/status before allowing admin access
                     $teacher_status_sql  = "SELECT COALESCE(status, 'teacher') as status FROM teacher_register WHERE username = ?";
@@ -154,12 +155,15 @@
 
                     if ($teacher_status === 'inactive') {
                         $_SESSION['access_denied'] = 'Your account is inactive. Please contact an administrator to restore access.';
-                        header("Location: teacher/index.php");
+                        session_write_close();
+                        header("Location: teacher/index.php?fresh=" . time());
                     } elseif ($teacher_status === 'admin') {
                         $_SESSION['role'] = 'admin';
-                        header("Location: admin/index.php");
+                        session_write_close();
+                        header("Location: admin/index.php?fresh=" . time());
                     } else {
-                        header("Location: teacher/index.php");
+                        session_write_close();
+                        header("Location: teacher/index.php?fresh=" . time());
                     }
                 }
                 exit();

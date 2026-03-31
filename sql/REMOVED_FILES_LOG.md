@@ -40,6 +40,15 @@
 | `admin/STATUS_FIX_DOCUMENTATION.md` | Dev fix documentation                                  |
 | `admin/create_signature_table.sql`  | Migration SQL — signature table dropped (see rollback) |
 
+## Pass 3 — Final Pre-Deploy Cleanup (2026-03-30)
+
+| File                | Reason removed                       |
+| ------------------- | ------------------------------------ |
+| `test_edit.php`     | Local test harness for edit flow     |
+| `test_push.php`     | OneSignal push test script           |
+| `test_push_api.php` | OneSignal API debug script           |
+| `test_output.html`  | Generated/temporary test output page |
+
 ## Database Tables Dropped
 
 | Table                | Reason removed                                  |

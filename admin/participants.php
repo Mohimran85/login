@@ -183,7 +183,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
-    <link rel="stylesheet" href="./CSS/report.css" />
+    <link rel="stylesheet" href="./CSS/report.css?v=<?php echo @filemtime(__DIR__ . '/CSS/report.css') ?: time(); ?>" />
     <link
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
       rel="stylesheet"
@@ -586,7 +586,7 @@
     <div class="grid-container">
       <div class="header">
         <div class="menu-icon" onclick="openSidebar()">
-          <span class="material-symbols-outlined">menu</span>
+          <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
         </div>
         <div class="header-logo">
           <img
@@ -602,7 +602,7 @@
         </div>
         <div class="header-profile">
           <div class="profile-info" onclick="navigateToProfile()">
-            <span class="material-symbols-outlined">account_circle</span>
+            <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
             <div class="profile-details">
               <span class="profile-name"><?php echo htmlspecialchars($user_data['name'] ?? 'User'); ?></span>
               <span class="profile-role"><?php echo ucfirst($user_type); ?></span>
@@ -615,41 +615,38 @@
         <div class="sidebar-title">
           <div class="sidebar-band">
             <h2 style="color: white; padding: 10px">Admin Panel</h2>
-            <span class="material-symbols-outlined" onclick="closeSidebar()"
-              >close</span
-            >
           </div>
           <ul class="sidebar-list">
             <li class="sidebar-list-item" onclick="window.location.href='index.php'">
-              <span class="material-symbols-outlined">dashboard</span>
+              <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
               <a href="index.php">Home</a>
             </li>
             <li class="sidebar-list-item active" onclick="window.location.href='participants.php'">
-              <span class="material-symbols-outlined">people</span>
+              <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
               <a href="participants.php">Participants</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
-              <span class="material-symbols-outlined">manage_accounts</span>
+              <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
               <a href="user_management.php">User Management</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
-              <span class="material-symbols-outlined">school</span>
+              <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
               <a href="manage_counselors.php">Manage Counselors</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
-              <span class="material-symbols-outlined">emoji_events</span>
+              <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
               <a href="hackathons.php">Hackathons</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
-              <span class="material-symbols-outlined">bar_chart</span>
+              <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
               <a href="reports.php">Reports</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
-              <span class="material-symbols-outlined">account_circle</span>
+              <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
               <a href="profile.php">Profile</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
-              <span class="material-symbols-outlined">logout</span>
+              <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
               <a href="logout.php">Logout</a>
             </li>
           </ul>
@@ -793,11 +790,11 @@
                 <div class="filter-group">
                   <div class="filter-actions">
                     <button type="submit" class="btn btn-primary">
-                      <span class="material-symbols-outlined">filter_list</span>
+                      <img src="../assets/images/iconsax/status-up.svg" alt="filter list" class="iconsax-icon" />
                       Filter
                     </button>
                     <a href="participants.php" class="btn btn-secondary">
-                      <span class="material-symbols-outlined">clear</span>
+                      <img src="../assets/images/iconsax/close-circle.svg" alt="clear" class="iconsax-icon" />
                       Clear
                     </a>
                   </div>
@@ -962,27 +959,27 @@
                   echo "<div class='export-options' style='display: flex; gap: 10px; flex-wrap: wrap;'>";
                   echo "<div class='dropdown' style='position: relative; display: inline-block;'>";
                   echo "<button class='btn btn-primary dropdown-toggle' onclick='toggleParticipantExportDropdown()' style='display: flex; align-items: center; gap: 5px;'>";
-                  echo "<span class='material-symbols-outlined'>download</span> Export";
-                  echo "<span class='material-symbols-outlined' style='font-size: 16px;'>arrow_drop_down</span>";
+                  echo '<img src="../assets/images/iconsax/arrow-up.svg" alt="download" class="iconsax-icon" /> Export';
+                  echo '<img src="../assets/images/iconsax/arrow-up.svg" alt="arrow drop down" class="iconsax-icon" style="font-size: 16px;" />';
                   echo "</button>";
                   echo "<div id='participantExportDropdownContent' class='dropdown-content' style='display: none; position: absolute; background-color: #f9f9f9; min-width: 200px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1000; right: 0; border-radius: 6px; border: 1px solid #ddd;'>";
 
                   $query_params = http_build_query($_GET);
 
                   echo "<a href='export_participants.php?format=csv&export_type=detailed&" . $query_params . "' style='color: black; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #eee;'>";
-                  echo "<span class='material-symbols-outlined' style='font-size: 18px;'>table_view</span> Detailed CSV";
+                  echo '<img src="../assets/images/iconsax/chart-21.svg" alt="table view" class="iconsax-icon" style="font-size: 18px;" /> Detailed CSV';
                   echo "</a>";
 
                   echo "<a href='export_participants.php?format=csv&export_type=summary&" . $query_params . "' style='color: black; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #eee;'>";
-                  echo "<span class='material-symbols-outlined' style='font-size: 18px;'>summarize</span> Summary CSV";
+                  echo '<img src="../assets/images/iconsax/chart.svg" alt="summarize" class="iconsax-icon" style="font-size: 18px;" /> Summary CSV';
                   echo "</a>";
 
                   echo "<a href='export_participants.php?format=excel&export_type=detailed&" . $query_params . "' style='color: black; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #eee;'>";
-                  echo "<span class='material-symbols-outlined' style='font-size: 18px;'>grid_on</span> Detailed Excel";
+                  echo '<img src="../assets/images/iconsax/element-4.svg" alt="grid on" class="iconsax-icon" style="font-size: 18px;" /> Detailed Excel';
                   echo "</a>";
 
                   echo "<a href='export_excel.php?" . $query_params . "' style='color: black; padding: 12px 16px; text-decoration: none; display: flex; align-items: center; gap: 8px;'>";
-                  echo "<span class='material-symbols-outlined' style='font-size: 18px;'>description</span> Legacy Excel";
+                  echo '<img src="../assets/images/iconsax/element-4.svg" alt="description" class="iconsax-icon" style="font-size: 18px;" /> Legacy Excel';
                   echo "</a>";
 
                   echo "</div>";
@@ -1049,13 +1046,13 @@
                       echo "<div class='action-buttons'>";
                       // Only show edit button for students (teacher event editing removed)
                       if ($row['participant_type'] === 'student') {
-                          echo "<a href='edit_participant.php?id=" . $row['id'] . "' class='btn btn-warning' title='Edit'>
-                              <span class='material-symbols-outlined'>edit</span>
-                            </a>";
+                          echo '<a href="edit_participant.php?id=' . $row['id'] . '" class="btn btn-warning" title="Edit">'
+                              . '<img src="../assets/images/iconsax/element-4.svg" alt="edit" class="iconsax-icon" />'
+                              . '</a>';
                       }
-                      echo "<button onclick='confirmDelete(" . (int) $row['id'] . ", " . htmlspecialchars(json_encode($row['participant_type']), ENT_QUOTES, 'UTF-8') . ")' class='btn btn-danger' title='Delete'>
-                          <span class='material-symbols-outlined'>delete</span>
-                        </button>";
+                      echo '<button onclick="confirmDelete(' . (int) $row['id'] . ', ' . htmlspecialchars(json_encode($row['participant_type']), ENT_QUOTES, 'UTF-8') . ')" class="btn btn-danger" title="Delete">'
+                          . '<img src="../assets/images/iconsax/close-circle.svg" alt="delete" class="iconsax-icon" />'
+                          . '</button>';
                       echo "</div>";
                       echo "</td>";
 

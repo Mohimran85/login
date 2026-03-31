@@ -845,8 +845,10 @@
         max-width: none !important; /* Override global max-width: 100% so it doesn't squish */
       }
 
-      .ticker-content:hover {
-        animation-play-state: paused !important; /* Pause on hover */
+      @media (hover: hover) and (pointer: fine) {
+        .ticker-content:hover {
+          animation-play-state: paused !important; /* Pause on hover for desktop only */
+        }
       }
 
       .ticker-item {
@@ -999,6 +1001,7 @@
         window.addEventListener('load', () => {
             const tickerContent = document.querySelector('.ticker-content');
             if (!tickerContent) return;
+          const tickerWrapper = document.querySelector('.news-ticker-wrapper');
 
             const items = Array.from(tickerContent.querySelectorAll('.ticker-item'));
             if (items.length === 0) return;
@@ -1033,6 +1036,21 @@
             // Use the exact pixel width for the seamless loop to avoid percentage issues
             tickerContent.style.setProperty('--ticker-width', '-' + originalWidth + 'px');
             tickerContent.style.animation = `ticker-loop-dynamic ${duration}s linear infinite`;
+
+            // Mobile behavior: pause only while user is touching/holding the ticker.
+            if (tickerWrapper && window.matchMedia('(hover: none), (pointer: coarse)').matches) {
+              const pauseTicker = () => {
+                tickerContent.style.animationPlayState = 'paused';
+              };
+
+              const resumeTicker = () => {
+                tickerContent.style.animationPlayState = 'running';
+              };
+
+              tickerWrapper.addEventListener('touchstart', pauseTicker, { passive: true });
+              tickerWrapper.addEventListener('touchend', resumeTicker);
+              tickerWrapper.addEventListener('touchcancel', resumeTicker);
+            }
         });
       });
     </script>

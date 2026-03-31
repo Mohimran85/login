@@ -138,6 +138,8 @@
         html, body { overflow-x: hidden; width: 100%; position: relative; }
         img { max-width: 100%; height: auto; }
 
+        .main { background-color: hsl(65, 85%, 98%); }
+
         /* Hackathon page styles */
         .page-header-section {
             background: white;

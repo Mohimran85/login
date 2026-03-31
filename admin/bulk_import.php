@@ -414,7 +414,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bulk Import - Admin Dashboard</title>
-    <link rel="stylesheet" href="./CSS/report.css">
+    <link rel="stylesheet" href="./CSS/report.css?v=<?php echo @filemtime(__DIR__ . '/CSS/report.css') ?: time(); ?>">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -634,7 +634,7 @@
         <!-- Header -->
         <div class="header">
             <div class="menu-icon">
-                <span class="material-symbols-outlined">menu</span>
+                <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
             </div>
             <div class="icon">
                 <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
@@ -644,7 +644,7 @@
             </div>
             <div class="header-profile">
                 <div class="profile-info">
-                    <span class="material-symbols-outlined">account_circle</span>
+                    <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                     <div class="profile-details">
                         <span class="profile-name"><?php echo htmlspecialchars($user_data['name'] ?? 'User'); ?></span>
                         <span class="profile-role"><?php echo ucfirst($user_type); ?></span>
@@ -658,39 +658,38 @@
             <div class="sidebar-title">
                 <div class="sidebar-band">
                     <h2 style="color: white; padding: 10px">Admin Panel</h2>
-                    <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                 </div>
                 <ul class="sidebar-list">
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">dashboard</span>
+                        <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                         <a href="index.php">Home</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <sp an class="material-symbols-outlined">people</sp>
+                        <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                         <a href="participants.php">Participants</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                         <a href="user_management.php">User Management</a>
                     </li>
                     <li class="sidebar-list-item active">
-                        <span class="material-symbols-outlined">upload</span>
+                        <img src="../assets/images/iconsax/arrow-up.svg" alt="upload" class="iconsax-icon" />
                         <a href="bulk_import.php">Bulk Import</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">emoji_events</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                         <a href="hackathons.php">Hackathons</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">bar_chart</span>
+                        <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
                         <a href="reports.php">Reports</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">account_circle</span>
+                        <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                         <a href="profile.php">Profile</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">logout</span>
+                        <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
                         <a href="logout.php">Logout</a>
                     </li>
                 </ul>
@@ -703,7 +702,7 @@
                 <!-- Back to User Management -->
                 <div style="margin-bottom: 20px;">
                     <a href="user_management.php" class="btn btn-secondary">
-                        <span class="material-symbols-outlined">arrow_back</span>
+                        <img src="../assets/images/iconsax/arrow-swap-horizontal.svg" alt="arrow back" class="iconsax-icon" />
                         Back to User Management
                     </a>
                 </div>
@@ -745,11 +744,11 @@
                         <h4>📋 Download Templates</h4>
                         <p>Download sample CSV templates to ensure correct format:</p>
                         <a href="download_template.php?type=students" class="btn btn-success">
-                            <span class="material-symbols-outlined">download</span>
+                            <img src="../assets/images/iconsax/arrow-up.svg" alt="download" class="iconsax-icon" />
                             Student Template
                         </a>
                         <a href="download_template.php?type=teachers" class="btn btn-success">
-                            <span class="material-symbols-outlined">download</span>
+                            <img src="../assets/images/iconsax/arrow-up.svg" alt="download" class="iconsax-icon" />
                             Teacher Template
                         </a>
                     </div>
@@ -760,7 +759,7 @@
 
                         <div class="upload-area" id="uploadArea">
                             <div class="upload-content">
-                                <span class="material-symbols-outlined" style="font-size: 48px; color: #6c757d;">cloud_upload</span>
+                                <img src="../assets/images/iconsax/arrow-up.svg" alt="cloud upload" class="iconsax-icon" style="font-size: 48px; color: #6c757d;" />
                                 <h4>Drag and drop your CSV file here</h4>
                                 <p>or</p>
                                 <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()">
@@ -777,7 +776,7 @@
 
                         <div style="text-align: center; margin-top: 20px;">
                             <button type="submit" class="btn btn-primary">
-                                <span class="material-symbols-outlined">upload</span>
+                                <img src="../assets/images/iconsax/arrow-up.svg" alt="upload" class="iconsax-icon" />
                                 Upload and Preview
                             </button>
                         </div>
@@ -836,11 +835,11 @@
 
                         <div style="text-align: center; margin-top: 30px;">
                             <a href="bulk_import.php" class="btn btn-secondary">
-                                <span class="material-symbols-outlined">cancel</span>
+                                <img src="../assets/images/iconsax/close-circle.svg" alt="cancel" class="iconsax-icon" />
                                 Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">
-                                <span class="material-symbols-outlined">check_circle</span>
+                                <img src="../assets/images/iconsax/status-up.svg" alt="check circle" class="iconsax-icon" />
                                 Confirm Import
                             </button>
                         </div>
@@ -878,11 +877,11 @@
 
                     <div style="text-align: center; margin-top: 30px;">
                         <a href="user_management.php" class="btn btn-primary">
-                            <span class="material-symbols-outlined">people</span>
+                            <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                             View User Management
                         </a>
                         <a href="bulk_import.php" class="btn btn-secondary">
-                            <span class="material-symbols-outlined">refresh</span>
+                            <img src="../assets/images/iconsax/refresh-2.svg" alt="refresh" class="iconsax-icon" />
                             Import More Users
                         </a>
                     </div>
@@ -940,7 +939,7 @@
             // IMPORTANT: Don't replace the entire content - preserve the file input!
             // Instead, update only the visual elements
             uploadContent.innerHTML = `
-                <span class="material-symbols-outlined" style="font-size: 48px; color: #28a745;">check_circle</span>
+                <img src="../assets/images/iconsax/status-up.svg" alt="check circle" class="iconsax-icon" style="font-size: 48px; color: #28a745;" />
                 <h4 style="color: #28a745;">${file.name} ✅</h4>
                 <p>Size: ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 <p style="color: #28a745; font-weight: bold;">File ready for upload!</p>

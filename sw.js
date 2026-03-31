@@ -78,6 +78,31 @@ self.addEventListener("fetch", (event) => {
   // Skip chrome-extension and other non-http requests
   if (!event.request.url.startsWith("http")) return;
 
+  const acceptHeader = event.request.headers.get("accept") || "";
+  if (acceptHeader.includes("text/html")) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (!response || response.status !== 200) {
+            return response;
+          }
+
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+
+          return response;
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => {
+            return cached || caches.match("/offline.html");
+          });
+        }),
+    );
+    return;
+  }
+
   event.respondWith(
     caches
       .match(event.request)

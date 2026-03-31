@@ -58,9 +58,11 @@ var barChartOptions = {
 };
 
 const barChartEl = document.querySelector("#bar-chart");
-if (barChartEl) {
+if (barChartEl && typeof ApexCharts !== "undefined") {
   var chart = new ApexCharts(barChartEl, barChartOptions);
   chart.render();
+} else if (barChartEl) {
+  console.warn("ApexCharts not available for bar chart");
 }
 
 // -------------Enhanced Monthly Trends Chart---------------
@@ -345,9 +347,11 @@ var areaChartOption = {
 };
 
 const areaChartEl = document.querySelector("#area-chart");
-if (areaChartEl) {
+if (areaChartEl && typeof ApexCharts !== "undefined") {
   var areaChart = new ApexCharts(areaChartEl, areaChartOption);
   areaChart.render();
+} else if (areaChartEl) {
+  console.warn("ApexCharts not available for area chart");
 }
 
 // ================== ENHANCED CATEGORY ANALYTICS ==================
@@ -469,8 +473,8 @@ function initEnhancedCategoryChart() {
         const pointLabel =
           (w.globals.labels && w.globals.labels[dataPointIndex]) ||
           (w.config.xaxis &&
-          w.config.xaxis.categories &&
-          w.config.xaxis.categories[dataPointIndex]);
+            w.config.xaxis.categories &&
+            w.config.xaxis.categories[dataPointIndex]);
         const category =
           window.categoryAnalytics.find((cat) => cat.name === pointLabel) ||
           window.categoryAnalytics[dataPointIndex];
@@ -1463,4 +1467,167 @@ function loadWeeklyData(startMonth, endMonth) {
     .catch((error) => {
       console.error("Error loading weekly data:", error);
     });
+}
+
+document.addEventListener("click", function (event) {
+  const button = event.target.closest(".month-btn");
+  if (!button) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const monthName = button.getAttribute("data-month-full") || "Month";
+  const monthNumber = parseInt(button.getAttribute("data-month"), 10) || 0;
+  const events = parseInt(button.getAttribute("data-events"), 10) || 0;
+  const participations =
+    parseInt(button.getAttribute("data-participations"), 10) || 0;
+  const wins = parseInt(button.getAttribute("data-wins"), 10) || 0;
+  openMonthModal(monthName, monthNumber, events, participations, wins);
+});
+
+function escapeHtml(value) {
+  const div = document.createElement("div");
+  div.textContent = value == null ? "" : String(value);
+  return div.innerHTML;
+}
+
+function openMonthModal(monthName, monthNumber, events, participations, wins) {
+  let modal = document.getElementById("month-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "month-modal";
+    modal.className = "modal";
+    document.body.appendChild(modal);
+  }
+
+  const displayYear = window.currentYear || new Date().getFullYear();
+  const successRate =
+    participations > 0 ? ((wins / participations) * 100).toFixed(1) : "0.0";
+
+  modal.innerHTML = `
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="month-modal-title">
+      <div class="modal-header">
+        <div>
+          <p class="modal-eyebrow">Month Analysis</p>
+          <h2 id="month-modal-title">${escapeHtml(
+            monthName,
+          )} ${escapeHtml(displayYear)}</h2>
+        </div>
+        <button type="button" class="close-button" aria-label="Close" onclick="closeMonthModal()">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-stats">
+        <div class="modal-stat">
+          <span class="stat-label">Events</span>
+          <span class="stat-value">${events}</span>
+        </div>
+        <div class="modal-stat">
+          <span class="stat-label">Participations</span>
+          <span class="stat-value">${participations}</span>
+        </div>
+        <div class="modal-stat">
+          <span class="stat-label">Wins</span>
+          <span class="stat-value">${wins}</span>
+        </div>
+        <div class="modal-stat">
+          <span class="stat-label">Success Rate</span>
+          <span class="stat-value">${successRate}%</span>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Event Details</h3>
+        <div id="month-details-container" class="month-details-container">
+          <div class="modal-loading">Loading details...</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add("is-open");
+  document.body.classList.add("modal-open");
+
+  modal.onclick = function (event) {
+    if (event.target === modal) {
+      closeMonthModal();
+    }
+  };
+
+  fetch(`ajax/get_month_details.php?year=${displayYear}&month=${monthNumber}`)
+    .then((response) => response.json())
+    .then((data) => {
+      const detailsContainer = document.getElementById(
+        "month-details-container",
+      );
+      if (!detailsContainer) return;
+
+      if (!data || !data.success) {
+        console.error("Month details error:", data ? data.error : "Unknown");
+        detailsContainer.innerHTML =
+          '<div class="modal-empty">Could not load details.</div>';
+        return;
+      }
+
+      const eventsList = Array.isArray(data.events) ? data.events : [];
+      if (eventsList.length === 0) {
+        detailsContainer.innerHTML =
+          '<div class="modal-empty">No detailed event data available for this month.</div>';
+        return;
+      }
+
+      let tableHtml = `
+        <table class="month-details-table">
+          <thead>
+            <tr>
+              <th>Event Type</th>
+              <th>Event Name</th>
+              <th>Prize</th>
+              <th>Participants</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      eventsList.forEach((event) => {
+        const eventType = escapeHtml(event.event_type);
+        const eventName = escapeHtml(event.event_name);
+        const prizeText = event.prize ? escapeHtml(event.prize) : "N/A";
+        const participantsText = escapeHtml(event.participant_count);
+
+        tableHtml += `
+          <tr>
+            <td>${eventType}</td>
+            <td>${eventName}</td>
+            <td>${prizeText}</td>
+            <td>${participantsText}</td>
+          </tr>
+        `;
+      });
+
+      tableHtml += `
+          </tbody>
+        </table>
+      `;
+
+      detailsContainer.innerHTML = tableHtml;
+    })
+    .catch((error) => {
+      console.error("Error fetching month details:", error);
+      const detailsContainer = document.getElementById(
+        "month-details-container",
+      );
+      if (detailsContainer) {
+        detailsContainer.innerHTML =
+          '<div class="modal-empty">Could not load details.</div>';
+      }
+    });
+}
+
+function closeMonthModal() {
+  const modal = document.getElementById("month-modal");
+  if (modal) {
+    modal.classList.remove("is-open");
+  }
+  document.body.classList.remove("modal-open");
 }

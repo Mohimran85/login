@@ -78,10 +78,10 @@ p {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.profile-info .material-symbols-outlined {
-  font-size: 32px;
-  color: #1e4276;
-  padding: 0;
+.profile-info .iconsax-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
 }
 
 .profile-details {
@@ -110,8 +110,19 @@ p {
   font-weight: 500;
   color: #1e4276;
 }
-.material-symbols-outlined {
-  padding-right: 10px;
+.iconsax-icon {
+  width: 1.2em;
+  height: 1.2em;
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+  filter: none;
+}
+
+.header .iconsax-icon,
+.profile-info .iconsax-icon {
+  filter: brightness(0) saturate(100%) invert(22%) sepia(44%) saturate(1305%)
+    hue-rotate(183deg) brightness(93%) contrast(92%);
 }
 /* SIDE BAR */
 #sidebar {
@@ -131,7 +142,8 @@ p {
 .sidebar-band {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: flex-start;
+  gap: 10px;
 }
 .sidebar-title {
   color: white;
@@ -153,9 +165,17 @@ p {
 .sidebar-list-item {
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
   padding: 20px;
   font-size: 18px;
   cursor: pointer;
+}
+
+.sidebar-list-item .iconsax-icon {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
 }
 a {
   text-decoration: none;
@@ -167,10 +187,64 @@ a {
   color: #1e4276;
   border-radius: 20px;
   transition: all 0.3s;
-  transform: scale(1.2);
+  transform: translateX(4px);
 }
 .sidebar-list-item:hover a {
   color: #1e4276;
+}
+
+/* Sidebar icon baseline + semantic colors */
+.sidebar-list-item .iconsax-icon,
+.sidebar-band .iconsax-icon {
+  filter: brightness(0) invert(1);
+}
+
+.sidebar-list-item .iconsax-icon[src*="element-4.svg"],
+.sidebar-list-item:hover .iconsax-icon[src*="element-4.svg"] {
+  filter: brightness(0) saturate(100%) invert(72%) sepia(30%) saturate(5066%)
+    hue-rotate(190deg) brightness(102%) contrast(103%);
+}
+
+.sidebar-list-item .iconsax-icon[src*="people.svg"],
+.sidebar-list-item:hover .iconsax-icon[src*="people.svg"] {
+  filter: brightness(0) saturate(100%) invert(74%) sepia(61%) saturate(608%)
+    hue-rotate(89deg) brightness(101%) contrast(90%);
+}
+
+.sidebar-list-item .iconsax-icon[src*="profile-2user.svg"],
+.sidebar-list-item:hover .iconsax-icon[src*="profile-2user.svg"] {
+  filter: brightness(0) saturate(100%) invert(76%) sepia(33%) saturate(2657%)
+    hue-rotate(295deg) brightness(100%) contrast(98%);
+}
+
+.sidebar-list-item .iconsax-icon[src*="teacher.svg"],
+.sidebar-list-item:hover .iconsax-icon[src*="teacher.svg"] {
+  filter: brightness(0) saturate(100%) invert(69%) sepia(98%) saturate(1568%)
+    hue-rotate(348deg) brightness(104%) contrast(101%);
+}
+
+.sidebar-list-item .iconsax-icon[src*="award.svg"],
+.sidebar-list-item:hover .iconsax-icon[src*="award.svg"] {
+  filter: brightness(0) saturate(100%) invert(83%) sepia(59%) saturate(1401%)
+    hue-rotate(355deg) brightness(102%) contrast(101%);
+}
+
+.sidebar-list-item .iconsax-icon[src*="chart.svg"],
+.sidebar-list-item:hover .iconsax-icon[src*="chart.svg"] {
+  filter: brightness(0) saturate(100%) invert(74%) sepia(37%) saturate(4789%)
+    hue-rotate(177deg) brightness(102%) contrast(101%);
+}
+
+.sidebar-list-item .iconsax-icon[src*="profile-circle.svg"],
+.sidebar-list-item:hover .iconsax-icon[src*="profile-circle.svg"] {
+  filter: brightness(0) saturate(100%) invert(73%) sepia(14%) saturate(2424%)
+    hue-rotate(216deg) brightness(96%) contrast(93%);
+}
+
+.sidebar-list-item .iconsax-icon[src*="logout.svg"],
+.sidebar-list-item:hover .iconsax-icon[src*="logout.svg"] {
+  filter: brightness(0) saturate(100%) invert(73%) sepia(53%) saturate(1237%)
+    hue-rotate(335deg) brightness(103%) contrast(101%);
 }
 .sidebar-responsive {
   display: inline !important;
@@ -485,6 +559,43 @@ button:hover {
 .no-data p {
   color: #6c757d;
   font-size: 16px;
+}
+
+/* Main content icon colors (non-sidebar) */
+.main .iconsax-icon,
+.main-content .iconsax-icon,
+.report .iconsax-icon,
+.main h1 .iconsax-icon,
+.main h2 .iconsax-icon,
+.main h3 .iconsax-icon {
+  filter: brightness(0) saturate(100%) invert(22%) sepia(44%) saturate(1305%)
+    hue-rotate(183deg) brightness(93%) contrast(92%);
+}
+
+/* Keep icons readable inside solid-color buttons */
+.main .btn .iconsax-icon,
+.main button .iconsax-icon,
+.main .btn-primary .iconsax-icon,
+.main .btn-secondary .iconsax-icon,
+.main .btn-success .iconsax-icon,
+.main .btn-danger .iconsax-icon,
+.main .download-btn .iconsax-icon {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Yellow buttons need dark icon contrast */
+.main .btn-warning .iconsax-icon {
+  filter: brightness(0) saturate(100%) invert(13%) sepia(9%) saturate(1381%)
+    hue-rotate(169deg) brightness(94%) contrast(87%) !important;
+}
+
+/* Dropdown/action text icons in white backgrounds */
+.main .dropdown-content .iconsax-icon,
+.main .action-buttons .iconsax-icon,
+.main .entries-info .iconsax-icon,
+.main .filters-container .iconsax-icon {
+  filter: brightness(0) saturate(100%) invert(27%) sepia(45%) saturate(1265%)
+    hue-rotate(186deg) brightness(92%) contrast(93%);
 }
 
 /* Responsive design for participants table */

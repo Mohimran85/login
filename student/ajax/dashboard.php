@@ -204,15 +204,15 @@ function getRecentActivities($db, $cache, $regno)
  */
 function getEventBreakdown($db, $cache, $regno)
 {
-    $cacheKey = "ajax_breakdown_" . $regno;
+    $cacheKey = "ajax_breakdown_v2_" . $regno;
     $data     = $cache->get($cacheKey);
 
     if (! $data) {
         try {
-            $query = "SELECT event_type, COUNT(*) as count
+            $query = "SELECT COALESCE(NULLIF(TRIM(event_type), ''), 'Other') as event_type, COUNT(*) as count
                      FROM student_event_register
-                     WHERE regno = ? AND verification_status = 'verified'
-                     GROUP BY event_type
+                     WHERE regno = ? AND verification_status = 'Approved'
+                     GROUP BY COALESCE(NULLIF(TRIM(event_type), ''), 'Other')
                      ORDER BY count DESC
                      LIMIT 10";
             $types = $db->executeQuery($query, [$regno]);

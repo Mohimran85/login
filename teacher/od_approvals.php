@@ -194,6 +194,7 @@
         .main {
             padding: 20px;
             min-height: calc(100vh - 80px);
+            background-color: hsl(65, 85%, 98%);
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;

@@ -993,7 +993,7 @@
         <!-- Header -->
         <div class="header">
             <div class="menu-icon" onclick="openSidebar()">
-                <span class="material-symbols-outlined">menu</span>
+                <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
             </div>
             <div class="header-logo">
                 <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
@@ -1003,7 +1003,7 @@
             </div>
             <div class="header-profile">
                 <div class="profile-info" onclick="window.location.href='profile.php'">
-                    <span class="material-symbols-outlined">account_circle</span>
+                    <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                     <div class="profile-details">
                         <span class="profile-name"><?php echo htmlspecialchars($user_name); ?></span>
                         <span class="profile-role"><?php
@@ -1039,61 +1039,60 @@
                                                                 }
 
                                                             ?></h2>
-                    <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                 </div>
                 <ul class="sidebar-list">
                     <li class="sidebar-list-item" onclick="window.location.href='index.php'">
-                        <span class="material-symbols-outlined">dashboard</span>
+                        <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                         <a href="index.php">Home</a>
                     </li>
                     <?php if ($is_counselor_user && ! $is_admin_user): ?>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/assigned_students.php'">
-                        <span class="material-symbols-outlined">supervisor_account</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="supervisor account" class="iconsax-icon" />
                         <a href="../teacher/assigned_students.php">My Assigned Students</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/od_approvals.php'">
-                        <span class="material-symbols-outlined">approval</span>
+                        <img src="../assets/images/iconsax/status-up.svg" alt="approval" class="iconsax-icon" />
                         <a href="../teacher/od_approvals.php">OD Approvals</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/internship_approvals.php'">
-                        <span class="material-symbols-outlined">school</span>
+                        <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                         <a href="../teacher/internship_approvals.php">Internship Validations</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/verify_events.php'">
-                        <span class="material-symbols-outlined">card_giftcard</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="card giftcard" class="iconsax-icon" />
                         <a href="../teacher/verify_events.php">Event Certificate Validation</a>
                     </li>
                     <?php endif; ?>
                     <?php if ($is_admin_user): ?>
                     <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
-                        <span class="material-symbols-outlined">people</span>
+                        <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                         <a href="participants.php">Participants</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
-                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                         <a href="user_management.php">User Management</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
-                        <span class="material-symbols-outlined">school</span>
+                        <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <?php endif; ?>
                     <li class="sidebar-list-item active" onclick="window.location.href='hackathons.php'">
-                        <span class="material-symbols-outlined">emoji_events</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                         <a href="hackathons.php">Hackathons</a>
                     </li>
                     <?php if ($is_admin_user): ?>
                     <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
-                        <span class="material-symbols-outlined">bar_chart</span>
+                        <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
                         <a href="reports.php">Reports</a>
                     </li>
                     <?php endif; ?>
                     <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
-                        <span class="material-symbols-outlined">account_circle</span>
+                        <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                         <a href="profile.php">Profile</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
-                        <span class="material-symbols-outlined">logout</span>
+                        <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
                         <a href="logout.php">Logout</a>
                     </li>
                 </ul>
@@ -1105,7 +1104,7 @@
             <!-- Page Header Section -->
             <div class="page-header-section">
                 <div class="page-header-title">
-                    <span class="material-symbols-outlined">edit</span>
+                    <img src="../assets/images/iconsax/element-4.svg" alt="edit" class="iconsax-icon" />
                     <div>
                         <h1>Edit Hackathon</h1>
                         <p style="color: #666; font-size: 14px; margin-top: 5px;">Update hackathon details and information</p>
@@ -1117,7 +1116,7 @@
             <div class="form-container">
                 <?php if (! empty($errors)): ?>
                     <div class="alert alert-error">
-                        <span class="material-symbols-outlined">error</span>
+                        <img src="../assets/images/iconsax/close-circle.svg" alt="error" class="iconsax-icon" />
                         <div>
                             <strong>Please fix the following errors:</strong>
                             <ul>
@@ -1222,7 +1221,7 @@
                         <div class="form-group">
                             <label>Hackathon Poster</label>
                             <div class="file-upload-box" onclick="document.getElementById('poster').click()">
-                                <span class="material-symbols-outlined" style="font-size: 48px;">image</span>
+                                <img src="../assets/images/iconsax/element-4.svg" alt="image" class="iconsax-icon" style="font-size: 48px;" />
                                 <p style="color: #666; margin-top: 10px;">Click to upload new poster (optional)</p>
                                 <input type="file" id="poster" name="poster" accept="image/*">
                             </div>
@@ -1238,7 +1237,7 @@
                         <div class="form-group">
                             <label>Rules & Guidelines PDF</label>
                             <div class="file-upload-box" onclick="document.getElementById('rules_pdf').click()">
-                                <span class="material-symbols-outlined" style="font-size: 48px;">picture_as_pdf</span>
+                                <img src="../assets/images/iconsax/element-4.svg" alt="picture as pdf" class="iconsax-icon" style="font-size: 48px;" />
                                 <p style="color: #666; margin-top: 10px;">Click to upload new PDF (optional)</p>
                                 <input type="file" id="rules_pdf" name="rules_pdf" accept="application/pdf">
                             </div>
@@ -1275,11 +1274,11 @@
 
                     <div class="btn-group">
                         <a href="hackathons.php" class="btn btn-secondary">
-                            <span class="material-symbols-outlined">close</span>
+                            <img src="../assets/images/iconsax/close-circle.svg" alt="close" class="iconsax-icon" />
                             Cancel
                         </a>
                         <button type="submit" class="btn btn-primary">
-                            <span class="material-symbols-outlined">save</span>
+                            <img src="../assets/images/iconsax/status-up.svg" alt="save" class="iconsax-icon" />
                             Update Hackathon
                         </button>
                     </div>

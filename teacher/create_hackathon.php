@@ -334,6 +334,8 @@
         * { box-sizing: border-box; }
         html, body { overflow-x: hidden; width: 100%; }
 
+        .main { background-color: hsl(65, 85%, 98%); }
+
         /* Page-specific styles */
         .page-header-section {
             background: white;

@@ -8,6 +8,13 @@
  * Included automatically via db_config.php for near-universal coverage.
  */
 
+if (PHP_SAPI !== 'cli' && ! headers_sent()) {
+    // Avoid cached pages showing stale data after login.
+    header('Cache-Control: no-cache, no-store, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+}
+
 /**
  * Check and enforce session inactivity timeout.
  *

@@ -140,6 +140,55 @@
     }
     }
 
+    // Missing certificate summary for header card and modal details
+    $missing_students_total     = 0;
+    $missing_certificates_total = 0;
+    $missing_students_details   = [];
+
+    if (! empty($student_regnos)) {
+    $summary_placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
+    $summary_query        = "SELECT
+                                sr.regno,
+                                sr.name,
+                                COUNT(*) as missing_count
+                             FROM od_requests odr
+                             JOIN student_register sr ON odr.student_regno = sr.regno
+                             WHERE odr.status = 'approved'
+                             AND odr.event_type != 'Other'
+                             AND odr.student_regno IN ($summary_placeholders)
+                             AND DATE_ADD(odr.event_date, INTERVAL (COALESCE(odr.event_days, 1) + 2) DAY) <= CURDATE()
+                             AND NOT EXISTS (
+                                 SELECT 1
+                                 FROM student_event_register ser
+                                 WHERE ser.regno = odr.student_regno
+                                 AND ser.event_name = odr.event_name
+                                 AND ser.certificates IS NOT NULL
+                                 AND ser.certificates != ''
+                             )
+                             GROUP BY sr.regno, sr.name
+                             ORDER BY missing_count DESC, sr.name ASC";
+
+    $summary_stmt  = $conn->prepare($summary_query);
+    $summary_types = str_repeat('s', count($student_regnos));
+    $summary_stmt->bind_param($summary_types, ...$student_regnos);
+    $summary_stmt->execute();
+    $summary_result = $summary_stmt->get_result();
+
+    if ($summary_result) {
+        while ($summary_row = $summary_result->fetch_assoc()) {
+            $missing_students_details[]  = [
+                'regno'         => $summary_row['regno'],
+                'name'          => $summary_row['name'],
+                'missing_count' => (int) $summary_row['missing_count'],
+            ];
+            $missing_certificates_total += (int) $summary_row['missing_count'];
+        }
+    }
+
+    $missing_students_total  = count($missing_students_details);
+    $summary_stmt->close();
+    }
+
     // Build SQL query based on filters - only show events from assigned students
     if (! empty($student_regnos)) {
     $placeholders = implode(',', array_fill(0, count($student_regnos), '?'));
@@ -166,6 +215,7 @@
                   LEFT JOIN student_event_register ser
                       ON odr.student_regno = ser.regno AND odr.event_name = ser.event_name
                   WHERE odr.status = 'approved'
+                  AND odr.event_type != 'Other'
                   AND odr.student_regno IN ($placeholders)
                   AND DATE_ADD(odr.event_date, INTERVAL (COALESCE(odr.event_days, 1) + 2) DAY) <= CURDATE()
                   AND (ser.id IS NULL OR ser.certificates IS NULL OR ser.certificates = '')";
@@ -280,6 +330,7 @@
         .main {
             padding: 20px;
             min-height: calc(100vh - 80px);
+            background-color: hsl(65, 85%, 98%);
             overflow-x: hidden;
             max-width: 100%;
         }
@@ -322,7 +373,16 @@
 
 
         .page-header {
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            gap: 16px;
             margin-bottom: 30px;
+        }
+
+        .page-header-left {
+            flex: 1;
+            min-width: 0;
         }
 
         .page-title {
@@ -336,6 +396,82 @@
             font-size: 14px;
             color: #6c757d;
             margin-bottom: 20px;
+        }
+
+        .page-header-right {
+            margin-left: 20px;
+        }
+
+        .missing-count-card {
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1e4276 0%, #2d5aa0 100%);
+            color: #fff;
+            padding: 14px 16px;
+            min-width: 250px;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(30, 66, 118, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-align: left;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .missing-count-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(30, 66, 118, 0.35);
+        }
+
+        .missing-count-title {
+            font-size: 11px;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+
+        .missing-count-value {
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .missing-count-subtext {
+            font-size: 12px;
+            opacity: 0.95;
+        }
+
+        .missing-detail-table {
+            width: 100%;
+            min-width: 0;
+            border-collapse: collapse;
+            margin-top: 8px;
+            table-layout: fixed;
+        }
+
+        .missing-detail-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .missing-detail-table thead {
+            background: #e8eef7;
+        }
+
+        .missing-detail-table th,
+        .missing-detail-table td {
+            border-bottom: 1px solid #e9ecef;
+            padding: 8px 6px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .missing-detail-table th {
+            color: #1e4276;
+            font-weight: 600;
+            text-transform: none;
+            letter-spacing: normal;
+            font-size: 13px;
         }
 
         /* Alerts */
@@ -461,18 +597,18 @@
             color: #6c757d;
         }
 
-        table {
+        .table-container > table {
             width: 100%;
             min-width: 900px;
             border-collapse: collapse;
             font-size: 13px;
         }
 
-        thead {
+        .table-container > table thead {
             background: linear-gradient(135deg, #1e4276 0%, #2d5aa0 100%);
         }
 
-        th {
+        .table-container > table th {
             padding: 12px 15px;
             text-align: left;
             font-weight: 600;
@@ -484,7 +620,7 @@
             white-space: nowrap;
         }
 
-        td {
+        .table-container > table td {
             padding: 12px 15px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 13px;
@@ -492,11 +628,11 @@
             vertical-align: middle;
         }
 
-        tbody tr {
+        .table-container > table tbody tr {
             transition: all 0.3s ease;
         }
 
-        tbody tr:hover {
+        .table-container > table tbody tr:hover {
             background: #f8f9fa;
         }
 
@@ -890,6 +1026,20 @@
                 padding: 15px;
             }
 
+            .page-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .page-header-right {
+                margin-left: 0;
+            }
+
+            .missing-count-card {
+                width: 100%;
+                min-width: 0;
+            }
+
             .page-title { font-size: 22px; }
             .filter-row { flex-direction: column; }
             .filter-group { width: 100%; }
@@ -1044,8 +1194,17 @@
         <main class="main">
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title"> Event Certificate Validation</h1>
-                <p class="page-subtitle">Review and verify event participation certificates from students</p>
+                <div class="page-header-left">
+                    <h1 class="page-title"> Event Certificate Validation</h1>
+                    <p class="page-subtitle">Review and verify event participation certificates from students</p>
+                </div>
+                <div class="page-header-right">
+                    <button type="button" class="missing-count-card" onclick="openMissingDetailsModal()" title="View student-wise missing certificate details">
+                        <div class="missing-count-title">Students Missing Certificate Upload</div>
+                        <div class="missing-count-value"><?php echo $missing_students_total; ?></div>
+                        <div class="missing-count-subtext">Total missing certificates: <?php echo $missing_certificates_total; ?></div>
+                    </button>
+                </div>
             </div>
 
             <!-- Alerts -->
@@ -1347,6 +1506,50 @@
         </div>
     </div>
 
+    <!-- Missing Students Modal -->
+    <div id="missingDetailsModal" class="modal">
+        <div class="modal-content" style="max-width: 760px;">
+            <div class="modal-header">
+                <span class="material-symbols-outlined" style="color: #1e4276;">warning</span>
+                Missing Certificate Upload Details
+            </div>
+            <div class="modal-body">
+                <p style="margin: 0 0 12px 0; color: #495057; font-size: 14px;">
+                    <strong><?php echo $missing_students_total; ?></strong> student(s) with pending uploads,
+                    <strong><?php echo $missing_certificates_total; ?></strong> missing certificate(s) in total.
+                </p>
+
+                <?php if (! empty($missing_students_details)): ?>
+                    <div class="missing-detail-table-wrap">
+                        <table class="missing-detail-table">
+                            <thead>
+                                <tr>
+                                    <th>Reg No</th>
+                                    <th>Student Name</th>
+                                    <th>Missing Certificates</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($missing_students_details as $missing_detail): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($missing_detail['regno']); ?></td>
+                                        <td><?php echo htmlspecialchars($missing_detail['name']); ?></td>
+                                        <td><?php echo (int) $missing_detail['missing_count']; ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <p style="margin: 0; color: #6c757d; font-size: 14px;">No missing certificate uploads found.</p>
+                <?php endif; ?>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-modal btn-modal-cancel" onclick="closeMissingDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Mobile menu toggle function
         function toggleSidebar() {
@@ -1508,6 +1711,14 @@
             document.getElementById('rejectForm').reset();
         }
 
+        function openMissingDetailsModal() {
+            document.getElementById('missingDetailsModal').classList.add('active');
+        }
+
+        function closeMissingDetailsModal() {
+            document.getElementById('missingDetailsModal').classList.remove('active');
+        }
+
         // Collect all missing records for Remind All
         <?php if ($status_filter === 'Missing' && $total_records > 0):
                 $all_missing = [];
@@ -1589,8 +1800,12 @@
         // Close modal when clicking outside
         window.addEventListener('click', function (event) {
             const modal = document.getElementById('rejectModal');
+            const missingModal = document.getElementById('missingDetailsModal');
             if (event.target === modal) {
                 closeRejectModal();
+            }
+            if (event.target === missingModal) {
+                closeMissingDetailsModal();
             }
         });
 

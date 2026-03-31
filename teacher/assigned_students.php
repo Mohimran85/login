@@ -56,6 +56,8 @@
     // Search and filter parameters
     $search                = isset($_GET['search']) ? trim($_GET['search']) : '';
     $semester_filter       = isset($_GET['semester']) ? $_GET['semester'] : '';
+    $department_filter     = isset($_GET['department']) ? $_GET['department'] : '';
+    $year_filter           = isset($_GET['year']) ? $_GET['year'] : '';
     $event_category_filter = isset($_GET['event_category']) ? $_GET['event_category'] : '';
 
     // Build WHERE clause
@@ -649,6 +651,10 @@
 
         .update-btn .material-symbols-outlined {
             font-size: 16px;
+        }
+
+        .main {
+            background-color: hsl(65, 85%, 98%);
         }
 
         /* Mobile Responsive */

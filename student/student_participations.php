@@ -2080,7 +2080,59 @@ fd3s        .participations-title {
             document.getElementById('errorModal').style.display = 'none';
         }
 
+        function isPhoneResolution() {
+            return window.innerWidth <= 768 || window.screen.width <= 768;
+        }
+
+        function getDownloadFileName(url, type) {
+            const fallbackName = (type || 'file').toLowerCase().replace(/\s+/g, '_') + '.file';
+
+            try {
+                const cleanUrl = (url || '').split('?')[0].split('#')[0];
+                const fileName = cleanUrl.substring(cleanUrl.lastIndexOf('/') + 1);
+                return fileName ? decodeURIComponent(fileName) : fallbackName;
+            } catch (e) {
+                return fallbackName;
+            }
+        }
+
+        function downloadWithoutPageLoad(url, type) {
+            return fetch(url, { credentials: 'same-origin' })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('File not found');
+                    }
+
+                    return response.blob();
+                })
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+
+                    link.href = blobUrl;
+                    link.download = getDownloadFileName(url, type);
+                    link.style.display = 'none';
+
+                    document.body.appendChild(link);
+                    link.click();
+
+                    setTimeout(() => {
+                        URL.revokeObjectURL(blobUrl);
+                        link.remove();
+                    }, 1000);
+                });
+        }
+
         function checkFileAndOpen(url, type) {
+            if (isPhoneResolution()) {
+                downloadWithoutPageLoad(url, type)
+                    .catch(() => {
+                        showErrorModal(`Unable to download ${type.toLowerCase()} file. Please try again.`);
+                    });
+
+                return;
+            }
+
             // Create a temporary link to test if file exists
             const tempLink = document.createElement('a');
             tempLink.href = url;

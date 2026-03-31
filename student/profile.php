@@ -292,6 +292,7 @@
             background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
             border-radius: 12px;
             border-left: 4px solid #28a745;
+            text-align: left;
         }
 
         .counselor-info.no-counselor {

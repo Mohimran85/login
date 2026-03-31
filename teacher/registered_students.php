@@ -206,6 +206,7 @@
         .main {
             min-width: 0;
             width: 100%;
+            background-color: hsl(65, 85%, 98%);
             overflow-x: hidden; /* Ensure main container doesn't scroll */
         }
 

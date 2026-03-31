@@ -278,89 +278,75 @@
     $months       = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     $month_names  = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-    // Initialize arrays for chart data
-    $monthly_events         = [];
-    $monthly_participations = [];
-    $monthly_wins           = [];
+    // Initialize arrays for chart data with 0s
+    $monthly_events         = array_fill(0, 12, 0);
+    $monthly_participations = array_fill(0, 12, 0);
+    $monthly_wins           = array_fill(0, 12, 0);
 
-    // Initialize arrays for previous year data (for YoY comparison)
-    $previous_year_events         = [];
-    $previous_year_participations = [];
-    $previous_year_wins           = [];
+    // Initialize arrays for previous year data (for YoY comparison) with 0s
+    $previous_year_events         = array_fill(0, 12, 0);
+    $previous_year_participations = array_fill(0, 12, 0);
+    $previous_year_wins           = array_fill(0, 12, 0);
 
-    for ($i = 1; $i <= 12; $i++) {
-    $month_num = str_pad($i, 2, '0', STR_PAD_LEFT);
+    // Fetch all current year data in one query to fix N+1 performance issue
+    $current_year_sql = "
+        SELECT
+            MONTH(start_date) as month,
+            COUNT(DISTINCT event_type) as events,
+            COUNT(*) as participations,
+            SUM(CASE WHEN LOWER(TRIM(prize)) IN ('first', 'second', 'third') THEN 1 ELSE 0 END) as wins
+        FROM student_event_register
+        WHERE YEAR(start_date) = $current_year AND verification_status = 'Approved'
+        GROUP BY MONTH(start_date)";
 
-    // Enhanced date matching for better accuracy
-    $date_condition          = "YEAR(start_date) = $current_year AND MONTH(start_date) = $i";
-    $previous_year_condition = "YEAR(start_date) = $previous_year AND MONTH(start_date) = $i";
+    $current_year_result = $conn->query($current_year_sql);
+    if ($current_year_result) {
+    while ($row = $current_year_result->fetch_assoc()) {
+        if (isset($row['month']) && $row['month'] !== null) {
+            $m = (int) $row['month'] - 1; // 0-indexed month
+            if ($m >= 0 && $m < 12) {
+                $monthly_events[$m]         = (int) $row['events'];
+                $monthly_participations[$m] = (int) $row['participations'];
+                $monthly_wins[$m]           = (int) $row['wins'];
+            }
+        }
+    }
+    }
 
-    // EVENT COUNTING LOGIC:
-    // - Events: Count unique combinations of event_name + date (1 workshop = 1 event, regardless of attendees)
-    // - Participations: Count total individual student registrations
-    // - Wins: Count individual prize winners
+    // Fetch all previous year data in one query
+    $prev_year_sql = "
+        SELECT
+            MONTH(start_date) as month,
+            COUNT(DISTINCT event_type) as events,
+            COUNT(*) as participations,
+            SUM(CASE WHEN LOWER(TRIM(prize)) IN ('first', 'second', 'third') THEN 1 ELSE 0 END) as wins
+        FROM student_event_register
+        WHERE YEAR(start_date) = $previous_year AND verification_status = 'Approved'
+        GROUP BY MONTH(start_date)";
 
-    // Count DISTINCT events by event_type for this month
-    // One event type = one unique type of event, regardless of how many instances or students attend
-    $student_events_sql = "SELECT COUNT(DISTINCT event_type) as count
-                                  FROM student_event_register
-                                  WHERE $date_condition AND event_type IS NOT NULL AND event_type != '' AND verification_status = 'Approved'";
-    $student_events_result = $conn->query($student_events_sql);
-    $student_events_count  = $student_events_result ? (int) $student_events_result->fetch_assoc()['count'] : 0;
-
-    // Count ALL student participations for this month (each record = 1 participation)
-    $student_parts_sql = "SELECT COUNT(*) as count
-                                 FROM student_event_register
-                                 WHERE $date_condition AND verification_status = 'Approved'";
-    $student_parts_result = $conn->query($student_parts_sql);
-    $student_parts_count  = $student_parts_result ? (int) $student_parts_result->fetch_assoc()['count'] : 0;
-
-    // Count ALL prize winners for this month (each prize record = 1 winner)
-    $wins_sql = "SELECT COUNT(*) as count
-                     FROM student_event_register
-                     WHERE $date_condition AND LOWER(TRIM(prize)) IN ('first', 'second', 'third')
-                     AND verification_status = 'Approved'";
-    $wins_result = $conn->query($wins_sql);
-    $wins_count  = $wins_result ? (int) $wins_result->fetch_assoc()['count'] : 0;
-
-    // Collect previous year data for YoY comparison - count unique event types only
-    $prev_events_sql = "SELECT COUNT(DISTINCT event_type) as count
-                               FROM student_event_register
-                               WHERE $previous_year_condition AND event_type IS NOT NULL AND event_type != '' AND verification_status = 'Approved'";
-    $prev_events_result = $conn->query($prev_events_sql);
-    $prev_events_count  = $prev_events_result ? (int) $prev_events_result->fetch_assoc()['count'] : 0;
-
-    $prev_parts_sql = "SELECT COUNT(*) as count
-                              FROM student_event_register
-                              WHERE $previous_year_condition AND verification_status = 'Approved'";
-    $prev_parts_result = $conn->query($prev_parts_sql);
-    $prev_parts_count  = $prev_parts_result ? (int) $prev_parts_result->fetch_assoc()['count'] : 0;
-
-    $prev_wins_sql = "SELECT COUNT(*) as count
-                          FROM student_event_register
-                          WHERE $previous_year_condition AND LOWER(TRIM(prize)) IN ('first', 'second', 'third')
-                          AND verification_status = 'Approved'";
-    $prev_wins_result = $conn->query($prev_wins_sql);
-    $prev_wins_count  = $prev_wins_result ? (int) $prev_wins_result->fetch_assoc()['count'] : 0;
-
-    // Store data for charts
-    $monthly_events[]         = $student_events_count;
-    $monthly_participations[] = $student_parts_count;
-    $monthly_wins[]           = $wins_count;
-
-    // Store previous year data for YoY comparison
-    $previous_year_events[]         = $prev_events_count;
-    $previous_year_participations[] = $prev_parts_count;
-    $previous_year_wins[]           = $prev_wins_count;
+    $prev_year_result = $conn->query($prev_year_sql);
+    if ($prev_year_result) {
+    while ($row = $prev_year_result->fetch_assoc()) {
+        if (isset($row['month']) && $row['month'] !== null) {
+            $m = (int) $row['month'] - 1; // 0-indexed month
+            if ($m >= 0 && $m < 12) {
+                $previous_year_events[$m]         = (int) $row['events'];
+                $previous_year_participations[$m] = (int) $row['participations'];
+                $previous_year_wins[$m]           = (int) $row['wins'];
+            }
+        }
+    }
+    }
 
     // Store detailed data for analysis
+    for ($i = 0; $i < 12; $i++) {
     $monthly_data[] = [
-        'month'             => $months[$i - 1],
-        'month_full'        => $month_names[$i - 1],
-        'events'            => $student_events_count,
-        'participations'    => $student_parts_count,
-        'wins'              => $wins_count,
-        'avg_participation' => $student_events_count > 0 ? round($student_parts_count / $student_events_count, 1) : 0,
+        'month'             => $months[$i],
+        'month_full'        => $month_names[$i],
+        'events'            => $monthly_events[$i],
+        'participations'    => $monthly_participations[$i],
+        'wins'              => $monthly_wins[$i],
+        'avg_participation' => $monthly_events[$i] > 0 ? round($monthly_participations[$i] / $monthly_events[$i], 1) : 0,
     ];
     }
 
@@ -457,6 +443,10 @@
     rsort($all_years); // Sort descending
 
     $conn->close();
+
+    // Cache-bust admin assets so icon color styles are fresh right after login.
+    $admin_css_version = @filemtime(__DIR__ . '/CSS/styles.css') ?: time();
+    $admin_js_version  = @filemtime(__DIR__ . '/JS/scripts.js') ?: time();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -475,12 +465,8 @@
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <!-- css link -->
-    <link rel="stylesheet" href="./CSS/styles.css" />
-    <!-- google icons -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
-      rel="stylesheet"
-    />
+    <link rel="stylesheet" href="./CSS/styles.css?v=<?php echo $admin_css_version; ?>" />
+    <link rel="stylesheet" href="./CSS/modal.css?v=<?php echo time(); ?>" />
     <!-- google fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -494,7 +480,7 @@
       <!-- header -->
       <div class="header">
          <div class="menu-icon" onclick="openSidebar()">
-          <span class="material-symbols-outlined">menu</span>
+          <img class="iconsax-icon" src="../assets/images/iconsax/menu-1.svg" alt="Open menu" />
         </div>
         <div class="header-logo">
           <img
@@ -510,7 +496,7 @@
         </div>
         <div class="header-profile">
           <div class="profile-info" onclick="navigateToProfile()">
-            <span class="material-symbols-outlined">account_circle</span>
+            <img class="iconsax-icon" src="../assets/images/iconsax/profile-circle.svg" alt="" aria-hidden="true" />
             <div class="profile-details">
               <span class="profile-name"><?php echo htmlspecialchars($user_data['name'] ?? 'User'); ?></span>
               <span class="profile-role"><?php echo ucfirst($user_type); ?></span>
@@ -523,39 +509,39 @@
         <div class="sidebar-title">
           <div class="sidebar-band">
             <h2 style="color: white; padding: 10px">Admin Panel</h2>
-            <span class="material-symbols-outlined"  onclick="closeSidebar()">close</span>
+
           </div>
           <ul class="sidebar-list">
             <li class="sidebar-list-item active" onclick="window.location.href='index.php'">
-              <span class="material-symbols-outlined">dashboard</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/element-4.svg" alt="" aria-hidden="true" />
               <a href="index.php">Home</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
-              <span class="material-symbols-outlined">people</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/people.svg" alt="" aria-hidden="true" />
               <a href="participants.php">Participants</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
-              <span class="material-symbols-outlined">manage_accounts</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/profile-2user.svg" alt="" aria-hidden="true" />
               <a href="user_management.php">User Management</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
-              <span class="material-symbols-outlined">school</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/teacher.svg" alt="" aria-hidden="true" />
               <a href="manage_counselors.php">Manage Counselors</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
-              <span class="material-symbols-outlined">emoji_events</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/award.svg" alt="" aria-hidden="true" />
               <a href="hackathons.php">Hackathons</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
-              <span class="material-symbols-outlined">bar_chart</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/chart.svg" alt="" aria-hidden="true" />
               <a href="reports.php">Reports</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
-              <span class="material-symbols-outlined">account_circle</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/profile-circle.svg" alt="" aria-hidden="true" />
               <a href="profile.php">Profile</a>
             </li>
             <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
-              <span class="material-symbols-outlined">logout</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/logout.svg" alt="" aria-hidden="true" />
               <a href="logout.php">Logout</a>
             </li>
           </ul>
@@ -584,24 +570,6 @@
                 <span class="year-info">
                   <?php echo count($available_years); ?> years with data
                 </span>
-              </div>
-              <div class="nav-buttons">
-                <button class="nav-btn" onclick="scrollToSection('dashboard-cards')">
-                  <span class="material-symbols-outlined">dashboard</span>
-                  Dashboard
-                </button>
-                <button class="nav-btn" onclick="scrollToSection('category-analytics')">
-                  <span class="material-symbols-outlined">analytics</span>
-                  Category Analytics
-                </button>
-                <button class="nav-btn" onclick="scrollToSection('monthly-trends')">
-                  <span class="material-symbols-outlined">trending_up</span>
-                  Monthly Trends
-                </button>
-                <button class="nav-btn" onclick="scrollToSection('detailed-insights')">
-                  <span class="material-symbols-outlined">insights</span>
-                  Detailed Insights
-                </button>
               </div>
             </div>
           </div>
@@ -714,7 +682,7 @@
 
             <div class="comparison-action">
               <button class="exit-comparison-btn" onclick="exitComparisonMode()">
-                <span class="material-symbols-outlined">close</span>
+                <img class="iconsax-icon" src="../assets/images/iconsax/close-circle.svg" alt="" aria-hidden="true" />
                 Exit Comparison
               </button>
             </div>
@@ -726,7 +694,7 @@
           <div class="card">
             <div class="card-inner">
               <h3>Total Students:</h3>
-              <span class="material-symbols-outlined">school</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/teacher.svg" alt="" aria-hidden="true" />
             </div>
             <h1><?php echo number_format($total_students); ?></h1>
             <small>All time registrations</small>
@@ -735,7 +703,7 @@
            <div class="card">
             <div class="card-inner">
               <h3>Total Teachers:</h3>
-              <span class="material-symbols-outlined">person_book</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/profile-2user.svg" alt="" aria-hidden="true" />
             </div>
             <h1><?php echo number_format($total_teachers); ?></h1>
             <small>All time registrations</small>
@@ -744,7 +712,7 @@
            <div class="card">
             <div class="card-inner">
               <h3>Student Events (<?php echo $display_current_year; ?>):</h3>
-              <span class="material-symbols-outlined">event</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/calendar.svg" alt="" aria-hidden="true" />
             </div>
             <h1><?php echo number_format($total_events); ?></h1>
             <small>Event types in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $display_current_year; ?></small>
@@ -753,7 +721,7 @@
            <div class="card">
             <div class="card-inner">
               <h3>Participations (<?php echo $display_current_year; ?>):</h3>
-              <span class="material-symbols-outlined">groups</span>
+              <img class="iconsax-icon" src="../assets/images/iconsax/people.svg" alt="" aria-hidden="true" />
             </div>
             <h1><?php echo number_format($total_participations); ?></h1>
             <small>Total in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $display_current_year; ?></small>
@@ -772,7 +740,7 @@
                   <option value="success">Success Rate</option>
                 </select>
                 <button class="chart-toggle" onclick="toggleChartType()" title="Toggle Chart Type">
-                  <span class="material-symbols-outlined">bar_chart</span>
+                  <img class="iconsax-icon" src="../assets/images/iconsax/chart.svg" alt="Toggle chart type" />
                 </button>
               </div>
             </div>
@@ -852,7 +820,7 @@
 
             <!-- Detailed Category Breakdown Table -->
             <div class="category-details">
-              <h3>Detailed Student Category Analytics -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $display_current_year; ?></h3>
+              <h3>Detailed Student Category Analytics - <?php echo $display_current_year; ?></h3>
               <div class="category-table-container">
                 <table class="category-table">
                   <thead>
@@ -952,11 +920,11 @@
                   <option value="comparison">YoY Comparison</option>
                 </select>
                 <button class="trend-comparison" onclick="showYearComparison()" title="Compare Years">
-                  <span class="material-symbols-outlined">compare_arrows</span>
+                  <img class="iconsax-icon" src="../assets/images/iconsax/arrow-swap-horizontal.svg" alt="" aria-hidden="true" />
                   Compare
                 </button>
                 <button class="trend-refresh" onclick="refreshTrendData()" title="Refresh Data">
-                  <span class="material-symbols-outlined">refresh</span>
+                  <img class="iconsax-icon" src="../assets/images/iconsax/refresh-2.svg" alt="Refresh trend data" />
                 </button>
               </div>
             </div>
@@ -966,12 +934,10 @@
                   <span class="stat-value"><?php echo $total_year_events; ?></span>
                   <span class="stat-label">Total Student Events</span>
                   <span class="stat-change"><?php
-                                                $prev_total = array_sum($previous_year_events);
-                                                if ($prev_total > 0) {
-                                                    $change = (($total_year_events - $prev_total) / $prev_total) * 100;
-                                                    echo($change >= 0 ? '+' : '') . round($change, 1) . '% vs last year';
+                                                if ($total_year_events > 0) {
+                                                    echo 'Real data analysis';
                                                 } else {
-                                                    echo $total_year_events > 0 ? 'New events this year' : 'No events yet';
+                                                    echo 'No events to analyze';
                                             }
                                             ?></span>
                 </div>
@@ -979,12 +945,10 @@
                   <span class="stat-value"><?php echo $total_year_participations; ?></span>
                   <span class="stat-label">Total Student Participations</span>
                   <span class="stat-change"><?php
-                                                $prev_parts = array_sum($previous_year_participations);
-                                                if ($prev_parts > 0) {
-                                                    $change = (($total_year_participations - $prev_parts) / $prev_parts) * 100;
-                                                    echo($change >= 0 ? '+' : '') . round($change, 1) . '% vs last year';
+                                                if ($total_year_participations > 0) {
+                                                    echo 'Real data analysis';
                                                 } else {
-                                                    echo $total_year_participations > 0 ? 'New participations this year' : 'No participations yet';
+                                                    echo 'No events to analyze';
                                             }
                                             ?></span>
                 </div>
@@ -1010,12 +974,17 @@
               <div class="month-selector">
                 <h4>📅 Quick Month Analysis</h4>
                 <div class="month-buttons">
-                  <?php for ($m = 1; $m <= 12; $m++): ?>
-                  <button class="month-btn" data-month="<?php echo $m; ?>" onclick="showMonthDetails(<?php echo $m; ?>)">
-                    <?php echo $months[$m - 1]; ?>
-                    <span class="month-value"><?php echo $monthly_events[$m - 1]; ?></span>
+                  <?php foreach ($monthly_data as $month_data): ?>
+                  <button class="month-btn"
+                          data-month="<?php echo date('n', strtotime($month_data['month_full'])); ?>"
+                          data-month-full="<?php echo htmlspecialchars($month_data['month_full']); ?>"
+                          data-events="<?php echo $month_data['events']; ?>"
+                          data-participations="<?php echo $month_data['participations']; ?>"
+                          data-wins="<?php echo $month_data['wins']; ?>">
+                    <?php echo $month_data['month']; ?>
+                    <span class="month-value"><?php echo $month_data['events']; ?></span>
                   </button>
-                  <?php endfor; ?>
+                  <?php endforeach; ?>
                 </div>
               </div>
             </div>
@@ -1099,7 +1068,7 @@
             <div class="trend-insights">
               <div class="trend-insight-card">
                 <div class="insight-header">
-                  <span class="insight-emoji">📊</span>
+                  <span class="insight-emoji"><img class="iconsax-icon" src="../assets/images/iconsax/chart-21.svg" alt="Growth pattern" /></span>
                   <h4>Growth Pattern</h4>
                 </div>
                 <p><?php if ($total_year_events > 0): ?>Events show <strong>consistent growth</strong> with peak activity in <?php echo $peak_month; ?>. The success rate averages <strong><?php echo $total_year_participations > 0 ? round(($total_year_wins / $total_year_participations) * 100, 1) : 0; ?>%</strong> across all months.<?php else: ?>No event data available for<?php echo $display_current_year; ?>. Start adding student events to see growth patterns and analytics.<?php endif; ?></p>
@@ -1107,7 +1076,7 @@
 
               <div class="trend-insight-card">
                 <div class="insight-header">
-                  <span class="insight-emoji">🎯</span>
+                  <span class="insight-emoji"><img class="iconsax-icon" src="../assets/images/iconsax/status-up.svg" alt="Key highlights" /></span>
                   <h4>Key Highlights</h4>
                 </div>
                 <ul class="insight-list">
@@ -1127,7 +1096,7 @@
 
               <div class="trend-insight-card">
                 <div class="insight-header">
-                  <span class="insight-emoji">🚀</span>
+                  <span class="insight-emoji"><img class="iconsax-icon" src="../assets/images/iconsax/trend-up.svg" alt="Recommendations" /></span>
                   <h4>Recommendations</h4>
                 </div>
                 <ul class="insight-list">
@@ -1161,7 +1130,7 @@
                   <option value="performance">Performance Metrics</option>
                 </select>
                 <button class="distribution-toggle" onclick="toggleDistributionData()" title="Toggle Data View">
-                  <span class="material-symbols-outlined">view_module</span>
+                  <img class="iconsax-icon" src="../assets/images/iconsax/element-4.svg" alt="Toggle distribution view" />
                 </button>
               </div>
 
@@ -1202,7 +1171,7 @@
             <h3>🎯 Monthly Student Event Insights</h3>
             <div class="insights-grid">
               <div class="insight-item">
-                <span class="insight-icon">📈</span>
+                <img class="insight-icon iconsax-icon insight-icon-active" src="../assets/images/iconsax/trend-up.svg" alt="Most active month" />
                 <div class="insight-content">
                   <span class="insight-title">Most Active Month</span>
                   <span class="insight-value"><?php echo $most_active_month; ?></span>
@@ -1210,7 +1179,7 @@
                 </div>
               </div>
               <div class="insight-item">
-                <span class="insight-icon">🏆</span>
+                <img class="insight-icon iconsax-icon insight-icon-trophy" src="../assets/images/iconsax/award.svg" alt="Best performance" />
                 <div class="insight-content">
                   <span class="insight-title">Best Performance</span>
                   <span class="insight-value"><?php
@@ -1221,7 +1190,7 @@
                 </div>
               </div>
               <div class="insight-item">
-                <span class="insight-icon">📊</span>
+                <img class="insight-icon iconsax-icon insight-icon-avg" src="../assets/images/iconsax/chart.svg" alt="Average participation" />
                 <div class="insight-content">
                   <span class="insight-title">Avg Participation</span>
                   <span class="insight-value"><?php echo $avg_participations_per_month; ?></span>
@@ -1229,7 +1198,7 @@
                 </div>
               </div>
               <div class="insight-item">
-                <span class="insight-icon">🎯</span>
+                <img class="insight-icon iconsax-icon insight-icon-peak" src="../assets/images/iconsax/status-up.svg" alt="Peak event month" />
                 <div class="insight-content">
                   <span class="insight-title">Peak Event Month</span>
                   <span class="insight-value"><?php echo $peak_month; ?></span>
@@ -1237,7 +1206,7 @@
                 </div>
               </div>
               <div class="insight-item">
-                <span class="insight-icon">📅</span>
+                <img class="insight-icon iconsax-icon insight-icon-calendar" src="../assets/images/iconsax/calendar.svg" alt="Total event types" />
                 <div class="insight-content">
                   <span class="insight-title">Total Event Types</span>
                   <span class="insight-value"><?php echo count($category_analytics); ?></span>
@@ -1245,7 +1214,7 @@
                 </div>
               </div>
               <div class="insight-item">
-                <span class="insight-icon">💪</span>
+                <img class="insight-icon iconsax-icon insight-icon-success" src="../assets/images/iconsax/chart-21.svg" alt="Success rate" />
                 <div class="insight-content">
                   <span class="insight-title">Success Rate</span>
                   <span class="insight-value"><?php echo $total_year_participations > 0 ? round(($total_year_wins / $total_year_participations) * 100, 1) : 0; ?>%</span>
@@ -1253,7 +1222,7 @@
                 </div>
               </div>
               <div class="insight-item">
-                <span class="insight-icon">🔥</span>
+                <img class="insight-icon iconsax-icon insight-icon-popular" src="../assets/images/iconsax/people.svg" alt="Most popular category" />
                 <div class="insight-content">
                   <span class="insight-title">Most Popular Category</span>
                   <span class="insight-value"><?php echo ! empty($category_analytics) ? array_keys($category_analytics)[0] : 'N/A'; ?></span>
@@ -1261,7 +1230,7 @@
                 </div>
               </div>
               <div class="insight-item">
-                <span class="insight-icon">⭐</span>
+                <img class="insight-icon iconsax-icon insight-icon-growth" src="../assets/images/iconsax/trend-up.svg" alt="Yearly growth" />
                 <div class="insight-content">
                   <span class="insight-title">Yearly Growth</span>
                   <span class="insight-value"><?php
@@ -1278,7 +1247,7 @@
                 </div>
               </div>
               <div class="insight-item">
-                <span class="insight-icon">🎓</span>
+                <img class="insight-icon iconsax-icon insight-icon-events" src="../assets/images/iconsax/teacher.svg" alt="Average events per month" />
                 <div class="insight-content">
                   <span class="insight-title">Avg Events/Month</span>
                   <span class="insight-value"><?php echo $avg_events_per_month; ?></span>
@@ -1292,7 +1261,7 @@
 
       <!-- Scroll to Top Button -->
       <button class="scroll-to-top" id="scrollToTop" onclick="scrollToTop()">
-        <span class="material-symbols-outlined">keyboard_arrow_up</span>
+        <img class="iconsax-icon" src="../assets/images/iconsax/arrow-up.svg" alt="Scroll to top" />
       </button>
 
       <!-- Scripts -->
@@ -1447,7 +1416,7 @@
       </script>
 
       <!-- CUSTOM JS -->
-      <script src="./JS/scripts.js"></script>
+      <script src="./JS/scripts.js?v=<?php echo $admin_js_version; ?>"></script>
 
     <script>
     // Prevent back button navigation
@@ -1651,12 +1620,18 @@
       document.getElementById('month-success').textContent = mSuccess + '%';
 
       // Show the modal
-      document.getElementById('month-details-panel').style.display = 'flex';
+      const monthModal = document.getElementById('month-details-panel');
+      if (monthModal) {
+        monthModal.classList.add('open');
+      }
     }
 
     // Hide month details modal
     function hideMonthDetails() {
-      document.getElementById('month-details-panel').style.display = 'none';
+      const monthModal = document.getElementById('month-details-panel');
+      if (monthModal) {
+        monthModal.classList.remove('open');
+      }
     }
 
     // Close modal when clicking outside
@@ -1669,6 +1644,9 @@
 
     // Update URL with current year parameter on page load
     document.addEventListener('DOMContentLoaded', function() {
+      // Always keep month details modal closed on initial load.
+      hideMonthDetails();
+
       const yearSelector = document.getElementById('yearSelector');
       const currentYear = yearSelector.value;
 

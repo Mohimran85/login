@@ -138,7 +138,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <!-- CSS -->
-    <link rel="stylesheet" href="./CSS/styles.css">
+    <link rel="stylesheet" href="./CSS/styles.css?v=<?php echo @filemtime(__DIR__ . '/CSS/styles.css') ?: time(); ?>">
     <!-- Google Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <!-- Google Fonts -->
@@ -175,9 +175,53 @@
             font-weight: 600;
         }
 
-        .page-header-title .material-symbols-outlined {
+        .page-header-title .iconsax-icon {
             font-size: 36px;
-            color: #0c3878;
+            filter: brightness(0) saturate(100%) invert(20%) sepia(57%) saturate(1125%) hue-rotate(188deg) brightness(97%) contrast(95%);
+        }
+
+        /* Iconsax color mapping for this page (img SVGs don't reliably follow color property). */
+        .btn .iconsax-icon {
+            filter: brightness(0) invert(1);
+        }
+
+        .stat-card-icon {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+        }
+
+        .stat-card-icon[src*="award.svg"] {
+            filter: brightness(0) saturate(100%) invert(83%) sepia(59%) saturate(1401%) hue-rotate(355deg) brightness(102%) contrast(101%);
+        }
+
+        .stat-card-icon[src*="refresh-2.svg"] {
+            filter: brightness(0) saturate(100%) invert(74%) sepia(37%) saturate(4789%) hue-rotate(177deg) brightness(102%) contrast(101%);
+        }
+
+        .stat-card-icon[src*="status-up.svg"] {
+            filter: brightness(0) saturate(100%) invert(72%) sepia(42%) saturate(2256%) hue-rotate(183deg) brightness(102%) contrast(104%);
+        }
+
+        .stat-card-icon[src*="people.svg"] {
+            filter: brightness(0) saturate(100%) invert(80%) sepia(63%) saturate(2036%) hue-rotate(346deg) brightness(103%) contrast(98%);
+        }
+
+        .view-count .iconsax-icon,
+        .icon-btn .iconsax-icon,
+        .table-container .iconsax-icon,
+        .pagination .iconsax-icon {
+            filter: brightness(0) saturate(100%) invert(20%) sepia(57%) saturate(1125%) hue-rotate(188deg) brightness(97%) contrast(95%);
+        }
+
+        .icon-btn.delete .iconsax-icon,
+        .alert-error .iconsax-icon,
+        .no-data .iconsax-icon[src*="close-circle.svg"] {
+            filter: brightness(0) saturate(100%) invert(30%) sepia(75%) saturate(1827%) hue-rotate(336deg) brightness(91%) contrast(95%);
+        }
+
+        .alert-success .iconsax-icon {
+            filter: brightness(0) saturate(100%) invert(33%) sepia(54%) saturate(593%) hue-rotate(84deg) brightness(92%) contrast(92%);
         }
 
         .header-actions {
@@ -598,7 +642,7 @@
             color: #999;
         }
 
-        .loading-spinner .material-symbols-outlined {
+        .loading-spinner .iconsax-icon {
             font-size: 48px;
             animation: spin 1s linear infinite;
         }
@@ -635,7 +679,7 @@
         <!-- Header -->
         <div class="header">
             <div class="menu-icon" onclick="openSidebar()">
-                <span class="material-symbols-outlined">menu</span>
+                <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
             </div>
             <div class="header-logo">
                 <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
@@ -645,7 +689,7 @@
             </div>
             <div class="header-profile">
                 <div class="profile-info" onclick="window.location.href='profile.php'">
-                    <span class="material-symbols-outlined">account_circle</span>
+                    <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                     <div class="profile-details">
                         <span class="profile-name"><?php echo htmlspecialchars($user_name); ?></span>
                         <span class="profile-role"><?php
@@ -681,61 +725,61 @@
                                                                 }
 
                                                             ?></h2>
-                    <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
+                    <img src="../assets/images/iconsax/close-circle.svg" alt="Close" class="iconsax-icon" onclick="closeSidebar()" />
                 </div>
                 <ul class="sidebar-list">
                     <li class="sidebar-list-item" onclick="window.location.href='index.php'">
-                        <span class="material-symbols-outlined">dashboard</span>
+                        <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                         <a href="index.php">Home</a>
                     </li>
                     <?php if ($is_counselor_user && ! $is_admin_user): ?>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/assigned_students.php'">
-                        <span class="material-symbols-outlined">supervisor_account</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="supervisor account" class="iconsax-icon" />
                         <a href="../teacher/assigned_students.php">My Assigned Students</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/od_approvals.php'">
-                        <span class="material-symbols-outlined">approval</span>
+                        <img src="../assets/images/iconsax/status-up.svg" alt="approval" class="iconsax-icon" />
                         <a href="../teacher/od_approvals.php">OD Approvals</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/internship_approvals.php'">
-                        <span class="material-symbols-outlined">school</span>
+                        <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                         <a href="../teacher/internship_approvals.php">Internship Validations</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/verify_events.php'">
-                        <span class="material-symbols-outlined">card_giftcard</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="card giftcard" class="iconsax-icon" />
                         <a href="../teacher/verify_events.php">Event Certificate Validation</a>
                     </li>
                     <?php endif; ?>
                     <?php if ($is_admin_user): ?>
                     <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
-                        <span class="material-symbols-outlined">people</span>
+                        <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                         <a href="participants.php">Participants</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
-                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                         <a href="user_management.php">User Management</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
-                        <span class="material-symbols-outlined">school</span>
+                        <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <?php endif; ?>
                     <li class="sidebar-list-item active" onclick="window.location.href='hackathons.php'">
-                        <span class="material-symbols-outlined">emoji_events</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                         <a href="hackathons.php">Hackathons</a>
                     </li>
                     <?php if ($is_admin_user): ?>
                     <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
-                        <span class="material-symbols-outlined">bar_chart</span>
+                        <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
                         <a href="reports.php">Reports</a>
                     </li>
                     <?php endif; ?>
                     <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
-                        <span class="material-symbols-outlined">account_circle</span>
+                        <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                         <a href="profile.php">Profile</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
-                        <span class="material-symbols-outlined">logout</span>
+                        <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
                         <a href="logout.php">Logout</a>
                     </li>
                 </ul>
@@ -748,7 +792,7 @@
             <div class="page-header-section">
                 <div class="header-content">
                     <div class="page-header-title">
-                        <span class="material-symbols-outlined">emoji_events</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                         <div>
                             <h1>Hackathon Management</h1>
                             <p style="color: #666; font-size: 14px; margin-top: 5px;">Manage hackathon posts and applications</p>
@@ -756,11 +800,11 @@
                     </div>
                     <div class="header-actions">
                         <a href="create_hackathon.php" class="btn btn-primary">
-                            <span class="material-symbols-outlined">add</span>
+                            <img src="../assets/images/iconsax/element-4.svg" alt="add" class="iconsax-icon" />
                             Create Hackathon
                         </a>
                         <a href="hackathon_applications.php" class="btn btn-secondary">
-                            <span class="material-symbols-outlined">list_alt</span>
+                            <img src="../assets/images/iconsax/chart-21.svg" alt="list alt" class="iconsax-icon" />
                             View Applications
                         </a>
                     </div>
@@ -770,14 +814,14 @@
             <!-- Success/Error Messages -->
             <?php if (isset($success_message)): ?>
                 <div class="alert alert-success">
-                    <span class="material-symbols-outlined">check_circle</span>
+                    <img src="../assets/images/iconsax/status-up.svg" alt="check circle" class="iconsax-icon" />
                     <?php echo htmlspecialchars($success_message); ?>
                 </div>
             <?php endif; ?>
 
             <?php if (isset($error_message)): ?>
                 <div class="alert alert-error">
-                    <span class="material-symbols-outlined">error</span>
+                    <img src="../assets/images/iconsax/close-circle.svg" alt="error" class="iconsax-icon" />
                     <?php echo htmlspecialchars($error_message); ?>
                 </div>
             <?php endif; ?>
@@ -787,7 +831,7 @@
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span class="stat-card-title">Total Hackathons</span>
-                        <span class="material-symbols-outlined stat-card-icon" style="color: #0c3878;">emoji_events</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="total hackathons" class="iconsax-icon stat-card-icon" style="color: #0c3878;" />
                     </div>
                     <div class="stat-card-value"><?php echo $statistics['total_hackathons']; ?></div>
                 </div>
@@ -795,7 +839,7 @@
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span class="stat-card-title">Upcoming</span>
-                        <span class="material-symbols-outlined stat-card-icon" style="color: #1976d2;">schedule</span>
+                        <img src="../assets/images/iconsax/refresh-2.svg" alt="upcoming" class="iconsax-icon stat-card-icon" style="color: #1976d2;" />
                     </div>
                     <div class="stat-card-value"><?php echo $statistics['upcoming']; ?></div>
                 </div>
@@ -803,7 +847,7 @@
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span class="stat-card-title">Total Views</span>
-                        <span class="material-symbols-outlined stat-card-icon" style="color: #34a853;">visibility</span>
+                        <img src="../assets/images/iconsax/status-up.svg" alt="total views" class="iconsax-icon stat-card-icon" style="color: #34a853;" />
                     </div>
                     <div class="stat-card-value"><?php echo number_format($statistics['total_views']); ?></div>
                 </div>
@@ -811,7 +855,7 @@
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span class="stat-card-title">Applications</span>
-                        <span class="material-symbols-outlined stat-card-icon" style="color: #fbbc04;">groups</span>
+                        <img src="../assets/images/iconsax/people.svg" alt="applications" class="iconsax-icon stat-card-icon" style="color: #fbbc04;" />
                     </div>
                     <div class="stat-card-value"><?php echo $statistics['total_applications']; ?></div>
                 </div>
@@ -819,7 +863,7 @@
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span class="stat-card-title">Ongoing</span>
-                        <span class="material-symbols-outlined stat-card-icon" style="color: #388e3c;">hourglass_top</span>
+                        <img src="../assets/images/iconsax/refresh-2.svg" alt="ongoing" class="iconsax-icon stat-card-icon" style="color: #388e3c;" />
                     </div>
                     <div class="stat-card-value"><?php echo $statistics['ongoing']; ?></div>
                 </div>
@@ -827,7 +871,7 @@
                 <div class="stat-card">
                     <div class="stat-card-header">
                         <span class="stat-card-title">Completed</span>
-                        <span class="material-symbols-outlined stat-card-icon" style="color: #7b1fa2;">check_circle</span>
+                        <img src="../assets/images/iconsax/status-up.svg" alt="completed" class="iconsax-icon stat-card-icon" style="color: #7b1fa2;" />
                     </div>
                     <div class="stat-card-value"><?php echo $statistics['completed']; ?></div>
                 </div>
@@ -867,7 +911,7 @@
 
                         <div class="form-group" style="align-self: flex-end;">
                             <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                <span class="material-symbols-outlined">filter_alt</span>
+                                <img src="../assets/images/iconsax/status-up.svg" alt="filter alt" class="iconsax-icon" />
                                 Apply Filters
                             </button>
                         </div>
@@ -897,7 +941,7 @@
                         <?php if (empty($hackathons)): ?>
                             <tr>
                                 <td colspan="11" style="text-align: center; padding: 40px; color: #999;">
-                                    <span class="material-symbols-outlined" style="font-size: 48px; display: block; margin-bottom: 10px;">inbox</span>
+                                    <img src="../assets/images/iconsax/element-4.svg" alt="inbox" class="iconsax-icon" style="font-size: 48px; display: block; margin-bottom: 10px;" />
                                     No hackathons found. Create your first hackathon!
                                 </td>
                             </tr>
@@ -910,7 +954,7 @@
                                             <?php $poster_path = ltrim($hackathon['poster_url'], '/'); ?>
                                             <img src="../<?php echo htmlspecialchars($poster_path); ?>" alt="Poster" class="hackathon-poster">
                                         <?php else: ?>
-                                            <span class="material-symbols-outlined" style="font-size: 50px; color: #ddd;">image</span>
+                                            <img src="../assets/images/iconsax/element-4.svg" alt="image" class="iconsax-icon" style="font-size: 50px; color: #ddd;" />
                                         <?php endif; ?>
                                     </td>
                                     <td>
@@ -930,7 +974,7 @@
                                     </td>
                                     <td>
                                         <div class="view-count" onclick="showViewDetails(<?php echo (int) $hackathon['id']; ?>, <?php echo htmlspecialchars(json_encode($hackathon['title']), ENT_QUOTES, 'UTF-8'); ?>)" style="cursor: pointer;" title="Click to see view details">
-                                            <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+                                            <img src="../assets/images/iconsax/status-up.svg" alt="visibility" class="iconsax-icon" style="font-size: 18px;" />
                                             <?php echo number_format($hackathon['view_count']); ?>
                                         </div>
                                     </td>
@@ -944,17 +988,17 @@
                                         <div class="actions-cell">
                                             <?php if (! empty($hackathon['hackathon_link'])): ?>
                                                 <a href="<?php echo htmlspecialchars($hackathon['hackathon_link']); ?>" class="icon-btn" title="External Link" target="_blank">
-                                                    <span class="material-symbols-outlined">link</span>
+                                                    <img src="../assets/images/iconsax/arrow-swap-horizontal.svg" alt="link" class="iconsax-icon" />
                                                 </a>
                                             <?php endif; ?>
                                             <a href="edit_hackathon.php?id=<?php echo $hackathon['id']; ?>" class="icon-btn" title="Edit">
-                                                <span class="material-symbols-outlined">edit</span>
+                                                <img src="../assets/images/iconsax/element-4.svg" alt="edit" class="iconsax-icon" />
                                             </a>
                                             <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this hackathon?')">
                                                 <input type="hidden" name="delete_id" value="<?php echo $hackathon['id']; ?>">
                                                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                                                 <button type="submit" class="icon-btn delete" title="Delete">
-                                                    <span class="material-symbols-outlined">delete</span>
+                                                    <img src="../assets/images/iconsax/close-circle.svg" alt="delete" class="iconsax-icon" />
                                                 </button>
                                             </form>
                                         </div>
@@ -996,14 +1040,14 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>
-                    <span class="material-symbols-outlined">visibility</span>
+                    <img src="../assets/images/iconsax/status-up.svg" alt="visibility" class="iconsax-icon" />
                     <span id="modalTitle">View Details</span>
                 </h2>
                 <button class="modal-close" onclick="closeViewModal()">&times;</button>
             </div>
             <div class="modal-body" id="viewModalBody">
                 <div class="loading-spinner">
-                    <span class="material-symbols-outlined">progress_activity</span>
+                    <img src="../assets/images/iconsax/refresh-2.svg" alt="progress activity" class="iconsax-icon" />
                     <p>Loading view details...</p>
                 </div>
             </div>
@@ -1044,7 +1088,7 @@
             // Show loading spinner
             modalBody.innerHTML = `
                 <div class="loading-spinner">
-                    <span class="material-symbols-outlined">progress_activity</span>
+                    <img src="../assets/images/iconsax/refresh-2.svg" alt="progress activity" class="iconsax-icon" />
                     <p>Loading view details...</p>
                 </div>
             `;
@@ -1058,10 +1102,11 @@
                     } else {
                         const errorDiv = document.createElement('div');
                         errorDiv.className = 'no-data';
-                        const icon = document.createElement('span');
-                        icon.className = 'material-symbols-outlined';
+                        const icon = document.createElement('img');
+                        icon.className = 'iconsax-icon';
                         icon.style.cssText = 'font-size: 48px; color: #ea4335;';
-                        icon.textContent = 'error';
+                        icon.src = '../assets/images/iconsax/close-circle.svg';
+                        icon.alt = 'error';
                         const msg = document.createElement('p');
                         msg.textContent = data.error || 'Failed to load view details';
                         errorDiv.appendChild(icon);
@@ -1074,7 +1119,7 @@
                     console.error('Error:', error);
                     modalBody.innerHTML = `
                         <div class="no-data">
-                            <span class="material-symbols-outlined" style="font-size: 48px; color: #ea4335;">error</span>
+                            <img src="../assets/images/iconsax/close-circle.svg" alt="error" class="iconsax-icon" style="font-size: 48px; color: #ea4335;" />
                             <p>Error loading view details. Please try again.</p>
                         </div>
                     `;
@@ -1087,7 +1132,7 @@
             if (!data.views || data.views.length === 0) {
                 modalBody.innerHTML = `
                     <div class="no-data">
-                        <span class="material-symbols-outlined" style="font-size: 48px;">visibility_off</span>
+                        <img src="../assets/images/iconsax/close-circle.svg" alt="visibility off" class="iconsax-icon" style="font-size: 48px;" />
                         <p>No views recorded yet for this hackathon.</p>
                     </div>
                 `;

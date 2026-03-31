@@ -258,7 +258,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Class Counselors - Admin Dashboard</title>
-    <link rel="stylesheet" href="./CSS/report.css">
+    <link rel="stylesheet" href="./CSS/report.css?v=<?php echo @filemtime(__DIR__ . '/CSS/report.css') ?: time(); ?>">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -811,7 +811,7 @@
             color: #999;
         }
 
-        .empty-state .material-symbols-outlined {
+        .empty-state .iconsax-icon {
             font-size: 64px;
             margin-bottom: 15px;
             opacity: 0.3;
@@ -949,7 +949,7 @@
             color: #999;
         }
 
-        .no-students-message .material-symbols-outlined {
+        .no-students-message .iconsax-icon {
             font-size: 64px;
             margin-bottom: 15px;
             opacity: 0.3;
@@ -986,7 +986,7 @@
         <!-- Header -->
         <div class="header">
             <div class="menu-icon">
-                <span class="material-symbols-outlined">menu</span>
+                <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
             </div>
             <div class="icon" style="padding-left: 10px;">
                 <img class="logo" src="sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
@@ -996,7 +996,7 @@
             </div>
             <div class="header-profile">
                 <div class="profile-info" onclick="navigateToProfile()">
-                    <span class="material-symbols-outlined">account_circle</span>
+                    <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                     <div class="profile-details">
                         <span class="profile-name"><?php echo htmlspecialchars($user_data['name'] ?? 'User'); ?></span>
                         <span class="profile-role"><?php echo ucfirst($user_type); ?></span>
@@ -1010,51 +1010,50 @@
             <div class="sidebar-title">
                 <div class="sidebar-band">
                     <h2 style="color: white; padding: 10px">Admin Panel</h2>
-                    <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                 </div>
                 <ul class="sidebar-list">
                     <li class="sidebar-list-item" onclick="window.location.href='index.php'">
-                        <span class="material-symbols-outlined">dashboard</span>
+                        <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                         <a href="index.php">Home</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
-                        <span class="material-symbols-outlined">people</span>
+                        <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                         <a href="participants.php">Participants</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='user_management.php'">
-                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                         <a href="user_management.php">User Management</a>
                     </li>
                     <li class="sidebar-list-item active" onclick="window.location.href='manage_counselors.php'">
-                        <span class="material-symbols-outlined">school</span>
+                        <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
-                        <span class="material-symbols-outlined">emoji_events</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                         <a href="hackathons.php">Hackathons</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
-                        <span class="material-symbols-outlined">bar_chart</span>
+                        <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
                         <a href="reports.php">Reports</a>
                     </li>
                     <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
-                        <span class="material-symbols-outlined">account_circle</span>
+                        <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                         <a href="profile.php">Profile</a>
                     </li>
                     <?php if ($user_type === 'teacher' && $teacher_status === 'teacher'): ?>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/index.php'">
-                        <span class="material-symbols-outlined">dashboard</span>
+                        <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                         <a href="../teacher/index.php">Teacher Dashboard</a>
                     </li>
                     <?php endif; ?>
                     <?php if ($user_type === 'teacher' && $teacher_status === 'counselor'): ?>
                     <li class="sidebar-list-item" onclick="window.location.href='../teacher/assigned_students.php'">
-                        <span class="material-symbols-outlined">supervisor_account</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="supervisor account" class="iconsax-icon" />
                         <a href="../teacher/assigned_students.php">Counselor Dashboard</a>
                     </li>
                     <?php endif; ?>
                     <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
-                        <span class="material-symbols-outlined">logout</span>
+                        <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
                         <a href="logout.php">Logout</a>
                     </li>
                 </ul>
@@ -1139,7 +1138,7 @@
                 <div class="form-group">
                     <label class="form-label" style="visibility: hidden;">Action</label>
                     <button type="button" onclick="showStudentSelection()" class="assignment-btn">
-                        <span class="material-symbols-outlined">group_add</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="group add" class="iconsax-icon" />
                         Select Students
                     </button>
                 </div>
@@ -1150,7 +1149,7 @@
         </div>
 
                 <h2 style="color: #0c3878; margin-bottom: 20px; font-size: 24px; display: flex; align-items: center; gap: 10px;">
-                    <span class="material-symbols-outlined">people</span>
+                    <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                     Teachers & Counselors
                 </h2>
 
@@ -1213,7 +1212,7 @@
                             </select>
                             <button type="submit" name="change_role" class="btn btn-primary">
                                 <span class="icon-text">
-                                    <span class="material-symbols-outlined">update</span>
+                                    <img src="../assets/images/iconsax/refresh-2.svg" alt="update" class="iconsax-icon" />
                                     Update Role
                                 </span>
                             </button>
@@ -1227,7 +1226,7 @@
                             </label>
                             <button type="submit" name="toggle_coordinator" class="btn btn-primary" style="padding: 6px 14px; font-size: 13px;">
                                 <span class="icon-text">
-                                    <span class="material-symbols-outlined" style="font-size: 16px;">save</span>
+                                    <img src="../assets/images/iconsax/status-up.svg" alt="save" class="iconsax-icon" style="font-size: 16px;" />
                                     Save
                                 </span>
                             </button>
@@ -1237,7 +1236,7 @@
                         <?php if ($teacher['status'] == 'counselor' && $teacher['student_count'] > 0): ?>
                             <button type="button" class="btn btn-view-students" onclick="viewStudents(<?php echo $teacher['id']; ?>, '<?php echo htmlspecialchars($teacher['name'], ENT_QUOTES); ?>')">
                                 <span class="icon-text">
-                                    <span class="material-symbols-outlined">visibility</span>
+                                    <img src="../assets/images/iconsax/status-up.svg" alt="visibility" class="iconsax-icon" />
                                     View Assigned Students (<?php echo $teacher['student_count']; ?>)
                                 </span>
                             </button>
@@ -1245,7 +1244,7 @@
                                 <input type="hidden" name="counselor_id" value="<?php echo $teacher['id']; ?>">
                                 <button type="submit" name="remove_all_students" class="btn btn-danger">
                                     <span class="icon-text">
-                                        <span class="material-symbols-outlined">person_remove</span>
+                                        <img src="../assets/images/iconsax/close-circle.svg" alt="person remove" class="iconsax-icon" />
                                         Remove All Students
                                     </span>
                                 </button>
@@ -1258,7 +1257,7 @@
 
                 <div style="text-align: center; margin-top: 30px;">
                     <a href="index.php" class="back-link">
-                        <span class="material-symbols-outlined">arrow_back</span>
+                        <img src="../assets/images/iconsax/arrow-swap-horizontal.svg" alt="arrow back" class="iconsax-icon" />
                         Back to Admin Dashboard
                     </a>
                 </div>
@@ -1276,7 +1275,7 @@
             </div>
             <div class="modal-body" id="modalBody">
                 <div class="empty-state">
-                    <span class="material-symbols-outlined">hourglass_empty</span>
+                    <img src="../assets/images/iconsax/refresh-2.svg" alt="hourglass empty" class="iconsax-icon" />
                     <p>Loading...</p>
                 </div>
             </div>
@@ -1296,14 +1295,14 @@
             </div>
             <div class="modal-body" id="selectionModalBody">
                 <div class="empty-state">
-                    <span class="material-symbols-outlined">hourglass_empty</span>
+                    <img src="../assets/images/iconsax/refresh-2.svg" alt="hourglass empty" class="iconsax-icon" />
                     <p>Loading students...</p>
                 </div>
             </div>
             <div class="modal-footer">
                 <span class="student-count-badge" id="selectionStudentCount">0 students</span>
                 <button class="btn-assign-selected" id="assignSelectedBtn" onclick="assignSelectedStudents()" disabled>
-                    <span class="material-symbols-outlined">check_circle</span>
+                    <img src="../assets/images/iconsax/status-up.svg" alt="check circle" class="iconsax-icon" />
                     Assign Selected
                 </button>
             </div>
@@ -1393,7 +1392,7 @@
                 if (coordinators.length > 0) {
                      html = '<ul style="list-style:none; padding:0;">';
                     coordinators.forEach(t => {
-                        html += `<li style="padding:12px; border-bottom:1px solid #f1f1f1; display:flex; align-items:center; gap:10px;"><span class="material-symbols-outlined" style="color:#ffc107;">stars</span> ${escapeHtml(t.name)} <span style="color:#666; font-size:12px;">(${escapeHtml(t.department || 'N/A')})</span></li>`;
+                        html += `<li style="padding:12px; border-bottom:1px solid #f1f1f1; display:flex; align-items:center; gap:10px;"><img src="../assets/images/iconsax/award.svg" alt="stars" class="iconsax-icon" style="color:#ffc107;" /> ${escapeHtml(t.name)} <span style="color:#666; font-size:12px;">(${escapeHtml(t.department || 'N/A')})</span></li>`;
                     });
                     html += '</ul>';
                 } else {
@@ -1438,7 +1437,7 @@
             modal.style.display = 'block';
 
             // Show loading state
-            modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading...</p></div>';
+            modalBody.innerHTML = '<div class="empty-state"><img src="../assets/images/iconsax/refresh-2.svg" alt="hourglass empty" class="iconsax-icon" /><p>Loading...</p></div>';
 
             // Fetch students via AJAX
             fetch('get_counselor_students.php?counselor_id=' + counselorId)
@@ -1446,7 +1445,7 @@
                 .then(data => {
                     if (data.success) {
                         if (data.students.length === 0) {
-                            modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">person_off</span><p>No students assigned</p></div>';
+                            modalBody.innerHTML = '<div class="empty-state"><img src="../assets/images/iconsax/close-circle.svg" alt="person off" class="iconsax-icon" /><p>No students assigned</p></div>';
                             studentCount.textContent = '0 students';
                         } else {
                             let html = '<ul class="student-list">';
@@ -1466,7 +1465,7 @@
                                         <form method="POST" style="margin: 0;" onsubmit="return confirm('Remove this student assignment?');">
                                             <input type="hidden" name="assignment_id" value="${student.assignment_id}">
                                             <button type="submit" name="remove_student" class="btn-remove">
-                                                <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+                                                <img src="../assets/images/iconsax/close-circle.svg" alt="delete" class="iconsax-icon" style="font-size: 16px;" />
                                                 Remove
                                             </button>
                                         </form>
@@ -1478,12 +1477,12 @@
                             studentCount.textContent = data.students.length + ' student' + (data.students.length !== 1 ? 's' : '');
                         }
                     } else {
-                        modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">error</span><p>Error loading students</p></div>';
+                        modalBody.innerHTML = '<div class="empty-state"><img src="../assets/images/iconsax/close-circle.svg" alt="error" class="iconsax-icon" /><p>Error loading students</p></div>';
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">error</span><p>Error loading students</p></div>';
+                    modalBody.innerHTML = '<div class="empty-state"><img src="../assets/images/iconsax/close-circle.svg" alt="error" class="iconsax-icon" /><p>Error loading students</p></div>';
                 });
         }
 
@@ -1523,7 +1522,7 @@
             modal.style.display = 'block';
 
             // Show loading state
-            modalBody.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">hourglass_empty</span><p>Loading students...</p></div>';
+            modalBody.innerHTML = '<div class="empty-state"><img src="../assets/images/iconsax/refresh-2.svg" alt="hourglass empty" class="iconsax-icon" /><p>Loading students...</p></div>';
 
             // Fetch students via AJAX
             fetch(`ajax/get_students_by_range.php?from_regno=${encodeURIComponent(fromRegno)}&to_regno=${encodeURIComponent(toRegno)}`)
@@ -1531,19 +1530,19 @@
                 .then(data => {
                     if (data.success) {
                         if (data.students.length === 0) {
-                            modalBody.innerHTML = '<div class="no-students-message"><span class="material-symbols-outlined">person_off</span><p>No students found in this registration number range</p></div>';
+                            modalBody.innerHTML = '<div class="no-students-message"><img src="../assets/images/iconsax/close-circle.svg" alt="person off" class="iconsax-icon" /><p>No students found in this registration number range</p></div>';
                             document.getElementById('selectionStudentCount').textContent = '0 students';
                             document.getElementById('assignSelectedBtn').disabled = true;
                         } else {
                             populateStudentCheckboxes(data.students, counselorId);
                         }
                     } else {
-                        modalBody.innerHTML = `<div class="no-students-message"><span class="material-symbols-outlined">error</span><p>Error: ${data.error || 'Failed to load students'}</p></div>`;
+                        modalBody.innerHTML = `<div class="no-students-message"><img src="../assets/images/iconsax/close-circle.svg" alt="error" class="iconsax-icon" /><p>Error: ${data.error || 'Failed to load students'}</p></div>`;
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    modalBody.innerHTML = '<div class="no-students-message"><span class="material-symbols-outlined">error</span><p>Error loading students</p></div>';
+                    modalBody.innerHTML = '<div class="no-students-message"><img src="../assets/images/iconsax/close-circle.svg" alt="error" class="iconsax-icon" /><p>Error loading students</p></div>';
                 });
         }
 

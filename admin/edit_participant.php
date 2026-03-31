@@ -170,7 +170,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Participant</title>
-    <link rel="stylesheet" href="./CSS/report.css">
+    <link rel="stylesheet" href="./CSS/report.css?v=<?php echo @filemtime(__DIR__ . '/CSS/report.css') ?: time(); ?>">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -398,7 +398,7 @@
     <div class="grid-container">
         <div class="header">
             <div class="menu-icon" onclick="openSidebar()">
-                <span class="material-symbols-outlined">menu</span>
+                <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
             </div>
             <div class="header-logo">
                 <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
@@ -408,7 +408,7 @@
             </div>
             <div class="header-profile">
                 <div class="profile-info" onclick="navigateToProfile()">
-                    <span class="material-symbols-outlined">account_circle</span>
+                    <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                     <div class="profile-details">
                         <span class="profile-name"><?php echo htmlspecialchars($user_data['name'] ?? 'User'); ?></span>
                         <span class="profile-role"><?php echo ucfirst($user_type); ?></span>
@@ -421,39 +421,38 @@
             <div class="sidebar-title">
                 <div class="sidebar-band">
                     <h2 style="color: white; padding: 10px">Admin Panel</h2>
-                    <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                 </div>
                 <ul class="sidebar-list">
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">dashboard</span>
+                        <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                         <a href="index.php">Home</a>
                     </li>
                     <li class="sidebar-list-item active">
-                        <span class="material-symbols-outlined">people</span>
+                        <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                         <a href="participants.php">Participants</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                         <a href="user_management.php">User Management</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">school</span>
+                        <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">emoji_events</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                         <a href="hackathons.php">Hackathons</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">bar_chart</span>
+                        <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
                         <a href="reports.php">Reports</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">account_circle</span>
+                        <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                         <a href="profile.php">Profile</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">logout</span>
+                        <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
                         <a href="logout.php">Logout</a>
                     </li>
                 </ul>
@@ -627,11 +626,11 @@
 
                         <div class="form-actions">
                             <a href="participants.php" class="btn btn-secondary">
-                                <span class="material-symbols-outlined">arrow_back</span>
+                                <img src="../assets/images/iconsax/arrow-swap-horizontal.svg" alt="arrow back" class="iconsax-icon" />
                                 Back to Participants
                             </a>
                             <button type="submit" name="update_participant" class="btn btn-primary">
-                                <span class="material-symbols-outlined">save</span>
+                                <img src="../assets/images/iconsax/status-up.svg" alt="save" class="iconsax-icon" />
                                 Update Participant
                             </button>
                         </div>

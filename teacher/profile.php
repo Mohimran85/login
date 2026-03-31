@@ -161,20 +161,20 @@
     }
 
     // Get statistics for the profile
-    $teacher_id = $teacher_data['faculty_id'] ?? $teacher_data['regno'] ?? '';
+    // Count students actively assigned to this class counselor (CC)
+    $total_students = 0;
+    $students_stmt  = null;
 
-    // Total events registered
-    $total_events_sql = "SELECT COUNT(*) as total FROM staff_event_reg WHERE staff_id=? OR name=?";
-    $total_stmt       = $conn->prepare($total_events_sql);
-    $total_stmt->bind_param("ss", $teacher_id, $teacher_data['name']);
-    $total_stmt->execute();
-    $total_events = $total_stmt->get_result()->fetch_assoc()['total'];
-
-    // Total students managed (from student registrations)
-    $total_students_sql = "SELECT COUNT(DISTINCT regno) as total FROM student_event_register";
-    $students_stmt      = $conn->prepare($total_students_sql);
+    if (isset($teacher_data['id']) && ! empty($teacher_data['id'])) {
+    $total_students_sql = "SELECT COUNT(DISTINCT student_regno) as total
+                           FROM counselor_assignments
+                           WHERE counselor_id = ? AND status = 'active'";
+    $students_stmt = $conn->prepare($total_students_sql);
+    $counselor_id  = (int) $teacher_data['id'];
+    $students_stmt->bind_param("i", $counselor_id);
     $students_stmt->execute();
-    $total_students = $students_stmt->get_result()->fetch_assoc()['total'];
+    $total_students = (int) $students_stmt->get_result()->fetch_assoc()['total'];
+    }
 
     // Get user status for sidebar navigation
     $user_status_sql  = "SELECT status FROM teacher_register WHERE username = ?";
@@ -191,8 +191,9 @@
     $is_admin     = ($user_status === 'admin');
 
     $stmt->close();
-    $total_stmt->close();
+    if ($students_stmt) {
     $students_stmt->close();
+    }
     $user_status_stmt->close();
     $conn->close();
 ?>
@@ -213,6 +214,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        .main {
+            background-color: hsl(65, 85%, 98%);
+        }
+
         .profile-container {
             display: grid;
             grid-template-columns: 1fr 2fr;
@@ -284,6 +289,12 @@
             grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-top: 20px;
+        }
+
+        .profile-stats .stat-item:only-child {
+            grid-column: 1 / -1;
+            max-width: 220px;
+            margin: 0 auto;
         }
 
         .stat-item {
@@ -674,12 +685,8 @@
 
                         <div class="profile-stats">
                             <div class="stat-item">
-                                <div class="stat-number"><?php echo $total_events; ?></div>
-                                <div class="stat-label">Events</div>
-                            </div>
-                            <div class="stat-item">
                                 <div class="stat-number"><?php echo $total_students; ?></div>
-                                <div class="stat-label">Students</div>
+                                <div class="stat-label">Assigned Students</div>
                             </div>
                         </div>
                     </div>
@@ -774,10 +781,6 @@
                         </div>
 
                         <div class="form-buttons" id="editButtons" style="display: none;">
-                            <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
-                                <span class="material-symbols-outlined">close</span>
-                                Cancel
-                            </button>
                             <button type="submit" name="update_profile" class="btn btn-primary">
                                 <span class="material-symbols-outlined">save</span>
                                 Save Changes
@@ -887,8 +890,12 @@
         // Profile edit functionality
         let isEditMode = false;
 
-        function toggleEditMode() {
-            isEditMode = !isEditMode;
+        function toggleEditMode(forceMode = null) {
+            if (typeof forceMode === 'boolean') {
+                isEditMode = forceMode;
+            } else {
+                isEditMode = !isEditMode;
+            }
             const editButton = document.getElementById('editToggleBtn');
             const profileDisplays = document.querySelectorAll('.profile-display');
             const profileEdits = document.querySelectorAll('.profile-edit');
@@ -929,8 +936,7 @@
             form.reset();
 
             // Switch back to view mode
-            isEditMode = false;
-            toggleEditMode();
+            toggleEditMode(false);
         }
 
         // Auto-hide messages after 5 seconds

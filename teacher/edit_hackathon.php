@@ -705,6 +705,8 @@
         }
         html, body { overflow-x: hidden; width: 100%; }
 
+        .main { background-color: hsl(65, 85%, 98%); }
+
         /* Edit Hackathon Specific Styles */
         .page-header-section {
             background: white;

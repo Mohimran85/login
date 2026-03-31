@@ -250,14 +250,16 @@
     }
 
     $student_query = "SELECT id, name, username, personal_email as email, regno as identifier, department,
-                             COALESCE(year_of_join, DATE(NOW())) as year_of_join,
+                             COALESCE(DATE(reg_time), DATE(year_of_join), DATE(NOW())) as year_of_join,
+                             CASE WHEN reg_time IS NOT NULL THEN 'full_date' ELSE 'year_only' END as date_type,
                              COALESCE(status, 'student') as status, 'student' as user_type,
                              dob,
                              id as sort_order
                       FROM student_register WHERE 1=1";
 
     $teacher_query = "SELECT id, name, username, email, faculty_id as identifier, department,
-                             COALESCE(year_of_join, DATE(NOW())) as year_of_join,
+                             COALESCE(DATE(created_at), DATE(year_of_join), DATE(NOW())) as year_of_join,
+                             CASE WHEN created_at IS NOT NULL THEN 'full_date' ELSE 'year_only' END as date_type,
                              COALESCE(status, 'teacher') as status, 'teacher' as user_type,
                              NULL as dob,
                              id as sort_order
@@ -432,7 +434,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="../assets/images/favicon_io/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
-    <link rel="stylesheet" href="./CSS/report.css">
+    <link rel="stylesheet" href="./CSS/report.css?v=<?php echo @filemtime(__DIR__ . '/CSS/report.css') ?: time(); ?>">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -949,7 +951,7 @@
               width: 100%;
               position: relative;
           }
-          
+
           .modal-input-label {
               font-family: 'Poppins', sans-serif;
               font-weight: 600;
@@ -959,7 +961,7 @@
               font-size: 14px;
               letter-spacing: 0.3px;
           }
-          
+
           .modal-form-control {
               width: 100%;
               padding: 12px 15px;
@@ -973,25 +975,25 @@
               background-color: #f8fafc;
               box-sizing: border-box;
           }
-          
+
           .modal-form-control:focus {
               border-color: #0c3878;
               background-color: #fff;
               box-shadow: 0 0 0 4px rgba(12, 56, 120, 0.1);
               outline: none;
           }
-          
+
           .modal-form-grid {
               display: grid;
               grid-template-columns: repeat(2, 1fr);
               gap: 20px;
               margin-top: 15px;
           }
-          
+
           .full-width {
               grid-column: span 2;
           }
-          
+
           @media (max-width: 600px) {
               .modal-form-grid {
                   grid-template-columns: 1fr;
@@ -1007,9 +1009,9 @@
           <!-- Header -->
           <div class="header">
               <div class="menu-icon">
-                  <span class="material-symbols-outlined">menu</span>
+                  <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
               </div>
-              <div class="icon">
+              <div class="header-logo">
                   <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
               </div>
               <div class="header-title">
@@ -1017,7 +1019,7 @@
               </div>
               <div class="header-profile">
                   <div class="profile-info" onclick="navigateToProfile()">
-                      <span class="material-symbols-outlined">account_circle</span>
+                      <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                       <div class="profile-details">
                           <span class="profile-name"><?php echo htmlspecialchars($user_data['name'] ?? 'User'); ?></span>
                           <span class="profile-role"><?php echo ucfirst($user_type); ?></span>
@@ -1031,51 +1033,50 @@
               <div class="sidebar-title">
                   <div class="sidebar-band">
                       <h2 style="color: white; padding: 10px">Admin Panel</h2>
-                      <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                   </div>
                   <ul class="sidebar-list">
                       <li class="sidebar-list-item" onclick="window.location.href='index.php'">
-                          <span class="material-symbols-outlined">dashboard</span>
+                          <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                           <a href="index.php">Home</a>
                       </li>
                       <li class="sidebar-list-item" onclick="window.location.href='participants.php'">
-                          <span class="material-symbols-outlined">people</span>
+                          <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                           <a href="participants.php">Participants</a>
                       </li>
                       <li class="sidebar-list-item active" onclick="window.location.href='user_management.php'">
-                          <span class="material-symbols-outlined">manage_accounts</span>
+                          <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                           <a href="user_management.php">User Management</a>
                       </li>
                       <li class="sidebar-list-item" onclick="window.location.href='manage_counselors.php'">
-                          <span class="material-symbols-outlined">school</span>
+                          <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                           <a href="manage_counselors.php">Manage Counselors</a>
                       </li>
                       <li class="sidebar-list-item" onclick="window.location.href='hackathons.php'">
-                          <span class="material-symbols-outlined">emoji_events</span>
+                          <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                           <a href="hackathons.php">Hackathons</a>
                       </li>
                       <li class="sidebar-list-item" onclick="window.location.href='reports.php'">
-                          <span class="material-symbols-outlined">bar_chart</span>
+                          <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
                           <a href="reports.php">Reports</a>
                       </li>
                       <li class="sidebar-list-item" onclick="window.location.href='profile.php'">
-                          <span class="material-symbols-outlined">account_circle</span>
+                          <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                           <a href="profile.php">Profile</a>
                       </li>
                       <?php if ($user_type === 'teacher' && $teacher_status === 'teacher'): ?>
                       <li class="sidebar-list-item" onclick="window.location.href='../teacher/index.php'">
-                          <span class="material-symbols-outlined">dashboard</span>
+                          <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                           <a href="../teacher/index.php">Teacher Dashboard</a>
                       </li>
                       <?php endif; ?>
                       <?php if ($user_type === 'teacher' && $teacher_status === 'counselor'): ?>
                       <li class="sidebar-list-item" onclick="window.location.href='../teacher/assigned_students.php'">
-                          <span class="material-symbols-outlined">supervisor_account</span>
+                          <img src="../assets/images/iconsax/profile-2user.svg" alt="supervisor account" class="iconsax-icon" />
                           <a href="../teacher/assigned_students.php">Counselor Dashboard</a>
                       </li>
                       <?php endif; ?>
                       <li class="sidebar-list-item" onclick="window.location.href='logout.php'">
-                          <span class="material-symbols-outlined">logout</span>
+                          <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
                           <a href="logout.php">Logout</a>
                       </li>
                   </ul>
@@ -1129,7 +1130,10 @@
                   <!-- Filters -->
                   <div class="filters-container">
                       <div class="filters-header">
-                          <h3>🔍 Filter                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?></h3>
+                          <h3 style="display: inline-flex; align-items: center; gap: 8px;">
+                              <!-- <img src="../assets/images/iconsax/status-up.svg" alt="filter" class="iconsax-icon" /> -->
+                              Filter <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?>
+                          </h3>
 
                                              </div>
 
@@ -1178,7 +1182,7 @@
 
                               <div class="filter-group">
                                   <button type="submit" class="btn btn-primary">
-                                      <span class="material-symbols-outlined">search</span>
+
                                       Search
                                   </button>
                               </div>
@@ -1189,9 +1193,12 @@
                   <!-- Class Counselor Management Link -->
                   <div class="filters-container">
                       <div class="filters-header">
-                          <h3>👨‍🏫 Class Counselors</h3>
+                          <h3 style="display: inline-flex; align-items: center; gap: 8px;">
+                              <img src="../assets/images/iconsax/profile-2user.svg" alt="class counselors" class="iconsax-icon" />
+                              Class Counselors
+                          </h3>
                           <a href="./manage_counselors.php" class="add-user-btn" onclick="console.log('Navigating to manage counselors...'); return true;">
-                              <span class="material-symbols-outlined">manage_accounts</span>
+                              <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                               Manage Counselors
                           </a>
                       </div>
@@ -1204,24 +1211,24 @@
                           <h3>📋                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'Teachers' : 'Users'; ?> List (<?php echo $total_users; ?> total)</h3>
                           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                               <a href="bulk_import.php" class="btn btn-secondary">
-                                  <span class="material-symbols-outlined">upload</span>
+                                  <img src="../assets/images/iconsax/arrow-up.svg" alt="upload" class="iconsax-icon" />
                                   Bulk Import
                               </a>
                               <div class="dropdown" style="position: relative; display: inline-block;">
                                   <button class="btn btn-success dropdown-toggle" onclick="toggleExportDropdown()" id="exportDropdown">
-                                      <span class="material-symbols-outlined">download</span>
+                                      <img src="../assets/images/iconsax/arrow-up.svg" alt="download" class="iconsax-icon" />
                                       Export Users
-                                      <span class="material-symbols-outlined" style="font-size: 16px;">arrow_drop_down</span>
+                                      <img src="../assets/images/iconsax/arrow-up.svg" alt="arrow drop down" class="iconsax-icon" style="font-size: 16px;" />
                                   </button>
                                   <div id="exportDropdownContent" class="dropdown-content" style="display: none; position: absolute; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1000; right: 0; border-radius: 6px;">
                                       <a href="export_users.php?type=students" style="color: black; padding: 12px 16px; text-decoration: none; display: block;">
-                                          <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">school</span> Export Students
+                                          <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" style="font-size: 18px; vertical-align: middle;" /> Export Students
                                       </a>
                                       <a href="export_users.php?type=teachers" style="color: black; padding: 12px 16px; text-decoration: none; display: block;">
-                                          <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">person</span> Export Teachers
+                                          <img src="../assets/images/iconsax/profile-circle.svg" alt="person" class="iconsax-icon" style="font-size: 18px; vertical-align: middle;" /> Export Teachers
                                       </a>
                                       <a href="export_users.php?type=all" style="color: black; padding: 12px 16px; text-decoration: none; display: block;">
-                                          <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">groups</span> Export All Users
+                                          <img src="../assets/images/iconsax/people.svg" alt="groups" class="iconsax-icon" style="font-size: 18px; vertical-align: middle;" /> Export All Users
                                       </a>
                                   </div>
                               </div>
@@ -1269,12 +1276,18 @@
                                                       <?php echo ucfirst($user['status']); ?>
                                                   </span>
                                               </td>
-                                              <td><?php echo date('M d, Y', strtotime($user['year_of_join'])); ?></td>
+                                              <td><?php
+                                                      if ($user['date_type'] === 'full_date') {
+                                                          echo date('M d, Y', strtotime($user['year_of_join']));
+                                                      } else {
+                                                          echo date('Y', strtotime($user['year_of_join']));
+                                                  }
+                                                  ?></td>
                                               <td>
                                                   <div class="action-buttons">
                                                       <button onclick='openEditModal(<?php echo (int) $user['id']; ?>, <?php echo htmlspecialchars(json_encode($user['user_type']), ENT_QUOTES, "UTF-8"); ?>, <?php echo htmlspecialchars(json_encode($user['name']), ENT_QUOTES, "UTF-8"); ?>, <?php echo htmlspecialchars(json_encode($user['username']), ENT_QUOTES, "UTF-8"); ?>, <?php echo htmlspecialchars(json_encode($user['email']), ENT_QUOTES, "UTF-8"); ?>, <?php echo htmlspecialchars(json_encode($user['department']), ENT_QUOTES, "UTF-8"); ?>, <?php echo htmlspecialchars(json_encode($user['identifier']), ENT_QUOTES, "UTF-8"); ?>, <?php echo htmlspecialchars(json_encode($user['dob'] ?? ''), ENT_QUOTES, "UTF-8"); ?>)'
                                                               class="btn btn-warning" title="Edit User">
-                                                          <span class="material-symbols-outlined">edit</span>
+                                                          <img src="../assets/images/iconsax/element-4.svg" alt="edit" class="iconsax-icon" />
                                                       </button>
 
                                                       <select onchange="changeUserRole(<?php echo $user['id']; ?>, '<?php echo $user['user_type']; ?>', this.value, '<?php echo $user['status']; ?>')"
@@ -1290,7 +1303,7 @@
 
                                                       <button onclick="confirmDeleteUser(<?php echo $user['id']; ?>, '<?php echo $user['user_type']; ?>', '<?php echo htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8'); ?>')"
                                                               class="btn btn-danger" title="Delete User">
-                                                          <span class="material-symbols-outlined">delete</span>
+                                                          <img src="../assets/images/iconsax/close-circle.svg" alt="delete" class="iconsax-icon" />
                                                       </button>
                                                   </div>
                                               </td>
@@ -1299,7 +1312,7 @@
                                   <?php else: ?>
                                       <tr>
                                           <td colspan="7" style="text-align: center; padding: 40px;">
-                                              <span class="material-symbols-outlined" style="font-size: 48px; color: #ccc;">person_off</span>
+                                              <img src="../assets/images/iconsax/close-circle.svg" alt="person off" class="iconsax-icon" style="font-size: 48px; color: #ccc;" />
                                               <p style="color: #666; margin: 10px 0;">No                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo($user_type === 'teacher' && $teacher_status !== 'admin') ? 'teachers' : 'users'; ?> found matching your criteria</p>
                                               <a href="add_user.php" class="btn btn-primary">Add First                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $user_type === 'teacher' ? 'Teacher' : 'User'; ?></a>
                                           </td>
@@ -1425,7 +1438,7 @@
                           Cancel
                       </button>
                       <button type="submit" class="btn btn-primary" style="background: #0c3878; box-shadow: 0 4px 12px rgba(12, 56, 120, 0.15);">
-                          <span class="material-symbols-outlined" style="font-size: 18px;">save</span>
+                          <img src="../assets/images/iconsax/status-up.svg" alt="save" class="iconsax-icon" style="font-size: 18px;" />
                           Save Changes
                       </button>
                   </div>

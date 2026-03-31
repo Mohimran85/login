@@ -181,6 +181,8 @@
         html, body { overflow-x: hidden; width: 100%; margin: 0; padding: 0; }
         .grid-container { max-width: 100vw; overflow-x: hidden; }
 
+        .main { background-color: hsl(65, 85%, 98%); }
+
         /* Page-specific styles */
         .page-header-section {
             background: white;

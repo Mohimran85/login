@@ -168,7 +168,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/images/favicon_io/apple-touch-icon.png">
     <link rel="manifest" href="../assets/images/favicon_io/site.webmanifest">
     <!-- CSS -->
-    <link rel="stylesheet" href="./CSS/styles.css">
+    <link rel="stylesheet" href="./CSS/styles.css?v=<?php echo @filemtime(__DIR__ . '/CSS/styles.css') ?: time(); ?>">
     <!-- Google Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <!-- Google Fonts -->
@@ -199,9 +199,47 @@
             color: #0c3878;
         }
 
-        .page-header-title .material-symbols-outlined {
+        .page-header-title .iconsax-icon {
             font-size: 36px;
-            color: #0c3878;
+            filter: brightness(0) saturate(100%) invert(20%) sepia(57%) saturate(1125%) hue-rotate(188deg) brightness(97%) contrast(95%);
+        }
+
+        /* Iconsax colors for this page */
+        .btn .iconsax-icon {
+            filter: brightness(0) invert(1);
+        }
+
+        .stat-icon .iconsax-icon {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            filter: brightness(0) invert(1);
+        }
+
+        .table-container .iconsax-icon,
+        .view-details .iconsax-icon,
+        .filter-row .iconsax-icon {
+            filter: brightness(0) saturate(100%) invert(20%) sepia(57%) saturate(1125%) hue-rotate(188deg) brightness(97%) contrast(95%);
+        }
+
+        .badge-individual .iconsax-icon {
+            filter: brightness(0) saturate(100%) invert(33%) sepia(52%) saturate(604%) hue-rotate(7deg) brightness(93%) contrast(93%);
+        }
+
+        .badge-team .iconsax-icon {
+            filter: brightness(0) saturate(100%) invert(25%) sepia(84%) saturate(1120%) hue-rotate(200deg) brightness(92%) contrast(94%);
+        }
+
+        .badge-confirmed .iconsax-icon {
+            filter: brightness(0) saturate(100%) invert(30%) sepia(62%) saturate(548%) hue-rotate(93deg) brightness(91%) contrast(92%);
+        }
+
+        .badge-withdrawn .iconsax-icon {
+            filter: brightness(0) saturate(100%) invert(24%) sepia(61%) saturate(1399%) hue-rotate(338deg) brightness(93%) contrast(94%);
+        }
+
+        .empty-state .iconsax-icon {
+            filter: brightness(0) saturate(100%) invert(66%) sepia(9%) saturate(468%) hue-rotate(179deg) brightness(91%) contrast(85%);
         }
 
         .header-actions {
@@ -399,7 +437,7 @@
             color: #999;
         }
 
-        .empty-state .material-symbols-outlined {
+        .empty-state .iconsax-icon {
             font-size: 80px;
             margin-bottom: 20px;
         }
@@ -447,7 +485,7 @@
         <!-- header -->
         <div class="header">
             <div class="menu-icon" onclick="openSidebar()">
-                <span class="material-symbols-outlined">menu</span>
+                <img src="../assets/images/iconsax/menu-1.svg" alt="menu" class="iconsax-icon" />
             </div>
             <div class="header-logo">
                 <img class="logo" src="../sona_logo.jpg" alt="Sona College Logo" height="60px" width="200">
@@ -457,7 +495,7 @@
             </div>
             <div class="header-profile">
                 <div class="profile-info" onclick="window.location.href='profile.php'">
-                    <span class="material-symbols-outlined">account_circle</span>
+                    <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                     <div class="profile-details">
                         <span class="profile-name"><?php echo htmlspecialchars($user_name); ?></span>
                         <span class="profile-role"><?php
@@ -492,61 +530,60 @@
                                                                 }
 
                                                             ?></h2>
-                    <span class="material-symbols-outlined" onclick="closeSidebar()">close</span>
                 </div>
                 <ul class="sidebar-list">
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">dashboard</span>
+                        <img src="../assets/images/iconsax/element-4.svg" alt="dashboard" class="iconsax-icon" />
                         <a href="index.php">Home</a>
                     </li>
                     <?php if ($is_counselor_user && ! $is_admin_user): ?>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">supervisor_account</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="supervisor account" class="iconsax-icon" />
                         <a href="../teacher/assigned_students.php">My Assigned Students</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">approval</span>
+                        <img src="../assets/images/iconsax/status-up.svg" alt="approval" class="iconsax-icon" />
                         <a href="../teacher/od_approvals.php">OD Approvals</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">school</span>
+                        <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                         <a href="../teacher/internship_approvals.php">Internship Validations</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">card_giftcard</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="card giftcard" class="iconsax-icon" />
                         <a href="../teacher/verify_events.php">Event Certificate Validation</a>
                     </li>
                     <?php endif; ?>
                     <?php if ($is_admin_user): ?>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">people</span>
+                        <img src="../assets/images/iconsax/people.svg" alt="people" class="iconsax-icon" />
                         <a href="participants.php">Participants</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">manage_accounts</span>
+                        <img src="../assets/images/iconsax/profile-2user.svg" alt="manage accounts" class="iconsax-icon" />
                         <a href="user_management.php">User Management</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">school</span>
+                        <img src="../assets/images/iconsax/teacher.svg" alt="school" class="iconsax-icon" />
                         <a href="manage_counselors.php">Manage Counselors</a>
                     </li>
                     <?php endif; ?>
                     <li class="sidebar-list-item active">
-                        <span class="material-symbols-outlined">emoji_events</span>
+                        <img src="../assets/images/iconsax/award.svg" alt="emoji events" class="iconsax-icon" />
                         <a href="hackathons.php">Hackathons</a>
                     </li>
                     <?php if ($is_admin_user): ?>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">bar_chart</span>
+                        <img src="../assets/images/iconsax/chart.svg" alt="bar chart" class="iconsax-icon" />
                         <a href="reports.php">Reports</a>
                     </li>
                     <?php endif; ?>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">account_circle</span>
+                        <img src="../assets/images/iconsax/profile-circle.svg" alt="account circle" class="iconsax-icon" />
                         <a href="profile.php">Profile</a>
                     </li>
                     <li class="sidebar-list-item">
-                        <span class="material-symbols-outlined">logout</span>
+                        <img src="../assets/images/iconsax/logout.svg" alt="logout" class="iconsax-icon" />
                         <a href="logout.php">Logout</a>
                     </li>
                 </ul>
@@ -556,20 +593,20 @@
         <div class="main">
             <div class="page-header-section">
                 <div class="page-header-title">
-                    <span class="material-symbols-outlined">description</span>
+                    <img src="../assets/images/iconsax/element-4.svg" alt="description" class="iconsax-icon" />
                     <h1>Hackathon Applications</h1>
                 </div>
                 <div class="header-actions">
                     <a href="create_hackathon.php" class="btn btn-primary">
-                        <span class="material-symbols-outlined">add</span>
+                        <img src="../assets/images/iconsax/element-4.svg" alt="add" class="iconsax-icon" />
                         Create Hackathon
                     </a>
                     <a href="?export=csv&<?php echo htmlspecialchars(http_build_query($_GET), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-success">
-                        <span class="material-symbols-outlined">download</span>
+                        <img src="../assets/images/iconsax/arrow-up.svg" alt="download" class="iconsax-icon" />
                         Export CSV
                     </a>
                     <a href="hackathons.php" class="btn btn-primary">
-                        <span class="material-symbols-outlined">arrow_back</span>
+                        <img src="../assets/images/iconsax/arrow-swap-horizontal.svg" alt="arrow back" class="iconsax-icon" />
                         Back to Hackathons
                     </a>
                 </div>
@@ -579,7 +616,7 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon total">
-                    <span class="material-symbols-outlined">description</span>
+                    <img src="../assets/images/iconsax/element-4.svg" alt="description" class="iconsax-icon" />
                 </div>
                 <div class="stat-info">
                     <h3><?php echo $stats['total']; ?></h3>
@@ -589,7 +626,7 @@
 
             <div class="stat-card">
                 <div class="stat-icon individual">
-                    <span class="material-symbols-outlined">person</span>
+                    <img src="../assets/images/iconsax/profile-circle.svg" alt="person" class="iconsax-icon" />
                 </div>
                 <div class="stat-info">
                     <h3><?php echo $stats['individual']; ?></h3>
@@ -599,7 +636,7 @@
 
             <div class="stat-card">
                 <div class="stat-icon team">
-                    <span class="material-symbols-outlined">groups</span>
+                    <img src="../assets/images/iconsax/people.svg" alt="groups" class="iconsax-icon" />
                 </div>
                 <div class="stat-info">
                     <h3><?php echo $stats['team']; ?></h3>
@@ -609,7 +646,7 @@
 
             <div class="stat-card">
                 <div class="stat-icon confirmed">
-                    <span class="material-symbols-outlined">check_circle</span>
+                    <img src="../assets/images/iconsax/status-up.svg" alt="check circle" class="iconsax-icon" />
                 </div>
                 <div class="stat-info">
                     <h3><?php echo $stats['confirmed']; ?></h3>
@@ -619,7 +656,7 @@
 
             <div class="stat-card">
                 <div class="stat-icon withdrawn">
-                    <span class="material-symbols-outlined">cancel</span>
+                    <img src="../assets/images/iconsax/close-circle.svg" alt="cancel" class="iconsax-icon" />
                 </div>
                 <div class="stat-info">
                     <h3><?php echo $stats['withdrawn']; ?></h3>
@@ -657,7 +694,7 @@
                 </select>
 
                 <button type="submit" class="btn btn-primary">
-                    <span class="material-symbols-outlined">search</span>
+                    <img src="../assets/images/iconsax/status-up.svg" alt="search" class="iconsax-icon" />
                     Filter
                 </button>
             </form>
@@ -667,7 +704,7 @@
         <div class="table-container">
             <?php if (empty($applications)): ?>
                 <div class="empty-state">
-                    <span class="material-symbols-outlined">inbox</span>
+                    <img src="../assets/images/iconsax/element-4.svg" alt="inbox" class="iconsax-icon" />
                     <h3>No Applications Found</h3>
                     <p>No applications match your current filters.</p>
                 </div>
@@ -703,9 +740,7 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-<?php echo htmlspecialchars($app['application_type'], ENT_QUOTES, 'UTF-8'); ?>">
-                                        <span class="material-symbols-outlined" style="font-size: 14px;">
-                                            <?php echo $app['application_type'] === 'team' ? 'groups' : 'person'; ?>
-                                        </span>
+                                        <img class="iconsax-icon" style="font-size: 14px;" src="../assets/images/iconsax/<?php echo $app['application_type'] === 'team' ? 'people.svg' : 'profile-circle.svg'; ?>" alt="<?php echo $app['application_type'] === 'team' ? 'team' : 'individual'; ?>" />
                                         <?php echo ucfirst($app['application_type']); ?>
                                     </span>
                                 </td>
@@ -728,9 +763,7 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-<?php echo htmlspecialchars($app['status'], ENT_QUOTES, 'UTF-8'); ?>">
-                                        <span class="material-symbols-outlined" style="font-size: 14px;">
-                                            <?php echo $app['status'] === 'confirmed' ? 'check_circle' : 'cancel'; ?>
-                                        </span>
+                                        <img class="iconsax-icon" style="font-size: 14px;" src="../assets/images/iconsax/<?php echo $app['status'] === 'confirmed' ? 'status-up.svg' : 'close-circle.svg'; ?>" alt="<?php echo htmlspecialchars($app['status'], ENT_QUOTES, 'UTF-8'); ?>" />
                                         <?php echo ucfirst($app['status']); ?>
                                     </span>
                                 </td>
@@ -739,7 +772,7 @@
                                     <a href="javascript:void(0)"
                                        onclick="viewDetails(<?php echo htmlspecialchars(json_encode($app)); ?>)"
                                        class="view-details">
-                                        <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+                                        <img src="../assets/images/iconsax/status-up.svg" alt="visibility" class="iconsax-icon" style="font-size: 18px;" />
                                         View
                                     </a>
                                 </td>
@@ -779,7 +812,7 @@
 
             content.innerHTML = `
                 <h2 style="color:#0c3878; margin-bottom:20px; display:flex; align-items:center; gap:10px;">
-                    <span class="material-symbols-outlined">description</span>
+                    <img src="../assets/images/iconsax/element-4.svg" alt="description" class="iconsax-icon" />
                     Application Details
                 </h2>
 

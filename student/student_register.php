@@ -13,6 +13,7 @@
     // Get logged-in user's registration number and student data
     $logged_in_regno = '';
     $student_data    = null;
+    $counselor_info  = null;
     if (isset($_SESSION['username'])) {
     require_once __DIR__ . '/../includes/db_config.php';
     $conn_user = get_db_connection();
@@ -44,6 +45,25 @@
         } else {
             $student_data['academic_year'] = ($cur_yr - 1) . '-' . substr($cur_yr, -2);
         }
+
+        // Check if student has an assigned counselor
+        $counselor_info = null;
+        $counselor_sql  = "SELECT tr.name as counselor_name, tr.email as counselor_email,
+                                ca.assigned_date, tr.faculty_id as counselor_id, tr.id as teacher_id
+                         FROM counselor_assignments ca
+                         JOIN teacher_register tr ON ca.counselor_id = tr.id
+                         WHERE ca.student_regno = ? AND ca.status = 'active'
+                         ORDER BY ca.assigned_date DESC
+                         LIMIT 1";
+        $counselor_stmt = $conn_user->prepare($counselor_sql);
+        $counselor_stmt->bind_param("s", $logged_in_regno);
+        $counselor_stmt->execute();
+        $counselor_result = $counselor_stmt->get_result();
+
+        if ($counselor_result->num_rows > 0) {
+            $counselor_info = $counselor_result->fetch_assoc();
+        }
+        $counselor_stmt->close();
     }
 
     $user_stmt->close();
@@ -1328,6 +1348,25 @@
 
   <!-- main container -->
   <div class="main">
+    <?php if (! $counselor_info): ?>
+        <!-- Page Disabled - No Class Counselor -->
+        <div style="display: flex; align-items: center; justify-content: center; min-height: 60vh; padding: 40px 20px;">
+            <div style="text-align: center; max-width: 500px; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);">
+                <span class="material-symbols-outlined" style="font-size: 72px; color: #dc3545; margin-bottom: 20px; display: block;">lock</span>
+                <h2 style="color: #dc3545; margin: 0 0 15px 0; font-size: 28px; font-weight: 600;">Page Disabled</h2>
+                <p style="color: #666; margin: 0 0 20px 0; font-size: 16px; line-height: 1.6;">
+                    This page is currently disabled because no Class Counselor has been assigned to you yet.
+                </p>
+                <p style="color: #856404; background: #fff3cd; padding: 15px; border-radius: 8px; margin: 0 0 25px 0; font-size: 14px; line-height: 1.6; border: 1px solid #ffeaa7;">
+                    <strong>⚠️ Important:</strong> Please contact your department administrator to get a Class Counselor assigned before accessing this feature.
+                </p>
+                <a href="index.php" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 30px; background: #0c3878; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.3s ease;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">arrow_back</span>
+                    Go to Dashboard
+                </a>
+            </div>
+        </div>
+    <?php else: ?>
     <main class="registration-main">
   <form action="" method="POST" enctype="multipart/form-data" class="registration-form">
     <div class="registration-container">
@@ -1486,6 +1525,7 @@
               <option value="Cultural Event" <?php echo($auto_event_type == 'Cultural Event') ? 'selected' : ''; ?>>Cultural Event</option>
               <option value="Sports Event" <?php echo($auto_event_type == 'Sports Event') ? 'selected' : ''; ?>>Sports Event</option>
               <option value="Technical Event" <?php echo($auto_event_type == 'Technical Event') ? 'selected' : ''; ?>>Technical Event</option>
+              <option value="Non technical" <?php echo($auto_event_type == 'Non technical') ? 'selected' : ''; ?>>Non technical</option>
               <option value="Other" <?php echo($auto_event_type == 'Other') ? 'selected' : ''; ?>>Other</option>
             </select>
           </div>
@@ -1609,6 +1649,7 @@
     </div>
   </form>
     </main>
+    <?php endif; ?>
   </div>
 
   <script>
