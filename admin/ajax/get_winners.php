@@ -23,23 +23,8 @@ try {
     }
 
     // Database connection
-    $db_host = getenv('DB_HOST') ?: 'localhost';
-    $db_user = getenv('DB_USER');
-    $db_pass = getenv('DB_PASS');
-    $db_name = getenv('DB_NAME') ?: 'event_management_system';
-
-    if (! $db_user || ! $db_pass) {
-        error_log('Database credentials missing in environment');
-        throw new Exception('Configuration error');
-    }
-
-    $conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
-    if ($conn->connect_error) {
-        error_log('Database connection failed: ' . $conn->connect_error);
-        throw new Exception('Database connection failed');
-    }
-    $conn->set_charset('utf8mb4');
-
+    require_once __DIR__ . '/../../includes/db_config.php';
+    $conn = get_db_connection();
     // Get year parameter
     $year = isset($_GET['year']) && is_numeric($_GET['year']) ? (int) $_GET['year'] : date('Y');
 

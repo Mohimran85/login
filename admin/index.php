@@ -85,6 +85,9 @@
     $compare_year       = isset($_GET['compare_year']) && is_numeric($_GET['compare_year']) ? (int) $_GET['compare_year'] : null;
     $is_comparison_mode = $compare_year !== null;
 
+    $display_current_year = $current_year . '-' . ($current_year + 1);
+    $display_compare_year = $compare_year ? $compare_year . '-' . ($compare_year + 1) : '';
+
     // Get dashboard statistics for selected year
     $total_students       = 0;
     $total_teachers       = 0;
@@ -570,9 +573,11 @@
                 <select id="yearSelector" class="year-dropdown" onchange="changeAnalysisYear()">
                   <?php
                       foreach ($all_years as $year) {
-                          $selected = ($year == $current_year) ? 'selected' : '';
-                          $has_data = in_array($year, $available_years) ? ' ✓' : ' ○';
-                          echo "<option value=\"$year\" $selected>$year$has_data</option>";
+                          $next_year    = $year + 1;
+                          $display_year = $year . '-' . $next_year;
+                          $selected     = ($year == $current_year) ? 'selected' : '';
+                          $has_data     = in_array($year, $available_years) ? ' ✓' : ' ○';
+                          echo "<option value=\"$year\" $selected>$display_year$has_data</option>";
                       }
                   ?>
                 </select>
@@ -606,13 +611,13 @@
         <div class="main-card" id="dashboard-cards">
           <div class="year-indicator">
             <?php if ($is_comparison_mode): ?>
-              <h3>Year-over-Year Comparison:<?php echo $current_year; ?> vs<?php echo $compare_year; ?></h3>
-              <p>Comparing analytics between                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $current_year; ?> and<?php echo $compare_year; ?>
+              <h3>Year-over-Year Comparison:<?php echo $display_current_year; ?> vs<?php echo $display_compare_year; ?></h3>
+              <p>Comparing analytics between                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $display_current_year; ?> and<?php echo $display_compare_year; ?>
                 <span class="custom-year-note">(Comparison Mode)</span>
               </p>
             <?php else: ?>
-              <h3> Dashboard Analytics for <?php echo $current_year; ?></h3>
-              <p>Showing data for academic year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $current_year; ?>
+              <h3> Dashboard Analytics for <?php echo $display_current_year; ?></h3>
+              <p>Showing data for academic year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $display_current_year; ?>
                 <?php if (isset($_GET['year'])): ?>
                   <span class="custom-year-note">(Custom Year Selected)</span>
                 <?php endif; ?>
@@ -633,7 +638,7 @@
               </div>
               <div class="comparison-data">
                 <div class="year-data current-year">
-                  <span class="comparison-year-label"><?php echo $current_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $display_current_year; ?></span>
                   <span class="year-value"><?php echo number_format($total_events); ?></span>
                 </div>
                 <div class="comparison-arrow">
@@ -647,7 +652,7 @@
                   </span>
                 </div>
                 <div class="year-data compare-year">
-                  <span class="comparison-year-label"><?php echo $compare_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $display_compare_year; ?></span>
                   <span class="year-value"><?php echo number_format($compare_total_events); ?></span>
                 </div>
               </div>
@@ -660,7 +665,7 @@
               </div>
               <div class="comparison-data">
                 <div class="year-data current-year">
-                  <span class="comparison-year-label"><?php echo $current_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $display_current_year; ?></span>
                   <span class="year-value"><?php echo number_format($total_participations); ?></span>
                 </div>
                 <div class="comparison-arrow">
@@ -674,7 +679,7 @@
                   </span>
                 </div>
                 <div class="year-data compare-year">
-                  <span class="comparison-year-label"><?php echo $compare_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $display_compare_year; ?></span>
                   <span class="year-value"><?php echo number_format($compare_total_participations); ?></span>
                 </div>
               </div>
@@ -687,7 +692,7 @@
               </div>
               <div class="comparison-data">
                 <div class="year-data current-year">
-                  <span class="comparison-year-label"><?php echo $current_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $display_current_year; ?></span>
                   <span class="year-value"><?php echo count($category_analytics); ?></span>
                 </div>
                 <div class="comparison-arrow">
@@ -701,7 +706,7 @@
                   </span>
                 </div>
                 <div class="year-data compare-year">
-                  <span class="comparison-year-label"><?php echo $compare_year; ?></span>
+                  <span class="comparison-year-label"><?php echo $display_compare_year; ?></span>
                   <span class="year-value"><?php echo count($compare_category_analytics); ?></span>
                 </div>
               </div>
@@ -738,20 +743,20 @@
 
            <div class="card">
             <div class="card-inner">
-              <h3>Student Events (<?php echo $current_year; ?>):</h3>
+              <h3>Student Events (<?php echo $display_current_year; ?>):</h3>
               <span class="material-symbols-outlined">event</span>
             </div>
             <h1><?php echo number_format($total_events); ?></h1>
-            <small>Event types in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $current_year; ?></small>
+            <small>Event types in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   <?php echo $display_current_year; ?></small>
           </div>
 
            <div class="card">
             <div class="card-inner">
-              <h3>Participations (<?php echo $current_year; ?>):</h3>
+              <h3>Participations (<?php echo $display_current_year; ?>):</h3>
               <span class="material-symbols-outlined">groups</span>
             </div>
             <h1><?php echo number_format($total_participations); ?></h1>
-            <small>Total in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $current_year; ?></small>
+            <small>Total in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $display_current_year; ?></small>
           </div>
         </div>
         <!-- Enhanced Charts Section -->
@@ -759,7 +764,7 @@
           <!-- Enhanced Category Analytics Card -->
           <div class="charts-card enhanced-category-card">
             <div class="chart-header">
-              <h2 class="chart-title">Student Events Analysis -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $current_year; ?></h2>
+              <h2 class="chart-title">Student Events Analysis -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $display_current_year; ?></h2>
               <div class="chart-controls">
                 <select id="categoryView" onchange="updateCategoryChart()">
                   <option value="participations">Total Participations</option>
@@ -847,7 +852,7 @@
 
             <!-- Detailed Category Breakdown Table -->
             <div class="category-details">
-              <h3>Detailed Student Category Analytics -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $current_year; ?></h3>
+              <h3>Detailed Student Category Analytics -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               <?php echo $display_current_year; ?></h3>
               <div class="category-table-container">
                 <table class="category-table">
                   <thead>
@@ -864,10 +869,10 @@
                       <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
                         <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
                           <span style="font-size: 48px;">📊</span>
-                          <strong>No Event Data Available for                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $current_year; ?></strong>
-                          <p>No student event categories found for the year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $current_year; ?>.</p>
+                          <strong>No Event Data Available for                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $display_current_year; ?></strong>
+                          <p>No student event categories found for the year                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       <?php echo $display_current_year; ?>.</p>
                           <div style="font-size: 12px; color: #aaa; margin-top: 8px;">
-                            Try selecting a different year from the dropdown above, or add events for                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $current_year; ?>.
+                            Try selecting a different year from the dropdown above, or add events for                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           <?php echo $display_current_year; ?>.
                           </div>
                         </div>
                       </td>
@@ -937,8 +942,8 @@
           <!-- Monthly Student Event Trends Chart (Enhanced) -->
           <div class="charts-card" id="monthly-trends">
             <div class="trend-header">
-              <h2 class="chart-title">Monthly Student Event Analysis -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $current_year; ?>
-                <span class="year-badge"><?php echo $current_year; ?></span>
+              <h2 class="chart-title">Monthly Student Event Analysis -                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             <?php echo $display_current_year; ?>
+                <span class="year-badge"><?php echo $display_current_year; ?></span>
               </h2>
               <div class="trend-controls">
                 <select id="trendView" onchange="updateTrendChart()">
@@ -1022,35 +1027,56 @@
                 <h4 id="selected-month-title">Month Details</h4>
                 <div class="month-stats-grid">
                   <div class="month-stat">
-                    <span class="month-stat-icon">📅</span>
+                    <div class="month-stat-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="#008FFB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#008FFB" fill-opacity="0.2"/>
+                        <path d="M16 2V6M8 2V6M3 10H21" stroke="#008FFB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
                     <div class="month-stat-info">
                       <span class="month-stat-label">Events</span>
                       <span class="month-stat-value" id="month-events">0</span>
                     </div>
                   </div>
                   <div class="month-stat">
-                    <span class="month-stat-icon">👥</span>
+                    <div class="month-stat-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#00E396" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#00E396" fill-opacity="0.2"/>
+                        <path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke="#00E396" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#00E396" fill-opacity="0.2"/>
+                        <path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke="#00E396" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke="#00E396" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
                     <div class="month-stat-info">
                       <span class="month-stat-label">Participants</span>
                       <span class="month-stat-value" id="month-participants">0</span>
                     </div>
                   </div>
                   <div class="month-stat">
-                    <span class="month-stat-icon">🏆</span>
+                    <div class="month-stat-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="#FEB019" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#FEB019" fill-opacity="0.3"/>
+                      </svg>
+                    </div>
                     <div class="month-stat-info">
                       <span class="month-stat-label">Winners</span>
                       <span class="month-stat-value" id="month-winners">0</span>
                     </div>
                   </div>
                   <div class="month-stat">
-                    <span class="month-stat-icon">📈</span>
+                    <div class="month-stat-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M23 6L13.5 15.5L8.5 10.5L1 18" stroke="#FF4560" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M17 6H23V12" stroke="#FF4560" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="#FF4560" fill-opacity="0.2"/>
+                      </svg>
+                    </div>
                     <div class="month-stat-info">
                       <span class="month-stat-label">Success Rate</span>
                       <span class="month-stat-value" id="month-success">0%</span>
                     </div>
                   </div>
                 </div>
-                <button class="close-month-details" onclick="hideMonthDetails()">Close</button>
+                <button type="button" class="close-month-details" onclick="hideMonthDetails()">Close</button>
               </div>
             </div>
 
@@ -1076,7 +1102,7 @@
                   <span class="insight-emoji">📊</span>
                   <h4>Growth Pattern</h4>
                 </div>
-                <p><?php if ($total_year_events > 0): ?>Events show <strong>consistent growth</strong> with peak activity in <?php echo $peak_month; ?>. The success rate averages <strong><?php echo $total_year_participations > 0 ? round(($total_year_wins / $total_year_participations) * 100, 1) : 0; ?>%</strong> across all months.<?php else: ?>No event data available for<?php echo $current_year; ?>. Start adding student events to see growth patterns and analytics.<?php endif; ?></p>
+                <p><?php if ($total_year_events > 0): ?>Events show <strong>consistent growth</strong> with peak activity in <?php echo $peak_month; ?>. The success rate averages <strong><?php echo $total_year_participations > 0 ? round(($total_year_wins / $total_year_participations) * 100, 1) : 0; ?>%</strong> across all months.<?php else: ?>No event data available for<?php echo $display_current_year; ?>. Start adding student events to see growth patterns and analytics.<?php endif; ?></p>
               </div>
 
               <div class="trend-insight-card">
@@ -1492,7 +1518,7 @@
       loadingOverlay.innerHTML = `
         <div class="loading-container">
           <div class="loading-spinner"></div>
-          <div class="loading-text">Loading Analytics for ${document.getElementById('yearSelector').value}...</div>
+          <div class="loading-text">Loading Analytics...</div>
           <div class="loading-subtext">Updating category analytics and trend data</div>
         </div>
       `;
@@ -1597,6 +1623,49 @@
         window.location.reload();
       }, 1000);
     }
+
+    // Show month details modal
+    function showMonthDetails(month) {
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+
+      // Get current year from selector or default to current year
+      const yearSelector = document.getElementById('yearSelector');
+      const selectedYear = yearSelector ? yearSelector.value : new Date().getFullYear();
+
+      // Update modal title
+      document.getElementById('selected-month-title').textContent =
+        monthNames[month - 1] + ' ' + selectedYear + ' Details';
+
+      // Get data from global arrays initialized via PHP
+      // month is 1-12, so array index is month - 1
+      const mIndex = month - 1;
+      const mEvents = (window.monthlyEvents && window.monthlyEvents[mIndex]) ? window.monthlyEvents[mIndex] : 0;
+      const mParts = (window.monthlyParticipations && window.monthlyParticipations[mIndex]) ? window.monthlyParticipations[mIndex] : 0;
+      const mWins = (window.monthlyWins && window.monthlyWins[mIndex]) ? window.monthlyWins[mIndex] : 0;
+      const mSuccess = mParts > 0 ? Math.round((mWins / mParts) * 100) : 0;
+
+      document.getElementById('month-events').textContent = mEvents;
+      document.getElementById('month-participants').textContent = mParts;
+      document.getElementById('month-winners').textContent = mWins;
+      document.getElementById('month-success').textContent = mSuccess + '%';
+
+      // Show the modal
+      document.getElementById('month-details-panel').style.display = 'flex';
+    }
+
+    // Hide month details modal
+    function hideMonthDetails() {
+      document.getElementById('month-details-panel').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('month-details-panel');
+      if (event.target === modal) {
+        hideMonthDetails();
+      }
+    });
 
     // Update URL with current year parameter on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -2063,3 +2132,6 @@
 
   </body>
 </html>
+
+
+
