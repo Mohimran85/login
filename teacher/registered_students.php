@@ -157,7 +157,14 @@
 
     // Get filter options (optimize by caching results)
     $event_types_result = $conn->query("SELECT DISTINCT event_type FROM student_event_register ORDER BY event_type LIMIT 50");
-    $departments_result = $conn->query("SELECT DISTINCT department FROM student_register ORDER BY department LIMIT 50");
+    $departments_result = $conn->query("SELECT department FROM (
+                                            SELECT DISTINCT department FROM student_register
+                                            UNION
+                                            SELECT 'Artificial Intelligence and Data Science' AS department
+                                        ) dept_options
+                                        WHERE department IS NOT NULL AND department != ''
+                                        ORDER BY department
+                                        LIMIT 100");
 
     // Get statistics efficiently in a single query
     $stats_sql = "SELECT

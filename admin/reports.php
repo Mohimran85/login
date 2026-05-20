@@ -180,9 +180,7 @@
                         <select name="department" id="department">
                             <option value="">Select Department</option>
                             <option value="Information Technology">Information Technology</option>
-                            <option value="CSE">CSE</option>
-                            <option value="AIML">AIML</option>
-                            <option value="AIDS">AIDS</option>
+                            <option value="Artificial Intelligence and Data Science">Artificial Intelligence and Data Science</option>
                         </select>
                     </div>
                 </div>

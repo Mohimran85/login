@@ -18,11 +18,12 @@
     $conn = get_db_connection();
 
     // Get teacher data
-    $username       = $_SESSION['username'];
-    $teacher_data   = null;
-    $teacher_status = 'teacher';
-    $is_admin       = false;
-    $is_counselor   = false;
+    $username                 = $_SESSION['username'];
+    $teacher_data             = null;
+    $teacher_status           = 'teacher';
+    $is_admin                 = false;
+    $is_counselor             = false;
+    $is_hackathon_coordinator = false;
 
     $sql  = "SELECT id, name, faculty_id as employee_id, COALESCE(status, 'teacher') as status, COALESCE(is_hackathon_coordinator, 0) as is_hackathon_coordinator FROM teacher_register WHERE username=?";
     $stmt = $conn->prepare($sql);
@@ -31,10 +32,11 @@
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-    $teacher_data   = $result->fetch_assoc();
-    $teacher_status = $teacher_data['status'];
-    $is_admin       = ($teacher_status === 'admin');
-    $is_counselor   = ($teacher_status === 'counselor');
+    $teacher_data             = $result->fetch_assoc();
+    $teacher_status           = $teacher_data['status'];
+    $is_admin                 = ($teacher_status === 'admin');
+    $is_counselor             = ($teacher_status === 'counselor');
+    $is_hackathon_coordinator = (bool) ($teacher_data['is_hackathon_coordinator'] ?? 0);
     }
     $stmt->close();
 
@@ -514,6 +516,14 @@
                 Reports
               </a>
             </li>
+                        <?php if ($is_hackathon_coordinator && ! $is_admin): ?>
+                        <li class="nav-item">
+                            <a href="hackathons.php" class="nav-link">
+                                <span class="material-symbols-outlined">workspace_premium</span>
+                                Hackathons
+                            </a>
+                        </li>
+                        <?php endif; ?>
             <li class="nav-item">
               <a href="profile.php" class="nav-link">
                 <span class="material-symbols-outlined">person</span>
